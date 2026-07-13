@@ -1,0 +1,10 @@
+{
+  "piezo_voigt": [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+  ],
+  "voigt_order": ["xx", "yy", "zz", "yz", "xz", "xy"],
+  "engineering_shear": true,
+  "piezo_unit": "C/m^2"
+}

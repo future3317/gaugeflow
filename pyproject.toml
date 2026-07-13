@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaugeflow"
+version = "0.1.0"
+description = "Stabilizer-aware response-field flow for tensor-orbit conditioned crystal generation"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.5", "torch-geometric>=2.5", "e3nn>=0.5", "pymatgen>=2023.8", "pandas>=2.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
