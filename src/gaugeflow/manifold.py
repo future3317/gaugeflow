@@ -14,6 +14,29 @@ def torus_logmap(start: torch.Tensor, end: torch.Tensor) -> torch.Tensor:
     return torch.remainder(end - start + 0.5, 1.0) - 0.5
 
 
+def project_simplex(value: torch.Tensor) -> torch.Tensor:
+    """Euclidean projection of the final axis onto the unit probability simplex.
+
+    This is the exact sorting-based projection, rather than clipping then
+    renormalizing. It is the retraction used by the A5 simplex atom-type path.
+    """
+    if value.shape[-1] < 1:
+        raise ValueError("simplex projection requires a non-empty final axis")
+    classes = value.shape[-1]
+    sorted_value, _ = torch.sort(value, dim=-1, descending=True)
+    cumulative = torch.cumsum(sorted_value, dim=-1) - 1.0
+    index = torch.arange(1, classes + 1, device=value.device, dtype=value.dtype)
+    support = sorted_value - cumulative / index > 0
+    rho = support.sum(dim=-1).clamp_min(1)
+    theta = cumulative.gather(-1, (rho - 1).unsqueeze(-1)).squeeze(-1) / rho.to(value.dtype)
+    return (value - theta.unsqueeze(-1)).clamp_min(0.0)
+
+
+def simplex_tangent(value: torch.Tensor) -> torch.Tensor:
+    """Orthogonally project a vector to the simplex tangent hyperplane."""
+    return value - value.mean(dim=-1, keepdim=True)
+
+
 def symmetric_to_vector(value: torch.Tensor) -> torch.Tensor:
     """Kelvin-style vectorization of a symmetric 3x3 matrix."""
     root2 = 2.0**0.5

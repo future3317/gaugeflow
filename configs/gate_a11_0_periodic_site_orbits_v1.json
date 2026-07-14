@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow A11.0 periodic unlabeled-site automorphism audit v1",
+  "status": "pre_registered_read_only_geometric_identifiability_audit",
+  "objective": "Determine whether fixed-CIF atom-type labels for the InN/BN endpoint-ID panel are identifiable from unlabeled periodic geometry before implementing any A11 type decoder.",
+  "historical_evidence_is_immutable": {
+    "gate_a4_manifest": "reports/gate_a4_generator_substrate_v1/manifest.json",
+    "gate_a5_manifest": "reports/gate_a5_quotient_substrate_v1/manifest.json",
+    "gate_a6_manifest": "reports/gate_a6_discrete_type_substrate_v1/manifest.json",
+    "gate_a7_manifest": "reports/gate_a7_joint_type_set_v1/manifest.json",
+    "gate_a8_manifest": "reports/gate_a8_time_conditioned_type_set_v1/manifest.json",
+    "gate_a9_manifest": "reports/gate_a9_source_weighted_type_set_v1/manifest.json",
+    "gate_a10_manifest": "reports/gate_a10_site_representation_audit_v1/manifest.json",
+    "instruction": "A/A1/A2/A3/A4/A5/A6/A7/A8/A9/A10 reports, thresholds, splits, checkpoints and conclusions remain immutable. A11.0 is read-only and starts no training."
+  },
+  "source_protocol": "configs/gate_a9_source_weighted_type_set_v1.json",
+  "material_ids": ["JVASP-1180", "JVASP-22673"],
+  "endpoint_labels": ["InN", "BN"],
+  "geometry": {
+    "niggli_reduce_before_symmetry": true,
+    "species_blind_structure": "replace every site species with H before symmetry analysis",
+    "symprec_angstrom": 0.001,
+    "angle_tolerance_degrees": 5.0,
+    "site_mapping_tolerance_angstrom": 0.001,
+    "report_proper_so3": true,
+    "report_full_o3_scalar": true,
+    "a11_g_representation_symmetry": "O(3)-invariant because the pre-registered first geometry head uses distances and dot products only"
+  },
+  "decision_rules": {
+    "all_full_o3_orbits_species_pure": "Only then is a separately versioned A11-G geometry-only type-head protocol authorized.",
+    "any_full_o3_orbit_species_mixed": "Do not interpret fixed-CIF site accuracy as an attainable deterministic O(3)-scalar target. A11-S/Q must jointly specify stochastic balanced assignment and automorphism-quotient supervision before training.",
+    "no_training": "This audit cannot itself authorize tensor conditioning, full GaugeFlow, relaxation, DFT, or DFPT."
+  },
+  "outputs": [
+    "reports/gate_a11_0_periodic_site_orbits_v1/summary.csv",
+    "reports/gate_a11_0_periodic_site_orbits_v1/site_orbits.csv",
+    "reports/gate_a11_0_periodic_site_orbits_v1/automorphisms.csv",
+    "reports/gate_a11_0_periodic_site_orbits_v1/a11_0_periodic_site_orbits_report.md",
+    "reports/gate_a11_0_periodic_site_orbits_v1/manifest.json"
+  ],
+  "prohibited": [
+    "training",
+    "a11_g_training",
+    "a11_s_training",
+    "a11_q_training",
+    "tensor_conditioned_training",
+    "full_GaugeFlow_training",
+    "relaxation",
+    "DFT",
+    "DFPT"
+  ]
+}

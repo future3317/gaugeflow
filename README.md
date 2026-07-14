@@ -6,11 +6,11 @@ runtime. The former local FlowMM working tree has been removed; the upstream
 baseline and the preserved local T2C patch set are documented under
 `../legacy_backups/flowmm_local_2026-07-14/`.
 
-## Current experimental status (2026-07-14)
+## Current experimental status (2026-07-15)
 
-GaugeFlow is in **Gate A**, the small-real-subset conditioning check. Gate A
-has not passed and no full 4,000/499/499 training result is claimed. The
-original four-method 400-step result is frozen as a negative v1 archive at
+The original four-method Gate A v1 is a frozen negative archive, not an
+active experiment. No full 4,000/499/499 training result is claimed. The
+original four-method 400-step result is frozen at
 `artifacts/gate_a_v1_frozen_archive/manifest.json`; its 1.2 separation
 threshold, checkpoints, and report are not editable evidence. The frozen v1
 protocol is `configs/gate_a_v1.json`: eight real training crystals (2--6
@@ -28,7 +28,8 @@ The common oracle-free evaluation **failed** one pre-registered supporting
 check. All methods respond to condition shuffling and GaugeFlow improves random
 representative consistency (mean velocity error 0.0452 versus 0.3522 for raw
 conditioning), but its generated target between/within distance ratio is only
-1.0066 against the required 1.2. Gate A therefore remains unresolved. The full
+1.0066 against the required 1.2. Gate A v1 therefore failed and remains
+frozen. The full
 decision additionally requires a pre-qualified frozen external tensor-oracle
 ensemble, the training-set orbit-tensor-error distribution, and the registered
 physical micro-audit. See `reports/performance_data_scientific_audit.md`.
@@ -108,6 +109,89 @@ manifold/decoder or joint-generation repair needs its own new versioned
 protocol. See `reports/gate_a4_generator_substrate_v1/`, especially
 `path_closure_report.md`, `endpoint_id_results.csv`,
 `type_path_comparison.csv`, and `head_loss_gradient_audit.csv`.
+
+### A5--A10 type-substrate repairs and site audit (all completed; none qualifies Gate A)
+
+The CUDA A5 experiment corrected two mathematical mismatches without relaxing
+any A4 rule: a true Dirichlet/simplex type path with endpoint NLL, and a
+training-only periodic optimal-transport/no-drift coordinate coupling. Its
+invariants passed, but endpoint-ID type composition reached only `0.3125` and
+geometry retrieval `0.5625`; the substrate remained unqualified.
+
+A6 replaced the earlier repeated-`argmax` categorical diagnostic with an
+absorbing discrete-flow-matching posterior and its exact masked-to-element
+jump sampler. Analytic closure was exact and common-noise target branching was
+nonzero, yet type composition/atom accuracy were `0.75`/`0.46875`. A7 then
+generated a graph-level 119-element count latent and enforced that count at
+every discrete reveal. This made composition exact (`1.0`), but did not make
+the species assignment to periodic sites reliable. A8 corrected a real
+implementation bug: `original_injection` previously did not inject time into
+the main node/message-passing path for endpoint-ID, raw-tensor, or direct-irrep
+conditioning. The fixed 400-step A8 run improved atom accuracy to `0.59375`,
+but still failed. A9's one fixed source-weighted Beta(1/2,1) DFM time measure
+also failed (`0.578125` atom accuracy); it is archived, not tuned further.
+
+The read-only A10 species-aware periodic StructureMatcher audit resolves a
+potential ambiguity in the CIF row-order metric. Its match rates for A7/A8/A9
+are `0.4375`/`0.5625`/`0.1875`, so the remaining failures are genuine chemical
+sublattice mismatches, not merely arbitrary atom-index permutations. The
+current blocker is therefore the scalar type-site representation: in
+endpoint-ID mode it receives no tensor response edge field, and scalar messages
+currently lack periodic edge-length/vector-state invariants. The next proposal
+must first audit the unlabeled periodic-site symmetry before deciding whether
+geometry alone, stochastic symmetry breaking, and/or quotient supervision are
+required; it may not add more sampler/loss searches or use target atom order.
+See `reports/gate_a5_quotient_substrate_v1/` through
+`reports/gate_a10_site_representation_audit_v1/`.
+
+### A11.0 periodic unlabeled-site identifiability audit (completed; no training)
+
+`configs/gate_a11_0_periodic_site_orbits_v1.json` first tests whether the
+fixed-CIF type labels in the InN/BN panel are mathematically identifiable from
+the proposed A11-G geometry representation. It Niggli reduces a copy of each
+endpoint with every species replaced by the same dummy atom, enumerates its
+periodic automorphisms, and only then compares the resulting site orbits with
+the true elements. It reports both proper SO(3) operations and full O(3)
+operations; the full partition is decisive for the pre-registered first
+geometry head because distances and dot products cannot distinguish a mirror.
+
+The audit rules out A11-G on this panel. InN has one four-site mixed orbit;
+BN has two two-site mixed orbits. Under both partitions, a deterministic
+O(3)-scalar site decoder has a fixed-CIF accuracy ceiling of `0.5`. The
+observed A7--A9 0.406--0.594 site accuracies are therefore not evidence that
+more radial bases or a larger deterministic GNN would solve the panel. See
+`reports/gate_a11_0_periodic_site_orbits_v1/`.
+
+### A11-Q exact assignment quotient (Q0 passed; Q1/Q2 not started)
+
+`configs/gate_a11_q_exact_assignment_v1.json` replaces the earlier prepared
+A11-S/Q contract for the current four-site InN/BN panel. The production
+assignment definition is exact: with predicted composition counts `n`, it
+enumerates each unique chemical labeling in `A(n)` exactly once and uses
+`p(Y) = softmax_Y sum_i C[i,Y_i]`. Thus a 2+2 composition has six assignments,
+not 24 permutations of two indistinguishable slots. Q0 has verified this
+finite law, exact-count Gumbel-max sampling, state-dependent residual groups,
+and FP32 node-relabeling consistency without training a model. Its outputs are
+in `reports/gate_a11_q_exact_assignment_v1/`.
+
+The production quotient is `proper_so3` only. `full_o3_scalar` remains a
+diagnostic comparison for the O(3)-scalar decoder considered in A11.0; improper
+operations cannot be silently quotiented when a rank-three polar tensor enters
+future GaugeFlow conditioning. At time `t`, Q1 must marginalize only
+`Gamma_t = {gamma in Aut(X): gamma y_t = y_t}`, respecting both revealed
+species and absorbing masks, and deduplicate equivalent labelings before
+summing their likelihoods. Sinkhorn and Hungarian implementations remain
+unit-tested utilities for a future large-N approximation, but are not used for
+the Q0/Q1 scientific attribution. Fixed-CIF site accuracy is only a diagnostic:
+high quotient accuracy with approximately 0.5 fixed-CIF accuracy can be the
+correct removal of arbitrary CIF row labels.
+
+Q1 is not authorized by this documentation update. It remains endpoint-ID,
+type-only, fixed-geometry, full-119-element, and model-composition-only, with
+the pre-registered composition/exact-assignment/StructureMatcher/mask/failure/
+relabeling thresholds in its protocol. If it passes, a separately versioned Q2
+must first test materials with different proper-SO(3) orbit structures; tensor
+conditioning does not resume directly.
 
 ### TensorOrbit-JARVIS-v2 oracle preparation
 
@@ -208,16 +292,23 @@ export PYTHONPATH="$PWD/src"
 python -m pytest -q
 ```
 
+This is the authoritative experimental environment: it has `torch 2.5.1+cu124`
+and can see the 16 GB RTX 4060 Ti. The Windows Anaconda interpreter is
+`torch 2.11.0+cpu`; do not use it for reported training or sampling results.
+
 Train the active method with a Cartesian tensor target cache:
 
 ## TensorOrbit-JARVIS-v1 data artifact
 
-GaugeFlow owns a frozen local evaluation artifact under
+GaugeFlow retains the historical local evaluation artifact under
 `data/tensororbit_jarvis_v1/`: the 4,000/499/499 v1 split and the
-Reynolds-projected Cartesian tensor targets. It is a data artifact, not a
-runtime dependency on PiezoJet or any predictor checkpoint. GaugeFlow keeps
-zero-response crystals as physical negatives and never emits target-CIF
-stabilizers as model inputs.
+Reynolds-projected Cartesian tensor targets. It is not formula-disjoint: its
+audit found 165 cross-split formula groups covering 672 rows and 56 structural
+near duplicates. It remains reproducibility evidence only; the separate v2
+activation candidate is required before future validation/test claims. Neither
+artifact is a runtime dependency on PiezoJet or any predictor checkpoint.
+GaugeFlow keeps zero-response crystals as physical negatives and never emits
+target-CIF stabilizers as model inputs.
 
 ```bash
 PYTHONPATH=src python scripts/train.py \
@@ -300,10 +391,12 @@ PYTHONPATH=src python scripts/evaluate_gate_a.py \
 - **Current Gate A failure:** the learned velocity is condition-sensitive, but
   400-step samples from different targets are not sufficiently separable.
 - **Generator substrate failure:** Gate A4 passed analytic path closure but
-  failed the trivial endpoint-ID type and geometry qualification. Resolve the
-  atom-type manifold/decoder and joint substrate under a new protocol before
-  returning to tensor conditioning; do not add conditional losses as a
-  workaround.
+  failed the trivial endpoint-ID type and geometry qualification. A5--A9
+  isolated and repaired continuous type paths, composition conservation, and
+  time injection; A10 shows the remaining blocker is geometry-blind scalar
+  type-site decoding and symmetry breaking. Do not return to tensor
+  conditioning, add more sampler/loss searches, or use target atom order as a
+  shortcut.
 - **Missing physical evidence:** no qualified frozen tensor-oracle ensemble or
   training-panel orbit-tensor-error distribution is available yet.
 - **Future benchmark data:** v1 split leakage prevents a credible full

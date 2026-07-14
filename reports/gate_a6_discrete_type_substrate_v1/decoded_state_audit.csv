@@ -1,0 +1,17 @@
+subspace,sample,target,retrieved_endpoint_joint,retrieved_endpoint_geometry,joint_endpoint_retrieval_correct,geometry_endpoint_retrieval_correct,decoded_composition_correct,decoded_atom_type_accuracy,type_endpoint_rms,coordinate_endpoint_rms,lattice_log_endpoint_rms,argmax_atom_types,argmax_composition_elements,argmax_composition_fractions,joint_distance_endpoint_0,joint_distance_endpoint_1,geometry_distance_endpoint_0,geometry_distance_endpoint_1
+absorbing_discrete_type,0,0,0,0,True,True,False,0.25,0.11227218061685562,0.0,0.0,"[7, 7, 49, 7]","[7, 49]","[0.75, 0.25]",0.5,5.0,0.0,4.0
+absorbing_discrete_type,1,0,0,0,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[7, 49, 7, 49]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,2,0,0,0,True,True,True,0.0,0.12964074313640594,0.0,0.0,"[7, 7, 49, 49]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,3,0,0,0,True,True,True,1.0,0.0,0.0,0.0,"[49, 49, 7, 7]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,4,0,0,0,True,True,False,0.25,0.11227218061685562,0.0,0.0,"[49, 7, 49, 49]","[7, 49]","[0.25, 0.75]",0.5,5.5,0.0,4.0
+absorbing_discrete_type,5,0,0,0,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[49, 7, 49, 7]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,6,0,0,0,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[7, 49, 7, 49]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,7,0,0,0,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[7, 49, 7, 49]","[7, 49]","[0.5, 0.5]",0.0,5.0,0.0,4.0
+absorbing_discrete_type,8,1,1,1,True,True,False,0.25,0.11227218061685562,0.0,0.0,"[7, 7, 5, 7]","[5, 7]","[0.25, 0.75]",5.0,0.5,4.0,0.0
+absorbing_discrete_type,9,1,1,1,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[5, 7, 5, 7]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,10,1,1,1,True,True,True,0.0,0.12964074313640594,0.0,0.0,"[7, 7, 5, 5]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,11,1,1,1,True,True,True,1.0,0.0,0.0,0.0,"[5, 5, 7, 7]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,12,1,1,1,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[5, 7, 7, 5]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,13,1,1,1,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[5, 7, 5, 7]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,14,1,1,1,True,True,True,0.5,0.09166985005140305,0.0,0.0,"[7, 5, 7, 5]","[5, 7]","[0.5, 0.5]",5.0,0.0,4.0,0.0
+absorbing_discrete_type,15,1,1,1,True,True,False,0.75,0.06482037156820297,0.0,0.0,"[7, 5, 7, 7]","[5, 7]","[0.25, 0.75]",5.0,0.5,4.0,0.0

@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A5 quotient substrate repair v1",
+  "status": "pre_registered_two_endpoint_substrate_repair",
+  "objective": "Repair only the mathematically mismatched atom-type and coordinate probability paths identified by Gate A4, then re-qualify the generator substrate with endpoint IDs before any tensor-conditioned experiment.",
+  "historical_evidence_is_immutable": {
+    "gate_a_v1_archive": "artifacts/gate_a_v1_frozen_archive/manifest.json",
+    "gate_a2_s1_manifest": "reports/gate_a2_conditional_control_v1/manifest.json",
+    "gate_a3_manifest": "reports/gate_a3_early_branching_v1/manifest.json",
+    "gate_a4_manifest": "reports/gate_a4_generator_substrate_v1/manifest.json",
+    "instruction": "A/A1/A2/A3/A4 reports, thresholds, splits, checkpoints and failure conclusions are immutable. A5 is a new substrate protocol, not a rerun or reinterpretation."
+  },
+  "evidence": {
+    "gate_a4": [
+      "Analytic closure passed for all paths, excluding a sampler direction/representation identity defect.",
+      "Endpoint-ID type composition was 0.000 and geometry retrieval was 0.5625, so tensor conditioning is not the causal bottleneck.",
+      "A4's softmax-Gaussian/simplex proxy lacked exact simplex retraction, tangent projection and an endpoint decoder objective.",
+      "A4's coordinate target was tied to CIF atom order and absolute fractional translation, although the physical crystal state is permutation and global-translation invariant."
+    ],
+    "literature": [
+      {
+        "citation": "Miller et al., FlowMM: Generating Materials with Riemannian Flow Matching, 2024",
+        "arxiv": "https://arxiv.org/abs/2406.04713",
+        "use": "Adopt a true Dirichlet simplex base, exact simplex retraction/tangent projection, no-drift torus quotient, and endpoint type decoder objective; do not restore FlowMM as a runtime dependency."
+      },
+      {
+        "citation": "Gat et al., Discrete Flow Matching, 2024",
+        "arxiv": "https://arxiv.org/abs/2407.15595",
+        "use": "Supports a posterior/endpoint-prediction view of discrete generation; A5 implements the simpler FlowMM-style simplex endpoint objective, not a continuous-time Markov sampler."
+      },
+      {
+        "citation": "Lipman et al., Flow Matching for Generative Modeling, 2023; Pooladian et al., Multisample Flow Matching, 2023",
+        "arxiv": ["https://arxiv.org/abs/2210.02747", "https://arxiv.org/abs/2304.14772"],
+        "use": "Supports replacing arbitrary independent source-target pairing by an explicit lower-cost coupling. A5 uses training-only periodic Hungarian coupling, never a target structure at sampling."
+      }
+    ]
+  },
+  "data": {
+    "train_csv": "../gaugeflow/data/piezo",
+    "split_manifest": "../gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "split": "train",
+    "target_cache_dir": "../gaugeflow/data/tensororbit_jarvis_v1/reynolds_projected_targets",
+    "preprocessed_cache": "artifacts/tensororbit_jarvis_v1_preprocessed_v1.pt"
+  },
+  "material_ids": ["JVASP-1180", "JVASP-22673"],
+  "endpoint_labels": ["InN", "BN"],
+  "a5_0_path_and_coupling_audit": {
+    "initial_noise_seed": 20260721,
+    "coupling_replicates": 32,
+    "sampler_steps": 16,
+    "requirements": {
+      "optimal_transport_not_worse_than_identity": true,
+      "simplex_nonnegative_and_unit_sum": true,
+      "simplex_tangent_zero_sum": true,
+      "no_drift_velocity_zero_graph_mean": true
+    }
+  },
+  "endpoint_id_substrate": {
+    "condition": "two-class one-hot endpoint ID only; no tensor, orbit, oracle, target CIF, target lattice or target symmetry condition reaches the model",
+    "seed": 20260722,
+    "train_steps": 400,
+    "learning_rate": 0.001,
+    "hidden_dim": 64,
+    "layers": 2,
+    "sampler_steps": 16,
+    "sample_replicates": 8,
+    "common_noise_seed": 20260723,
+    "variants": [
+      {
+        "id": "type_riemannian_simplex_endpoint_nll",
+        "active_heads": ["type"],
+        "type_path": "riemannian_simplex",
+        "target_coupling": "identity",
+        "coordinate_gauge": "absolute",
+        "loss_normalization": "target_velocity_rms",
+        "endpoint_type_nll_weight": 1.0
+      },
+      {
+        "id": "geometry_typewise_ot_no_drift_normalized",
+        "active_heads": ["coord", "lattice"],
+        "type_path": "euclidean_logits",
+        "target_coupling": "typewise_optimal_transport",
+        "coordinate_gauge": "no_drift",
+        "loss_normalization": "target_velocity_rms",
+        "endpoint_type_nll_weight": 0.0
+      },
+      {
+        "id": "joint_ot_simplex_no_drift_normalized",
+        "active_heads": ["type", "coord", "lattice"],
+        "type_path": "riemannian_simplex",
+        "target_coupling": "optimal_transport",
+        "coordinate_gauge": "no_drift",
+        "loss_normalization": "target_velocity_rms",
+        "endpoint_type_nll_weight": 1.0
+      }
+    ],
+    "criteria": {
+      "type_decoded_composition_accuracy_min": 0.95,
+      "geometry_endpoint_retrieval_accuracy_min": 0.9,
+      "joint_endpoint_retrieval_accuracy_min": 0.9,
+      "generated_between_within_ratio_min": 1.2,
+      "sampling_failure_count_max": 0
+    }
+  },
+  "decision_rules": {
+    "type_variant_failure": "Do not return to tensor conditioning. Evaluate a separately proposed discrete-flow/CTMC replacement, not target-specific vocabulary pruning.",
+    "geometry_variant_failure": "Do not return to tensor conditioning. Diagnose lattice quotient/coordinate architecture after confirming OT and translation quotient invariants.",
+    "joint_only_failure": "Do not return to tensor conditioning. Audit joint-head interference with frozen scale diagnostics.",
+    "all_criteria_pass": "Only then may a separately versioned tensor-conditioned gate be proposed; A5 never itself passes Gate A."
+  },
+  "prohibited": [
+    "Gate_A3_4_or_8_target_expansion",
+    "Gate_A2_S2",
+    "full_GaugeFlow_training",
+    "conditional_loss_search",
+    "continuous_alignment_posterior",
+    "oracle_guidance",
+    "relaxation",
+    "DFT",
+    "DFPT"
+  ]
+}

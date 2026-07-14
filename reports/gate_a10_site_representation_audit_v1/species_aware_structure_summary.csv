@@ -1,0 +1,4 @@
+source_protocol,samples,cif_index_atom_accuracy,species_aware_match_rate
+gate_a7_joint_type_set_v1,16,0.40625,0.4375
+gate_a8_time_conditioned_type_set_v1,16,0.59375,0.5625
+gate_a9_source_weighted_type_set_v1,16,0.578125,0.1875

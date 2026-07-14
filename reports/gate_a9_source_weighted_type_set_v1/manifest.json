@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A9 source-weighted joint atom-type substrate v1",
+  "protocol_sha256": "5ca5c71f9a581a8e254fd6c7dbacb56d992ed3cc2782cb2387cee1e6bd09bedd",
+  "status": "type_set_substrate_not_qualified",
+  "analytic_discrete_set_closure_passed": true,
+  "type_set_substrate_qualified": false,
+  "device": "cuda",
+  "historical_gate_evidence_modified": false,
+  "tensor_conditioned_gate_started": false,
+  "geometry_or_joint_crystal_repair_started": false,
+  "report_sha256": {
+    "analytic_discrete_set_closure.csv": "5dca87fd63b24a7149c030f70551e77864657ba27fdf060f93f647d186fd6eca",
+    "endpoint_id_results.csv": "5f4770b927f4113e30675f0e985df6406e2f93043fe9665d9d14fb33bdc3c9fa",
+    "decoded_state_audit.csv": "7e418303f4e72e13e6b8eda80835009fd3e295edea41073dd61e40409f06a0c1",
+    "composition_count_audit.csv": "a53d7bf1d7de7ecb2975b0004d1c243a5b31333888b8acf8a8aedf35753b628c",
+    "common_noise_trajectory.csv": "1ec22ea1b7e50219b694cec17bdadc2f5f4b63bff53e36191d8b611627781605",
+    "literature_basis.json": "4ae36a07ff3d397e76e5d5dd3b5c576b167b09c821c84f7b45618352df2a84df",
+    "gate_a9_source_weighted_type_set_report.md": "1750d8b643a2ae22a68a607db037d6522b7e78c05ea9a6606bd31d615e98eebc"
+  }
+}

@@ -537,15 +537,23 @@ class GaugeFlowVectorField(nn.Module):
         conditioning_mode: str = "orbit_alignment",
         conditional_control: str = "original_injection",
         residual_g_min: float = 0.25,
+        composition_max_atoms: int | None = None,
+        composition_atom_types: int | None = None,
     ):
         super().__init__()
         if conditional_control not in {"original_injection", "residual_field"}:
             raise ValueError("conditional_control must be 'original_injection' or 'residual_field'")
         if not 0.0 <= residual_g_min <= 1.0:
             raise ValueError("residual_g_min must lie in [0, 1]")
+        if composition_max_atoms is not None and composition_max_atoms < 1:
+            raise ValueError("composition_max_atoms must be positive when set")
+        if composition_atom_types is not None and not 1 <= composition_atom_types <= atom_types:
+            raise ValueError("composition_atom_types must lie in [1, atom_types]")
         self.atom_types = atom_types
         self.conditional_control = conditional_control
         self.residual_g_min = residual_g_min
+        self.composition_max_atoms = composition_max_atoms
+        self.composition_atom_types = composition_atom_types or atom_types
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.time_input = nn.Sequential(nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.conditioning_mode = conditioning_mode
@@ -573,6 +581,13 @@ class GaugeFlowVectorField(nn.Module):
         self.delta_type_out = nn.Linear(hidden_dim, atom_types)
         self.delta_coord_out = nn.Linear(self.vector_dim, 1, bias=False)
         self.delta_lattice_out = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
+        self.composition_count_out = (
+            nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim), nn.SiLU(),
+                nn.Linear(hidden_dim, self.composition_atom_types * (composition_max_atoms + 1)),
+            )
+            if composition_max_atoms is not None else None
+        )
         # Scalar heads: coordinates are explicitly interpreted in Cartesian
         # tangent space, where one scale gives the equivariant covariance sigma^2 I.
         self.type_log_std_out = nn.Linear(hidden_dim, 1)
@@ -592,6 +607,7 @@ class GaugeFlowVectorField(nn.Module):
         return_uncertainty: bool = False,
         return_condition_diagnostics: bool = False,
         return_velocity_components: bool = False,
+        return_composition_counts: bool = False,
     ) -> tuple[torch.Tensor, ...]:
         lattices = log_vector_to_lattice(lattice_log)
         source, target, directions = periodic_complete_edges(
@@ -599,8 +615,15 @@ class GaugeFlowVectorField(nn.Module):
         )
         edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
         nodes = self.type_input(type_state)
+        # Flow matching needs the scalar path time in the vector-field state
+        # itself.  Supplying it only through ``graph_query`` is insufficient:
+        # endpoint-ID, raw-tensor, and direct-irrep condition encoders do not
+        # consume that query, which previously made original-injection fields
+        # time-blind.  This broadcast is condition-independent and is applied
+        # before every message-passing block in all conditioning modes.
+        node_time_embedding = self.time_input(time.unsqueeze(-1))[batch]
         vectors = nodes.new_zeros((nodes.shape[0], self.vector_dim, 3))
-        graph_seed = scatter_mean(nodes, batch, lattices.shape[0]) + self.time_input(time.unsqueeze(-1))
+        graph_seed = scatter_mean(nodes + node_time_embedding, batch, lattices.shape[0])
         response_outputs = self.response(
             piezo_irreps, condition_present, graph_seed, directions, edge_graph,
             frac_coords, lattices, batch, type_state, condition_orbit,
@@ -610,13 +633,14 @@ class GaugeFlowVectorField(nn.Module):
         condition_diagnostics = response_outputs[4] if return_condition_diagnostics else None
 
         if self.conditional_control == "original_injection":
-            nodes = nodes + graph_condition[batch]
+            nodes = nodes + node_time_embedding + graph_condition[batch]
             for layer in self.layers:
                 nodes, vectors = layer(
                     nodes, vectors, source, target, directions, edge_response,
                     edge_auxiliary, graph_condition[batch],
                 )
             graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
+            composition_graph_nodes = graph_nodes
             cartesian_velocity = self.coord_out(vectors.transpose(-1, -2)).squeeze(-1)
             lattice_nodes = lattices[batch]
             fractional_velocity = torch.einsum("ni,nij->nj", cartesian_velocity, torch.linalg.inv(lattice_nodes))
@@ -636,7 +660,7 @@ class GaugeFlowVectorField(nn.Module):
         else:
             # v_base is condition-free: no tensor token, response vector, or
             # tensor-derived edge feature reaches this path.
-            base_nodes = nodes + self.time_input(time.unsqueeze(-1))[batch]
+            base_nodes = nodes + node_time_embedding
             base_vectors = vectors
             delta_nodes = nodes.new_zeros(nodes.shape)
             delta_vectors = vectors.new_zeros(vectors.shape)
@@ -654,6 +678,7 @@ class GaugeFlowVectorField(nn.Module):
                 )
             base_graph_nodes = scatter_mean(base_nodes, batch, lattices.shape[0])
             delta_graph_nodes = scatter_mean(delta_nodes, batch, lattices.shape[0])
+            composition_graph_nodes = base_graph_nodes + delta_graph_nodes
             base_type = self.type_out(base_nodes)
             base_cartesian = self.coord_out(base_vectors.transpose(-1, -2)).squeeze(-1)
             delta_cartesian = self.delta_coord_out(delta_vectors.transpose(-1, -2)).squeeze(-1)
@@ -692,4 +717,11 @@ class GaugeFlowVectorField(nn.Module):
             outputs = (*outputs, condition_diagnostics)
         if return_velocity_components:
             outputs = (*outputs, components)
+        if return_composition_counts:
+            if self.composition_count_out is None or self.composition_max_atoms is None:
+                raise ValueError("composition-count outputs require composition_max_atoms at model construction")
+            composition_logits = self.composition_count_out(composition_graph_nodes).reshape(
+                -1, self.composition_atom_types, self.composition_max_atoms + 1
+            )
+            outputs = (*outputs, composition_logits)
         return outputs

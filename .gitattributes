@@ -1,0 +1,2 @@
+# Generated audit plots are visual assets; suppress text-diff whitespace noise.
+*.svg -diff

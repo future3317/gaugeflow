@@ -1,0 +1,20 @@
+[
+  {
+    "citation": "Miller et al., FlowMM: Generating Materials with Riemannian Flow Matching, 2024",
+    "arxiv": "https://arxiv.org/abs/2406.04713",
+    "use": "Adopt a true Dirichlet simplex base, exact simplex retraction/tangent projection, no-drift torus quotient, and endpoint type decoder objective; do not restore FlowMM as a runtime dependency."
+  },
+  {
+    "citation": "Gat et al., Discrete Flow Matching, 2024",
+    "arxiv": "https://arxiv.org/abs/2407.15595",
+    "use": "Supports a posterior/endpoint-prediction view of discrete generation; A5 implements the simpler FlowMM-style simplex endpoint objective, not a continuous-time Markov sampler."
+  },
+  {
+    "citation": "Lipman et al., Flow Matching for Generative Modeling, 2023; Pooladian et al., Multisample Flow Matching, 2023",
+    "arxiv": [
+      "https://arxiv.org/abs/2210.02747",
+      "https://arxiv.org/abs/2304.14772"
+    ],
+    "use": "Supports replacing arbitrary independent source-target pairing by an explicit lower-cost coupling. A5 uses training-only periodic Hungarian coupling, never a target structure at sampling."
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A10 species-aware site-representation audit v1",
+  "status": "completed_read_only_site_representation_audit",
+  "objective": "Determine whether the residual A7-A9 type failures are arbitrary CIF-index permutations or true species-decorated crystal mismatches, without training, retuning, or changing a historical report.",
+  "source_protocol": "configs/gate_a9_source_weighted_type_set_v1.json",
+  "source_reports": [
+    "reports/gate_a7_joint_type_set_v1/decoded_state_audit.csv",
+    "reports/gate_a8_time_conditioned_type_set_v1/decoded_state_audit.csv",
+    "reports/gate_a9_source_weighted_type_set_v1/decoded_state_audit.csv"
+  ],
+  "structure_matcher": {
+    "ltol": 0.2,
+    "stol": 0.3,
+    "angle_tol": 5,
+    "primitive_cell": false,
+    "scale": false,
+    "attempt_supercell": false,
+    "definition": "Match species-decorated periodic structures after allowed lattice and atom permutations; a failed match is a real chemical-sublattice mismatch, not merely a CIF row-order difference."
+  },
+  "code_audit_scope": [
+    "EndpointIdConditionEncoder emits zero edge response fields.",
+    "ResponseMessageLayer scalar messages currently receive node features, condition features, and response/direction invariants, but no periodic edge distance or vector-state invariant.",
+    "With zero response and a fully masked type state, the type scalar head consequently lacks a direct periodic metric signal for site discrimination."
+  ],
+  "decision_rule": "Do not add more discrete path losses or sampler schedules. A future architecture proposal must make type scalar messages geometrically informative through periodic metric/vector invariants and state how i.i.d. node noise resolves unlabeled-site symmetries without using target atom order.",
+  "prohibited": ["training", "full_GaugeFlow_training", "tensor_conditioned_training", "relaxation", "DFT", "DFPT"]
+}

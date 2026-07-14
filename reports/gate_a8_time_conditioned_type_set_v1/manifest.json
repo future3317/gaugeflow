@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A8 explicit-time joint atom-type substrate v1",
+  "protocol_sha256": "f7397f615ffcf035b95aa2a70a720f000ccdfc2466fcedd8cdc3a54552d30c14",
+  "status": "type_set_substrate_not_qualified",
+  "analytic_discrete_set_closure_passed": true,
+  "type_set_substrate_qualified": false,
+  "device": "cuda",
+  "historical_gate_evidence_modified": false,
+  "tensor_conditioned_gate_started": false,
+  "geometry_or_joint_crystal_repair_started": false,
+  "report_sha256": {
+    "analytic_discrete_set_closure.csv": "5dca87fd63b24a7149c030f70551e77864657ba27fdf060f93f647d186fd6eca",
+    "endpoint_id_results.csv": "2a27af4e49e9fb60aba6e408679658e6cd69b3cf2a626653a0ba0da5d6582182",
+    "decoded_state_audit.csv": "50929963f88d40f0a64b8dc17fcce22932625269a001d0c2dde60babf07084d8",
+    "composition_count_audit.csv": "97a24d8d288846351de11bc6d0a15e4d1be4719e94c45df2c29f3ca1ee5d4f0a",
+    "common_noise_trajectory.csv": "3b77367dea1b1d9585d362f4167270cc09b1b6fd4b5ca67c502dfc16deaa7e7b",
+    "literature_basis.json": "5699d912486d35fd0f2021ed94f05bd858acef2753378c4334f54f2e700c9884",
+    "gate_a8_time_conditioned_type_set_report.md": "26c3759d3df98d43b930df1dbeb3f9dc014b24a2e9b829d5c58f28676f8fc205"
+  }
+}

@@ -11,3 +11,5 @@ reports/cprofile_*/
 reports/profile_intermediate/
 reports/debug_data_audit/
 reports/benchmark_smoke.*
+reports/*_cpu_smoke_*/
+reports/**/evaluation.log

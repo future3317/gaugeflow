@@ -1,0 +1,12 @@
+[
+  {
+    "citation": "Gat et al., Discrete Flow Matching, 2024",
+    "arxiv": "https://arxiv.org/abs/2407.15595",
+    "use": "DFM permits arbitrary couplings and learned endpoint posteriors. A7 keeps the absorbing DFM path but models a graph-level count latent before constrained token transitions."
+  },
+  {
+    "citation": "Miller et al., FlowMM: Generating Materials with Riemannian Flow Matching, 2024",
+    "arxiv": "https://arxiv.org/abs/2406.04713",
+    "use": "Crystal generation must respect permutation symmetry; A7 treats composition as a permutation-invariant graph quantity and only then assigns types to sites."
+  }
+]

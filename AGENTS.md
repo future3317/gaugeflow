@@ -21,6 +21,27 @@ test it at small scale, and only then update scientific claims.
   use the paired target CIF, target graph, target lattice, target stabilizer, or
   target space group to construct a training-only conditioning path.
 
+## Required execution environment
+
+- Run all tests, training, sampling, and reported benchmarks in **WSL 2**,
+  distribution `Ubuntu-22.04`, using the `flowmm-t2c` micromamba environment.
+  The exact interpreter is
+  `/home/future04/micromamba/envs/flowmm-t2c/bin/python`.
+- This environment is verified with `torch 2.5.1+cu124`, CUDA 12.4, and the
+  NVIDIA GeForce RTX 4060 Ti. Before a GPU experiment, verify the interpreter
+  and device explicitly:
+
+  ```bash
+  /home/future04/micromamba/envs/flowmm-t2c/bin/python -c \
+    "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+  ```
+
+- The unqualified WSL `python3` is not the experiment environment and may not
+  have PyTorch installed. The Windows Anaconda interpreter currently has
+  CPU-only `torch 2.11.0+cpu`; never use it for reported training, sampling,
+  profiling, or regression results. Set `PYTHONPATH="$PWD/src"` after entering
+  the repository in WSL.
+
 ## Experimental gates
 
 Execute the research program strictly in order:
@@ -66,15 +87,58 @@ Execute the research program strictly in order:
    the vocabulary. The `{B,N,In}` type vocabulary is diagnostic-only. Any
    atom-type manifold/decoder or joint-substrate repair must be proposed in a
    new versioned protocol, with a new fixed budget.
-5. **Gate B -- coherent representative invariance.** At fixed structure and
+5. **A5--A10 substrate repair/audit sequence.** These are completed, versioned
+   endpoint-ID-only studies on the frozen InN/BN pair; none starts a tensor
+   gate. A5 corrected simplex/quotient paths but did not qualify the substrate.
+   A6 replaced repeated-argmax "categorical" decoding with an absorbing
+   discrete-flow posterior and sampler; its analytic closure passed but type
+   composition reached only 0.75. A7 added a generated (not externally
+   conditioned) 119-element composition-count latent and exact count-constrained
+   transitions: graph composition reached 1.0, while site assignment still
+   failed. A8 repaired an implementation defect in which original-injection
+   fields were time-blind for endpoint-ID/raw/direct conditioning; atom accuracy
+   improved to 0.59375 but did not qualify. A9 used one fixed
+   Beta(1/2,1) source-weighted discrete-path objective and also did not qualify.
+   A10 is a read-only, species-aware StructureMatcher audit: A7/A8/A9 match
+   rates are 0.4375/0.5625/0.1875, proving the residual issue is a real chemical
+   sublattice mismatch, not merely CIF row order. Do not add further sampler or
+   loss searches. Any successor must first pass the separate A11.0 unlabeled
+   site-orbit audit; it must not use target atom order or target composition.
+6. **A11.0 periodic-site identifiability audit.**
+   `configs/gate_a11_0_periodic_site_orbits_v1.json` is a completed,
+   read-only audit of the frozen InN/BN endpoint-ID geometry. It Niggli
+   reduces an all-identical-species copy of each crystal, enumerates proper
+   SO(3) and full O(3) periodic site automorphisms, then inspects target
+   species only after the site-orbit partition is fixed. Both materials have
+   species-mixed full-O(3) site orbits and a fixed-CIF deterministic
+   O(3)-scalar ceiling of 0.5. Therefore do **not** start an A11-G
+   geometry-only training run or reinterpret fixed-CIF accuracy as an
+   attainable deterministic target. `configs/gate_a11_q_exact_assignment_v1.json`
+   supersedes the earlier *prepared-only* A11-S/Q contract for future A11-Q
+   work. Q0 is a completed read-only test of exact count-constrained chemical
+   assignment enumeration, residual automorphism actions, and node-relabeling
+   consistency; Q1 and Q2 are **not started**. For the four-site 2+2 InN/BN
+   panel, production likelihood is the exact categorical distribution over
+   six unique chemical assignments, not Sinkhorn or permutations of duplicate
+   species slots. Sinkhorn/Hungarian remain future large-N
+   approximation/diagnostic utilities only. Production quotients use only
+   proper-SO(3) automorphisms; full-O(3) is diagnostic-only for scalar-decoder
+   identifiability and improper operations must not be silently quotiented for
+   a rank-three polar tensor. At a partial discrete state, marginalize only
+   the state-dependent residual group `Gamma_t = {gamma: gamma y_t = y_t}`.
+   Fixed-CIF site accuracy is diagnostic, never an A11-Q gate threshold. Do
+   not start Q1 until Q0's manifest passes; if Q1 later passes, propose a
+   separate Q2 material panel with distinct proper-SO(3) orbit structures
+   before restoring tensor conditioning.
+7. **Gate B -- coherent representative invariance.** At fixed structure and
    tensor orbit, rotate the input representative and measure velocity
    equivariance, composition/prototype stability, C2ST, MMD, and orbit-error
    distributions.
-6. **Gate C -- small method screen.** Use one frozen structural checkpoint,
+8. **Gate C -- small method screen.** Use one frozen structural checkpoint,
    one sample budget, and at least three seeds. Advance GaugeFlow only if orbit
    fidelity and representative/cell consistency improve without losing
    validity or degrading the high-symmetry subset.
-7. **Gate D -- physical validation.** Freeze the model and ranking rule before
+9. **Gate D -- physical validation.** Freeze the model and ranking rule before
    top-K relaxation, symmetry re-identification, oracle recomputation, and the
    pre-registered DFPT audit.
 
@@ -114,11 +178,14 @@ orbit-tensor-error distributions. See `README.md` and
   Clebsch--Gordan layers; do not weaken it into raw component concatenation.
 - Use numerically safe norms on quantities that can be exactly zero and test
   both finite forward values and finite backward gradients.
+- Feed path time directly to every message-passing node state. Passing time
+  only through a condition encoder query is invalid because several legitimate
+  conditioning encoders do not use that query.
 - The production atom-type path is Euclidean 119-logit flow plus a final
-  `argmax`; it is not a categorical or simplex manifold. A4 adds an
-  `endpoint_id` conditioning mode and a simplex path only for frozen
-  substrate diagnostics. They are not tensor-conditioned methods and must not
-  be selected as a replacement without a separately authorized protocol.
+  `argmax`; it is not a categorical or simplex manifold. A5--A9 add true
+  simplex/discrete/type-set paths only for frozen substrate diagnostics. They
+  are not tensor-conditioned methods and must not be selected as a replacement
+  without a separately authorized protocol.
 
 ## Evidence and reporting
 
@@ -144,6 +211,10 @@ orbit-tensor-error distributions. See `README.md` and
   PiezoJet as the primary oracle.
 - Gate A oracle-free diagnostics support debugging but cannot replace
   training-set orbit tensor error from a qualified frozen oracle ensemble.
+- Use a species-aware periodic matcher when judging generated endpoint
+  structures. CIF atom-row accuracy is diagnostic only: it can disagree with
+  a physically equivalent atom permutation, while an unmatched decorated
+  structure is a real sublattice failure.
 - Report representative/cell consistency and distributional behavior, not only
   single-sample tensor error. Include validity and the high-symmetry subset as
   guardrails.

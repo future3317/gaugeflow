@@ -7,7 +7,8 @@ from dataclasses import dataclass
 import torch
 from torch_geometric.utils import scatter
 
-from .manifold import lattice_to_log_vector, torus_logmap, wrap01
+from .coupling import periodic_assignment, remove_graphwise_translation
+from .manifold import lattice_to_log_vector, project_simplex, simplex_tangent, torus_logmap, wrap01
 from .manifold import log_vector_to_lattice
 from .uncertainty import (
     SampleUncertainty,
@@ -32,6 +33,10 @@ class RiemannianCrystalFlowMatcher:
         uncertainty_weight: float = 0.0,
         active_heads: tuple[str, ...] | list[str] = _HEADS,
         type_path: str = "euclidean_logits",
+        target_coupling: str = "identity",
+        coordinate_gauge: str = "absolute",
+        loss_normalization: str = "none",
+        endpoint_type_nll_weight: float = 0.0,
     ):
         self.atom_types = atom_types
         if uncertainty_weight < 0:
@@ -39,11 +44,25 @@ class RiemannianCrystalFlowMatcher:
         active = tuple(active_heads)
         if not active or any(head not in self._HEADS for head in active):
             raise ValueError(f"active_heads must be a non-empty subset of {self._HEADS}")
-        if type_path not in {"euclidean_logits", "simplex_probability"}:
-            raise ValueError("type_path must be 'euclidean_logits' or 'simplex_probability'")
+        if type_path not in {"euclidean_logits", "simplex_probability", "riemannian_simplex"}:
+            raise ValueError("unknown type_path")
+        if target_coupling not in {"identity", "optimal_transport", "typewise_optimal_transport"}:
+            raise ValueError("unknown target_coupling")
+        if coordinate_gauge not in {"absolute", "no_drift"}:
+            raise ValueError("coordinate_gauge must be 'absolute' or 'no_drift'")
+        if loss_normalization not in {"none", "target_velocity_rms"}:
+            raise ValueError("unknown loss_normalization")
+        if endpoint_type_nll_weight < 0:
+            raise ValueError("endpoint_type_nll_weight must be non-negative")
+        if endpoint_type_nll_weight and type_path != "riemannian_simplex":
+            raise ValueError("endpoint_type_nll_weight requires the riemannian_simplex type path")
         self.uncertainty_weight = uncertainty_weight
         self.active_heads = active
         self.type_path = type_path
+        self.target_coupling = target_coupling
+        self.coordinate_gauge = coordinate_gauge
+        self.loss_normalization = loss_normalization
+        self.endpoint_type_nll_weight = endpoint_type_nll_weight
 
     def target_state(self, batch) -> CrystalFlowState:
         return CrystalFlowState(
@@ -57,6 +76,10 @@ class RiemannianCrystalFlowMatcher:
         type_state = torch.randn((batch.atom_types.numel(), self.atom_types), device=device)
         if self.type_path == "simplex_probability":
             type_state = torch.softmax(type_state, dim=-1)
+        elif self.type_path == "riemannian_simplex":
+            type_state = torch.distributions.Dirichlet(
+                torch.ones(self.atom_types, device=device)
+            ).sample((batch.atom_types.numel(),))
         state = CrystalFlowState(
             type_state=type_state,
             frac_coords=torch.rand_like(batch.frac_coords),
@@ -73,6 +96,40 @@ class RiemannianCrystalFlowMatcher:
             frac_coords=state.frac_coords if "coord" in self.active_heads else target.frac_coords,
             lattice_log=state.lattice_log if "lattice" in self.active_heads else target.lattice_log,
         )
+
+    def _coupled_target(self, target: CrystalFlowState, base: CrystalFlowState, batch) -> CrystalFlowState:
+        """Permute the paired endpoint only while constructing a training path."""
+        if self.target_coupling == "identity":
+            return target
+        type_state, frac_coords = target.type_state.clone(), target.frac_coords.clone()
+        for graph in range(batch.num_graphs):
+            nodes = torch.nonzero(batch.batch == graph, as_tuple=False).flatten()
+            source_types = target_types = None
+            if self.target_coupling == "typewise_optimal_transport":
+                source_types = batch.atom_types[nodes]
+                target_types = batch.atom_types[nodes]
+            assignment = periodic_assignment(
+                base.frac_coords[nodes], target.frac_coords[nodes],
+                source_types=source_types, target_types=target_types,
+            )
+            type_state[nodes] = target.type_state[nodes][assignment]
+            frac_coords[nodes] = target.frac_coords[nodes][assignment]
+        return CrystalFlowState(type_state, frac_coords, target.lattice_log)
+
+    def _type_velocity(self, value: torch.Tensor) -> torch.Tensor:
+        return simplex_tangent(value) if self.type_path == "riemannian_simplex" else value
+
+    def _coordinate_velocity(self, value: torch.Tensor, batch) -> torch.Tensor:
+        if self.coordinate_gauge == "no_drift":
+            return remove_graphwise_translation(value, batch.batch, batch.num_graphs)
+        return value
+
+    def _head_loss(self, value: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        loss = (value - target).square().mean()
+        normalizer = target.square().mean().detach().clamp_min(1e-8)
+        if self.loss_normalization == "target_velocity_rms":
+            return loss, loss / normalizer
+        return loss, loss
 
     def loss(
         self,
@@ -104,10 +161,13 @@ class RiemannianCrystalFlowMatcher:
             raise ValueError("identification_early_sigma must be positive when set")
         target = self.target_state(batch)
         base = self.random_state(batch)
+        target = self._coupled_target(target, base, batch)
         time = torch.rand((batch.num_graphs,), device=batch.frac_coords.device)
         node_time = time[batch.batch].unsqueeze(-1)
         velocity_type = target.type_state - base.type_state
-        velocity_coord = torus_logmap(base.frac_coords, target.frac_coords)
+        velocity_coord = self._coordinate_velocity(
+            torus_logmap(base.frac_coords, target.frac_coords), batch
+        )
         velocity_lattice = target.lattice_log - base.lattice_log
         state = CrystalFlowState(
             type_state=base.type_state + node_time * velocity_type,
@@ -121,12 +181,25 @@ class RiemannianCrystalFlowMatcher:
             return_uncertainty=self.uncertainty_weight > 0,
         )
         pred_type, pred_coord, pred_lattice, alignment = outputs[:4]
-        terms = {
-            "type": (pred_type - velocity_type).square().mean(),
-            "coord": (pred_coord - velocity_coord).square().mean(),
-            "lattice": (pred_lattice - velocity_lattice).square().mean(),
-        }
-        terms["loss"] = sum(terms[head] for head in self.active_heads)
+        pred_type = self._type_velocity(pred_type)
+        pred_coord = self._coordinate_velocity(pred_coord, batch)
+        type_loss, type_objective = self._head_loss(pred_type, velocity_type)
+        coord_loss, coord_objective = self._head_loss(pred_coord, velocity_coord)
+        lattice_loss, lattice_objective = self._head_loss(pred_lattice, velocity_lattice)
+        terms = {"type": type_loss, "coord": coord_loss, "lattice": lattice_loss}
+        terms["type_objective"] = type_objective
+        terms["coord_objective"] = coord_objective
+        terms["lattice_objective"] = lattice_objective
+        terms["loss"] = sum(terms[f"{head}_objective"] for head in self.active_heads)
+        terms["endpoint_type_nll"] = terms["loss"].new_zeros(())
+        if self.endpoint_type_nll_weight:
+            remaining = (1.0 - time[batch.batch]).unsqueeze(-1)
+            endpoint_probability = project_simplex(state.type_state + remaining * pred_type)
+            endpoint_index = target.type_state.argmax(dim=-1)
+            terms["endpoint_type_nll"] = -endpoint_probability.clamp_min(1e-8).log().gather(
+                -1, endpoint_index.unsqueeze(-1)
+            ).mean()
+            terms["loss"] = terms["loss"] + self.endpoint_type_nll_weight * terms["endpoint_type_nll"]
         terms["counterfactual"] = terms["loss"].new_zeros(())
         if counterfactual_weight > 0:
             permutation = torch.roll(
@@ -139,6 +212,8 @@ class RiemannianCrystalFlowMatcher:
                 return_uncertainty=False,
             )
             wrong_type, wrong_coord, wrong_lattice = wrong_outputs[:3]
+            wrong_type = self._type_velocity(wrong_type)
+            wrong_coord = self._coordinate_velocity(wrong_coord, batch)
             own_type_error = (pred_type - velocity_type).square().mean(dim=-1)
             own_coord_error = (pred_coord - velocity_coord).square().mean(dim=-1)
             wrong_type_error = (wrong_type - velocity_type).square().mean(dim=-1)
@@ -203,6 +278,8 @@ class RiemannianCrystalFlowMatcher:
                     return_uncertainty=False,
                 )
                 candidate_type, candidate_coord, candidate_lattice = candidate_outputs[:3]
+                candidate_type = self._type_velocity(candidate_type)
+                candidate_coord = self._coordinate_velocity(candidate_coord, batch)
                 candidate_node_error = (
                     (candidate_type - velocity_type).square().mean(dim=-1)
                     + (candidate_coord - velocity_coord).square().mean(dim=-1)
@@ -289,16 +366,31 @@ class RiemannianCrystalFlowMatcher:
                 getattr(batch, "condition_orbit", None),
                 return_uncertainty=return_uncertainty,
             )
-            conditional = conditional_outputs[:3]
+            conditional_raw = conditional_outputs[:3]
+            conditional = (
+                self._type_velocity(conditional_raw[0]),
+                self._coordinate_velocity(conditional_raw[1], batch),
+                conditional_raw[2],
+            )
             if guidance_scale:
-                null = model(
+                null_raw = model(
                     state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
                     batch.piezo_irreps, torch.zeros_like(batch.condition_present),
                     getattr(batch, "condition_orbit", None),
                 )[:3]
+                null = (
+                    self._type_velocity(null_raw[0]),
+                    self._coordinate_velocity(null_raw[1], batch),
+                    null_raw[2],
+                )
                 velocity = tuple((1 + guidance_scale) * c - guidance_scale * u for c, u in zip(conditional, null))
             else:
                 velocity = conditional
+            velocity = (
+                self._type_velocity(velocity[0]),
+                self._coordinate_velocity(velocity[1], batch),
+                velocity[2],
+            )
             # Inactive A4 subspaces remain at the endpoint supplied by
             # random_state/initial_state.  Do not allow an untrained head to
             # contaminate the requested factor during a diagnostic sample.
@@ -315,7 +407,9 @@ class RiemannianCrystalFlowMatcher:
                 alignment = conditional_outputs[3]
                 alignment_entropy += dt * -(alignment.clamp_min(1e-8) * alignment.clamp_min(1e-8).log()).sum(-1)
             type_state = state.type_state + dt * velocity[0]
-            if self.type_path == "simplex_probability":
+            if self.type_path == "riemannian_simplex":
+                type_state = project_simplex(type_state)
+            elif self.type_path == "simplex_probability":
                 # The exact linear interpolant remains in the simplex.  A
                 # learned Euler field need not, so the diagnostic simplex path
                 # projects only the probability factor back to its manifold.

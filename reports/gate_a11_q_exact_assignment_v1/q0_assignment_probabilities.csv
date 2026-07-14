@@ -1,0 +1,13 @@
+material_id,assignment_index,assignment_atomic_numbers,assignment_elements,probability,is_fixed_cif_label,in_proper_so3_target_orbit,in_full_o3_target_orbit_diagnostic
+JVASP-1180,0,"[7, 7, 49, 49]","[N, N, In, In]",0.1666666567325592,False,True,True
+JVASP-1180,1,"[7, 49, 7, 49]","[N, In, N, In]",0.1666666567325592,False,False,False
+JVASP-1180,2,"[7, 49, 49, 7]","[N, In, In, N]",0.1666666567325592,False,False,False
+JVASP-1180,3,"[49, 7, 7, 49]","[In, N, N, In]",0.1666666567325592,False,False,False
+JVASP-1180,4,"[49, 7, 49, 7]","[In, N, In, N]",0.1666666567325592,False,False,False
+JVASP-1180,5,"[49, 49, 7, 7]","[In, In, N, N]",0.1666666567325592,True,True,True
+JVASP-22673,0,"[5, 5, 7, 7]","[B, B, N, N]",0.1666666567325592,True,True,True
+JVASP-22673,1,"[5, 7, 5, 7]","[B, N, B, N]",0.1666666567325592,False,False,False
+JVASP-22673,2,"[5, 7, 7, 5]","[B, N, N, B]",0.1666666567325592,False,False,False
+JVASP-22673,3,"[7, 5, 5, 7]","[N, B, B, N]",0.1666666567325592,False,False,False
+JVASP-22673,4,"[7, 5, 7, 5]","[N, B, N, B]",0.1666666567325592,False,False,False
+JVASP-22673,5,"[7, 7, 5, 5]","[N, N, B, B]",0.1666666567325592,False,True,True

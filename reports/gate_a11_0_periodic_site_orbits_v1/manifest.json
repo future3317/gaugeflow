@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow A11.0 periodic unlabeled-site automorphism audit v1",
+  "status": "pre_registered_read_only_geometric_identifiability_audit",
+  "training_started": false,
+  "historical_gate_evidence_modified": false,
+  "protocol_sha256": "cd090c46e9570fb6f6d8a484f29a491baffbd0863a32d4dadc05f366d5b11f4a",
+  "source_protocol_sha256": "5ca5c71f9a581a8e254fd6c7dbacb56d992ed3cc2782cb2387cee1e6bd09bedd",
+  "report_sha256": {
+    "summary.csv": "66205b12d8ca162d24103ddb62e6f84291e7ebfee6330e585430bff7ebf70539",
+    "site_orbits.csv": "4d4c8166c0bb8e1b6388ceef83d14ffbde9112dc71907cf9f370f5e1b7654a0a",
+    "automorphisms.csv": "6de3859e6356dfb01eff30264f0a235effb1cfd1f3a89dc2fdf2df31019fafb4",
+    "a11_0_periodic_site_orbits_report.md": "074238d19075dced66ab6ce3fa678f68d8c5a622863c7b1bebbff2867d35f8e7"
+  }
+}

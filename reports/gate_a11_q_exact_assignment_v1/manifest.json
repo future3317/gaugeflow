@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A11-Q exact automorphism-quotient assignment v1",
+  "status": "q0_passed_exact_enumeration_read_only",
+  "q1_status": "not_started",
+  "q2_status": "not_started",
+  "training_started": false,
+  "tensor_conditioned_training_started": false,
+  "historical_gate_evidence_modified": false,
+  "production_automorphism_group": "proper_so3",
+  "full_o3_usage": "diagnostic_only",
+  "protocol_sha256": "7a16777bd97bc5a392d2764bd90e90c0f7a9c1fe54c159f4080142cb1b3bf2b0",
+  "source_protocol_sha256": "5ca5c71f9a581a8e254fd6c7dbacb56d992ed3cc2782cb2387cee1e6bd09bedd",
+  "a11_0_automorphism_sha256": "6de3859e6356dfb01eff30264f0a235effb1cfd1f3a89dc2fdf2df31019fafb4",
+  "report_sha256": {
+    "q0_exact_assignment_summary.csv": "825a5685fc229ba9143aee64f28bccd816ed913153a94410edfa11cdb4e3c55b",
+    "q0_assignment_probabilities.csv": "98bb36fec54ed7516e0313a5ae52713cca6364335b82a45908767cb7e5e79ed2",
+    "q0_residual_groups.csv": "546d26eba8fc51c2f48c306e4279333dee91cd42d9222bc0f81d26aabe8e112d",
+    "q0_permutation_consistency.csv": "19e4be03b5c19850331918777bd98d43c66b56ac690ed5c28990af20727f077f",
+    "gate_a11_q0_exact_assignment_report.md": "80943cef012bc809eba09c1a47e42adab24ccb3083bc39104ebf491bc0680282"
+  }
+}
