@@ -3,7 +3,8 @@ import copy
 import torch
 
 from gaugeflow.conditioning import apply_condition_dropout, randomize_tensor_orbit_representative
-from gaugeflow.flow import RiemannianCrystalFlowMatcher
+from gaugeflow.flow import CrystalFlowState, RiemannianCrystalFlowMatcher
+from gaugeflow.manifold import torus_logmap
 from gaugeflow.model import (
     GaugeFlowVectorField,
     OrbitResponseFieldEncoder,
@@ -197,6 +198,113 @@ def test_counterfactual_tangent_ranking_is_finite_and_preserves_zero_null_separa
         batch.piezo_irreps, torch.zeros_like(batch.condition_present),
     )[0]
     assert not torch.allclose(present, null)
+
+
+def test_endpoint_id_control_uses_the_existing_backbone_without_a_tensor_condition():
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([5, 7]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.tensor([[1.0, 0.0]]),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+        Data(atom_types=torch.tensor([49, 7]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.tensor([[0.0, 1.0]]),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    model = GaugeFlowVectorField(
+        hidden_dim=32, layers=1, orbit_frames=3, conditioning_mode="endpoint_id"
+    )
+    terms = RiemannianCrystalFlowMatcher().loss(model, batch)
+    assert torch.isfinite(terms["loss"])
+    terms["loss"].backward()
+    assert model.response.embedding[0].weight.grad is not None
+
+
+def test_sampler_accepts_a_fixed_initial_state_and_preserves_inactive_subspaces():
+    class ConstantVelocity(torch.nn.Module):
+        def __init__(self, velocity):
+            super().__init__()
+            self.velocity = velocity
+
+        def forward(self, *args, **kwargs):
+            del args, kwargs
+            return (*self.velocity, torch.ones(1, 1))
+
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([5, 7]), frac_coords=torch.tensor([[0.9, 0.1, 0.2], [0.2, 0.3, 0.4]]),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    matcher = RiemannianCrystalFlowMatcher(active_heads=("type",))
+    target = matcher.target_state(batch)
+    base = matcher.random_state(batch)
+    velocity = (
+        target.type_state - base.type_state,
+        torch.zeros_like(target.frac_coords),
+        torch.zeros_like(target.lattice_log),
+    )
+    sampled = matcher.sample(ConstantVelocity(velocity), batch, steps=8, initial_state=base)
+    assert torch.allclose(sampled.type_state, target.type_state, atol=2e-6, rtol=2e-6)
+    assert torch.allclose(sampled.frac_coords, target.frac_coords)
+    assert torch.allclose(sampled.lattice_log, target.lattice_log)
+
+
+def test_exact_production_path_velocity_closes_type_torus_and_spd_endpoints():
+    class ConstantVelocity(torch.nn.Module):
+        def __init__(self, velocity):
+            super().__init__()
+            self.velocity = velocity
+
+        def forward(self, *args, **kwargs):
+            del args, kwargs
+            return (*self.velocity, torch.ones(1, 1))
+
+    torch.manual_seed(809)
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([5, 7]), frac_coords=torch.tensor([[0.95, 0.1, 0.2], [0.05, 0.3, 0.4]]),
+             lattice=torch.tensor([[3.0, 0.0, 0.0], [0.1, 3.5, 0.0], [0.2, 0.3, 4.0]]).unsqueeze(0),
+             piezo_irreps=torch.randn(1, 18), condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    matcher = RiemannianCrystalFlowMatcher()
+    target = matcher.target_state(batch)
+    base = matcher.random_state(batch)
+    velocity = (
+        target.type_state - base.type_state,
+        torus_logmap(base.frac_coords, target.frac_coords),
+        target.lattice_log - base.lattice_log,
+    )
+    sampled = matcher.sample(ConstantVelocity(velocity), batch, steps=16, initial_state=base)
+    assert torch.allclose(sampled.type_state, target.type_state, atol=3e-6, rtol=3e-6)
+    assert torch.allclose(torus_logmap(sampled.frac_coords, target.frac_coords), torch.zeros_like(target.frac_coords), atol=3e-6, rtol=3e-6)
+    assert torch.allclose(sampled.lattice_log, target.lattice_log, atol=3e-6, rtol=3e-6)
+
+
+def test_simplex_type_path_preserves_probabilities_and_decodes_the_endpoint():
+    class ConstantVelocity(torch.nn.Module):
+        def __init__(self, velocity):
+            super().__init__()
+            self.velocity = velocity
+
+        def forward(self, *args, **kwargs):
+            del args, kwargs
+            return (*self.velocity, torch.ones(1, 1))
+
+    torch.manual_seed(811)
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([5, 7]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    matcher = RiemannianCrystalFlowMatcher(active_heads=("type",), type_path="simplex_probability")
+    target = matcher.target_state(batch)
+    base = matcher.random_state(batch)
+    assert torch.all(base.type_state >= 0)
+    assert torch.allclose(base.type_state.sum(dim=-1), torch.ones(base.type_state.shape[0]))
+    sampled = matcher.sample(
+        ConstantVelocity((target.type_state - base.type_state, torch.zeros_like(target.frac_coords), torch.zeros_like(target.lattice_log))),
+        batch, steps=12, initial_state=base,
+    )
+    assert torch.all(sampled.type_state >= 0)
+    assert torch.allclose(sampled.type_state.sum(dim=-1), torch.ones(sampled.type_state.shape[0]), atol=1e-6)
+    assert torch.equal(sampled.type_state.argmax(-1), batch.atom_types)
 
 
 def test_all_negative_early_identification_is_finite_and_requires_present_conditions():

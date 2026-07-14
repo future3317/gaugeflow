@@ -79,6 +79,36 @@ module is permitted. The next scientific audit is the probability path,
 atom-type manifold, decoder, and flow-target definition. See
 `reports/gate_a3_early_branching_v1/gate_a3_two_target_report.md`.
 
+### Gate A4 generator-substrate audit (completed, not qualified)
+
+`configs/gate_a4_generator_substrate_v1.json` isolates the generator substrate
+from tensor conditioning on the same frozen InN/BN pair. First, its exact
+velocity closure test passed: the production Euler sampler recovered each
+endpoint for type-only, coordinate-only, lattice-only, and joint paths with a
+maximum continuous error of `3.11e-7` (tolerance `1e-5`) and decoded endpoint
+accuracy `1.0`. Thus the current failure is not an analytic time-direction,
+torus-wrap, SPD-log/exp, or exact-velocity integration error.
+
+The two-class endpoint-ID qualification then failed after its fixed 400 steps:
+type-only decoded composition accuracy was `0.000` (required `>=0.95`),
+geometry-only endpoint retrieval was `0.5625` (required `>=0.90`), and joint
+endpoint retrieval was `0.625` (required `>=0.90`); all three
+between/within ratios were below `1.2`. There were zero non-finite samples.
+The full 119-logit Euclidean type path ended at top-1 accuracies `0.00/0.00`
+(InN/BN); the v2 active-element mask reached `0.25/0.25`; the diagnostic-only
+`{B,N,In}` vocabulary reached `0.50/0.50`; a projected simplex path reached
+`0.50/0.75`; and the fixed categorical diagnostic reached `0.50/0.25`. These
+are mechanism diagnostics, not final model claims; in particular, the
+`{B,N,In}` vocabulary is forbidden as a final vocabulary.
+
+Therefore the generator substrate is **not qualified** even when the
+condition is a trivial endpoint ID. Do not resume tensor-conditioned gates,
+4/8-target A3, A2 S2, full training, relaxation, DFT, or DFPT. Any atom-type
+manifold/decoder or joint-generation repair needs its own new versioned
+protocol. See `reports/gate_a4_generator_substrate_v1/`, especially
+`path_closure_report.md`, `endpoint_id_results.csv`,
+`type_path_comparison.csv`, and `head_loss_gradient_audit.csv`.
+
 ### TensorOrbit-JARVIS-v2 oracle preparation
 
 The formula-disjoint v2 split remains inactive for GaugeFlow. Its external
@@ -153,7 +183,7 @@ parity operations remain distinct.
 1. Read a rank-three Cartesian piezoelectric target (or its 18-component irrep
    coordinate vector), preserve an exact physical zero as a present condition,
    and optionally apply graphwise CFG dropout using a separate Boolean mask.
-2. Initialize atom-type logits, fractional coordinates on the three-torus, and
+2. Initialize 119-dimensional Euclidean atom-type logits, fractional coordinates on the three-torus, and
    an SPD lattice-log state from noise.
 3. At each flow time, build periodic Cartesian bond geometry from the current
    state. `orbit_alignment` evaluates a fixed tensor orbit plus a dynamic
@@ -164,7 +194,7 @@ parity operations remain distinct.
    predict type, coordinate, and lattice tangent velocities.
 5. Euler-integrate the conditional vector field, optionally combining the
    conditional and learned-null predictions with classifier-free guidance, and
-   decode the final type probabilities, wrapped fractional coordinates, and
+   decode the final type logits by `argmax`, wrapped fractional coordinates, and
    lattice. Sampling never receives a paired target CIF or target lattice.
 
 ## Environment and basic use
@@ -269,8 +299,11 @@ PYTHONPATH=src python scripts/evaluate_gate_a.py \
 
 - **Current Gate A failure:** the learned velocity is condition-sensitive, but
   400-step samples from different targets are not sufficiently separable.
-  Diagnose conditioning strength and per-target trajectories without changing
-  the frozen threshold or sample budget.
+- **Generator substrate failure:** Gate A4 passed analytic path closure but
+  failed the trivial endpoint-ID type and geometry qualification. Resolve the
+  atom-type manifold/decoder and joint substrate under a new protocol before
+  returning to tensor conditioning; do not add conditional losses as a
+  workaround.
 - **Missing physical evidence:** no qualified frozen tensor-oracle ensemble or
   training-panel orbit-tensor-error distribution is available yet.
 - **Future benchmark data:** v1 split leakage prevents a credible full

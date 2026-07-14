@@ -462,6 +462,68 @@ class ConditionedResidualBlock(nn.Module):
         )
 
 
+class EndpointIdConditionEncoder(nn.Module):
+    """Two-class endpoint-ID control used only by the A4 substrate audit.
+
+    This deliberately has no tensor interpretation, no tensor orbit and no
+    response field.  It exposes the exact same graph-token interface to the
+    existing message-passing backbone so a failed endpoint-ID experiment is a
+    generator-substrate failure, rather than a tensor-conditioning failure.
+    """
+
+    def __init__(self, hidden_dim: int):
+        super().__init__()
+        self.embedding = nn.Sequential(
+            nn.Linear(2, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
+        self.null_condition = nn.Parameter(torch.zeros(hidden_dim))
+        self.present_bias = nn.Parameter(torch.zeros(hidden_dim))
+
+    def forward(
+        self,
+        endpoint_id: torch.Tensor,
+        present: torch.Tensor,
+        graph_query: torch.Tensor,
+        edge_directions: torch.Tensor,
+        edge_graph: torch.Tensor,
+        frac_coords: torch.Tensor,
+        lattices: torch.Tensor,
+        batch: torch.Tensor,
+        type_state: torch.Tensor,
+        framed_tensors: torch.Tensor | None = None,
+        return_diagnostics: bool = False,
+    ) -> tuple[torch.Tensor, ...]:
+        del graph_query, edge_graph, frac_coords, lattices, batch, type_state
+        if framed_tensors is not None:
+            raise ValueError("endpoint-ID control has no tensor orbit cache")
+        if endpoint_id.ndim != 2 or endpoint_id.shape[-1] != 2:
+            raise ValueError(
+                f"endpoint-ID control requires [num_graphs, 2] one-hot IDs, got {tuple(endpoint_id.shape)}"
+            )
+        if not torch.allclose(endpoint_id.sum(dim=-1), torch.ones_like(endpoint_id[:, 0])):
+            raise ValueError("endpoint-ID control requires normalized one-hot IDs")
+        values = self.embedding(endpoint_id).unsqueeze(1)
+        aligned = values[:, 0] + self.present_bias
+        mask = present.to(dtype=torch.bool)
+        graph_condition = torch.where(
+            mask, aligned, self.null_condition.unsqueeze(0).expand_as(aligned)
+        )
+        empty_field = edge_directions.new_zeros((edge_directions.shape[0], 3))
+        weights = torch.ones((endpoint_id.shape[0], 1), device=endpoint_id.device, dtype=endpoint_id.dtype)
+        outputs = (graph_condition, empty_field, empty_field, weights)
+        if not return_diagnostics:
+            return outputs
+        return (*outputs, {
+            "raw_condition_embedding": values[:, 0],
+            "frame_candidate_embeddings": values,
+            "frame_weights": weights,
+            "uniform_pooled_embedding": values[:, 0],
+            "aligned_embedding": aligned,
+            "pool_then_embed": values[:, 0],
+            "stabilizer_posterior": None,
+        })
+
+
 class GaugeFlowVectorField(nn.Module):
     """Standalone vector field over atom logits, torus coordinates, and SPD lattice logs."""
 
@@ -486,7 +548,12 @@ class GaugeFlowVectorField(nn.Module):
         self.residual_g_min = residual_g_min
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.time_input = nn.Sequential(nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
-        self.response = OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
+        self.conditioning_mode = conditioning_mode
+        self.response = (
+            EndpointIdConditionEncoder(hidden_dim)
+            if conditioning_mode == "endpoint_id"
+            else OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
+        )
         axis = torch.arange(-2, 3, dtype=torch.float32)
         self.register_buffer(
             "periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False

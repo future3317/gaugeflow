@@ -53,15 +53,28 @@ Execute the research program strictly in order:
    Inspect the probability path, atom-type manifold, decoder, and flow-target
    definition before proposing any new mechanism. Continuous state separation
    alone is insufficient: use the decoded-state audit and endpoint retrieval.
-4. **Gate B -- coherent representative invariance.** At fixed structure and
+4. **Gate A4 generator substrate.** `configs/gate_a4_generator_substrate_v1.json`
+   is a completed, frozen InN/BN audit of the probability path, atom-type
+   manifold, decoder, flow target, and joint generator. A4.0 exact-velocity
+   closure passed for all four subspaces, so there is no evidence of an
+   analytic time-direction, Euler, torus-wrap, or SPD-log/exp defect. The
+   fixed endpoint-ID qualification did not pass: type-only decoded
+   composition is 0.000 (minimum 0.95), geometry retrieval is 0.5625 (minimum
+   0.90), and joint retrieval is 0.625 (minimum 0.90). The result is recorded
+   in `reports/gate_a4_generator_substrate_v1/`. Do not resume tensor
+   conditioning, extend targets, add conditional losses, or silently replace
+   the vocabulary. The `{B,N,In}` type vocabulary is diagnostic-only. Any
+   atom-type manifold/decoder or joint-substrate repair must be proposed in a
+   new versioned protocol, with a new fixed budget.
+5. **Gate B -- coherent representative invariance.** At fixed structure and
    tensor orbit, rotate the input representative and measure velocity
    equivariance, composition/prototype stability, C2ST, MMD, and orbit-error
    distributions.
-5. **Gate C -- small method screen.** Use one frozen structural checkpoint,
+6. **Gate C -- small method screen.** Use one frozen structural checkpoint,
    one sample budget, and at least three seeds. Advance GaugeFlow only if orbit
    fidelity and representative/cell consistency improve without losing
    validity or degrading the high-symmetry subset.
-6. **Gate D -- physical validation.** Freeze the model and ranking rule before
+7. **Gate D -- physical validation.** Freeze the model and ranking rule before
    top-K relaxation, symmetry re-identification, oracle recomputation, and the
    pre-registered DFPT audit.
 
@@ -101,6 +114,11 @@ orbit-tensor-error distributions. See `README.md` and
   Clebsch--Gordan layers; do not weaken it into raw component concatenation.
 - Use numerically safe norms on quantities that can be exactly zero and test
   both finite forward values and finite backward gradients.
+- The production atom-type path is Euclidean 119-logit flow plus a final
+  `argmax`; it is not a categorical or simplex manifold. A4 adds an
+  `endpoint_id` conditioning mode and a simplex path only for frozen
+  substrate diagnostics. They are not tensor-conditioned methods and must not
+  be selected as a replacement without a separately authorized protocol.
 
 ## Evidence and reporting
 
