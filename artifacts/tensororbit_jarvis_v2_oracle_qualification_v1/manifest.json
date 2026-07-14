@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 external tensor-oracle qualification v1",
+  "status": "prepared_commit_required_before_external_training",
+  "protocol_sha256": "b1448671a7333e1cd2dbb5451d47ebdd794a5a00b173ea4f31243f8f7bda7244",
+  "activation_audit_manifest_sha256": "b314fcab3001e60c29f87d295c43727e80cc1643899cf25ec6464cbf0f90a640",
+  "candidate_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd",
+  "audit_rows_sha256": "ab80d2267eb8b81495979e4c04477fabde8d54b80194369497a5cf571d5e92e0",
+  "oracle_training_manifests": {
+    "gmtnet": "7ecd7cc61d17798f52244ef0c186f1ef9747acaa43915869377314b69ef9508e",
+    "se3_transformer_rank3": "0e2dab83fd7bf0263b9df7f379871300e7ef9c9033c86a001489ca434ba56848"
+  },
+  "git_head_at_preparation": null,
+  "working_tree_clean_at_preparation": null,
+  "external_training_started": false,
+  "gaugeflow_training_started": false,
+  "piezojet_primary_oracle": false
+}

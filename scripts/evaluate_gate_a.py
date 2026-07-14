@@ -70,8 +70,20 @@ def _load_model(path: Path, device: torch.device):
     model = GaugeFlowVectorField(
         config["hidden_dim"], config["layers"], config["orbit_frames"],
         conditioning_mode=config["conditioning_mode"],
+        conditional_control=config.get("conditional_control", "original_injection"),
+        residual_g_min=config.get("residual_g_min", 0.25),
     ).to(device)
-    model.load_state_dict(payload["model"])
+    incompatible = model.load_state_dict(payload["model"], strict=False)
+    allowed_historical_missing = (
+        "conditional_layers.", "delta_type_out.", "delta_coord_out.", "delta_lattice_out."
+    )
+    if incompatible.unexpected_keys or any(
+        not key.startswith(allowed_historical_missing) for key in incompatible.missing_keys
+    ):
+        raise RuntimeError(
+            f"Checkpoint/model incompatibility for {path}: "
+            f"missing={incompatible.missing_keys}, unexpected={incompatible.unexpected_keys}"
+        )
     model.eval()
     return model, payload["isotypic_scales"].to(device), config["conditioning_mode"]
 

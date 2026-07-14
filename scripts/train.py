@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import torch
 from torch.utils.data import DataLoader, Subset, WeightedRandomSampler
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 
 from gaugeflow.conditioning import apply_condition_dropout, randomize_tensor_orbit_representative
 from gaugeflow.data import RESPONSE_NORM_BOUNDS, PiezoCrystalDataset, collate_crystals
@@ -83,6 +88,8 @@ def main() -> None:
     parser.add_argument("--preprocessed-cache", type=Path,
                         help="Versioned CIF/Niggli/condition tensor cache")
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--checkpoint-at", type=int, nargs="*", default=[],
+                        help="Additional fixed training steps to save as step_XXXX.pt beside --checkpoint")
     parser.add_argument("--steps", type=int, default=100_000)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=2e-4)
@@ -110,12 +117,39 @@ def main() -> None:
                         help="0 is uniform; 1 is full inverse-frequency reweighting")
     parser.add_argument("--condition-dropout", type=float, default=0.1,
                         help="Probability of replacing a present tensor condition with the learned CFG null token")
+    parser.add_argument("--conditional-control", choices=("original_injection", "residual_field"),
+                        default="original_injection",
+                        help="A2 control: legacy input injection or explicit base-plus-conditional residual field")
+    parser.add_argument("--residual-g-min", type=float, default=0.25,
+                        help="Pre-registered floor in g(t)=g_min+(1-g_min)4t(1-t)")
+    parser.add_argument("--counterfactual-weight", type=float, default=0.0,
+                        help="Weight of fixed cyclic wrong-condition tangent-ranking loss")
+    parser.add_argument("--counterfactual-margin", type=float, default=0.0,
+                        help="Margin m in the fixed cyclic wrong-condition tangent-ranking loss")
+    parser.add_argument("--identification-weight", type=float, default=0.0,
+                        help="Weight of all-negative tangent condition-identification loss")
+    parser.add_argument("--identification-temperature", type=float, default=1.0,
+                        help="Softmax temperature for all-negative tangent identification")
+    parser.add_argument("--identification-early-sigma", type=float,
+                        help="Use exp(-t/sigma) weighting for tangent identification")
     parser.add_argument("--direct-irrep-random-frame", action=argparse.BooleanOptionalAction, default=True,
                         help="Randomize the tensor orbit representative for the direct-irrep control during training")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
     if args.max_examples is not None and args.material_ids_file is not None:
         parser.error("--max-examples and --material-ids-file are mutually exclusive")
+    if not 0.0 <= args.residual_g_min <= 1.0:
+        parser.error("--residual-g-min must lie in [0, 1]")
+    if args.counterfactual_weight < 0:
+        parser.error("--counterfactual-weight must be non-negative")
+    if args.identification_weight < 0:
+        parser.error("--identification-weight must be non-negative")
+    if args.identification_temperature <= 0:
+        parser.error("--identification-temperature must be positive")
+    if args.identification_early_sigma is not None and args.identification_early_sigma <= 0:
+        parser.error("--identification-early-sigma must be positive")
+    if any(step < 1 or step > args.steps for step in args.checkpoint_at):
+        parser.error("--checkpoint-at values must lie in [1, --steps]")
 
     torch.manual_seed(args.seed)
     full_dataset = PiezoCrystalDataset(
@@ -159,7 +193,8 @@ def main() -> None:
         collate_fn=collate_crystals,
     )
     model = GaugeFlowVectorField(
-        args.hidden_dim, args.layers, args.orbit_frames, conditioning_mode=args.conditioning_mode
+        args.hidden_dim, args.layers, args.orbit_frames, conditioning_mode=args.conditioning_mode,
+        conditional_control=args.conditional_control, residual_g_min=args.residual_g_min,
     )
     records_are_normalized = False
     if diagnostic_subset:
@@ -205,7 +240,14 @@ def main() -> None:
         )
         optimizer.zero_grad(set_to_none=True)
         uncertainty_weight = args.uncertainty_weight if step > args.uncertainty_warmup_steps else 0.0
-        terms = RiemannianCrystalFlowMatcher(uncertainty_weight=uncertainty_weight).loss(model, batch)
+        terms = RiemannianCrystalFlowMatcher(uncertainty_weight=uncertainty_weight).loss(
+            model, batch,
+            counterfactual_weight=args.counterfactual_weight,
+            counterfactual_margin=args.counterfactual_margin,
+            identification_weight=args.identification_weight,
+            identification_temperature=args.identification_temperature,
+            identification_early_sigma=args.identification_early_sigma,
+        )
         if not torch.isfinite(terms["loss"]):
             raise FloatingPointError(
                 "Non-finite GaugeFlow loss. The run stops rather than silently applying a numerical fallback."
@@ -215,11 +257,27 @@ def main() -> None:
         optimizer.step()
         if step == 1 or step % args.log_every == 0:
             print({key: float(value.detach().cpu()) for key, value in terms.items()})
-    args.checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        if step in args.checkpoint_at:
+            _save_checkpoint(args, model, scales, full_dataset, indices, step, terms)
+    _save_checkpoint(args, model, scales, full_dataset, indices, args.steps, terms, final=True)
+
+
+def _save_checkpoint(
+    args, model, scales, full_dataset: PiezoCrystalDataset, indices: list[int], step: int,
+    terms: dict[str, torch.Tensor], *, final: bool = False,
+) -> None:
+    """Persist explicit learning-curve checkpoints without changing the run budget."""
+    if final:
+        path = args.checkpoint
+    else:
+        path = args.checkpoint.parent / f"step_{step:04d}{args.checkpoint.suffix}"
+    path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
             "model": model.state_dict(),
             "config": vars(args),
+            "training_step": step,
+            "last_terms": {key: float(value.detach().cpu()) for key, value in terms.items()},
             "isotypic_scales": scales,
             "data_protocol": {
                 "split_manifest": str(args.split_manifest) if args.split_manifest else None,
@@ -230,6 +288,13 @@ def main() -> None:
                 "condition_balanced_sampling": args.condition_balanced_sampling,
                 "condition_sampling_power": args.condition_sampling_power,
                 "condition_dropout": args.condition_dropout,
+                "conditional_control": args.conditional_control,
+                "residual_g_min": args.residual_g_min,
+                "counterfactual_weight": args.counterfactual_weight,
+                "counterfactual_margin": args.counterfactual_margin,
+                "identification_weight": args.identification_weight,
+                "identification_temperature": args.identification_temperature,
+                "identification_early_sigma": args.identification_early_sigma,
                 "direct_irrep_random_frame": args.direct_irrep_random_frame,
                 "max_examples": args.max_examples,
                 "material_ids_file": str(args.material_ids_file) if args.material_ids_file else None,
@@ -238,7 +303,7 @@ def main() -> None:
             },
             "format": "gaugeflow-standalone-v1",
         },
-        args.checkpoint,
+        path,
     )
 
 

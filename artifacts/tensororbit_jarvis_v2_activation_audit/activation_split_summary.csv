@@ -1,0 +1,4 @@
+split,records,formula_groups,exact_zero_tensors,stratum_0,stratum_1,stratum_2,stratum_3,stratum_4
+train,4000,2803,1824,1824,209,1057,457,453
+val,499,366,231,231,30,137,49,52
+test,499,372,242,242,28,120,54,55

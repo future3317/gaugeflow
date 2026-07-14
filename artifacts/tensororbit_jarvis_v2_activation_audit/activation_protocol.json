@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 activation protocol",
+  "status": "audit_only_not_active",
+  "parent": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/../gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "sha256": "6ac07d1456490a197fc8e32bd59fa7320d374130771a4490c3e47784c05912d6"
+  },
+  "candidate": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json",
+    "sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "activation_requires": [
+    "new explicitly versioned train/evaluation protocol",
+    "new model checkpoints",
+    "new benchmark record; no comparison silently mixed with v1"
+  ],
+  "gate_a1_effect": "none; frozen v1 Gate A panel and checkpoint interpretation are unchanged"
+}

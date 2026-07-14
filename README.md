@@ -9,10 +9,13 @@ baseline and the preserved local T2C patch set are documented under
 ## Current experimental status (2026-07-14)
 
 GaugeFlow is in **Gate A**, the small-real-subset conditioning check. Gate A
-has not passed and no full 4,000/499/499 training result is claimed. The frozen
-protocol is `configs/gate_a_v1.json`: eight real training crystals (2--6 atoms,
-including a physical zero-response example), 400 optimizer steps, one seed,
-and matched capacity for all four methods.
+has not passed and no full 4,000/499/499 training result is claimed. The
+original four-method 400-step result is frozen as a negative v1 archive at
+`artifacts/gate_a_v1_frozen_archive/manifest.json`; its 1.2 separation
+threshold, checkpoints, and report are not editable evidence. The frozen v1
+protocol is `configs/gate_a_v1.json`: eight real training crystals (2--6
+atoms, including a physical zero-response example), 400 optimizer steps, one
+seed, and matched capacity for all four methods.
 
 | Method | Gate A status |
 | --- | --- |
@@ -29,6 +32,62 @@ conditioning), but its generated target between/within distance ratio is only
 decision additionally requires a pre-qualified frozen external tensor-oracle
 ensemble, the training-set orbit-tensor-error distribution, and the registered
 physical micro-audit. See `reports/performance_data_scientific_audit.md`.
+
+### Gate A2 conditional-control successor (S1 completed, not passed)
+
+`configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1
+protocol that tests whether the shared conditional flow backbone can be made
+causal before changing any orbit-alignment machinery. It runs only the same
+eight IDs with the `direct_irrep` baseline, identical capacity/seed/noise, and
+the four pre-registered 800-step variants: legacy input injection, explicit
+base-plus-residual conditional field, that field plus tangent-ranking loss, and
+the same loss with graphwise condition dropout 0.1. The residual field uses
+`g(t)=0.25+0.75*4t(1-t)`, has separate type/coordinate/lattice residual heads,
+and applies FiLM plus a conditional residual gate in every message block. A
+physical zero tensor remains a present condition and is distinct from the CFG
+null token.
+
+All four A2 S1 variants failed at both fixed learning-curve checkpoints; S2 is
+locked and was not launched. At 800 steps, the best generated between/within
+ratio was 1.00685 (requirement >= 1.2), and the best own-target win rate was
+0.63889 (requirement >= 0.75). The counterfactual residual variant achieved a
+positive mean own-target margin (0.41504), preserved common-noise terminal
+state differences, and had zero sampling failures, but neither condition
+response nor pre-registered CFG=1 supplementation produced generated-target
+separation. See `reports/gate_a2_conditional_control_v1/gate_a2_s1_report.md`;
+this result does not alter Gate A v1 or claim Gate A passage.
+
+### Gate A3 early-branching successor (two-target screen completed, not passed)
+
+`configs/gate_a3_early_branching_v1.json` pre-registers the two distinct,
+four-atom, nonzero high-response targets `JVASP-1180` (InN) and `JVASP-22673`
+(BN). Their 24-frame relative tensor-orbit distance is 0.98325 and their
+scale-invariant lattice-shape distance is 0.26234. It compares FM-only against
+one fixed early-time all-negative tangent-identification objective; it does
+not tune residual gates, FiLM, CFG, counterfactual weights, or training steps.
+
+The two-target gate failed at 400 steps. The identification variant reached
+early/all-time own-target retrieval of 0.70/0.50 (requirements 0.90/0.80), a
+generated between/within ratio of 1.01288 (requirement 1.2), and decoded
+training-endpoint retrieval of 0.375 (requirement 0.75). It did retain a
+positive tangent margin, common-noise continuous early branches, and zero
+sampling failures. The matched-noise argmax compositions were not identical,
+so it is not labelled “continuous control without discrete branch change”; the
+decoded structures nevertheless fail to align reliably with either requested
+endpoint. Consequently no 4-target/8-target extension or new conditional
+module is permitted. The next scientific audit is the probability path,
+atom-type manifold, decoder, and flow-target definition. See
+`reports/gate_a3_early_branching_v1/gate_a3_two_target_report.md`.
+
+### TensorOrbit-JARVIS-v2 oracle preparation
+
+The formula-disjoint v2 split remains inactive for GaugeFlow. Its external
+oracle qualification protocol now fixes matched v2 manifests for GMTNet and an
+architecture-distinct e3nn SE(3)-Transformer rank-three tensor predictor;
+PiezoJet is not a primary oracle. The preparation is at
+`configs/tensororbit_jarvis_v2_oracle_qualification_v1.json` and remains
+`prepared_commit_required_before_external_training`: neither external training
+nor a GaugeFlow 4,000/499/499 run has started.
 
 Two implementation defects were found before restarting the frozen run:
 
@@ -158,10 +217,14 @@ found that v1 is **not formula-disjoint**: 165 reduced-formula groups affecting
 Consequently, v1 must not support formula-disjoint or clean-generalization
 claims. It remains frozen for the current eight-record Gate A protocol. An
 inactive formula-disjoint v2 candidate is under
-`artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/`; activating it
-requires a new protocol version. Training uses square-root inverse-frequency
-sampling across five response strata by default, while validation/test retain
-their natural distributions.
+`artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/`, with activation
+requirements recorded in
+`artifacts/tensororbit_jarvis_v2_activation_audit/activation_protocol.json`.
+Activating it requires a new protocol version and new checkpoints. Every future
+validation/test or full benchmark must use v2 after that activation; v1 may not
+be silently substituted. Training uses square-root inverse-frequency sampling
+across five response strata by default, while validation/test retain their
+natural distributions.
 
 ## Status contract
 
@@ -209,7 +272,9 @@ PYTHONPATH=src python scripts/evaluate_gate_a.py \
 - **Missing physical evidence:** no qualified frozen tensor-oracle ensemble or
   training-panel orbit-tensor-error distribution is available yet.
 - **Future benchmark data:** v1 split leakage prevents a credible full
-  4,000/499/499 generalization result; v2 is only a candidate.
+  4,000/499/499 generalization result. v2 has passed an activation audit but
+  remains inactive until a separately versioned protocol creates new
+  checkpoints; it is mandatory for all future validation/test claims.
 
 These are distinct issues. CIF parsing, DataLoader throughput, and CUDA device
 placement are no longer the active blockers. Do not start the full run,

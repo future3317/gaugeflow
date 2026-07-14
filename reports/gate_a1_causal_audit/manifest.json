@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A.1 conditional-to-trajectory causal audit v1",
+  "status": "diagnostic_only_not_a_gate_decision",
+  "protocol_sha256": "b8d48d2d3babcf9ef4ef1702c986ca284982472c0a333ce28f9ad4b0da3181c3",
+  "parent_gate_protocol_sha256": "43447573b435e44beb3e1e744b9eee5142eb1bed4a89ffb7848c9afddf398987",
+  "device": "cuda",
+  "checkpoints": {
+    "raw_tensor": "4e132a5215c95fd826fd3699cf31894f26f72347d694280fe63c6e3b9af3e646",
+    "direct_irrep": "e2fba228149455e03c46ef356ab561d08043ba18c093de46d07753079db50a00",
+    "stabilizer_pooling": "ca3de01c8fee9e79946ac8e679d30f43a438e04514f7b4da250a641e94f97747",
+    "orbit_alignment": "625006da0769738456152f927a01173d7875f84a4e10fd11d4a2ed630217c12e"
+  },
+  "outputs": {
+    "condition_embedding_posterior.csv": "5e170965943f4cb04b1d12a9d11c4c29520af9c4b0ff30d56bb6af846800c6fc",
+    "condition_embedding_summary.csv": "8faf9925b989bd70483182a6a42884f2cd1ebd64b6aed5c61cc240273e100930",
+    "posterior_pairwise_divergence.csv": "8446021be1893f04da579ef5f7843e86a24b0683702f26d69fea234d1b4b3bb1",
+    "posterior_summary.csv": "e4bcf0915fce9b0098124060904588b69221d44af213a751df1011a799898c9e",
+    "posterior_weights.csv": "bb35ec0e8493d91c6ffc389c896d39628d46bf3d6a4c7e528a307982741a6cc2",
+    "sampling_sensitivity.csv": "9bde004e0801f11cf96bfa240ff60eada04e020482e0eb7aa0ded7db6c6c9c3a",
+    "teacher_forced_ranking.csv": "9ab20d494b753d2a5b3c8f67da398885ecde63e191b59593fa911c9e38692f02",
+    "teacher_forced_ranking_summary.csv": "adbc04c5aff46f439f6583afa4eb987ada6a891eae29fd9b8ed81af2141f91e3",
+    "trajectory_dynamics_summary.csv": "07611821fb2045a8490ec247b91474c6cb77506f98eccc7076a984b7a3525d42",
+    "trajectory_mean_curves.csv": "837526370367cd9b03f612b2a8aea1c24c077a0ce2e7ff2f1db2e14085d3405a",
+    "trajectory_pairwise.csv": "aa07738592d742acec831d4e22ac413ec2311fc65e447a2cfe5f57e6dfd725d4",
+    "unified_four_method_metrics.csv": "fdb43a05f6f975f7acd1a122b11cd01be26c60b494e1cd424dd87d13133fae78"
+  },
+  "v2_activation_manifest_sha256": "927813b6eb7bf3e31c69abadd70532ec63fa10ef943aeec54ebcefa85db266ad",
+  "frozen_threshold": 1.2,
+  "gate_a_status": "failed_not_advanced",
+  "manifest_sha256": "4a717348c6317ee61219f50d3853805fd380ebe05707a39a8d0f34868305768d"
+}

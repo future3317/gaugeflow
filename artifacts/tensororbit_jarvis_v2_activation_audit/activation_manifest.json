@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 activation audit",
+  "status": "candidate_not_active_audit_complete",
+  "activation_prohibited_in_gate_a1": true,
+  "candidate_split": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json",
+    "sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "parent_v1_split": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/../gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "sha256": "6ac07d1456490a197fc8e32bd59fa7320d374130771a4490c3e47784c05912d6"
+  },
+  "source_csv_sha256": {
+    "train.csv": "13e0bb65c7abae4504b7d40178e7011cdd4d5efddfecca2e2a9b30d0612262d6",
+    "val.csv": "e65a9c6159ebfe3f9f92cd6508723cc98b8a832df9473e8e4ebc5f1b01c3c1c8",
+    "test.csv": "5e21328939ef06bc4d5e876aa336fa7aa5f97487fc4f62bddb2518c8bcae54b1"
+  },
+  "target_cache_index_sha256": "2f7cd811e9ededd1bfff01a9832db4fe2deb447bc52000355281ac005e187d86",
+  "audit_rows": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/reports/data_quality_rows.csv",
+    "sha256": "ab80d2267eb8b81495979e4c04477fabde8d54b80194369497a5cf571d5e92e0"
+  },
+  "checks": {
+    "candidate_status_not_active": true,
+    "row_count_4998": true,
+    "row_ids_unique": true,
+    "all_audited_rows_valid": true,
+    "candidate_counts": true,
+    "candidate_ids_unique": true,
+    "candidate_id_join_exact": true,
+    "formula_groups_disjoint": true,
+    "response_strata_match_metadata": true,
+    "gate_a_ids_retained_train": true,
+    "zero_tensors_explicit": true,
+    "target_cache_id_join": true,
+    "candidate_hash_matches_metadata": true,
+    "audit_row_hash_matches_metadata": true,
+    "structurematcher_cross_split_candidates": true
+  },
+  "formula_overlap_counts": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "structurematcher": {
+    "configuration": "ltol=0.2, stol=0.3, angle_tol=5, primitive_cell=True, scale=True, attempt_supercell=True",
+    "cross_split_same_formula_candidate_groups": 0,
+    "near_duplicate_pairs": 0,
+    "interpretation": "No cross-split reduced-formula group exists; StructureMatcher cannot match composition-incompatible pairs."
+  },
+  "response_strata": {
+    "train": {
+      "0": 1824,
+      "1": 209,
+      "2": 1057,
+      "3": 457,
+      "4": 453
+    },
+    "val": {
+      "0": 231,
+      "1": 30,
+      "2": 137,
+      "3": 49,
+      "4": 52
+    },
+    "test": {
+      "0": 242,
+      "1": 28,
+      "2": 120,
+      "3": 54,
+      "4": 55
+    }
+  },
+  "exact_zero_counts": {
+    "train": 1824,
+    "val": 231,
+    "test": 242
+  },
+  "missing_target_cache_ids": [],
+  "manifest_sha256": "927813b6eb7bf3e31c69abadd70532ec63fa10ef943aeec54ebcefa85db266ad"
+}

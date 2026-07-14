@@ -158,7 +158,8 @@ class OrbitResponseFieldEncoder(nn.Module):
         batch: torch.Tensor,
         type_state: torch.Tensor,
         framed_tensors: torch.Tensor | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        return_diagnostics: bool = False,
+    ) -> tuple[torch.Tensor, ...]:
         graphs = piezo_irreps.shape[0]
         if self.mode == "raw_tensor":
             values = self.raw_tensor(piezo_irreps).unsqueeze(1)
@@ -167,7 +168,18 @@ class OrbitResponseFieldEncoder(nn.Module):
             mask = present.to(dtype=torch.bool)
             graph_condition = torch.where(mask, aligned, self.null_condition.unsqueeze(0).expand_as(aligned))
             empty_field = edge_directions.new_zeros((edge_directions.shape[0], 3))
-            return graph_condition, empty_field, empty_field, weights
+            outputs = (graph_condition, empty_field, empty_field, weights)
+            if not return_diagnostics:
+                return outputs
+            return (*outputs, {
+                "raw_condition_embedding": values[:, 0],
+                "frame_candidate_embeddings": values,
+                "frame_weights": weights,
+                "uniform_pooled_embedding": values[:, 0],
+                "aligned_embedding": aligned,
+                "pool_then_embed": values[:, 0],
+                "stabilizer_posterior": None,
+            })
 
         if self.mode == "direct_irrep":
             tensors = piezo_from_irreps(piezo_irreps, self.piezo_basis)
@@ -201,7 +213,18 @@ class OrbitResponseFieldEncoder(nn.Module):
             if selected_field.numel():
                 selected_field = torch.where(mask[edge_graph], selected_field, torch.zeros_like(selected_field))
                 edge_auxiliary = torch.where(mask[edge_graph], edge_auxiliary, torch.zeros_like(edge_auxiliary))
-            return graph_condition, selected_field, edge_auxiliary, weights
+            outputs = (graph_condition, selected_field, edge_auxiliary, weights)
+            if not return_diagnostics:
+                return outputs
+            return (*outputs, {
+                "raw_condition_embedding": values[:, 0],
+                "frame_candidate_embeddings": values,
+                "frame_weights": weights,
+                "uniform_pooled_embedding": values[:, 0],
+                "aligned_embedding": aligned,
+                "pool_then_embed": values[:, 0],
+                "stabilizer_posterior": None,
+            })
 
         tensors = piezo_from_irreps(piezo_irreps, self.piezo_basis)
         frames = self.rotations.shape[0]
@@ -215,6 +238,7 @@ class OrbitResponseFieldEncoder(nn.Module):
                         f"Expected cached condition orbit {expected}, got {tuple(framed_tensors.shape)}"
                     )
                 framed = framed_tensors.to(piezo_irreps)
+            automorphism_weights: torch.Tensor | None = None
             if self.mode == "stabilizer_pooling":
                 transformed = framed
             else:
@@ -281,7 +305,36 @@ class OrbitResponseFieldEncoder(nn.Module):
                 self.key(values) * self.query(graph_query).unsqueeze(1)
             ).sum(dim=-1) / math.sqrt(values.shape[-1])
             weights = torch.softmax(scores, dim=-1)
+        uniform_pooled_embedding = values.mean(dim=1)
         aligned = (weights.unsqueeze(-1) * values).sum(dim=1) + self.present_bias
+        # This is diagnostic-only: the production path remains ``sum_k q_k
+        # phi(tensor_k)``.  Returning ``phi(sum_k q_k tensor_k)`` alongside it
+        # lets Gate A.1 locate collapse caused by pooling before a nonlinear
+        # embedding without changing the checkpoint's conditioning path.
+        if return_diagnostics:
+            pooled_tensor = (weights[..., None, None, None] * transformed).sum(dim=1)
+            pooled_irreps = piezo_to_irreps(pooled_tensor, self.piezo_basis)
+            pooled_fixed_fields = torch.einsum(
+                "bijk,mj,mk->bmi",
+                pooled_tensor,
+                self.fixed_probes.to(pooled_tensor),
+                self.fixed_probes.to(pooled_tensor),
+            ).reshape(graphs, -1)
+            pooled_graph_field = (weights.unsqueeze(-1) * graph_field).sum(dim=1)
+            pooled_isotypic_norms = torch.stack(
+                [safe_norm(pooled_irreps[..., block], dim=-1) for block in isotypic_slices()],
+                dim=-1,
+            )
+            pooled_features = torch.cat(
+                (
+                    pooled_isotypic_norms,
+                    safe_norm(pooled_graph_field, dim=-1, keepdim=True),
+                    pooled_isotypic_norms.new_zeros((graphs, 2)),
+                    pooled_fixed_fields,
+                ),
+                dim=-1,
+            )
+            pool_then_embed = self.candidate(pooled_features)
         mask = present.to(dtype=torch.bool)
         graph_condition = torch.where(mask, aligned, self.null_condition.unsqueeze(0).expand_as(aligned))
         if edge_fields.numel():
@@ -290,7 +343,18 @@ class OrbitResponseFieldEncoder(nn.Module):
         else:
             selected_field = edge_directions.new_empty((0, 3))
         auxiliary = torch.zeros_like(selected_field)
-        return graph_condition, selected_field, auxiliary, weights
+        outputs = (graph_condition, selected_field, auxiliary, weights)
+        if not return_diagnostics:
+            return outputs
+        return (*outputs, {
+            "raw_condition_embedding": values[:, 0],
+            "frame_candidate_embeddings": values,
+            "frame_weights": weights,
+            "uniform_pooled_embedding": uniform_pooled_embedding,
+            "aligned_embedding": aligned,
+            "pool_then_embed": pool_then_embed,
+            "stabilizer_posterior": automorphism_weights,
+        })
 
 
 class ResponseMessageLayer(nn.Module):
@@ -354,6 +418,50 @@ class ResponseMessageLayer(nn.Module):
         return updated_nodes, vectors + self.vector_update(updated_nodes).unsqueeze(-1) * vector_aggregate
 
 
+class ConditionedResidualBlock(nn.Module):
+    """A per-message-block FiLM-gated conditional tangent residual.
+
+    This module is intentionally separate from the base field.  Its input may
+    read the tensor token and tensor response vectors, whereas the base path
+    receives explicit zeros for both objects.  The returned values are a
+    residual state, not a replacement for the condition-free message field.
+    """
+
+    def __init__(self, hidden_dim: int, vector_dim: int):
+        super().__init__()
+        self.message = ResponseMessageLayer(hidden_dim, vector_dim)
+        self.film = nn.Linear(hidden_dim, hidden_dim * 2)
+        self.residual_gate = nn.Linear(hidden_dim, hidden_dim)
+        self.vector_gate = nn.Linear(hidden_dim, vector_dim)
+
+    def forward(
+        self,
+        base_nodes: torch.Tensor,
+        delta_nodes: torch.Tensor,
+        delta_vectors: torch.Tensor,
+        source: torch.Tensor,
+        target: torch.Tensor,
+        directions: torch.Tensor,
+        response: torch.Tensor,
+        auxiliary_response: torch.Tensor,
+        node_condition: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        scale, shift = self.film(node_condition).chunk(2, dim=-1)
+        context = (base_nodes + delta_nodes) * (1.0 + scale) + shift
+        vector_scale = torch.sigmoid(self.vector_gate(node_condition)).unsqueeze(-1)
+        vector_context = delta_vectors * vector_scale
+        updated_nodes, updated_vectors = self.message(
+            context, vector_context, source, target, directions, response,
+            auxiliary_response, node_condition,
+        )
+        node_update = updated_nodes - context
+        vector_update = updated_vectors - vector_context
+        return (
+            delta_nodes + torch.sigmoid(self.residual_gate(node_condition)) * node_update,
+            delta_vectors + vector_scale * vector_update,
+        )
+
+
 class GaugeFlowVectorField(nn.Module):
     """Standalone vector field over atom logits, torus coordinates, and SPD lattice logs."""
 
@@ -365,9 +473,17 @@ class GaugeFlowVectorField(nn.Module):
         atom_types: int = 119,
         vector_dim: int | None = None,
         conditioning_mode: str = "orbit_alignment",
+        conditional_control: str = "original_injection",
+        residual_g_min: float = 0.25,
     ):
         super().__init__()
+        if conditional_control not in {"original_injection", "residual_field"}:
+            raise ValueError("conditional_control must be 'original_injection' or 'residual_field'")
+        if not 0.0 <= residual_g_min <= 1.0:
+            raise ValueError("residual_g_min must lie in [0, 1]")
         self.atom_types = atom_types
+        self.conditional_control = conditional_control
+        self.residual_g_min = residual_g_min
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.time_input = nn.Sequential(nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.response = OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
@@ -377,9 +493,19 @@ class GaugeFlowVectorField(nn.Module):
         )
         self.vector_dim = vector_dim or max(16, hidden_dim // 8)
         self.layers = nn.ModuleList([ResponseMessageLayer(hidden_dim, self.vector_dim) for _ in range(layers)])
+        # Construct these adapters in both A2 variants so hidden width, depth,
+        # and total parameter capacity remain fixed across the pre-registered
+        # mechanism comparison.  They are deliberately inactive in the
+        # original-injection control.
+        self.conditional_layers = nn.ModuleList(
+            [ConditionedResidualBlock(hidden_dim, self.vector_dim) for _ in range(layers)]
+        )
         self.type_out = nn.Linear(hidden_dim, atom_types)
         self.coord_out = nn.Linear(self.vector_dim, 1, bias=False)
         self.lattice_out = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
+        self.delta_type_out = nn.Linear(hidden_dim, atom_types)
+        self.delta_coord_out = nn.Linear(self.vector_dim, 1, bias=False)
+        self.delta_lattice_out = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
         # Scalar heads: coordinates are explicitly interpreted in Cartesian
         # tangent space, where one scale gives the equivariant covariance sigma^2 I.
         self.type_log_std_out = nn.Linear(hidden_dim, 1)
@@ -397,6 +523,8 @@ class GaugeFlowVectorField(nn.Module):
         condition_present: torch.Tensor,
         condition_orbit: torch.Tensor | None = None,
         return_uncertainty: bool = False,
+        return_condition_diagnostics: bool = False,
+        return_velocity_components: bool = False,
     ) -> tuple[torch.Tensor, ...]:
         lattices = log_vector_to_lattice(lattice_log)
         source, target, directions = periodic_complete_edges(
@@ -406,26 +534,95 @@ class GaugeFlowVectorField(nn.Module):
         nodes = self.type_input(type_state)
         vectors = nodes.new_zeros((nodes.shape[0], self.vector_dim, 3))
         graph_seed = scatter_mean(nodes, batch, lattices.shape[0]) + self.time_input(time.unsqueeze(-1))
-        graph_condition, edge_response, edge_auxiliary, alignment = self.response(
+        response_outputs = self.response(
             piezo_irreps, condition_present, graph_seed, directions, edge_graph,
             frac_coords, lattices, batch, type_state, condition_orbit,
+            return_diagnostics=return_condition_diagnostics,
         )
-        nodes = nodes + graph_condition[batch]
-        for layer in self.layers:
-            nodes, vectors = layer(
-                nodes, vectors, source, target, directions, edge_response,
-                edge_auxiliary, graph_condition[batch],
+        graph_condition, edge_response, edge_auxiliary, alignment = response_outputs[:4]
+        condition_diagnostics = response_outputs[4] if return_condition_diagnostics else None
+
+        if self.conditional_control == "original_injection":
+            nodes = nodes + graph_condition[batch]
+            for layer in self.layers:
+                nodes, vectors = layer(
+                    nodes, vectors, source, target, directions, edge_response,
+                    edge_auxiliary, graph_condition[batch],
+                )
+            graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
+            cartesian_velocity = self.coord_out(vectors.transpose(-1, -2)).squeeze(-1)
+            lattice_nodes = lattices[batch]
+            fractional_velocity = torch.einsum("ni,nij->nj", cartesian_velocity, torch.linalg.inv(lattice_nodes))
+            type_velocity = self.type_out(nodes)
+            lattice_velocity = self.lattice_out(graph_nodes)
+            components = {
+                "mode": self.conditional_control,
+                "gate": torch.ones_like(time),
+                "type_base": type_velocity,
+                "type_conditional_residual": torch.zeros_like(type_velocity),
+                "coordinate_base": fractional_velocity,
+                "coordinate_conditional_residual": torch.zeros_like(fractional_velocity),
+                "lattice_base": lattice_velocity,
+                "lattice_conditional_residual": torch.zeros_like(lattice_velocity),
+            }
+            uncertainty_nodes, uncertainty_graph_nodes = nodes, graph_nodes
+        else:
+            # v_base is condition-free: no tensor token, response vector, or
+            # tensor-derived edge feature reaches this path.
+            base_nodes = nodes + self.time_input(time.unsqueeze(-1))[batch]
+            base_vectors = vectors
+            delta_nodes = nodes.new_zeros(nodes.shape)
+            delta_vectors = vectors.new_zeros(vectors.shape)
+            zero_condition = torch.zeros_like(graph_condition[batch])
+            zero_response = torch.zeros_like(edge_response)
+            zero_auxiliary = torch.zeros_like(edge_auxiliary)
+            for base_layer, conditional_layer in zip(self.layers, self.conditional_layers):
+                base_nodes, base_vectors = base_layer(
+                    base_nodes, base_vectors, source, target, directions, zero_response,
+                    zero_auxiliary, zero_condition,
+                )
+                delta_nodes, delta_vectors = conditional_layer(
+                    base_nodes, delta_nodes, delta_vectors, source, target, directions,
+                    edge_response, edge_auxiliary, graph_condition[batch],
+                )
+            base_graph_nodes = scatter_mean(base_nodes, batch, lattices.shape[0])
+            delta_graph_nodes = scatter_mean(delta_nodes, batch, lattices.shape[0])
+            base_type = self.type_out(base_nodes)
+            base_cartesian = self.coord_out(base_vectors.transpose(-1, -2)).squeeze(-1)
+            delta_cartesian = self.delta_coord_out(delta_vectors.transpose(-1, -2)).squeeze(-1)
+            lattice_nodes = lattices[batch]
+            base_coordinate = torch.einsum("ni,nij->nj", base_cartesian, torch.linalg.inv(lattice_nodes))
+            delta_coordinate = torch.einsum("ni,nij->nj", delta_cartesian, torch.linalg.inv(lattice_nodes))
+            base_lattice = self.lattice_out(base_graph_nodes)
+            delta_type = self.delta_type_out(delta_nodes)
+            delta_lattice = self.delta_lattice_out(delta_graph_nodes)
+            gate = self.residual_g_min + (1.0 - self.residual_g_min) * 4.0 * time * (1.0 - time)
+            node_gate = gate[batch].unsqueeze(-1)
+            type_velocity = base_type + node_gate * delta_type
+            fractional_velocity = base_coordinate + node_gate * delta_coordinate
+            lattice_velocity = base_lattice + gate.unsqueeze(-1) * delta_lattice
+            components = {
+                "mode": self.conditional_control,
+                "gate": gate,
+                "type_base": base_type,
+                "type_conditional_residual": delta_type,
+                "coordinate_base": base_coordinate,
+                "coordinate_conditional_residual": delta_coordinate,
+                "lattice_base": base_lattice,
+                "lattice_conditional_residual": delta_lattice,
+            }
+            uncertainty_nodes = base_nodes + delta_nodes
+            uncertainty_graph_nodes = base_graph_nodes + delta_graph_nodes
+        outputs = (type_velocity, fractional_velocity, lattice_velocity, alignment)
+        if return_uncertainty:
+            uncertainty = VelocityUncertainty(
+                type_log_std=bounded_log_std(self.type_log_std_out(uncertainty_nodes)),
+                coord_log_std=bounded_log_std(self.coord_log_std_out(uncertainty_nodes)),
+                lattice_log_std=bounded_log_std(self.lattice_log_std_out(uncertainty_graph_nodes)),
             )
-        graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
-        cartesian_velocity = self.coord_out(vectors.transpose(-1, -2)).squeeze(-1)
-        lattice_nodes = lattices[batch]
-        fractional_velocity = torch.einsum("ni,nij->nj", cartesian_velocity, torch.linalg.inv(lattice_nodes))
-        outputs = (self.type_out(nodes), fractional_velocity, self.lattice_out(graph_nodes), alignment)
-        if not return_uncertainty:
-            return outputs
-        uncertainty = VelocityUncertainty(
-            type_log_std=bounded_log_std(self.type_log_std_out(nodes)),
-            coord_log_std=bounded_log_std(self.coord_log_std_out(nodes)),
-            lattice_log_std=bounded_log_std(self.lattice_log_std_out(graph_nodes)),
-        )
-        return (*outputs, uncertainty)
+            outputs = (*outputs, uncertainty)
+        if return_condition_diagnostics:
+            outputs = (*outputs, condition_diagnostics)
+        if return_velocity_components:
+            outputs = (*outputs, components)
+        return outputs

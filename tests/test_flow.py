@@ -130,6 +130,110 @@ def test_gate_a_conditioning_controls_have_finite_objectives():
         assert torch.isfinite(matcher.loss(model, batch)["loss"]), mode
 
 
+def test_residual_conditional_field_keeps_base_condition_free_and_records_three_heads():
+    torch.manual_seed(101)
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([14, 8]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+        Data(atom_types=torch.tensor([14, 8]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    model = GaugeFlowVectorField(
+        hidden_dim=32, layers=2, orbit_frames=3, conditioning_mode="direct_irrep",
+        conditional_control="residual_field", residual_g_min=0.25,
+    ).eval()
+    matcher = RiemannianCrystalFlowMatcher()
+    state = matcher.target_state(batch)
+    time = torch.tensor([0.0, 0.5])
+    output = model(
+        state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+        batch.piezo_irreps, batch.condition_present, return_velocity_components=True,
+    )
+    components = output[4]
+    assert torch.allclose(components["gate"], torch.tensor([0.25, 1.0]))
+    assert components["type_base"].shape == output[0].shape
+    assert components["coordinate_conditional_residual"].shape == output[1].shape
+    assert components["lattice_conditional_residual"].shape == output[2].shape
+    changed = batch.piezo_irreps.flip(0)
+    alternate = model(
+        state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+        changed, batch.condition_present, return_velocity_components=True,
+    )[4]
+    assert torch.allclose(components["type_base"], alternate["type_base"], atol=1e-7, rtol=1e-7)
+    assert torch.allclose(components["coordinate_base"], alternate["coordinate_base"], atol=1e-7, rtol=1e-7)
+
+
+def test_counterfactual_tangent_ranking_is_finite_and_preserves_zero_null_separation():
+    torch.manual_seed(103)
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([14, 8]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.zeros(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+        Data(atom_types=torch.tensor([14, 8]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    model = GaugeFlowVectorField(
+        hidden_dim=32, layers=1, orbit_frames=3, conditioning_mode="direct_irrep",
+        conditional_control="residual_field",
+    )
+    matcher = RiemannianCrystalFlowMatcher()
+    terms = matcher.loss(model, batch, counterfactual_weight=0.25, counterfactual_margin=0.1)
+    assert torch.isfinite(terms["loss"])
+    assert torch.isfinite(terms["counterfactual"])
+    assert terms["counterfactual"] > 0
+    terms["loss"].backward()
+    assert model.delta_type_out.weight.grad is not None
+    state = matcher.target_state(batch)
+    time = torch.full((batch.num_graphs,), 0.5)
+    present = model(
+        state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+        batch.piezo_irreps, batch.condition_present,
+    )[0]
+    null = model(
+        state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+        batch.piezo_irreps, torch.zeros_like(batch.condition_present),
+    )[0]
+    assert not torch.allclose(present, null)
+
+
+def test_all_negative_early_identification_is_finite_and_requires_present_conditions():
+    torch.manual_seed(107)
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([14, 8]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+        Data(atom_types=torch.tensor([13, 7]), frac_coords=torch.rand(2, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
+    ])
+    model = GaugeFlowVectorField(
+        hidden_dim=32, layers=1, orbit_frames=3, conditioning_mode="direct_irrep"
+    )
+    matcher = RiemannianCrystalFlowMatcher()
+    terms = matcher.loss(
+        model, batch, identification_weight=0.5,
+        identification_temperature=0.25, identification_early_sigma=0.25,
+    )
+    assert torch.isfinite(terms["loss"])
+    assert torch.isfinite(terms["identification"])
+    assert 0.0 <= terms["identification_retrieval"] <= 1.0
+    terms["loss"].backward()
+    assert model.response.candidate[0].weight.grad is not None
+    batch.condition_present[1] = False
+    try:
+        matcher.loss(
+            model, batch, identification_weight=0.5,
+            identification_temperature=0.25, identification_early_sigma=0.25,
+        )
+    except ValueError as error:
+        assert "present physical tensor conditions" in str(error)
+    else:
+        raise AssertionError("Null CFG conditions must be rejected by all-negative identification")
+
+
 def test_direct_irrep_cartesian_products_are_so3_equivariant_without_harmonics():
     torch.manual_seed(11)
     tensor = piezo_voigt_to_cartesian(torch.randn(3, 6)).unsqueeze(0)

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "status": "prepared_not_started",
+  "protocol_sha256": "b1448671a7333e1cd2dbb5451d47ebdd794a5a00b173ea4f31243f8f7bda7244",
+  "candidate_split": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json",
+  "candidate_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd",
+  "split_counts": {
+    "train": 4000,
+    "val": 499,
+    "test": 499
+  },
+  "source_csv_directory": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/../gaugeflow/data/piezo",
+  "target_cache_dir": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/../gaugeflow/data/tensororbit_jarvis_v1/reynolds_projected_targets",
+  "target_definition": "Reynolds-projected Cartesian rank-three piezoelectric tensor, symmetric in final two indices",
+  "coordinate_convention": "GaugeFlow 18-dimensional CartesianTensor('ijk=ikj') irrep coordinates or equivalent 3x3x3 Cartesian tensor",
+  "forbidden": [
+    "GaugeFlow training",
+    "PiezoJet as primary oracle",
+    "v1 validation/test"
+  ],
+  "oracle": {
+    "id": "se3_transformer_rank3",
+    "architecture_class": "e3nn SE(3)-Transformer with a rank-three Cartesian tensor head",
+    "role": "architecture-distinct external qualification candidate",
+    "training_status": "not_started",
+    "required_external_pin": [
+      "source_repository_url",
+      "source_commit",
+      "environment_lock",
+      "training_entrypoint"
+    ],
+    "output_contract": "one predicted Cartesian 3x3x3 tensor and one explicit abstention/validity field for every v2 val/test material_id"
+  },
+  "required_before_training": [
+    "source_repository_url",
+    "source_commit",
+    "environment_lock",
+    "training_entrypoint"
+  ],
+  "required_after_training": [
+    "checkpoint_sha256",
+    "prediction_file_sha256",
+    "exact_val_test_id_join",
+    "frozen_qualification_report"
+  ]
+}

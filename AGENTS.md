@@ -28,15 +28,40 @@ Execute the research program strictly in order:
 1. **Gate A -- conditioning works on a tiny real panel.** Use the frozen IDs,
    methods, seed, and budgets in `configs/gate_a_v1.json`. Compare
    `raw_tensor`, `direct_irrep`, `stabilizer_pooling`, and `orbit_alignment`.
-2. **Gate B -- coherent representative invariance.** At fixed structure and
+   Gate A v1 is an archived negative result at
+   `artifacts/gate_a_v1_frozen_archive/manifest.json`: never edit its
+   threshold (1.2), reports, split, or checkpoints.
+2. **Gate A2 S1 -- shared conditional-control mechanism.** The versioned
+   successor protocol `configs/gate_a2_conditional_control_v1.json` is
+   direct-irrep-only and runs exactly four fixed 400/800-step combinations on
+   the v1 eight-ID training panel. It repairs conditional control with a
+   condition-free base plus a time-gated, per-message-block FiLM/residual
+   field; it does not alter the GaugeFlow alignment posterior. Its completed
+   S1 result is `s1_direct_irrep_not_passed` in
+   `reports/gate_a2_conditional_control_v1/manifest.json`. Do not rerun,
+   retune, extend beyond 800 steps, select CFG=1 as the main result, or start
+   S2. S2 remains locked unless a separately versioned protocol is explicitly
+   authorized after all S1 criteria pass.
+3. **Gate A3 two-target early branching.**
+   `configs/gate_a3_early_branching_v1.json` is a completed, frozen two-target
+   direct-irrep test of early all-negative tangent identification, not another
+   residual/FiLM/CFG/counterfactual search. The deterministic pair is InN
+   (`JVASP-1180`) and BN (`JVASP-22673`); its result is
+   `two_target_not_passed` in
+   `reports/gate_a3_early_branching_v1/manifest.json`. Do not extend to 4 or 8
+   targets, increase its 400-step budget, or add more conditional modules.
+   Inspect the probability path, atom-type manifold, decoder, and flow-target
+   definition before proposing any new mechanism. Continuous state separation
+   alone is insufficient: use the decoded-state audit and endpoint retrieval.
+4. **Gate B -- coherent representative invariance.** At fixed structure and
    tensor orbit, rotate the input representative and measure velocity
    equivariance, composition/prototype stability, C2ST, MMD, and orbit-error
    distributions.
-3. **Gate C -- small method screen.** Use one frozen structural checkpoint,
+5. **Gate C -- small method screen.** Use one frozen structural checkpoint,
    one sample budget, and at least three seeds. Advance GaugeFlow only if orbit
    fidelity and representative/cell consistency improve without losing
    validity or degrading the high-symmetry subset.
-4. **Gate D -- physical validation.** Freeze the model and ranking rule before
+6. **Gate D -- physical validation.** Freeze the model and ranking rule before
    top-K relaxation, symmetry re-identification, oracle recomputation, and the
    pre-registered DFPT audit.
 
@@ -81,10 +106,21 @@ orbit-tensor-error distributions. See `README.md` and
 
 - Do not describe TensorOrbit-JARVIS v1 as formula-disjoint. The audit found
   165 reduced-formula groups crossing splits and 56 cross-split structural
-  near-duplicate pairs. Keep v1 unchanged for the frozen Gate A panel. The
-  formula-disjoint v2 split under `artifacts/` is an inactive candidate and may
-  be activated only by a new versioned protocol. Training may use condition-
-  stratum balancing; validation and test retain natural distributions.
+  near-duplicate pairs. Keep v1 unchanged only for historical Gate A panels.
+  The formula-disjoint v2 split under `artifacts/` is an inactive candidate;
+  its activation protocol is
+  `artifacts/tensororbit_jarvis_v2_activation_audit/activation_protocol.json`.
+  Every future validation/test or full benchmark must use v2 after a new
+  versioned protocol and new checkpoints, never a silently substituted v1
+  split. Training may use condition-stratum balancing; validation and test
+  retain natural distributions.
+- v2 is presently prepared only for independent external tensor-oracle
+  qualification under
+  `configs/tensororbit_jarvis_v2_oracle_qualification_v1.json`. The GMTNet and
+  e3nn SE(3)-Transformer manifests must receive pinned external source commits,
+  environment locks, and a committed qualification protocol before training.
+  Do not start GaugeFlow full training from this preparation, and do not use
+  PiezoJet as the primary oracle.
 - Gate A oracle-free diagnostics support debugging but cannot replace
   training-set orbit tensor error from a qualified frozen oracle ensemble.
 - Report representative/cell consistency and distributional behavior, not only

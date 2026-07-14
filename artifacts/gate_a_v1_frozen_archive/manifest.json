@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A v1 frozen negative-result archive",
+  "status": "frozen_negative_result_do_not_modify",
+  "decision": "Gate A v1 failed and is not advanced. The 1.2 generated between/within threshold remains immutable.",
+  "archive_scope": "References only: no source report, checkpoint, split, threshold, or result is copied over or modified.",
+  "protocol": {
+    "path": "configs/gate_a_v1.json",
+    "sha256": "43447573b435e44beb3e1e744b9eee5142eb1bed4a89ffb7848c9afddf398987"
+  },
+  "reports": {
+    "supporting_gate_result": {
+      "path": "reports/gate_a_supporting_after.json",
+      "sha256": "2986c4a17f9a9d86d0d9855f4185a6b30cc9a71f7b6163ed64ad6ac33e010382"
+    },
+    "causal_audit": {
+      "path": "reports/gate_a1_causal_audit.md",
+      "sha256": "d37dd839a073d648f7a679defb3e03803c35d6437474c1d169472271ab484ec3"
+    },
+    "performance_and_scientific_audit": {
+      "path": "reports/performance_data_scientific_audit.md",
+      "sha256": "5a0192f3da22ada6581136e2343f551a733e4c4f7452850e3caeea1c6f869885"
+    }
+  },
+  "checkpoints": {
+    "raw_tensor": "4e132a5215c95fd826fd3699cf31894f26f72347d694280fe63c6e3b9af3e646",
+    "direct_irrep": "e2fba228149455e03c46ef356ab561d08043ba18c093de46d07753079db50a00",
+    "stabilizer_pooling": "ca3de01c8fee9e79946ac8e679d30f43a438e04514f7b4da250a641e94f97747",
+    "orbit_alignment": "625006da0769738456152f927a01173d7875f84a4e10fd11d4a2ed630217c12e"
+  },
+  "allowed_follow_up": "Only a versioned successor protocol may test a new conditional-control mechanism. It may not overwrite, relabel, or silently replace Gate A v1 evidence."
+}

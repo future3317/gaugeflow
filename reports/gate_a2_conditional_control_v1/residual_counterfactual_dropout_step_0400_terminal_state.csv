@@ -1,0 +1,4 @@
+variant,state_head,terminal_pairwise_rms,peak_pairwise_rms,terminal_over_peak,finite,retained_at_90pct_peak,checkpoint_step
+residual_counterfactual_dropout,type_logit,0.06483458594552108,0.06483458594552108,1.0,True,True,400
+residual_counterfactual_dropout,fractional_coordinate,0.02020467278946723,0.02020467278946723,1.0,True,True,400
+residual_counterfactual_dropout,lattice_log,0.3714358386184488,0.3714358386184488,1.0,True,True,400

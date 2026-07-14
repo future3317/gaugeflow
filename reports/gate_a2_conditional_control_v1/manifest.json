@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A2 conditional control v1",
+  "status": "s1_direct_irrep_not_passed",
+  "protocol_sha256": "412406eed3904c296617c0e99228ff5b98517deff185211733c52043bbc86af1",
+  "checkpoint_sha256": {
+    "original_injection/step_0400": "2baaac58eaf55ee9f01349bf7d9130efab260cbd8e81c4981e48b89403832834",
+    "original_injection/step_0800": "217af5e3821bc86a0797aa8845fccebf6d843aab0f270263849eb936fe7ce3ef",
+    "residual_field/step_0400": "b331901d34588336e8fff9352ef477464056bd90e754a6f61c673073dea867b3",
+    "residual_field/step_0800": "1c93a8faa7501276795ca37f58fd0450cf7815bc5dbc948cad2d04a76bd9efb7",
+    "residual_counterfactual/step_0400": "03a26f45d0689ff61c3c522be296d4d16a11af0cd785a86af2e137e0e1ba5712",
+    "residual_counterfactual/step_0800": "23e30106323086724bd0377df4accc6640f9b93140d8f1c6cab0084d503b7507",
+    "residual_counterfactual_dropout/step_0400": "27bb207c46ee7a020a7723237b591caae7c798262092293f7016519816665ac0",
+    "residual_counterfactual_dropout/step_0800": "a4ead5336c84c3cabb7ee246c0e35128b69db11c1eec6f8c73793829a39202e1"
+  },
+  "main_cfg": 0.0,
+  "s2_started": false,
+  "gate_a_v1_modified": false
+}

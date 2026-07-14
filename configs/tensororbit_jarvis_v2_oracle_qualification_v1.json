@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 external tensor-oracle qualification v1",
+  "status": "prepared_not_started",
+  "purpose": "Prepare matched v2 split training for independent external tensor oracles only; this is not a GaugeFlow generation protocol.",
+  "activation_parent": {
+    "activation_protocol": "artifacts/tensororbit_jarvis_v2_activation_audit/activation_protocol.json",
+    "activation_manifest": "artifacts/tensororbit_jarvis_v2_activation_audit/activation_manifest.json",
+    "candidate_split": "artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json",
+    "candidate_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd",
+    "source_audit_rows": "reports/data_quality_rows.csv",
+    "source_audit_rows_sha256": "ab80d2267eb8b81495979e4c04477fabde8d54b80194369497a5cf571d5e92e0"
+  },
+  "data": {
+    "source_csv_directory": "../gaugeflow/data/piezo",
+    "target_cache_dir": "../gaugeflow/data/tensororbit_jarvis_v1/reynolds_projected_targets",
+    "tensor_target": "Reynolds-projected Cartesian rank-three piezoelectric tensor, symmetric in final two indices",
+    "tensor_coordinate_convention": "GaugeFlow 18-dimensional CartesianTensor('ijk=ikj') irrep coordinates or equivalent 3x3x3 Cartesian tensor",
+    "splits": {"train": 4000, "val": 499, "test": 499}
+  },
+  "oracles": [
+    {
+      "id": "gmtnet",
+      "architecture_class": "GMTNet equivariant material tensor predictor",
+      "role": "primary external qualification candidate",
+      "training_status": "not_started",
+      "required_external_pin": ["source_repository_url", "source_commit", "environment_lock", "training_entrypoint"],
+      "output_contract": "one predicted Cartesian 3x3x3 tensor and one explicit abstention/validity field for every v2 val/test material_id"
+    },
+    {
+      "id": "se3_transformer_rank3",
+      "architecture_class": "e3nn SE(3)-Transformer with a rank-three Cartesian tensor head",
+      "role": "architecture-distinct external qualification candidate",
+      "training_status": "not_started",
+      "required_external_pin": ["source_repository_url", "source_commit", "environment_lock", "training_entrypoint"],
+      "output_contract": "one predicted Cartesian 3x3x3 tensor and one explicit abstention/validity field for every v2 val/test material_id"
+    }
+  ],
+  "matched_split_requirements": {
+    "exact_candidate_split_hash": true,
+    "same_train_val_test_ids_for_every_oracle": true,
+    "no_v1_validation_or_test_ids": true,
+    "per_oracle_training_manifest_hash": true,
+    "per_oracle_checkpoint_hash": true,
+    "prediction_id_join_exact": true,
+    "zero_tensors_retained_as_physical_targets": true,
+    "PiezoJet_primary_oracle": false
+  },
+  "qualification_plan": {
+    "freeze_before_test": ["source commit", "environment lock", "training manifest", "checkpoint hash", "prediction schema"],
+    "validation_metrics": [
+      "Cartesian tensor symmetry residual",
+      "complete response-field error on fixed lossless probes",
+      "orbit-aware tensor error distribution",
+      "physical-zero false-positive rate",
+      "abstention rate and coverage"
+    ],
+    "ensemble_rule": "No predictor is a Gate A oracle until GMTNet and the architecture-distinct predictor both complete matched v2 validation under frozen manifests. PiezoJet may be evaluated later only as a non-primary additional member.",
+    "activation_requires": [
+      "this protocol committed with its manifest hash",
+      "both external training manifests committed or externally pinned",
+      "new checkpoint and prediction hashes",
+      "separate qualification report"
+    ]
+  },
+  "prohibited": [
+    "overwrite_tensororbit_jarvis_v1",
+    "modify_historical_gate_reports",
+    "GaugeFlow_4000_499_499_training",
+    "GaugeFlow_S2",
+    "relaxation",
+    "DFT",
+    "DFPT"
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A3 early branching v1",
+  "status": "pre_registered_two_target_only",
+  "objective": "Test whether tensor conditions become necessary early branches of the direct-irrep flow path before any 4/8-target expansion.",
+  "historical_evidence_is_immutable": {
+    "gate_a_v1_archive": "artifacts/gate_a_v1_frozen_archive/manifest.json",
+    "gate_a1_report": "reports/gate_a1_causal_audit.md",
+    "gate_a2_s1_manifest": "reports/gate_a2_conditional_control_v1/manifest.json",
+    "instruction": "No threshold, split, checkpoint, report, or failure conclusion from Gate A v1, A1, or A2 may be changed."
+  },
+  "data": {
+    "train_csv": "../gaugeflow/data/piezo",
+    "split_manifest": "../gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "split": "train",
+    "target_cache_dir": "../gaugeflow/data/tensororbit_jarvis_v1/reynolds_projected_targets",
+    "preprocessed_cache": "artifacts/tensororbit_jarvis_v1_preprocessed_v1.pt",
+    "audit_rows": "reports/data_quality_rows.csv"
+  },
+  "material_ids": ["JVASP-1180", "JVASP-22673"],
+  "selection": {
+    "algorithm": "deterministic_global_maximum_over_eligible_pairs",
+    "eligibility": {
+      "audit_row_valid": true,
+      "split": "train",
+      "physical_zero_tensor": false,
+      "atom_count_min": 2,
+      "atom_count_max": 6,
+      "response_norm_quantile_among_nonzero_candidates": 0.75,
+      "expected_response_norm_threshold": 1.3040811121463776,
+      "different_reduced_formula": true,
+      "same_atom_count": true,
+      "fixed_so3_frames": 24,
+      "relative_tensor_orbit_distance_min": 0.5,
+      "scale_invariant_lattice_shape_distance_min": 0.1
+    },
+    "orbit_distance": "min_R ||e_i-rho(R)e_j||_F / sqrt(||e_i||_F^2+||e_j||_F^2), with fixed_so3_frames(24, seed=0)",
+    "lattice_shape_distance": "||G_i/tr(G_i)-G_j/tr(G_j)||_F for Niggli-reduced row-lattice Gram matrices",
+    "rank_order": [
+      "descending_relative_tensor_orbit_distance",
+      "descending_minimum_response_norm",
+      "descending_lattice_shape_distance",
+      "ascending_atom_count",
+      "lexicographic_material_ids"
+    ],
+    "selected_material_ids": ["JVASP-1180", "JVASP-22673"],
+    "expected": {
+      "formulas": ["InN", "BN"],
+      "atom_count": 4,
+      "response_norms": [1.6873594522476196, 2.225799798965454],
+      "relative_tensor_orbit_distance": 0.9832474589347839,
+      "lattice_shape_distance": 0.2623356580734253
+    },
+    "selection_manifest": "artifacts/gate_a3_early_branching_v1_selection/selection_manifest.json"
+  },
+  "training": {
+    "seed": 20260714,
+    "batch_size": 2,
+    "learning_rate": 0.001,
+    "hidden_dim": 64,
+    "layers": 2,
+    "orbit_frames": 8,
+    "steps": 400,
+    "checkpoint_steps": [200, 400],
+    "conditioning_mode": "direct_irrep",
+    "conditional_control": "original_injection",
+    "direct_irrep_random_frame": true,
+    "condition_dropout": 0.0,
+    "counterfactual_weight": 0.0,
+    "uncertainty_weight": 0.0,
+    "condition_balanced_sampling": false
+  },
+  "variants": [
+    {
+      "id": "fm_only",
+      "identification_weight": 0.0,
+      "identification_temperature": 0.25,
+      "identification_early_sigma": 0.25,
+      "eligible_for_expansion": false
+    },
+    {
+      "id": "early_all_negative_identification",
+      "identification_weight": 0.5,
+      "identification_temperature": 0.25,
+      "identification_early_sigma": 0.25,
+      "eligible_for_expansion": true
+    }
+  ],
+  "evaluation": {
+    "seed": 73103,
+    "sample_replicates": 8,
+    "sample_atoms": 4,
+    "sample_steps": 16,
+    "trajectory_steps": 16,
+    "ranking_times": [0.0, 0.0625, 0.125, 0.1875, 0.25, 0.5, 0.75, 1.0],
+    "early_time_max": 0.25,
+    "cfg_scale": 0.0
+  },
+  "two_target_gate": {
+    "early_time_own_target_retrieval_accuracy_min": 0.9,
+    "all_time_own_target_retrieval_accuracy_min": 0.8,
+    "mean_margin_min_exclusive": 0.0,
+    "common_noise_early_branch": {
+      "time": 0.25,
+      "all_state_heads_positive_and_finite": true,
+      "terminal_retention_fraction_min": 0.9
+    },
+    "generated_between_within_distance_ratio_min": 1.2,
+    "generated_nearest_centroid_accuracy_min": 0.75,
+    "sampling_failure_count_max": 0,
+    "own_condition_flow_error_not_worse_than_all_negatives": true,
+    "decoded_endpoint_retrieval_accuracy_min": 0.75,
+    "advancement_variant": "early_all_negative_identification",
+    "expansion": "Only after every criterion passes may a separately versioned protocol propose 4 targets, then 8 targets."
+  },
+  "prohibited": [
+    "gate_a2_s2",
+    "additional_training_steps",
+    "residual_gate_search",
+    "FiLM_search",
+    "CFG_scale_search",
+    "counterfactual_weight_search",
+    "continuous_learned_posterior",
+    "trajectory_consistency_loss",
+    "vector_field_level_orbit_marginalization",
+    "GaugeFlow_full_4000_499_499_training",
+    "relaxation",
+    "DFT",
+    "DFPT"
+  ]
+}

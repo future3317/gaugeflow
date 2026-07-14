@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "name": "Gate A3 early-branching pair selection",
+  "status": "verified_pre_registered_two_target_selection",
+  "protocol_sha256": "0eb35cbdcecf22588dd92114a4299e95088830b1f78734a8f7ef6a210e6012b4",
+  "selection": {
+    "material_ids": [
+      "JVASP-1180",
+      "JVASP-22673"
+    ],
+    "formulas": [
+      "InN",
+      "BN"
+    ],
+    "atom_count": 4,
+    "response_norms": [
+      1.6873594522476196,
+      2.225799798965454
+    ],
+    "relative_tensor_orbit_distance": 0.9832474589347839,
+    "lattice_shape_distance": 0.2623356580734253
+  },
+  "response_norm_threshold": 1.3040811121463776,
+  "eligible_records": 51,
+  "eligible_pairs": 215,
+  "audit_rows_sha256": "ab80d2267eb8b81495979e4c04477fabde8d54b80194369497a5cf571d5e92e0",
+  "split_manifest_sha256": "6ac07d1456490a197fc8e32bd59fa7320d374130771a4490c3e47784c05912d6",
+  "preprocessed_cache_sha256": "ef4ad9fc70a6786bb0937132ce932a1f955fe35403b8af202e6b07a06ec9b333",
+  "scope": "Selection only; this manifest does not start S2, full training, relaxation, DFT, or DFPT."
+}

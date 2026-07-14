@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow Gate A2 conditional control v1",
+  "status": "pre_registered_s1_direct_irrep_only",
+  "parent_archive": "artifacts/gate_a_v1_frozen_archive/manifest.json",
+  "objective": "Repair the shared conditional flow backbone without changing the GaugeFlow alignment posterior.",
+  "data": {
+    "train_csv": "../gaugeflow/data/piezo",
+    "split_manifest": "../gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "target_cache_dir": "../gaugeflow/data/tensororbit_jarvis_v1/reynolds_projected_targets",
+    "preprocessed_cache": "artifacts/tensororbit_jarvis_v1_preprocessed_v1.pt"
+  },
+  "material_ids": [
+    "JVASP-25138", "JVASP-36991", "JVASP-272", "JVASP-33818",
+    "JVASP-1963", "JVASP-36313", "JVASP-16175", "JVASP-37007"
+  ],
+  "s1": {
+    "methods": ["direct_irrep"],
+    "seed": 20260714,
+    "training": {
+      "batch_size": 8,
+      "learning_rate": 0.001,
+      "hidden_dim": 64,
+      "layers": 2,
+      "orbit_frames": 8,
+      "steps": 800,
+      "checkpoint_steps": [400, 800],
+      "direct_irrep_random_frame": true,
+      "uncertainty_weight": 0.0,
+      "condition_balanced_sampling": false
+    },
+    "conditional_residual_field": {
+      "equation": "v(x_t,t,c)=v_base(x_t,t)+g(t) delta_v_cond(x_t,t,c)",
+      "g_min": 0.25,
+      "gate": "g(t)=g_min+(1-g_min)*4*t*(1-t)",
+      "base_reads_tensor_condition": false,
+      "conditional_injection": "FiLM plus condition-dependent residual gate in every message-passing block",
+      "heads": ["type_logit", "fractional_coordinate", "lattice_log"]
+    },
+    "counterfactual_loss": {
+      "fixed_batch_permutation": "cyclic_roll_by_one",
+      "formula": "softplus(m + own_tangent_error - wrong_tangent_error)",
+      "margin": 0.1,
+      "weight": 0.25,
+      "main_flow_matching_loss": "unchanged"
+    },
+    "variants": [
+      {
+        "id": "original_injection",
+        "conditional_control": "original_injection",
+        "counterfactual_weight": 0.0,
+        "condition_dropout": 0.0,
+        "cfg_evaluation_scales": [0.0]
+      },
+      {
+        "id": "residual_field",
+        "conditional_control": "residual_field",
+        "counterfactual_weight": 0.0,
+        "condition_dropout": 0.0,
+        "cfg_evaluation_scales": [0.0]
+      },
+      {
+        "id": "residual_counterfactual",
+        "conditional_control": "residual_field",
+        "counterfactual_weight": 0.25,
+        "condition_dropout": 0.0,
+        "cfg_evaluation_scales": [0.0]
+      },
+      {
+        "id": "residual_counterfactual_dropout",
+        "conditional_control": "residual_field",
+        "counterfactual_weight": 0.25,
+        "condition_dropout": 0.1,
+        "cfg_evaluation_scales": [0.0, 1.0]
+      }
+    ],
+    "evaluation": {
+      "seed": 73021,
+      "loss_repeats": 8,
+      "representative_repeats": 8,
+      "sample_replicates": 4,
+      "sample_atoms": 4,
+      "sample_steps": 8,
+      "trajectory_steps": 8,
+      "ranking_times": [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
+    },
+    "pass_criteria": {
+      "generated_between_within_ratio_min": 1.2,
+      "own_target_win_rate_min": 0.75,
+      "mean_own_target_margin_min_exclusive": 0.0,
+      "common_noise_terminal_state_separation": "all three terminal state-head RMS values must be nonzero, finite, and retained at >= 90% of their trajectory peak",
+      "own_condition_error_not_worse_than_wrong": true,
+      "sampling_failure_count_max": 0,
+      "all_three_conditional_residual_heads_recorded": true
+    }
+  },
+  "s2": {
+    "status": "locked_until_s1_passes_then_requires_new_run_command",
+    "methods": ["raw_tensor", "direct_irrep", "stabilizer_pooling", "orbit_alignment"],
+    "required_shared_mechanism": "the S1-frozen conditional-control backbone and loss",
+    "required_gaugeflow_reports": [
+      "generated separation",
+      "representative velocity error versus raw/direct",
+      "token compression",
+      "teacher-forced ranking",
+      "throughput",
+      "memory"
+    ]
+  },
+  "data_protocol": {
+    "v1_status": "frozen_for_historical_gate_a_only",
+    "v2_status": "required_for_all_future_validation_test_and_full_benchmark",
+    "v2_activation_protocol": "artifacts/tensororbit_jarvis_v2_activation_audit/activation_protocol.json"
+  },
+  "prohibited_this_protocol": [
+    "continuous_learned_posterior",
+    "trajectory_consistency_loss",
+    "vector_field_level_orbit_marginalization",
+    "full_4000_499_499_run",
+    "relaxation",
+    "DFT",
+    "DFPT",
+    "Gate_A_pass_claim"
+  ]
+}

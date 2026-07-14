@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
+from torch_geometric.utils import scatter
 
 from .manifold import lattice_to_log_vector, torus_logmap, wrap01
 from .manifold import log_vector_to_lattice
@@ -44,7 +45,34 @@ class RiemannianCrystalFlowMatcher:
             lattice_log=torch.randn((batch.num_graphs, 6), device=device),
         )
 
-    def loss(self, model, batch) -> dict[str, torch.Tensor]:
+    def loss(
+        self,
+        model,
+        batch,
+        *,
+        counterfactual_weight: float = 0.0,
+        counterfactual_margin: float = 0.0,
+        identification_weight: float = 0.0,
+        identification_temperature: float = 1.0,
+        identification_early_sigma: float | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Flow matching with an optional fixed-permutation tangent ranking term.
+
+        The primary three-head flow loss is unchanged.  When enabled, the
+        auxiliary term compares the current graph's own tensor condition to a
+        cyclically shifted condition on exactly the same interpolant state.
+        Null-conditioned examples are excluded from that comparison so a
+        physical zero tensor (which is present) is never conflated with CFG's
+        learned missing-condition token.
+        """
+        if counterfactual_weight < 0:
+            raise ValueError("counterfactual_weight must be non-negative")
+        if identification_weight < 0:
+            raise ValueError("identification_weight must be non-negative")
+        if identification_temperature <= 0:
+            raise ValueError("identification_temperature must be positive")
+        if identification_early_sigma is not None and identification_early_sigma <= 0:
+            raise ValueError("identification_early_sigma must be positive when set")
         target = self.target_state(batch)
         base = self.random_state(batch)
         time = torch.rand((batch.num_graphs,), device=batch.frac_coords.device)
@@ -70,6 +98,108 @@ class RiemannianCrystalFlowMatcher:
             "lattice": (pred_lattice - velocity_lattice).square().mean(),
         }
         terms["loss"] = terms["type"] + terms["coord"] + terms["lattice"]
+        terms["counterfactual"] = terms["loss"].new_zeros(())
+        if counterfactual_weight > 0:
+            permutation = torch.roll(
+                torch.arange(batch.num_graphs, device=batch.batch.device), 1
+            )
+            wrong_outputs = model(
+                state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+                batch.piezo_irreps[permutation], batch.condition_present,
+                getattr(batch, "condition_orbit", None),
+                return_uncertainty=False,
+            )
+            wrong_type, wrong_coord, wrong_lattice = wrong_outputs[:3]
+            own_type_error = (pred_type - velocity_type).square().mean(dim=-1)
+            own_coord_error = (pred_coord - velocity_coord).square().mean(dim=-1)
+            wrong_type_error = (wrong_type - velocity_type).square().mean(dim=-1)
+            wrong_coord_error = (wrong_coord - velocity_coord).square().mean(dim=-1)
+            own_graph_error = (
+                scatter(
+                    own_type_error + own_coord_error,
+                    batch.batch,
+                    dim=0,
+                    dim_size=batch.num_graphs,
+                    reduce="mean",
+                )
+                + (pred_lattice - velocity_lattice).square().mean(dim=-1)
+            )
+            wrong_graph_error = (
+                scatter(
+                    wrong_type_error + wrong_coord_error,
+                    batch.batch,
+                    dim=0,
+                    dim_size=batch.num_graphs,
+                    reduce="mean",
+                )
+                + (wrong_lattice - velocity_lattice).square().mean(dim=-1)
+            )
+            present = batch.condition_present.reshape(batch.num_graphs, -1).all(dim=-1)
+            valid = present & present[permutation]
+            if valid.any():
+                terms["counterfactual"] = torch.nn.functional.softplus(
+                    counterfactual_margin + own_graph_error[valid] - wrong_graph_error[valid]
+                ).mean()
+                terms["loss"] = terms["loss"] + counterfactual_weight * terms["counterfactual"]
+        terms["identification"] = terms["loss"].new_zeros(())
+        terms["identification_retrieval"] = terms["loss"].new_zeros(())
+        if identification_weight > 0:
+            # A3 uses every tensor in the batch as a candidate condition for
+            # every own flow interpolant.  This is deliberately not a cyclic
+            # negative: with two targets it is the exact all-negative softmax,
+            # and it remains well-defined for a later, separately authorized
+            # 4/8-target extension.
+            present = batch.condition_present.reshape(batch.num_graphs, -1).all(dim=-1)
+            if batch.num_graphs < 2:
+                raise ValueError("All-negative identification requires at least two graphs")
+            if not present.all():
+                raise ValueError(
+                    "All-negative identification requires present physical tensor conditions; "
+                    "do not conflate it with the CFG null token"
+                )
+            candidate_errors = []
+            for candidate in range(batch.num_graphs):
+                candidate_condition = batch.piezo_irreps[candidate:candidate + 1].expand(
+                    batch.num_graphs, -1
+                )
+                candidate_orbit = None
+                condition_orbit = getattr(batch, "condition_orbit", None)
+                if condition_orbit is not None:
+                    candidate_orbit = condition_orbit[candidate:candidate + 1].expand(
+                        batch.num_graphs, *condition_orbit.shape[1:]
+                    )
+                candidate_outputs = model(
+                    state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+                    candidate_condition, batch.condition_present, candidate_orbit,
+                    return_uncertainty=False,
+                )
+                candidate_type, candidate_coord, candidate_lattice = candidate_outputs[:3]
+                candidate_node_error = (
+                    (candidate_type - velocity_type).square().mean(dim=-1)
+                    + (candidate_coord - velocity_coord).square().mean(dim=-1)
+                )
+                candidate_errors.append(
+                    scatter(
+                        candidate_node_error,
+                        batch.batch,
+                        dim=0,
+                        dim_size=batch.num_graphs,
+                        reduce="mean",
+                    )
+                    + (candidate_lattice - velocity_lattice).square().mean(dim=-1)
+                )
+            # rows index the own interpolant x_t^i, columns index e_j.
+            score = -torch.stack(candidate_errors, dim=-1)
+            log_probability = torch.log_softmax(score / identification_temperature, dim=-1)
+            own = torch.arange(batch.num_graphs, device=batch.batch.device)
+            per_graph_identification = -log_probability[own, own]
+            early_weight = (
+                torch.exp(-time / identification_early_sigma)
+                if identification_early_sigma is not None else torch.ones_like(time)
+            )
+            terms["identification"] = (early_weight * per_graph_identification).mean()
+            terms["identification_retrieval"] = (score.argmax(dim=-1) == own).float().mean()
+            terms["loss"] = terms["loss"] + identification_weight * terms["identification"]
         if self.uncertainty_weight > 0:
             uncertainty = outputs[4]
             lattice_nodes = log_vector_to_lattice(state.lattice_log)[batch.batch]
