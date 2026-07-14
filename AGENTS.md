@@ -119,6 +119,9 @@ orbit-tensor-error distributions. See `README.md` and
   `configs/tensororbit_jarvis_v2_oracle_qualification_v1.json`. The GMTNet and
   e3nn SE(3)-Transformer manifests must receive pinned external source commits,
   environment locks, and a committed qualification protocol before training.
+  The protocol/manifest commit is attested in
+  `artifacts/tensororbit_jarvis_v2_oracle_qualification_v1/commit_attestation.json`;
+  external model pins and qualification remain blocking.
   Do not start GaugeFlow full training from this preparation, and do not use
   PiezoJet as the primary oracle.
 - Gate A oracle-free diagnostics support debugging but cannot replace

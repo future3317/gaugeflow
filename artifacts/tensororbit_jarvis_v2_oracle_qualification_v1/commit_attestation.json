@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 oracle qualification commit attestation",
+  "status": "protocol_and_manifest_committed_external_training_still_prohibited",
+  "protocol": {
+    "path": "configs/tensororbit_jarvis_v2_oracle_qualification_v1.json",
+    "sha256": "b1448671a7333e1cd2dbb5451d47ebdd794a5a00b173ea4f31243f8f7bda7244"
+  },
+  "preparation_manifest": {
+    "path": "artifacts/tensororbit_jarvis_v2_oracle_qualification_v1/manifest.json",
+    "sha256": "f2bc9c04022b0ba255299cc699ee57b9ff092b00581e0a48774e42b5006097c2"
+  },
+  "commit": "af73a90e8808116d2e30d42a4ebce67bc3a97ccc",
+  "remaining_blockers": [
+    "pin GMTNet external source repository, commit, environment lock, and entrypoint",
+    "pin the architecture-distinct e3nn SE(3)-Transformer source repository, commit, environment lock, and entrypoint",
+    "run matched v2 external-oracle training and produce checkpoint/prediction hashes",
+    "complete a separately frozen external-oracle qualification report"
+  ],
+  "external_training_started": false,
+  "GaugeFlow_full_training_started": false,
+  "PiezoJet_primary_oracle": false
+}

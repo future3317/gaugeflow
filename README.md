@@ -86,8 +86,10 @@ oracle qualification protocol now fixes matched v2 manifests for GMTNet and an
 architecture-distinct e3nn SE(3)-Transformer rank-three tensor predictor;
 PiezoJet is not a primary oracle. The preparation is at
 `configs/tensororbit_jarvis_v2_oracle_qualification_v1.json` and remains
-`prepared_commit_required_before_external_training`: neither external training
-nor a GaugeFlow 4,000/499/499 run has started.
+inactive pending external source pins and matched training. Its protocol and
+preparation manifest are committed and attested in
+`artifacts/tensororbit_jarvis_v2_oracle_qualification_v1/commit_attestation.json`;
+neither external training nor a GaugeFlow 4,000/499/499 run has started.
 
 Two implementation defects were found before restarting the frozen run:
 
