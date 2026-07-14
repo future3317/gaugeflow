@@ -64,6 +64,21 @@ def fixed_so3_frames(count: int, *, seed: int = 0, dtype: torch.dtype = torch.fl
     return q
 
 
+def fixed_lossless_response_probes(*, dtype: torch.dtype = torch.float32) -> torch.Tensor:
+    """Six directions whose symmetric dyads span ``Sym²(R³)``.
+
+    Thus ``F_e`` on this fixed set determines every component of a tensor that
+    is symmetric in its final two indices.  These probes are independent of a
+    noisy generated crystal; local bonds remain complementary geometry probes.
+    """
+    directions = torch.tensor(
+        ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0),
+         (1.0, 1.0, 0.0), (1.0, 0.0, 1.0), (0.0, 1.0, 1.0)),
+        dtype=dtype,
+    )
+    return torch.nn.functional.normalize(directions, dim=-1)
+
+
 def orbit_irreps(value: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
     """Return a finite SO(3) orbit set with shape [batch, frames, 18]."""
     tensor = piezo_from_irreps(value).unsqueeze(1)
@@ -76,6 +91,21 @@ def response_field(tensor: torch.Tensor, directions: torch.Tensor) -> torch.Tens
     if tensor.shape[-3:] != (3, 3, 3) or directions.shape[-1] != 3:
         raise ValueError("Expected rank-three tensors and 3D directions")
     return torch.einsum("...ijk,...j,...k->...i", tensor, directions, directions)
+
+
+def polarized_response(tensor: torch.Tensor, left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
+    """Evaluate the symmetric bilinear constitutive form from ``F_e``.
+
+    For a piezoelectric tensor symmetric in its final two indices,
+    ``e(u, v) = (F_e(u + v) - F_e(u) - F_e(v)) / 2``.  Keeping this
+    construction explicit makes the response field a lossless constitutive
+    query, rather than an engineered directional summary.
+    """
+    return 0.5 * (
+        response_field(tensor, left + right)
+        - response_field(tensor, left)
+        - response_field(tensor, right)
+    )
 
 
 def isotypic_slices() -> tuple[slice, slice, slice]:
@@ -101,3 +131,17 @@ def response_field_error(prediction: torch.Tensor, target: torch.Tensor, directi
     delta = prediction - target
     field = torch.einsum("...ijk,mj,mk->...mi", delta, directions, directions)
     return field.square().sum(dim=-1).mean(dim=-1)
+
+
+def maximum_response_field_error(
+    prediction: torch.Tensor, target: torch.Tensor, directions: torch.Tensor
+) -> torch.Tensor:
+    """Worst directional response discrepancy over a declared probe set.
+
+    Unlike the sphere-averaged field error, this exposes a device-relevant
+    failure mode.  The result is explicitly a finite-probe approximation to
+    the maximum over the unit sphere.
+    """
+    delta = prediction - target
+    field = torch.einsum("...ijk,mj,mk->...mi", delta, directions, directions)
+    return field.square().sum(dim=-1).sqrt().amax(dim=-1)
