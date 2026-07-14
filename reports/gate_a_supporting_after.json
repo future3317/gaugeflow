@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "gate": "A",
+  "protocol_sha256": "43447573b435e44beb3e1e744b9eee5142eb1bed4a89ffb7848c9afddf398987",
+  "supporting_checks": {
+    "all_methods_condition_gap": true,
+    "gaugeflow_representative_error": true,
+    "gaugeflow_beats_raw_representative_error": true,
+    "gaugeflow_target_separation": false,
+    "gaugeflow_condition_permutation_shift": true
+  },
+  "oracle_free_supporting_status": "failed",
+  "full_gate_status": "incomplete_external_tensor_evidence",
+  "full_gate_requires": [
+    "pre-qualified frozen external tensor-oracle ensemble",
+    "training-set orbit tensor error distribution",
+    "pre-registered DFPT micro-audit"
+  ],
+  "results": {
+    "raw_tensor": {
+      "flow_condition_test": {
+        "correct_flow_loss_mean": 2.03353214263916,
+        "shuffled_flow_loss_mean": 2.2424702644348145,
+        "shuffled_flow_gap_fraction_mean": 0.10468178987503052,
+        "shuffled_flow_gap_fraction_median": 0.09359520673751831,
+        "shuffled_worse_fraction": 1.0
+      },
+      "representative_consistency": {
+        "relative_velocity_error_mean": 0.3522091507911682,
+        "relative_velocity_error_max": 0.5575267175833384,
+        "per_head_mean": {
+          "type": 0.46915847435593605,
+          "coordinate": 0.401367612183094,
+          "lattice": 0.18610139563679695
+        }
+      },
+      "generated_distribution": {
+        "within_target_distance_mean": 16.21483612060547,
+        "between_target_distance_mean": 16.28676986694336,
+        "between_within_distance_ratio": 1.0044362545013428,
+        "leave_one_out_nearest_centroid_accuracy": 0.0,
+        "condition_permutation_feature_shift_mean": 2.2148866653442383,
+        "condition_permutation_feature_shift_median": 2.218973159790039,
+        "all_generated_features_finite": true
+      }
+    },
+    "direct_irrep": {
+      "flow_condition_test": {
+        "correct_flow_loss_mean": 2.1004817485809326,
+        "shuffled_flow_loss_mean": 2.3565757274627686,
+        "shuffled_flow_gap_fraction_mean": 0.12790122628211975,
+        "shuffled_flow_gap_fraction_median": 0.10845018178224564,
+        "shuffled_worse_fraction": 1.0
+      },
+      "representative_consistency": {
+        "relative_velocity_error_mean": 0.2121116816997528,
+        "relative_velocity_error_max": 0.27630827700098354,
+        "per_head_mean": {
+          "type": 0.07584434421733022,
+          "coordinate": 0.5472767353057861,
+          "lattice": 0.013213985890615731
+        }
+      },
+      "generated_distribution": {
+        "within_target_distance_mean": 16.13918685913086,
+        "between_target_distance_mean": 16.290485382080078,
+        "between_within_distance_ratio": 1.0093746185302734,
+        "leave_one_out_nearest_centroid_accuracy": 0.03125,
+        "condition_permutation_feature_shift_mean": 2.08390474319458,
+        "condition_permutation_feature_shift_median": 1.8334035873413086,
+        "all_generated_features_finite": true
+      }
+    },
+    "stabilizer_pooling": {
+      "flow_condition_test": {
+        "correct_flow_loss_mean": 2.0203492641448975,
+        "shuffled_flow_loss_mean": 2.2684710025787354,
+        "shuffled_flow_gap_fraction_mean": 0.12536197900772095,
+        "shuffled_flow_gap_fraction_median": 0.12049757689237595,
+        "shuffled_worse_fraction": 1.0
+      },
+      "representative_consistency": {
+        "relative_velocity_error_mean": 0.11765005439519882,
+        "relative_velocity_error_max": 0.17390004048744837,
+        "per_head_mean": {
+          "type": 0.1899012289941311,
+          "coordinate": 0.11044072359800339,
+          "lattice": 0.05260821548290551
+        }
+      },
+      "generated_distribution": {
+        "within_target_distance_mean": 16.227699279785156,
+        "between_target_distance_mean": 16.282691955566406,
+        "between_within_distance_ratio": 1.00338876247406,
+        "leave_one_out_nearest_centroid_accuracy": 0.0,
+        "condition_permutation_feature_shift_mean": 2.058969736099243,
+        "condition_permutation_feature_shift_median": 1.6709225177764893,
+        "all_generated_features_finite": true
+      }
+    },
+    "orbit_alignment": {
+      "flow_condition_test": {
+        "correct_flow_loss_mean": 2.099759340286255,
+        "shuffled_flow_loss_mean": 2.2760708332061768,
+        "shuffled_flow_gap_fraction_mean": 0.08565365523099899,
+        "shuffled_flow_gap_fraction_median": 0.06633666157722473,
+        "shuffled_worse_fraction": 1.0
+      },
+      "representative_consistency": {
+        "relative_velocity_error_mean": 0.04522540792822838,
+        "relative_velocity_error_max": 0.07447068889935811,
+        "per_head_mean": {
+          "type": 0.04404681036248803,
+          "coordinate": 0.067557442933321,
+          "lattice": 0.024071962921880186
+        }
+      },
+      "generated_distribution": {
+        "within_target_distance_mean": 16.18145751953125,
+        "between_target_distance_mean": 16.288890838623047,
+        "between_within_distance_ratio": 1.0066392421722412,
+        "leave_one_out_nearest_centroid_accuracy": 0.0625,
+        "condition_permutation_feature_shift_mean": 2.040266513824463,
+        "condition_permutation_feature_shift_median": 1.7656892538070679,
+        "all_generated_features_finite": true
+      }
+    }
+  }
+}

@@ -1,4 +1,13 @@
 __pycache__/
 .pytest_cache/
 checkpoints/
+data/
 *.pyc
+outputs/
+artifacts/*.pt
+reports/profiler_*/*_trace.json
+reports/profiler_*/*.prof
+reports/cprofile_*/
+reports/profile_intermediate/
+reports/debug_data_audit/
+reports/benchmark_smoke.*

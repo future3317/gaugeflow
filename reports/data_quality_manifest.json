@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "artifact": "TensorOrbit-JARVIS-v1-data-quality-audit",
+  "git": {
+    "commit": null,
+    "dirty": null
+  },
+  "tensor_convention_version": "gaugeflow-cartesian-ijk=ikj-engineering-shear-v1",
+  "source_files": {
+    "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/train.csv": "13e0bb65c7abae4504b7d40178e7011cdd4d5efddfecca2e2a9b30d0612262d6",
+    "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/val.csv": "e65a9c6159ebfe3f9f92cd6508723cc98b8a832df9473e8e4ebc5f1b01c3c1c8",
+    "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/test.csv": "5e21328939ef06bc4d5e876aa336fa7aa5f97487fc4f62bddb2518c8bcae54b1"
+  },
+  "split_manifest": {
+    "path": "/mnt/e/CODE/T2C-Flow/gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+    "sha256": "6ac07d1456490a197fc8e32bd59fa7320d374130771a4490c3e47784c05912d6"
+  },
+  "target_cache_index_sha256": "2f7cd811e9ededd1bfff01a9832db4fe2deb447bc52000355281ac005e187d86",
+  "target_cache_count": 4998,
+  "audit_rows_sha256": "ab80d2267eb8b81495979e4c04477fabde8d54b80194369497a5cf571d5e92e0",
+  "audited_row_count": 4998,
+  "full_audit": true,
+  "manifest_sha256": "3e1128fc1ec48a0e2ca7d53be5153a216ddc5610fc34a8aa34dc579b82d3ce1d"
+}

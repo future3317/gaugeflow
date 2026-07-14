@@ -43,7 +43,10 @@ def main() -> None:
     args = parser.parse_args()
     payload = torch.load(args.checkpoint, map_location=args.device)
     config = payload["config"]
-    model = GaugeFlowVectorField(config["hidden_dim"], config["layers"], config["orbit_frames"]).to(args.device)
+    model = GaugeFlowVectorField(
+        config["hidden_dim"], config["layers"], config["orbit_frames"],
+        conditioning_mode=config.get("conditioning_mode", "orbit_alignment"),
+    ).to(args.device)
     model.load_state_dict(payload["model"])
     model.eval()
     target = load_target(args.target, payload["isotypic_scales"]).to(args.device)

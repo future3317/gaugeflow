@@ -8,6 +8,22 @@ from e3nn.io import CartesianTensor
 
 PIEZO_IRREPS = CartesianTensor("ijk=ikj")
 VOIGT_ORDER = ("xx", "yy", "zz", "yz", "xz", "xy")
+# `CartesianTensor.from_cartesian/to_cartesian` constructs a full
+# ReducedTensorProducts object when no basis is supplied.  The formula is
+# fixed, so constructing it inside every graph/flow step is pure overhead.
+_PIEZO_CHANGE_OF_BASIS = (
+    PIEZO_IRREPS.reduced_tensor_products().change_of_basis.detach().contiguous()
+)
+
+
+def piezo_change_of_basis(
+    *, dtype: torch.dtype | None = None, device: torch.device | str | None = None
+) -> torch.Tensor:
+    """Return the exact fixed e3nn Cartesian/irrep change-of-basis tensor."""
+    value = _PIEZO_CHANGE_OF_BASIS
+    if dtype is not None or device is not None:
+        value = value.to(dtype=dtype or value.dtype, device=device or value.device)
+    return value
 
 
 def piezo_voigt_to_cartesian(value: torch.Tensor) -> torch.Tensor:
@@ -35,14 +51,20 @@ def piezo_cartesian_to_voigt(value: torch.Tensor) -> torch.Tensor:
     )
 
 
-def piezo_to_irreps(value: torch.Tensor) -> torch.Tensor:
-    return PIEZO_IRREPS.from_cartesian(value)
+def piezo_to_irreps(
+    value: torch.Tensor, change_of_basis: torch.Tensor | None = None
+) -> torch.Tensor:
+    basis = piezo_change_of_basis(dtype=value.dtype, device=value.device) if change_of_basis is None else change_of_basis.to(value)
+    return value.flatten(-3) @ basis.flatten(1).transpose(0, 1)
 
 
-def piezo_from_irreps(value: torch.Tensor) -> torch.Tensor:
+def piezo_from_irreps(
+    value: torch.Tensor, change_of_basis: torch.Tensor | None = None
+) -> torch.Tensor:
     if value.shape[-1] != PIEZO_IRREPS.dim:
         raise ValueError(f"Expected {PIEZO_IRREPS.dim} irreps coordinates, got {value.shape[-1]}")
-    return PIEZO_IRREPS.to_cartesian(value)
+    basis = piezo_change_of_basis(dtype=value.dtype, device=value.device) if change_of_basis is None else change_of_basis.to(value)
+    return (value @ basis.flatten(1)).reshape(*value.shape[:-1], 3, 3, 3)
 
 
 def rotate_rank3(value: torch.Tensor, rotation: torch.Tensor) -> torch.Tensor:
@@ -64,6 +86,21 @@ def fixed_so3_frames(count: int, *, seed: int = 0, dtype: torch.dtype = torch.fl
     return q
 
 
+def fixed_lossless_response_probes(*, dtype: torch.dtype = torch.float32) -> torch.Tensor:
+    """Six directions whose symmetric dyads span ``Sym?(R?)``.
+
+    Thus ``F_e`` on this fixed set determines every component of a tensor that
+    is symmetric in its final two indices.  These probes are independent of a
+    noisy generated crystal; local bonds remain complementary geometry probes.
+    """
+    directions = torch.tensor(
+        ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0),
+         (1.0, 1.0, 0.0), (1.0, 0.0, 1.0), (0.0, 1.0, 1.0)),
+        dtype=dtype,
+    )
+    return torch.nn.functional.normalize(directions, dim=-1)
+
+
 def orbit_irreps(value: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
     """Return a finite SO(3) orbit set with shape [batch, frames, 18]."""
     tensor = piezo_from_irreps(value).unsqueeze(1)
@@ -76,6 +113,21 @@ def response_field(tensor: torch.Tensor, directions: torch.Tensor) -> torch.Tens
     if tensor.shape[-3:] != (3, 3, 3) or directions.shape[-1] != 3:
         raise ValueError("Expected rank-three tensors and 3D directions")
     return torch.einsum("...ijk,...j,...k->...i", tensor, directions, directions)
+
+
+def polarized_response(tensor: torch.Tensor, left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
+    """Evaluate the symmetric bilinear constitutive form from ``F_e``.
+
+    For a piezoelectric tensor symmetric in its final two indices,
+    ``e(u, v) = (F_e(u + v) - F_e(u) - F_e(v)) / 2``.  Keeping this
+    construction explicit makes the response field a lossless constitutive
+    query, rather than an engineered directional summary.
+    """
+    return 0.5 * (
+        response_field(tensor, left + right)
+        - response_field(tensor, left)
+        - response_field(tensor, right)
+    )
 
 
 def isotypic_slices() -> tuple[slice, slice, slice]:
@@ -101,3 +153,17 @@ def response_field_error(prediction: torch.Tensor, target: torch.Tensor, directi
     delta = prediction - target
     field = torch.einsum("...ijk,mj,mk->...mi", delta, directions, directions)
     return field.square().sum(dim=-1).mean(dim=-1)
+
+
+def maximum_response_field_error(
+    prediction: torch.Tensor, target: torch.Tensor, directions: torch.Tensor
+) -> torch.Tensor:
+    """Worst directional response discrepancy over a declared probe set.
+
+    Unlike the sphere-averaged field error, this exposes a device-relevant
+    failure mode.  The result is explicitly a finite-probe approximation to
+    the maximum over the unit sphere.
+    """
+    delta = prediction - target
+    field = torch.einsum("...ijk,mj,mk->...mi", delta, directions, directions)
+    return field.square().sum(dim=-1).sqrt().amax(dim=-1)

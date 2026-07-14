@@ -6,7 +6,9 @@ import numpy as np
 from pymatgen.core import Structure
 
 
-def niggli_reduce_structure(structure: Structure, *, atol: float = 1e-5) -> Structure:
+def niggli_reduce_structure_with_transform(
+    structure: Structure, *, atol: float = 1e-5
+) -> tuple[Structure, np.ndarray]:
     """Return a Niggli-reduced equivalent structure with tracked coordinates.
 
     If row-vector lattice bases obey ``L_reduced = B @ L_original``, fractional
@@ -25,10 +27,16 @@ def niggli_reduce_structure(structure: Structure, *, atol: float = 1e-5) -> Stru
     if abs(determinant) != 1:
         raise ValueError("Niggli reduction did not yield a unimodular lattice-basis transform")
     fractional = np.remainder(structure.frac_coords @ np.linalg.inv(integer_change), 1.0)
-    return Structure(
+    reduced_structure = Structure(
         reduced_lattice,
         structure.species,
         fractional,
         coords_are_cartesian=False,
         site_properties=structure.site_properties,
     )
+    return reduced_structure, integer_change.astype(np.int64)
+
+
+def niggli_reduce_structure(structure: Structure, *, atol: float = 1e-5) -> Structure:
+    """Backward-compatible structure-only Niggli reduction."""
+    return niggli_reduce_structure_with_transform(structure, atol=atol)[0]

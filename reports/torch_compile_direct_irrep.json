@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "phase": "after_optional_compile",
+  "device": "cuda",
+  "torch_version": "2.5.1+cu124",
+  "cuda_version": "12.4",
+  "material_ids": [
+    "JVASP-25138",
+    "JVASP-36991",
+    "JVASP-272",
+    "JVASP-33818",
+    "JVASP-1963",
+    "JVASP-36313",
+    "JVASP-16175",
+    "JVASP-37007"
+  ],
+  "candidate_count": 792,
+  "cold_catalogue_seconds": 0.010925250999999747,
+  "panel_preprocessing_seconds": 1.9343440540000003,
+  "preprocessed_manifest": {
+    "schema": 1,
+    "name": "TensorOrbit-JARVIS-v1-preprocessed-v1",
+    "created_utc": "2026-07-14T08:32:41.784714+00:00",
+    "record_count": 4998,
+    "material_ids_sha256": "f33f2c434895ba9203ba14ff25bc3fe37b2cd6b40748cc1e3c70c9f294b3388f",
+    "source_files": {
+      "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/train.csv": "13e0bb65c7abae4504b7d40178e7011cdd4d5efddfecca2e2a9b30d0612262d6",
+      "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/val.csv": "e65a9c6159ebfe3f9f92cd6508723cc98b8a832df9473e8e4ebc5f1b01c3c1c8",
+      "/mnt/e/CODE/T2C-Flow/gaugeflow/data/piezo/test.csv": "5e21328939ef06bc4d5e876aa336fa7aa5f97487fc4f62bddb2518c8bcae54b1"
+    },
+    "preprocessing_code": {
+      "src/gaugeflow/data.py": "648f4bb60f0e086e7e05ef061c0e419e3415390af7289e77c09cf20401c0f8f1",
+      "src/gaugeflow/unit_cell.py": "354b0820136a4665596c227b5e9c3f8f8585e7e27b5141807e206453a2b40296",
+      "src/gaugeflow/tensor.py": "53d2c9234b4d73029be843f44fc391c593848de2708fd748a54db99f77b04dd2",
+      "scripts/build_preprocessed_cache.py": "9dee5fac5c54dfa440c5e1e974f0593c53f60b323f84122811a3abcb0e1202de"
+    },
+    "preprocessing_git": {
+      "commit": "e56a07610daae89f1171b98b017b4d01f884ea36",
+      "dirty": true
+    },
+    "tensor_convention_version": "gaugeflow-cartesian-ijk=ikj-engineering-shear-v1",
+    "split_manifest": {
+      "path": "/mnt/e/CODE/T2C-Flow/gaugeflow/data/tensororbit_jarvis_v1/splits.json",
+      "sha256": "6ac07d1456490a197fc8e32bd59fa7320d374130771a4490c3e47784c05912d6"
+    },
+    "target_cache_index_sha256": "919aeeb7a6823e6f3aed0079945cf4af99d385aa23c79468271694a4219637e6",
+    "niggli_transform_stored_per_record": true,
+    "sample_id_stored_as_record_key": true,
+    "zero_response_and_stratum_stored": true,
+    "build_seconds": 50.282974626,
+    "manifest_sha256": "d5c4a649789fdd18c760461db207d919f0bb5e24a9fae67d74ad863df2998d7d"
+  },
+  "results": [
+    {
+      "mode": "direct_irrep",
+      "warmup_steps": 2,
+      "benchmark_steps": 5,
+      "torch_compile": true,
+      "compile_invocation_seconds": 0.6022602149999994,
+      "warmup_seconds_including_lazy_compile": 28.435720189999998,
+      "mean_step_seconds": 0.01244512159999971,
+      "median_step_seconds": 0.012212778000005642,
+      "min_step_seconds": 0.008527644999993811,
+      "max_step_seconds": 0.016269585999999947,
+      "mean_cuda_event_milliseconds": 12.429062271118164,
+      "measured_benchmark_seconds": 0.062225607999998545,
+      "projected_400_step_seconds": 4.978048639999884,
+      "cpu_peak_rss_mib": 1438.375,
+      "gpu_peak_allocated_mib": 262.74560546875,
+      "gpu_peak_reserved_mib": 270.0,
+      "sampling_seconds": 8.556078466999999,
+      "sample_graphs": 8,
+      "sampling_graphs_per_second": 0.9350077878382319,
+      "sampling_integration_graph_steps_per_second": 1.8700155756764638,
+      "resource_samples": 27,
+      "process_cpu_percent_mean": 82.6037037037037,
+      "gpu_utilization_percent_mean": 38.333333333333336,
+      "nvidia_smi_vram_mib_peak": 463.0,
+      "slowdown_vs_direct_irrep": 1.0
+    }
+  ]
+}
