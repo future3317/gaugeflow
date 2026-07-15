@@ -1,0 +1,2 @@
+model_seed,fixed_batch_velocity_mse,fixed_batch_endpoint_rms,fixed_train_batch_overfit_passed,unseen_teacher_forced_endpoint_rms,free_running_endpoint_rms,failure_attribution
+5201,0.04977145791053772,0.10854063183069229,False,0.17628057301044464,0.08506461977958679,model_or_loss_cannot_memorize

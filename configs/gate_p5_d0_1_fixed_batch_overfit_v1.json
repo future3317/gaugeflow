@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow P5-D0.1 fixed-batch unconditional coordinate-flow overfit audit v1",
+  "status": "pre_registered_not_started",
+  "purpose": "Determine whether the unchanged P5-D0 unconditional coordinate field can memorize a finite, fixed set of torus flow tangents for one endpoint. This is an audit of the model/loss/substrate, not a new conditional experiment.",
+  "parent_evidence": {
+    "gate_p5_d0_unconditional_coordinate_v1": "failed_frozen_not_modified",
+    "p5_conditional_v1": "failed_frozen_not_modified"
+  },
+  "state": {
+    "endpoint_source": "P5-D0 / P5 v1 endpoint index 0; same atom types, lattice, coordinate target, and torus path",
+    "conditions_removed": ["tensor", "tensor orbit", "harmonic", "condition-present/null mask", "CFG", "endpoint ID"],
+    "endpoint_count": 1,
+    "fixed_atom_types_and_lattice": true
+  },
+  "training": {
+    "conditioning_mode": "unconditional",
+    "hidden_dim": 64,
+    "layers": 2,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "model_seed": 5201,
+    "steps": 5000,
+    "adaptive_extension_or_hyperparameter_search": false,
+    "fixed_examples": {
+      "count": 64,
+      "source_noise_seed": 520101,
+      "time_seed": 520102,
+      "resampling_during_training": false
+    }
+  },
+  "evaluation": {
+    "unseen_examples": {
+      "count": 64,
+      "source_noise_seed": 520201,
+      "time_seed": 520202
+    },
+    "free_running": {
+      "source": "fixed training source index 0",
+      "sampler_steps": 100,
+      "CFG": 0.0
+    }
+  },
+  "pass_criteria": {
+    "fixed_batch_velocity_mse_max": 0.0001,
+    "fixed_batch_endpoint_rms_max": 0.02
+  },
+  "attribution_reference": {
+    "unseen_teacher_forced_endpoint_rms_max": 0.02,
+    "free_running_endpoint_rms_max": 0.02,
+    "rule": "These fixed references classify a successful fixed-batch fit; they do not convert this audit into a P5-D1 authorization."
+  },
+  "decision_rule": "Fixed-batch overfit passes only if both pass_criteria hold after exactly 5,000 updates. If it fails, attribute to model/loss inability to memorize. If it passes but unseen teacher-forced RMS exceeds its reference, attribute to source-coupling generalization. If both teacher-forced sets pass but free-running RMS exceeds its reference, attribute to integration trajectory. This audit never authorizes P5-D1, P3, P4, P6, an oracle, real tensor training, relaxation, DFT, or DFPT.",
+  "prohibited": ["modify_or_rerun_P5_D0", "P5_D1", "P3", "P4", "P6", "harmonic_grid_training", "oracle", "real_tensor_training", "relaxation", "DFT", "DFPT", "posthoc_threshold_change"]
+}
