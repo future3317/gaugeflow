@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "status": "not_passed_p5_c0",
+  "attribution": "fixed_lift_not_qualified",
+  "next_gate_allowed": false,
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_c0_periodic_path_fixed_lift_v1.json",
+  "protocol_sha256": "a6eaa0218af36e49314d97409312ad965a53a24d01fcdd6380bc7810a7e786c5",
+  "audit_manifest_sha256": "97dc11a2d2c23e1e4691d8fc7bb52ed8dfeb0d26f30fd3fe0a21bd3a7ca66b51",
+  "runner_sha256": "43a9f66aae16ae58622dfc5c24d9d9e0308e1b53e226fe5db37eaae32aa4bbaf",
+  "coupling_sha256": "72f2c8a55389d2379d794bd389a7fc45c6d8631c061bbbf3b01f2225e72c9168",
+  "geometry_sha256": "0f04580cee33c7c79ff7050a52f615375353191d7c3768d497a01ee53a0da2a0",
+  "historical_results_modified": false
+}

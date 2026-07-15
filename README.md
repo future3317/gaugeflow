@@ -109,7 +109,7 @@ formula/prototype groups; it is blocked on the corrected full-O(3) v2 build.
 P4 is blocked by the failed P5 precondition. The next real-tensor step remains
 the separately blocked two-oracle full-O(3) v2 qualification.
 
-### P5-D0 coordinate-flow root-cause repair (D0.3--D0.8 completed; not passed)
+### P5-D0/C0 coordinate-flow root-cause repair (completed; not passed)
 
 The fixed-batch P5-D0.1 negative result has a concrete representation/path
 mismatch, not evidence that the coordinate head is disconnected. The old path
@@ -205,6 +205,30 @@ while teacher-forced RMS worsened to `0.1256` and 100-step RMS to `0.2474`
 the fixed D0.7/D0.8 capacity, budget, and thresholds. D0.8 is terminal for
 this authorization: do not start P5-D1, D0.9, harmonic, oracle, or real-tensor
 experiments from these results.
+
+P5-C0 then audited whether the remaining failure was caused by a discontinuous
+periodic target rather than the learned map. On the frozen 64 sources and 33
+times, exact type-preserving coupling found one assignment for every state
+(the endpoint has four distinct elements), but 234 time-adjacent lift changes
+and 112 material branch events. The largest path-consistency jump was `0.4633`;
+a `1e-4` quotient perturbation triggered one lift change with a `0.2500` target
+displacement jump. The repair now solves `(pi*, K*, tau*)` once per
+source--endpoint pair using a complete finite integer search bounded by a known
+feasible cost and `sigma_min(L)`. Training and sampling then stay on that
+universal-cover lift, while PBC edge features remain invariant to arbitrary
+integer lifts; wrapping occurs only for terminal decoding. There is no dynamic
+nearest-image, assignment, translation-alignment, or compatibility fallback in
+this path.
+
+The fixed-lift run improved D0.4 but did not qualify: grid velocity/map MSE are
+`0.003744/0.000843`, teacher-forced translation-quotient RMS is `0.023588`, and
+100-step free-running RMS is `0.130658`, against `0.001/0.02/0.05`; sampling
+failures are zero. Rollout RMS worsens from `0.08355` at one step to `0.13065`
+at 100 steps. Therefore branch switching was a real target defect, but was not
+the sole generator failure; the remaining blocker is learned vector-field fit
+and rollout error accumulation. P5-C0 is frozen at
+`reports/gate_p5_c0_periodic_path_fixed_lift_v1/`. It does not authorize P5-D1,
+harmonic, oracle, or real-tensor experiments.
 
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 

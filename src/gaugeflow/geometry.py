@@ -70,7 +70,14 @@ def periodic_closest_image_edges(
     if shifts.numel() == 0 or not torch.isfinite(shifts).all():
         raise ValueError("shifts must contain at least one finite periodic image")
 
-    fractional_images = (frac_coords[target] - frac_coords[source]).unsqueeze(1) + shifts.unsqueeze(0)
+    # Treat the supplied shell as local offsets around the componentwise
+    # nearest integer image.  This makes the geometry invariant to arbitrary
+    # universal-cover lifts of either endpoint; using the shell as absolute
+    # shifts silently fails once a fixed lift leaves [0,1)^3.
+    relative = frac_coords[target] - frac_coords[source]
+    image_center = -torch.round(relative)
+    candidate_shifts = image_center.unsqueeze(1) + shifts.unsqueeze(0)
+    fractional_images = relative.unsqueeze(1) + candidate_shifts
     cartesian_images = torch.einsum("esi,eij->esj", fractional_images, lattice[batch[source]])
     nearest = cartesian_images.square().sum(dim=-1).argmin(dim=-1)
     rows = torch.arange(source.numel(), device=source.device)
@@ -79,7 +86,7 @@ def periodic_closest_image_edges(
     if bool((distance <= 1e-10).any()):
         raise ValueError("distinct periodic sites have a zero closest-image displacement")
     direction = displacement / distance.unsqueeze(-1)
-    return PeriodicEdges(source, target, displacement, direction, distance, shifts[nearest])
+    return PeriodicEdges(source, target, displacement, direction, distance, candidate_shifts[rows, nearest])
 
 
 class GaussianRadialBasis(torch.nn.Module):

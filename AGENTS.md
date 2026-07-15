@@ -252,6 +252,16 @@ Execute the research program strictly in order:
     expansion without restoring accurate maps. D0.8 is terminal: do not run
     D0.9, change the constraint/bound/weight, or enter P5-D1, harmonic,
     oracle, or real-tensor work from it.
+    P5-C0 is the completed periodic-path representability audit and sole
+    fixed-lift repair. Exact coupling on the frozen 64-source/33-time panel
+    found 234 temporal lift changes, 112 material branch events, no permutation
+    ambiguity, and a maximum quotient target jump of `0.4633`. The runtime now
+    freezes `(pi*,K*,tau*)` once and follows one universal-cover path; PBC edge
+    geometry is invariant to integer lifts and wrapping is terminal only. The
+    run still failed (`0.003744` velocity MSE, `0.023588` teacher RMS,
+    `0.130658` 100-step RMS, zero failures). Preserve the protocol and results
+    under `reports/gate_p5_c0_periodic_path_fixed_lift_v1/`; do not tune or
+    continue to P5-D1, harmonic, oracle, real tensor, relaxation, DFT, or DFPT.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "status": "branch_switching_confirmed",
+  "training_authorized": true,
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_c0_periodic_path_fixed_lift_v1.json",
+  "protocol_sha256": "a6eaa0218af36e49314d97409312ad965a53a24d01fcdd6380bc7810a7e786c5",
+  "runner_sha256": "8d3d430eda86ac82c0794e70a8c51eca0e56eb7089243061222d2d2538bec8c8",
+  "coupling_sha256": "72f2c8a55389d2379d794bd389a7fc45c6d8631c061bbbf3b01f2225e72c9168",
+  "geometry_sha256": "0f04580cee33c7c79ff7050a52f615375353191d7c3768d497a01ee53a0da2a0",
+  "historical_results_modified": false
+}
