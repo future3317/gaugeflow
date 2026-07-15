@@ -933,3 +933,123 @@ class GaugeFlowVectorField(nn.Module):
             )
             outputs = (*outputs, composition_logits)
         return outputs
+
+
+class FourierIntervalEmbedding(nn.Module):
+    """Fourier features for the D0.6 start time and finite rollout interval."""
+
+    def __init__(self, hidden_dim: int, frequencies: int = 8, epsilon: float = 1.0e-4):
+        super().__init__()
+        if frequencies < 1 or epsilon <= 0:
+            raise ValueError("Fourier interval embedding requires positive frequencies and epsilon")
+        self.epsilon = float(epsilon)
+        self.register_buffer("frequencies", math.pi * (2.0 ** torch.arange(frequencies, dtype=torch.float32)))
+        self.network = nn.Sequential(
+            nn.Linear(2 + 4 * frequencies, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
+
+    def forward(self, start: torch.Tensor, end: torch.Tensor) -> torch.Tensor:
+        if start.ndim != 1 or end.shape != start.shape:
+            raise ValueError("flow-map start/end times must be matching rank-one tensors")
+        if bool((start < 0).any() or (end > 1).any() or (end <= start).any()):
+            raise ValueError("flow-map times must satisfy 0 <= start < end <= 1")
+        remaining_start = 1.0 - start + self.epsilon
+        remaining_end = 1.0 - end + self.epsilon
+        gamma_start = -remaining_start.log()
+        gamma_interval = (remaining_start / remaining_end).log()
+        values = torch.stack((gamma_start, gamma_interval), dim=-1)
+        phases = values.unsqueeze(-1) * self.frequencies.to(values)
+        features = torch.cat((values, phases.sin().flatten(1), phases.cos().flatten(1)), dim=-1)
+        return self.network(features)
+
+
+class FlowMapMessageBlock(nn.Module):
+    """Metric-equivariant message update with interval-time FiLM at this block."""
+
+    def __init__(self, hidden_dim: int, vector_dim: int, radial_basis_dim: int):
+        super().__init__()
+        self.message = ResponseMessageLayer(hidden_dim, vector_dim, radial_basis_dim=radial_basis_dim)
+        self.film = nn.Linear(hidden_dim, hidden_dim * 2)
+
+    def forward(
+        self,
+        nodes: torch.Tensor,
+        vectors: torch.Tensor,
+        source: torch.Tensor,
+        target: torch.Tensor,
+        directions: torch.Tensor,
+        radial_basis: torch.Tensor,
+        interval_condition: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        scale, shift = self.film(interval_condition).chunk(2, dim=-1)
+        context = nodes * (1.0 + scale) + shift
+        zero_response = directions.new_zeros((directions.shape[0], 3))
+        return self.message(
+            context, vectors, source, target, directions, zero_response,
+            zero_response, interval_condition, radial_basis,
+        )
+
+
+class QuotientRolloutFlowMap(nn.Module):
+    """D0.6 finite quotient displacement map with no single-time fallback.
+
+    Every message block receives the Fourier embedding of ``(s, u)`` through
+    FiLM. The output is a finite displacement, never an Euler velocity or an
+    endpoint bridge residual.
+    """
+
+    def __init__(
+        self,
+        hidden_dim: int = 64,
+        layers: int = 2,
+        atom_types: int = 119,
+        vector_dim: int | None = None,
+        coordinate_rbf_dim: int = 16,
+        coordinate_rbf_cutoff: float = 8.0,
+        fourier_frequencies: int = 8,
+        time_epsilon: float = 1.0e-4,
+    ):
+        super().__init__()
+        if layers < 1 or coordinate_rbf_dim < 2 or coordinate_rbf_cutoff <= 0:
+            raise ValueError("flow-map backbone requires positive depth and metric RBF settings")
+        self.atom_types = atom_types
+        self.type_input = nn.Linear(atom_types, hidden_dim)
+        self.interval_time = FourierIntervalEmbedding(hidden_dim, fourier_frequencies, time_epsilon)
+        self.coordinate_rbf = GaussianRadialBasis(coordinate_rbf_dim, coordinate_rbf_cutoff)
+        axis = torch.arange(-2, 3, dtype=torch.float32)
+        self.register_buffer("periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False)
+        self.vector_dim = vector_dim or max(16, hidden_dim // 8)
+        self.blocks = nn.ModuleList(
+            [FlowMapMessageBlock(hidden_dim, self.vector_dim, coordinate_rbf_dim) for _ in range(layers)]
+        )
+        self.coordinate_vector_out = nn.Linear(self.vector_dim, 1, bias=False)
+        self.coordinate_edge_out = nn.Sequential(
+            nn.Linear(hidden_dim * 3 + coordinate_rbf_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
+
+    def forward(
+        self,
+        type_state: torch.Tensor,
+        frac_coords: torch.Tensor,
+        lattice_log: torch.Tensor,
+        batch: torch.Tensor,
+        start: torch.Tensor,
+        end: torch.Tensor,
+    ) -> torch.Tensor:
+        lattices = log_vector_to_lattice(lattice_log)
+        geometry = periodic_closest_image_edges(frac_coords, lattices, batch, shifts=self.periodic_shifts)
+        radial_basis = self.coordinate_rbf(geometry.distance)
+        node_interval = self.interval_time(start, end)[batch]
+        nodes = self.type_input(type_state)
+        vectors = nodes.new_zeros((nodes.shape[0], self.vector_dim, 3))
+        for block in self.blocks:
+            nodes, vectors = block(
+                nodes, vectors, geometry.source, geometry.target, geometry.direction,
+                radial_basis, node_interval,
+            )
+        cartesian = self.coordinate_vector_out(vectors.transpose(-1, -2)).squeeze(-1)
+        cartesian = cartesian + GaugeFlowVectorField._edge_displacement_field(
+            nodes, node_interval, geometry.source, geometry.target, geometry.displacement,
+            radial_basis, self.coordinate_edge_out,
+        )
+        return torch.einsum("ni,nij->nj", cartesian, torch.linalg.inv(lattices[batch]))

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "not_passed_quotient_rollout_map",
+  "attribution": "rollout_or_free_running_failure",
+  "next_step_allowed": "none",
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_d0_6_quotient_rollout_corrected_flow_map_v1.json",
+  "protocol_sha256": "2c484df070a19bd60bde7997d9949447b80e959c7865a9b964f837519c5497cb",
+  "runner_sha256": "47aad8bb39890943470d844d9cb19155afc13ba77ee3425ffd62afec1ca075c6",
+  "device": "cuda",
+  "results": "results.csv",
+  "learning_curve": "learning_curve.csv",
+  "time_grid_metrics": "time_grid_metrics.csv",
+  "teacher_forced_rms": "teacher_forced_rms.csv",
+  "historical_results_modified": false
+}

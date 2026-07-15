@@ -1,0 +1,2 @@
+model_seed,fixed_source_count,time_grid_count,all_time_flow_map_mse,teacher_forced_translation_aligned_rms,free_running_translation_aligned_rms,sampling_failures,passed,attribution
+5201,64,33,3.642695327243928e-05,0.04456614463053869,0.23273585736751556,0,False,rollout_or_free_running_failure

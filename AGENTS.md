@@ -218,6 +218,18 @@ Execute the research program strictly in order:
     schedule, loss, or step tuning. Its result is frozen under
     `reports/gate_p5_d0_5_endpoint_bridge_metric_v1/`; no next gate is
     authorized.
+    D0.6 is separately frozen as the requested Quotient Rollout-Corrected
+    Flow Map. It predicts a finite projected map \(\Delta(x_s,s,u)\), receives
+    only the prescribed two Fourier interval variables through FiLM at every
+    message block, and trains exactly `L_on + L_corr` with the first rollout
+    detached. Its adjacent 33-grid on-path map MSE passed strongly (`3.64e-5`,
+    maximum `0.001`), but long-horizon teacher-forced RMS (`0.0446`, maximum
+    `0.02`) and 100-map free-running RMS (`0.2327`, maximum `0.05`) failed,
+    with zero sampling failures. Thus the remaining problem is explicitly
+    cross-horizon composition/rollout stability, not local quotient-map
+    fitting. `reports/gate_p5_d0_6_quotient_rollout_corrected_flow_map_v1/`
+    is the immutable result. Do not alter D0.5 code, tune D0.6, start P5-D1,
+    or work on harmonic/real tensors from this evidence.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

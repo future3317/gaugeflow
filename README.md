@@ -163,6 +163,19 @@ therefore freezes an endpoint-residual-fit failure at
 `reports/gate_p5_d0_5_endpoint_bridge_metric_v1/`; it forbids further tuning
 or any next gate.
 
+D0.6 then tested the requested **Quotient Rollout-Corrected Flow Map** without
+altering D0.5. It predicts a finite quotient displacement from `(s,u)`, uses
+only the prescribed two Fourier interval coordinates via FiLM in every message
+block, and optimizes exactly the on-path map loss plus one detached-rollout
+correction loss. The model now fits local analytic maps extremely well: the
+mean adjacent 33-grid map MSE is `3.64e-5` (limit `0.001`). However, direct
+long-horizon teacher-forced maps still give aligned RMS `0.0446` (limit `0.02`)
+and composition of 100 learned maps gives `0.2327` (limit `0.05`), with zero
+non-finite samples. This cleanly localizes the remaining issue to cross-horizon
+map composition/rollout stability, not local map fitting. D0.6 is frozen at
+`reports/gate_p5_d0_6_quotient_rollout_corrected_flow_map_v1/`; no P5-D1,
+harmonic, or real-tensor work is authorized.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1
