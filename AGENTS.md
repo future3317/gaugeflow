@@ -130,15 +130,26 @@ Execute the research program strictly in order:
    not start Q1 until Q0's manifest passes; if Q1 later passes, propose a
    separate Q2 material panel with distinct proper-SO(3) orbit structures
    before restoring tensor conditioning.
-7. **Gate B -- coherent representative invariance.** At fixed structure and
+7. **Substrate-v2 decoration qualification (new, not a historical rerun).**
+   `configs/substrate_v2_decoration_only_v1.json` isolates the missing physical
+   information in the site decoder: metric PBC distances/RBFs and equivariant
+   vector-state invariants. It uses dense chemical tokens `0..117` and a
+   distinct mask token `118`. It may supply true composition counts only to
+   qualify exact quotient-aware site scoring on fixed geometry; that is not a
+   composition-generator result and must not be silently substituted for A11-Q1.
+   Do not start it until a source-pinned v2 raw build supplies the InN/BN
+   structures and proper automorphisms. Its exact assignment law and
+   permutation checks must pass before proposing a separately versioned
+   model-generated-composition gate.
+8. **Gate B -- coherent representative invariance.** At fixed structure and
    tensor orbit, rotate the input representative and measure velocity
    equivariance, composition/prototype stability, C2ST, MMD, and orbit-error
    distributions.
-8. **Gate C -- small method screen.** Use one frozen structural checkpoint,
+9. **Gate C -- small method screen.** Use one frozen structural checkpoint,
    one sample budget, and at least three seeds. Advance GaugeFlow only if orbit
    fidelity and representative/cell consistency improve without losing
    validity or degrading the high-symmetry subset.
-9. **Gate D -- physical validation.** Freeze the model and ranking rule before
+10. **Gate D -- physical validation.** Freeze the model and ranking rule before
    top-K relaxation, symmetry re-identification, oracle recomputation, and the
    pre-registered DFPT audit.
 
@@ -173,9 +184,14 @@ orbit-tensor-error distributions. See `README.md` and
 - Preserve the distinction between an exact physical zero tensor and the CFG
   null condition. Condition dropout is graphwise and must carry an explicit
   condition-present mask.
-- Keep `direct_irrep` a genuine Cartesian equivariant direct-interaction
-  baseline. Its exact tensor contractions do not require spherical harmonics or
-  Clebsch--Gordan layers; do not weaken it into raw component concatenation.
+- The frozen historical `direct_irrep` has only two Cartesian contractions and
+  is not a complete direct baseline. Do not reinterpret its result. Every new
+  fair direct comparison must use `CompleteDirectIrrepCoupling`, which retains
+  all six `1o` CG paths of `(2x1o + 1x2o + 1x3o) x (0e + 2e)`, and must pass its
+  SO(3)-equivariance regression test.
+- The historical production vocabulary is raw atomic number in 119 logits and
+  has an untrained index zero. Never reuse it in a new categorical protocol:
+  use `vocabulary.py` dense elements `0..117` and internal mask `118`.
 - Use numerically safe norms on quantities that can be exactly zero and test
   both finite forward values and finite backward gradients.
 - Feed path time directly to every message-passing node state. Passing time
@@ -209,6 +225,12 @@ orbit-tensor-error distributions. See `README.md` and
   external model pins and qualification remain blocking.
   Do not start GaugeFlow full training from this preparation, and do not use
   PiezoJet as the primary oracle.
+- Before external-oracle training, the raw source must be rebuilt through
+  `configs/tensororbit_jarvis_v2_raw_build_v1.json` and
+  `scripts/build_tensororbit_v2_raw.py`: release URL/version/hash, units,
+  per-row Voigt convention, explicit exclusions, ID joins, zero counts and
+  target-cache hashes are mandatory. A local inherited cache is not upstream
+  provenance evidence.
 - Gate A oracle-free diagnostics support debugging but cannot replace
   training-set orbit tensor error from a qualified frozen oracle ensemble.
 - Use a species-aware periodic matcher when judging generated endpoint

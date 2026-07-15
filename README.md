@@ -205,6 +205,35 @@ preparation manifest are committed and attested in
 `artifacts/tensororbit_jarvis_v2_oracle_qualification_v1/commit_attestation.json`;
 neither external training nor a GaugeFlow 4,000/499/499 run has started.
 
+### Substrate-v2 correction program (implemented; qualification data not present)
+
+The negative substrate gates exposed implementation defects, not a reason to
+declare conditional crystal generation impossible. A new isolated
+`substrate-v2` implementation repairs the prerequisites without changing any
+historical checkpoint or Gate conclusion:
+
+- chemical elements use dense tokens `0..117` (physical atomic numbers
+  `1..118`); the absorbing mask is the separate token `118`, so no untrained
+  chemical class can be decoded;
+- periodic edges retain closest-image displacement, integer image shift,
+  distance, radial-basis features, and equivariant vector-state invariants;
+- `GeometryAwareSiteScorer` predicts site--species scores from fixed periodic
+  geometry and endpoint ID, with no CIF row index, target species map, tensor,
+  target composition, or target stabilizer;
+- the first qualification uses exact count-constrained, proper-SO(3)
+  residual-automorphism quotient likelihood only as a decoder isolation. Its
+  supplied composition is explicitly non-production and therefore distinct
+  from unstarted A11-Q1;
+- the former direct-irrep baseline is archived as a two-contraction historical
+  control. New comparisons must use the complete six-path e3nn CG baseline in
+  `src/gaugeflow/direct_irrep.py`.
+
+`configs/substrate_v2_decoration_only_v1.json` fixes the new qualification;
+`configs/synthetic_rank3_tensor_control_v1.json` provides a non-cancelling,
+exactly SO(3)-equivariant synthetic rank-three teacher for tensor-plumbing
+tests. Neither has been trained: this worktree has no raw JARVIS data directory,
+so manufacturing a positive score would be scientifically invalid.
+
 Two implementation defects were found before restarting the frozen run:
 
 - The integer-action catalogue incorrectly contained infinite-order shear and
@@ -254,6 +283,10 @@ parity operations remain distinct.
 ## Layout
 
 - src/gaugeflow/tensor.py: tensor conventions, orbit samples, lossless response queries, and directional metrics.
+- src/gaugeflow/vocabulary.py: versioned dense 118-element tokens and separate mask invariant.
+- src/gaugeflow/geometry.py and substrate_v2.py: metric PBC edges and the geometry-aware discrete-decoration scorer.
+- src/gaugeflow/direct_irrep.py: complete six-channel e3nn CG direct baseline for future comparisons.
+- src/gaugeflow/provenance.py: explicit engineering-Voigt conversion and proper-SO(3) Reynolds projection.
 - src/gaugeflow/manifold.py: standalone product crystal flow coordinates.
 - src/gaugeflow/model.py: finite-orbit response encoder, Cartesian direct-irrep control, and graph vector field.
 - src/gaugeflow/data.py: direct CSV/CIF reader using PyG Data/Batch, independent of FlowMM.
@@ -349,6 +382,17 @@ be silently substituted. Training uses square-root inverse-frequency sampling
 across five response strata by default, while validation/test retain their
 natural distributions.
 
+The new raw reconstruction path is
+`configs/tensororbit_jarvis_v2_raw_build_v1.json` plus
+`scripts/build_tensororbit_v2_raw.py`. It requires a downloaded raw-record
+file whose SHA-256 matches a release manifest, explicit per-record Voigt order,
+engineering-shear declaration and units, an exhaustive exclusion map, and the
+formula-grouped candidate split. It writes split CSVs, proper-SO(3)
+Reynolds-projected Cartesian target cache files and build/exclusion manifests.
+The source release itself has not been pinned or supplied yet; the protocol is
+therefore intentionally blocked rather than pretending the old cache proves
+upstream provenance.
+
 ## Status contract
 
 The new package is the active GaugeFlow path. QR canonicalization, raw
@@ -359,10 +403,12 @@ Python module or model checkpoint is imported.
 
 Use ``--conditioning-mode orbit_alignment`` for the active finite-orbit model
 and ``--conditioning-mode direct_irrep`` for the Cartesian direct-interaction
-baseline. The latter uses exact Cartesian tensor contractions (``einsum``),
-not spherical-harmonic evaluation or Clebsch--Gordan layers. Classifier-free
-guidance is trained with ``--condition-dropout`` (default ``0.1``); a zero
-physical tensor remains distinct from the learned null condition.
+baseline in the frozen historical runs. It has only two contractions and is not
+a complete CG baseline. Future fair controls must instantiate
+`CompleteDirectIrrepCoupling`, which preserves all six `1o` pathways from
+`(2x1o + 1x2o + 1x3o) x (0e + 2e)`. Classifier-free guidance is trained with
+``--condition-dropout`` (default ``0.1``); a zero physical tensor remains
+distinct from the learned null condition.
 
 ## Gated experimental execution
 

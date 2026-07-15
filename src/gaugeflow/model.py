@@ -33,8 +33,14 @@ def scatter_mean(value: torch.Tensor, index: torch.Tensor, dim_size: int) -> tor
 def safe_norm(
     value: torch.Tensor, dim: int | tuple[int, ...] | None = None, *, keepdim: bool = False
 ) -> torch.Tensor:
-    """Euclidean norm with a defined zero gradient at the physical zero tensor."""
-    return value.square().sum(dim=dim, keepdim=keepdim).clamp_min(1e-12).sqrt()
+    """Smooth Euclidean norm with a defined zero gradient at a physical zero.
+
+    Adding ``eps^2`` inside the square root avoids the flat, artificial
+    near-zero region introduced by ``sqrt(clamp(sum(x^2), eps))`` while still
+    making the exact zero tensor finite in forward and backward passes.
+    """
+    eps = torch.finfo(value.dtype).eps
+    return (value.square().sum(dim=dim, keepdim=keepdim) + eps * eps).sqrt()
 
 
 def periodic_complete_edges(

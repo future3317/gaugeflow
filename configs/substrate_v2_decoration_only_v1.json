@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow substrate-v2 decoration-only qualification v1",
+  "status": "pre_registered_implementation_pending_data_reconstruction",
+  "objective": "Qualify a geometry-aware categorical site-decoration substrate before any tensor-conditioned flow experiment. This is a new decoder-only control, not a rerun, amendment, or replacement of A5--A11.",
+  "historical_evidence_is_immutable": {
+    "instruction": "Gate A through A11.0 reports, thresholds, checkpoints, data split, and conclusions remain frozen. A11-Q1 remains unstarted and is not changed by this protocol.",
+    "new_protocol_reason": "This protocol supplies the true composition only to isolate whether periodic geometry can make sites chemically distinguishable. That is intentionally different from A11-Q1, where composition must be generated."
+  },
+  "scope": {
+    "state": "fixed true periodic fractional geometry and row-vector lattice; all atom species are absorbing-mask tokens",
+    "condition": "endpoint ID only",
+    "vocabulary": "dense chemical tokens 0..117 for atomic numbers 1..118; internal mask token 118; no untrained chemical class 0",
+    "provided_for_decoder_qualification_only": "true graph-level composition counts",
+    "forbidden_inputs": ["tensor condition", "target species mapping", "CIF row index", "target CIF metadata", "stabilizer from target CIF", "absolute Cartesian origin"],
+    "not_a_production_claim": "Supplying counts is allowed only for this isolated scorer qualification and does not establish unconditional composition generation."
+  },
+  "architectures": [
+    {
+      "id": "legacy_scalar_direction_baseline",
+      "purpose": "Frozen-style scalar reference: normalized local direction messages without metric radial features or vector-state invariants."
+    },
+    {
+      "id": "rbf_metric_scorer",
+      "purpose": "Adds periodic closest-image distance/RBF features to every scalar message."
+    },
+    {
+      "id": "rbf_vector_invariant_scorer",
+      "purpose": "Adds equivariant vector channels; scalar messages consume their dot-product/norm invariants as well as RBF metric geometry."
+    },
+    {
+      "id": "exact_quotient_assignment",
+      "purpose": "Uses the geometry-aware scorer with exact count-constrained assignment likelihood under the proper-SO(3) residual automorphism group."
+    }
+  ],
+  "assignment": {
+    "training_law": "For predicted site--species scores C[i,k] and supplied qualification counts n, enumerate each unique Y in A(n), set S(Y)=sum_i C[i,Y_i], and normalize exp(S(Y)) exactly. The target likelihood is summed only over UniqueOrbit_{Gamma_t}(Y).",
+    "sampling": "assignment-level categorical or Gumbel-max on the complete exact support; repeated species slots are never duplicated.",
+    "automorphism_scope": "proper-SO(3) in the production qualification; full-O(3) is diagnostic only; residual groups must be recomputed from the current mask/reveal state.",
+    "optional_exchangeable_node_noise": "not enabled in v1. Assignment-level Gumbel is the initial exchangeable symmetry-breaking mechanism. Any node noise comparison requires a new versioned protocol."
+  },
+  "data_and_repetitions": {
+    "panel": "InN/BN only after a source-pinned v2 data reconstruction has supplied their canonical structures and proper automorphisms",
+    "seeds": [1701, 1702, 1703],
+    "optimization_budget": "fixed before data reconstruction; no adaptive extension or continuous hyperparameter search",
+    "common_noise": "fixed assignment-level Gumbels are reused for counterfactual endpoint-ID samples"
+  },
+  "primary_metrics": {
+    "proper_so3_quotient_assignment_accuracy_min": 0.95,
+    "quotient_nll": "report per endpoint and seed",
+    "exact_composition_count_required": true,
+    "terminal_masks_max": 0,
+    "species_aware_periodic_structure_match_min": 0.9,
+    "sampling_failures_max": 0,
+    "node_relabeling_complete_assignment_log_probability_error_fp32_max": 0.000002
+  },
+  "required_diagnostics": [
+    "fixed-CIF site accuracy, reported only as a diagnostic",
+    "full-O(3) and proper-SO(3) quotient accuracy",
+    "assignment entropy and probability of every equivalent labeling",
+    "residual automorphism group size along mask reveal states",
+    "distance/RBF ablation and vector-invariant ablation",
+    "periodic edge displacement, closest-image shift, and distance sanity checks",
+    "permutation consistency of scorer logits and full assignment probability vector"
+  ],
+  "promotion_rule": "Only if the exact-quotient geometry-aware scorer meets every primary threshold on all pre-registered seeds may a new, separately versioned composition-generator qualification be proposed. Tensor conditioning is still not restored by this protocol.",
+  "prohibited": ["historical-gate-rerun", "full-4000-499-499-training", "tensor-conditioned-training", "relaxation", "DFT", "DFPT", "silent-vocabulary-remapping"]
+}

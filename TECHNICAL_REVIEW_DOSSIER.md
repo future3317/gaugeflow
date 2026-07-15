@@ -374,6 +374,38 @@ Q0 用 neutral zero score 完成 exact enumeration、count conservation、residu
 
 ## 7. 实验时间线、设计与真实结果
 
+### 7.0 Review 后的 substrate-v2 实质修复（已实现，尚未训练）
+
+这不是把 claim 写小，而是把审查所指向的实现缺口拆成可验证的新基座；
+A5--A11 和 Gate A 的历史结果均不改写。
+
+1. `vocabulary.py` 定义 physical atomic number `1..118` 到 dense chemical
+   token `0..117` 的双向映射，mask 固定为 `118`。因此新 decoder 不再有训练
+   中永远没有 target、却能在 argmax/sample 中被选中的 chemical class 0。
+2. `geometry.py` 保留 PBC closest-image displacement、unit direction、metric
+   distance 和 integer image shift；`GaussianRadialBasis` 将距离进入 scalar
+   message。`substrate_v2.py` 的 vector channels 从 direction 构造，scalar
+   更新显式读取 vector norm/dot invariants。这直接修复 endpoint-ID 时旧
+   scalar type head 没有 bond length/RBF/geometry invariant 的 feature omission。
+3. 首个 `substrate_v2_decoration_only_v1` 仅在 fixed geometry、all-mask type
+   state、endpoint ID、**外供 composition（只为 isolated decoder test）**下用
+   exact proper-SO(3) residual-automorphism quotient assignment NLL；它不能被
+   叙述为 composition generation，也不会替代未启动的 A11-Q1。
+4. 历史 `direct_irrep` 的两个 `einsum` contraction 不是完备 CG baseline。
+   新 `direct_irrep.py` 使用 e3nn `FullTensorProduct`，完整保留
+   `(2x1o+1x2o+1x3o) x (0e+2e)` 到 `1o` 的六个路径；已用随机 rank-3 tensor
+   和 SO(3) rotation 做 shape/equivariance regression test。旧 checkpoint
+   仍只属于历史 gate，不能被重新命名为完整 baseline。
+5. `synthetic_teacher.py` 实现非抵消 synthetic rank-3 control：
+   `(a_j-a_i) exp(-r_ij/r0) n_ij⊗n_ij⊗n_ij`。普通 symmetric-weight directed
+   bond sum 在 `i→j`/`j→i` 下严格抵消，不能作为 tensor teacher；新 teacher
+   通过 PBC/SO(3) 非零与等变测试，但不被称为真实 piezoelectric model。
+6. `provenance.py` 和 `build_tensororbit_v2_raw.py` 使上游 release hash、
+   row-level Voigt order/engineering shear/unit、proper-SO(3) Reynolds
+   projection、zero count、ID join、cache hash、5015-vs-4998 exclusion manifest
+   成为可执行 contract。当前工作树没有原始 JARVIS file/release pin，故不能
+   启动真实训练；这是一项数据输入 blocker，而不是模型负结果的解释替代。
+
 ### 7.1 Gate A v1：四方法最小真实面板（冻结失败）
 
 面板为 8 个固定 train ID：`JVASP-25138, 36991, 272, 33818, 1963, 36313, 16175, 37007`，2--6 atom，包含 exact zero，response norm 从 0 到 1.59898。每个 method 400 step，batch 8，hidden 64，2 layers，8 frames，单 seed。evaluation：8 loss repeat、8 representative repeat、每 condition 4 sample、每 sample 4 atom、8 Euler steps。

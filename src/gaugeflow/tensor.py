@@ -72,7 +72,12 @@ def rotate_rank3(value: torch.Tensor, rotation: torch.Tensor) -> torch.Tensor:
 
 
 def fixed_so3_frames(count: int, *, seed: int = 0, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-    """Deterministic SO(3) quadrature candidates, including identity."""
+    """Deterministic, seeded Haar-Monte-Carlo SO(3) nodes, including identity.
+
+    These nodes are not a deterministic quadrature rule and carry no finite-K
+    integration guarantee.  New alignment protocols must report frame/grid
+    refinement rather than describe this routine as exact quadrature.
+    """
     if count < 1:
         raise ValueError("count must be positive")
     generator = torch.Generator(device="cpu").manual_seed(seed)
@@ -99,6 +104,40 @@ def fixed_lossless_response_probes(*, dtype: torch.dtype = torch.float32) -> tor
         dtype=dtype,
     )
     return torch.nn.functional.normalize(directions, dim=-1)
+
+
+def icosahedral_response_probes(*, dtype: torch.dtype = torch.float32) -> torch.Tensor:
+    """Six antipodal icosahedral axes for a well-conditioned probe basis."""
+    golden = (1.0 + 5.0**0.5) / 2.0
+    directions = torch.tensor(
+        ((0.0, 1.0, golden), (0.0, 1.0, -golden),
+         (1.0, golden, 0.0), (1.0, -golden, 0.0),
+         (golden, 0.0, 1.0), (golden, 0.0, -1.0)),
+        dtype=dtype,
+    )
+    return torch.nn.functional.normalize(directions, dim=-1)
+
+
+def response_probe_measurement_matrix(directions: torch.Tensor) -> torch.Tensor:
+    """Return the Kelvin-coordinate measurement matrix for ``n outer n``.
+
+    Each row maps the six independent strain coordinates to the response of
+    one Cartesian output component.  Its condition number diagnoses probe
+    reconstruction stability independently of any neural network.
+    """
+    if directions.ndim != 2 or directions.shape[-1] != 3:
+        raise ValueError("directions must have shape [probes, 3]")
+    unit = torch.nn.functional.normalize(directions, dim=-1)
+    root2 = 2.0**0.5
+    return torch.stack(
+        (
+            unit[:, 0].square(), unit[:, 1].square(), unit[:, 2].square(),
+            root2 * unit[:, 1] * unit[:, 2],
+            root2 * unit[:, 0] * unit[:, 2],
+            root2 * unit[:, 0] * unit[:, 1],
+        ),
+        dim=-1,
+    )
 
 
 def orbit_irreps(value: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:

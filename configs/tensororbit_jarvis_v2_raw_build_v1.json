@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 raw acquisition and target-cache build v1",
+  "status": "blocked_missing_pinned_raw_release",
+  "purpose": "Reconstruct a source-pinned, independently auditable TensorOrbit-JARVIS-v2 input artifact before any real-tensor training or external oracle qualification.",
+  "required_raw_release_manifest": {
+    "fields": ["source_name", "source_release", "source_url", "downloaded_filename", "download_sha256", "retrieved_utc", "license", "record_schema", "tensor_unit", "source_voigt_order", "engineering_shear"],
+    "not_allowed": ["unhashed_local_csv", "implicit_voigt_order", "implicit_shear_convention", "unlogged_row_exclusion"]
+  },
+  "raw_record_contract": {
+    "required_fields": ["material_id", "cif", "piezo_voigt", "voigt_order", "engineering_shear", "unit"],
+    "tensor": "finite 3x6 piezoelectric matrix; source order and engineering shear are stored per record and canonicalized to [xx,yy,zz,yz,xz,xy]",
+    "target": "Cartesian 3x3x3 tensor symmetric in final two indices, Reynolds-projected over proper crystallographic SO(3) rotations inferred from the source CIF",
+    "cell_convention": "row lattice r=f@L; an integral GL(3,Z) Niggli basis change changes only L/f representation, never the Cartesian tensor directly"
+  },
+  "activation_inputs": {
+    "split": "artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json",
+    "exclusions": "a versioned JSON mapping every raw record not in the 4,998 split to an explicit reason",
+    "expected_counts": {"train": 4000, "val": 499, "test": 499},
+    "zero_tensors": "retained as physical targets and independently counted",
+    "joins": "unique material_id joins between raw records, split, CSV outputs and hashed target-cache files"
+  },
+  "required_outputs": [
+    "data/tensororbit_jarvis_v2/raw_release_manifest.json",
+    "data/tensororbit_jarvis_v2/build_manifest.json",
+    "data/tensororbit_jarvis_v2/exclusions_applied.json",
+    "data/tensororbit_jarvis_v2/piezo/{train,val,test}.csv",
+    "data/tensororbit_jarvis_v2/reynolds_projected_targets/*.pt",
+    "reports/tensororbit_jarvis_v2_raw_build_report.md"
+  ],
+  "promotion_rule": "A successful build is provenance activation only. Formula-group leakage, StructureMatcher near-duplicate audit, response strata audit, and two matched external oracle qualifications remain separate requirements before real-tensor model evaluation.",
+  "prohibited": ["overwrite_tensororbit_jarvis_v1", "overwrite_historical_reports", "GaugeFlow_full_training", "relaxation", "DFT", "DFPT"]
+}
