@@ -207,7 +207,7 @@ def batched_soft_crystal_stabilizer_actions(
 
 
 def proper_stabilizer_rotations(
-    structure: Structure, *, symprec: float = 1e-3
+    structure: Structure, *, symprec: float = 1e-3, max_cartesian_orthogonality_error: float = 1e-2
 ) -> torch.Tensor:
     """Return unique proper Cartesian symmetry rotations of ``structure``.
 
@@ -215,6 +215,8 @@ def proper_stabilizer_rotations(
     intentionally omitted: they are handled by the periodic crystal graph,
     while this set removes only the residual rotational alignment ambiguity.
     """
+    if max_cartesian_orthogonality_error <= 0:
+        raise ValueError("max_cartesian_orthogonality_error must be positive")
     analyzer = SpacegroupAnalyzer(structure, symprec=symprec)
     rotations: list[torch.Tensor] = []
     for operation in analyzer.get_symmetry_operations(cartesian=True):
@@ -222,6 +224,19 @@ def proper_stabilizer_rotations(
         determinant = torch.linalg.det(rotation)
         if not torch.isclose(determinant, torch.ones((), dtype=rotation.dtype), atol=1e-4):
             continue
+        # CIF decimal precision can make an otherwise proper Cartesian point
+        # operation slightly non-orthogonal (for example ~3e-4 in its Gram
+        # residual). A rank-three tensor must never be acted on by that raw
+        # matrix: validate the finite numerical residual, then use its nearest
+        # proper polar factor. Grossly non-orthogonal operations fail rather
+        # than being disguised as symmetry.
+        identity = torch.eye(3, dtype=rotation.dtype, device=rotation.device)
+        error = (rotation @ rotation.T - identity).abs().max()
+        if error > max_cartesian_orthogonality_error:
+            raise ValueError(
+                f"Cartesian symmetry operation has Gram residual {float(error):.3e}, exceeding the declared tolerance"
+            )
+        rotation = proper_polar_rotation(rotation.unsqueeze(0))[0]
         if not any(torch.allclose(rotation, seen, atol=1e-5, rtol=1e-5) for seen in rotations):
             rotations.append(rotation)
     if not rotations:

@@ -389,9 +389,15 @@ file whose SHA-256 matches a release manifest, explicit per-record Voigt order,
 engineering-shear declaration and units, an exhaustive exclusion map, and the
 formula-grouped candidate split. It writes split CSVs, proper-SO(3)
 Reynolds-projected Cartesian target cache files and build/exclusion manifests.
-The source release itself has not been pinned or supplied yet; the protocol is
-therefore intentionally blocked rather than pretending the old cache proves
-upstream provenance.
+The initial v2 raw build is now materialized from a locally pinned GMTNet
+release copy (5,000 records, source commit and file hashes recorded): it covers
+all 4,998 candidate IDs and explicitly excludes two non-parent records. The
+build and formula-disjoint audit pass, with 2,297 exact physical-zero targets.
+Its attestation is
+`artifacts/tensororbit_jarvis_v2_raw_build_v1/attestation.json`. The original
+download timestamp for that local copy is unavailable, so it is not yet a
+direct-release provenance qualification and it does not activate the two
+external oracles or any generator training.
 
 ## Status contract
 

@@ -70,10 +70,27 @@ def main() -> None:
     parser.add_argument("--split", type=Path, default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"))
     parser.add_argument("--exclusions", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=Path("data/tensororbit_jarvis_v2"))
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse only schema- and canonical-Voigt-verified target files from an interrupted identical build.",
+    )
+    parser.add_argument(
+        "--cache-only-new-target-limit",
+        type=int,
+        help="Build at most this many missing target files, then exit without writing an incomplete manifest/CSV.",
+    )
+    parser.add_argument("--cache-only-start-index", type=int, help="Inclusive index in the fixed train/val/test target order.")
+    parser.add_argument("--cache-only-stop-index", type=int, help="Exclusive index in the fixed train/val/test target order.")
     args = parser.parse_args()
     protocol = json.loads((ROOT / args.protocol if not args.protocol.is_absolute() else args.protocol).read_text(encoding="utf-8"))
     if protocol.get("name") != "TensorOrbit-JARVIS-v2 raw acquisition and target-cache build v1":
         raise ValueError("raw builder must be invoked with its matching versioned protocol")
+    if args.cache_only_new_target_limit is not None:
+        if not args.resume or args.cache_only_new_target_limit < 1:
+            raise ValueError("cache-only target limits require --resume and a positive limit")
+    if (args.cache_only_start_index is None) != (args.cache_only_stop_index is None):
+        raise ValueError("cache-only start/stop indices must be supplied together")
     release = json.loads(args.raw_release_manifest.read_text(encoding="utf-8"))
     required_manifest = set(protocol["required_raw_release_manifest"]["fields"])
     missing_manifest = sorted(required_manifest.difference(release))
@@ -113,8 +130,16 @@ def main() -> None:
     rows_by_split: dict[str, list[dict[str, Any]]] = {name: [] for name in split}
     target_index: dict[str, str] = {}
     zero_count = 0
-    for split_name, ids in split.items():
-        for material_id in ids:
+    newly_built = 0
+    ordered_targets = [(split_name, material_id) for split_name, ids in split.items() for material_id in ids]
+    if args.cache_only_start_index is not None:
+        if not args.resume:
+            raise ValueError("cache-only start/stop indices require --resume")
+        start, stop = args.cache_only_start_index, args.cache_only_stop_index
+        if start < 0 or stop <= start or stop > len(ordered_targets):
+            raise ValueError(f"cache-only indices must satisfy 0 <= start < stop <= {len(ordered_targets)}")
+        ordered_targets = ordered_targets[start:stop]
+    for split_name, material_id in ordered_targets:
             record = keyed[material_id]
             missing_fields = sorted(required_record.difference(record))
             if missing_fields:
@@ -125,22 +150,44 @@ def main() -> None:
             canonical = canonicalize_engineering_piezo_voigt(
                 source, record["voigt_order"], engineering_shear=bool(record["engineering_shear"])
             )
-            structure = Structure.from_str(str(record["cif"]), fmt="cif")
-            rotations = proper_stabilizer_rotations(structure)
-            target, residual = reynolds_project_proper_rank3(canonical, rotations)
+            cache_path = _target_cache_file(target_dir, material_id)
+            cached: dict[str, Any] | None = None
+            if args.resume and cache_path.is_file():
+                try:
+                    cached = torch.load(cache_path, map_location="cpu", weights_only=True)
+                except TypeError:
+                    cached = torch.load(cache_path, map_location="cpu")
+                cached_canonical = torch.as_tensor(cached.get("canonical_voigt"), dtype=canonical.dtype)
+                if (
+                    cached.get("schema") != SYMMETRY_TARGET_CACHE_SCHEMA
+                    or cached_canonical.shape != (3, 6)
+                    or not torch.allclose(cached_canonical, canonical, atol=1e-7, rtol=1e-7)
+                ):
+                    raise ValueError(f"{material_id}: existing target cache cannot be resumed safely")
+            if cached is None:
+                structure = Structure.from_str(str(record["cif"]), fmt="cif")
+                rotations = proper_stabilizer_rotations(structure)
+                try:
+                    target, residual = reynolds_project_proper_rank3(canonical, rotations)
+                except ValueError as error:
+                    raise ValueError(f"{material_id}: {error}") from error
+                torch.save(
+                    {
+                        "schema": SYMMETRY_TARGET_CACHE_SCHEMA,
+                        "target": target.cpu(),
+                        "rotations": rotations.cpu(),
+                        "residual": float(residual),
+                        "canonical_voigt": canonical.cpu(),
+                        "rotation_projection": "validated_cartesian_operation_then_proper_polar_factor_v1",
+                    },
+                    cache_path,
+                )
+                newly_built += 1
+            else:
+                target = torch.as_tensor(cached["target"], dtype=canonical.dtype)
+                residual = torch.as_tensor(cached["residual"], dtype=canonical.dtype)
             if not torch.allclose(target, target.transpose(-1, -2), atol=1e-6, rtol=1e-6):
                 raise RuntimeError(f"{material_id} projection lost strain-index symmetry")
-            cache_path = _target_cache_file(target_dir, material_id)
-            torch.save(
-                {
-                    "schema": SYMMETRY_TARGET_CACHE_SCHEMA,
-                    "target": target.cpu(),
-                    "rotations": rotations.cpu(),
-                    "residual": float(residual),
-                    "canonical_voigt": canonical.cpu(),
-                },
-                cache_path,
-            )
             target_index[material_id] = sha256_file(cache_path)
             zero_count += int(torch.count_nonzero(target) == 0)
             rows_by_split[split_name].append(
@@ -155,6 +202,22 @@ def main() -> None:
                     "raw_record_sha256": canonical_hash(record),
                 }
             )
+            if args.cache_only_new_target_limit is not None and newly_built >= args.cache_only_new_target_limit:
+                print(json.dumps({"status": "partial_target_cache_complete", "newly_built": newly_built}, indent=2))
+                return
+    if args.cache_only_start_index is not None:
+        print(
+            json.dumps(
+                {
+                    "status": "partial_target_cache_range_complete",
+                    "start": args.cache_only_start_index,
+                    "stop": args.cache_only_stop_index,
+                    "newly_built": newly_built,
+                },
+                indent=2,
+            )
+        )
+        return
     source_files = {}
     for name, rows in rows_by_split.items():
         destination = csv_dir / f"{name}.csv"

@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "status": "raw_build_audit_passed_oracle_still_unqualified",
+  "split_counts": {
+    "train": 4000,
+    "val": 499,
+    "test": 499
+  },
+  "formula_overlap": {
+    "train_val": [],
+    "train_test": [],
+    "val_test": []
+  },
+  "physical_zero_counts": {
+    "train": 1824,
+    "val": 231,
+    "test": 242
+  },
+  "response_strata": {
+    "train": {
+      "0": 1826,
+      "2": 1053,
+      "3": 441,
+      "1": 246,
+      "4": 434
+    },
+    "val": {
+      "2": 143,
+      "3": 45,
+      "1": 30,
+      "4": 50,
+      "0": 231
+    },
+    "test": {
+      "3": 46,
+      "2": 119,
+      "0": 242,
+      "4": 54,
+      "1": 38
+    }
+  },
+  "rows_sha256": "5edc737e1b9e845c88905a66eb077b3eeee271e5dba6f072aca8632620efdcce",
+  "build_manifest_sha256": "3de48681d5837fe9de94d88632e00839fba34e54e67ece6805538f818b8b5672",
+  "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+}

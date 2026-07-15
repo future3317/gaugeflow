@@ -406,6 +406,26 @@ A5--A11 和 Gate A 的历史结果均不改写。
    成为可执行 contract。当前工作树没有原始 JARVIS file/release pin，故不能
    启动真实训练；这是一项数据输入 blocker，而不是模型负结果的解释替代。
 
+### 7.1 v2 raw build 真实执行结果（不等于 oracle/generator qualification）
+
+之后在本机发现并独立读取 GMTNet release 的 `jarvis_diele_piezo.pkl` 数据副本。
+GaugeFlow 没有 import PiezoJet module、没有使用 PiezoJet weights；只将该 pkl 作为
+可哈希原始 input，通过自己的 exporter、converter、Reynolds projector 和 audit 重建。
+
+- source copy: 5,000 条，GMTNet source commit
+  `7a606a459ee48a320ed38450e391811fb43d5e19`，pkl SHA-256
+  `2a57e081f0072b2ac7fca7769095adcded1d299d2cd971db5c93fd25eb66929d`；
+- v2 4,998 IDs 全部 join，`JVASP-44417`/`JVASP-8639` 以
+  `absent_from_frozen_tensororbit_4998_parent_population` 显式排除；
+- build 输出 4,000/499/499 CSV 和 4,998 Reynolds-projected Cartesian cache，
+  cache index SHA-256 为
+  `b2c06198dc2efa578e1699546c8e605c77705953fe306ef950a15728bf63b1f2`；
+- exact physical zero target 为 2,297；formula overlap 为 0；逐条 final-index
+  symmetry、proper-SO(3) invariance、Voigt round-trip 和 ID join 均通过；
+- raw source copy 的原始 download timestamp 不可得，故它是 **local pinned source
+  copy**，不是已经完成 direct-official-download provenance 的最终资格。它同样
+  不等于 GMTNet/SE(3) oracle qualification，更不等于 GaugeFlow 生成成功。
+
 ### 7.1 Gate A v1：四方法最小真实面板（冻结失败）
 
 面板为 8 个固定 train ID：`JVASP-25138, 36991, 272, 33818, 1963, 36313, 16175, 37007`，2--6 atom，包含 exact zero，response norm 从 0 到 1.59898。每个 method 400 step，batch 8，hidden 64，2 layers，8 frames，单 seed。evaluation：8 loss repeat、8 representative repeat、每 condition 4 sample、每 sample 4 atom、8 Euler steps。

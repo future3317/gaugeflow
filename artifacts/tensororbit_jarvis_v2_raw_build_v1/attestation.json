@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 raw-build attestation v1",
+  "status": "raw_build_audit_passed_oracle_still_unqualified",
+  "source": {
+    "source_name": "GMTNet JARVIS dielectric/piezo release local pinned copy",
+    "source_release": "GMTNet source commit 7a606a459ee48a320ed38450e391811fb43d5e19",
+    "source_url": "https://github.com/divelab/AIRS",
+    "source_copy_status": "local_pinned_copy_direct_download_timestamp_unavailable",
+    "source_pickle_sha256": "2a57e081f0072b2ac7fca7769095adcded1d299d2cd971db5c93fd25eb66929d",
+    "download_sha256": "492278c8173cd21f6d7f4ca6ac8ee3e5da72fd8386fccb6bb2d1aae136ecd068",
+    "record_count": 5000,
+    "tensor_unit": "C/m^2",
+    "source_voigt_order": [
+      "xx",
+      "yy",
+      "zz",
+      "xy",
+      "yz",
+      "xz"
+    ],
+    "engineering_shear": true,
+    "frozen_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "build": {
+    "protocol_sha256": "c150cdf758447fdc46daae0aba0d4ab54b63acd22b4218de3ac0486385a2d63b",
+    "raw_release_manifest_sha256": "337b2b194a8de36ccd5dab661b14a9f9e06d67c7bbafcc0a8a537fd87f21b226",
+    "raw_records_sha256": "492278c8173cd21f6d7f4ca6ac8ee3e5da72fd8386fccb6bb2d1aae136ecd068",
+    "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd",
+    "split_counts": {
+      "train": 4000,
+      "val": 499,
+      "test": 499
+    },
+    "excluded_record_count": 2,
+    "exclusions_sha256": "670730e31b3c85fb595b2fb0f9b43a90bfcef6c54ce93c1bb5e02c9634365066",
+    "output_csv_sha256": {
+      "train": "e772c998245823962970bdcf3dbd30a367575e09bcaa5dcb168d15df9da3fd46",
+      "val": "921850ebcd751a833d2836c7606ae066fb27b055996735193fe39a87fc21d002",
+      "test": "8c28a052377c54acbd1efa2facde285385fb209cbf82108a01e855efdba0705e"
+    },
+    "target_cache_sha256": "b2c06198dc2efa578e1699546c8e605c77705953fe306ef950a15728bf63b1f2",
+    "physical_zero_target_count": 2297,
+    "tensor_convention": "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> proper-SO(3) Reynolds projection"
+  },
+  "exclusions": {
+    "JVASP-44417": "absent_from_frozen_tensororbit_4998_parent_population",
+    "JVASP-8639": "absent_from_frozen_tensororbit_4998_parent_population"
+  },
+  "audit": {
+    "schema": 1,
+    "status": "raw_build_audit_passed_oracle_still_unqualified",
+    "split_counts": {
+      "train": 4000,
+      "val": 499,
+      "test": 499
+    },
+    "formula_overlap": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    },
+    "physical_zero_counts": {
+      "train": 1824,
+      "val": 231,
+      "test": 242
+    },
+    "response_strata": {
+      "train": {
+        "0": 1826,
+        "2": 1053,
+        "3": 441,
+        "1": 246,
+        "4": 434
+      },
+      "val": {
+        "2": 143,
+        "3": 45,
+        "1": 30,
+        "4": 50,
+        "0": 231
+      },
+      "test": {
+        "3": 46,
+        "2": 119,
+        "0": 242,
+        "4": 54,
+        "1": 38
+      }
+    },
+    "rows_sha256": "5edc737e1b9e845c88905a66eb077b3eeee271e5dba6f072aca8632620efdcce",
+    "build_manifest_sha256": "3de48681d5837fe9de94d88632e00839fba34e54e67ece6805538f818b8b5672",
+    "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "limitations": [
+    "The raw source is a locally pinned GMTNet release copy; its direct-download timestamp is unavailable.",
+    "This attestation does not qualify either external tensor oracle or any GaugeFlow generation result."
+  ]
+}
