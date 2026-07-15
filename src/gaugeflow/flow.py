@@ -131,6 +131,34 @@ class RiemannianCrystalFlowMatcher:
             return loss, loss / normalizer
         return loss, loss
 
+    @staticmethod
+    def _forward_model(
+        model,
+        state: CrystalFlowState,
+        batch,
+        time: torch.Tensor,
+        *,
+        return_uncertainty: bool = False,
+    ):
+        """Call either the tensor-conditioned or truly unconditional backbone.
+
+        P5-D0 must not smuggle a zero tensor, CFG mask, or endpoint identifier
+        into a nominally unconditional qualification.  Its model therefore has
+        a shorter forward signature and this dispatcher preserves the original
+        interface for every historical conditional protocol.
+        """
+        if getattr(model, "conditioning_mode", None) == "unconditional":
+            return model(
+                state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+                return_uncertainty=return_uncertainty,
+            )
+        return model(
+            state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
+            batch.piezo_irreps, batch.condition_present,
+            getattr(batch, "condition_orbit", None),
+            return_uncertainty=return_uncertainty,
+        )
+
     def loss(
         self,
         model,
@@ -159,6 +187,10 @@ class RiemannianCrystalFlowMatcher:
             raise ValueError("identification_temperature must be positive")
         if identification_early_sigma is not None and identification_early_sigma <= 0:
             raise ValueError("identification_early_sigma must be positive when set")
+        if getattr(model, "conditioning_mode", None) == "unconditional" and (
+            counterfactual_weight > 0 or identification_weight > 0
+        ):
+            raise ValueError("unconditional flow cannot receive condition-ranking losses")
         target = self.target_state(batch)
         base = self.random_state(batch)
         target = self._coupled_target(target, base, batch)
@@ -174,11 +206,8 @@ class RiemannianCrystalFlowMatcher:
             frac_coords=wrap01(base.frac_coords + node_time * velocity_coord),
             lattice_log=base.lattice_log + time.unsqueeze(-1) * velocity_lattice,
         )
-        outputs = model(
-            state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
-            batch.piezo_irreps, batch.condition_present,
-            getattr(batch, "condition_orbit", None),
-            return_uncertainty=self.uncertainty_weight > 0,
+        outputs = self._forward_model(
+            model, state, batch, time, return_uncertainty=self.uncertainty_weight > 0
         )
         pred_type, pred_coord, pred_lattice, alignment = outputs[:4]
         pred_type = self._type_velocity(pred_type)
@@ -360,11 +389,8 @@ class RiemannianCrystalFlowMatcher:
         alignment_entropy = state.lattice_log.new_zeros((state.lattice_log.shape[0],))
         for step in range(steps):
             time = torch.full((batch.num_graphs,), step / steps, device=batch.frac_coords.device)
-            conditional_outputs = model(
-                state.type_state, state.frac_coords, state.lattice_log, batch.batch, time,
-                batch.piezo_irreps, batch.condition_present,
-                getattr(batch, "condition_orbit", None),
-                return_uncertainty=return_uncertainty,
+            conditional_outputs = self._forward_model(
+                model, state, batch, time, return_uncertainty=return_uncertainty
             )
             conditional_raw = conditional_outputs[:3]
             conditional = (

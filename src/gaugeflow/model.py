@@ -702,11 +702,17 @@ class GaugeFlowVectorField(nn.Module):
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.time_input = nn.Sequential(nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.conditioning_mode = conditioning_mode
-        self.response = (
-            EndpointIdConditionEncoder(hidden_dim)
-            if conditioning_mode == "endpoint_id"
-            else OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
-        )
+        if conditioning_mode == "unconditional":
+            # P5-D0 is deliberately a no-condition substrate qualification.
+            # Do not construct a tensor, harmonic, null-token, or endpoint-ID
+            # encoder here: its forward interface receives no condition input.
+            self.response = None
+        else:
+            self.response = (
+                EndpointIdConditionEncoder(hidden_dim)
+                if conditioning_mode == "endpoint_id"
+                else OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
+            )
         axis = torch.arange(-2, 3, dtype=torch.float32)
         self.register_buffer(
             "periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False
@@ -750,8 +756,8 @@ class GaugeFlowVectorField(nn.Module):
         lattice_log: torch.Tensor,
         batch: torch.Tensor,
         time: torch.Tensor,
-        piezo_irreps: torch.Tensor,
-        condition_present: torch.Tensor,
+        piezo_irreps: torch.Tensor | None = None,
+        condition_present: torch.Tensor | None = None,
         condition_orbit: torch.Tensor | None = None,
         return_uncertainty: bool = False,
         return_condition_diagnostics: bool = False,
@@ -773,13 +779,26 @@ class GaugeFlowVectorField(nn.Module):
         node_time_embedding = self.time_input(time.unsqueeze(-1))[batch]
         vectors = nodes.new_zeros((nodes.shape[0], self.vector_dim, 3))
         graph_seed = scatter_mean(nodes + node_time_embedding, batch, lattices.shape[0])
-        response_outputs = self.response(
-            piezo_irreps, condition_present, graph_seed, directions, edge_graph,
-            frac_coords, lattices, batch, type_state, condition_orbit,
-            return_diagnostics=return_condition_diagnostics, time=time,
-        )
-        graph_condition, edge_response, edge_auxiliary, alignment = response_outputs[:4]
-        condition_diagnostics = response_outputs[4] if return_condition_diagnostics else None
+        if self.conditioning_mode == "unconditional":
+            if piezo_irreps is not None or condition_present is not None or condition_orbit is not None:
+                raise ValueError("unconditional mode must not receive tensor, mask, or condition-orbit inputs")
+            graph_condition = nodes.new_zeros((lattices.shape[0], nodes.shape[-1]))
+            edge_response = directions.new_zeros((directions.shape[0], 3))
+            edge_auxiliary = directions.new_zeros((directions.shape[0], 3))
+            alignment = torch.ones((lattices.shape[0], 1), dtype=nodes.dtype, device=nodes.device)
+            condition_diagnostics = None
+        else:
+            if piezo_irreps is None or condition_present is None:
+                raise ValueError("conditional modes require piezo_irreps and condition_present")
+            if self.response is None:
+                raise RuntimeError("conditional response encoder was not constructed")
+            response_outputs = self.response(
+                piezo_irreps, condition_present, graph_seed, directions, edge_graph,
+                frac_coords, lattices, batch, type_state, condition_orbit,
+                return_diagnostics=return_condition_diagnostics, time=time,
+            )
+            graph_condition, edge_response, edge_auxiliary, alignment = response_outputs[:4]
+            condition_diagnostics = response_outputs[4] if return_condition_diagnostics else None
 
         if self.conditional_control == "original_injection":
             nodes = nodes + node_time_embedding + graph_condition[batch]

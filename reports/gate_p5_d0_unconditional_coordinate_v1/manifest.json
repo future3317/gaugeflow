@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "not_passed_unconditional_coordinate_substrate",
+  "failure_attribution": "training_fit_failure",
+  "p5_d1_allowed": false,
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_d0_unconditional_coordinate_v1.json",
+  "protocol_sha256": "b9f5e4fd7636f72173ef2bb742ccf166318e73e64da241fa83ee6fd42612eb89",
+  "runner_sha256": "a22691af20e310207481dbce9a34b2ee93c0f8163f1b54a66dba206b0a1b6597",
+  "device": "cuda",
+  "teacher_so3_equivariance_max_error": 2.980232238769531e-07,
+  "all_pre_registered_seed_criteria_pass": false,
+  "historical_p5_modified": false,
+  "results": "results.csv"
+}
