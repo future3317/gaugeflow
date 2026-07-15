@@ -126,7 +126,7 @@ def test_gate_a_conditioning_controls_have_finite_objectives():
              condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=2),
     ])
     matcher = RiemannianCrystalFlowMatcher()
-    for mode in ("raw_tensor", "direct_irrep", "stabilizer_pooling", "orbit_alignment"):
+    for mode in ("raw_tensor", "direct_irrep", "invariant_only_v1", "stabilizer_pooling", "orbit_alignment"):
         model = GaugeFlowVectorField(hidden_dim=32, layers=1, orbit_frames=3, conditioning_mode=mode)
         assert torch.isfinite(matcher.loss(model, batch)["loss"]), mode
 

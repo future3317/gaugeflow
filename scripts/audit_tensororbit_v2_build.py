@@ -12,7 +12,12 @@ import pandas as pd
 import torch
 from pymatgen.core import Structure
 
-from gaugeflow.data import RESPONSE_NORM_BOUNDS, SYMMETRY_TARGET_CACHE_SCHEMA, _target_cache_file
+from gaugeflow.data import (
+    FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA,
+    RESPONSE_NORM_BOUNDS,
+    SYMMETRY_TARGET_CACHE_SCHEMA,
+    _target_cache_file,
+)
 from gaugeflow.tensor import piezo_cartesian_to_voigt, piezo_voigt_to_cartesian, rotate_rank3
 
 
@@ -48,6 +53,14 @@ def main() -> None:
     output_dir = ROOT / args.output_dir if not args.output_dir.is_absolute() else args.output_dir
     attestation_path = ROOT / args.attestation if not args.attestation.is_absolute() else args.attestation
     split = json.loads(split_path.read_text(encoding="utf-8"))
+    manifest_path = build_dir / "build_manifest.json"
+    build_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected_schema = int(build_manifest.get("target_cache_schema", SYMMETRY_TARGET_CACHE_SCHEMA))
+    compatibility_scope = str(build_manifest.get("crystal_compatibility_group", "legacy_proper_so3"))
+    if expected_schema not in {SYMMETRY_TARGET_CACHE_SCHEMA, FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA}:
+        raise ValueError(f"Unsupported target cache schema {expected_schema}")
+    if compatibility_scope not in {"legacy_proper_so3", "full_o3_crystal_point_group"}:
+        raise ValueError(f"Unknown crystal compatibility scope {compatibility_scope}")
     frames = []
     for name in ("train", "val", "test"):
         frame = pd.read_csv(build_dir / "piezo" / f"{name}.csv")
@@ -69,8 +82,14 @@ def main() -> None:
         cache_path = _target_cache_file(build_dir / "reynolds_projected_targets", material_id)
         payload = torch.load(cache_path, map_location="cpu", weights_only=True)
         target, rotations = torch.as_tensor(payload["target"]), torch.as_tensor(payload["rotations"])
-        if payload.get("schema") != SYMMETRY_TARGET_CACHE_SCHEMA or target.shape != (3, 3, 3):
+        if payload.get("schema") != expected_schema or target.shape != (3, 3, 3):
             raise ValueError(f"{material_id}: cache schema/target shape is invalid")
+        if compatibility_scope == "full_o3_crystal_point_group":
+            if payload.get("crystal_compatibility_group") != compatibility_scope:
+                raise ValueError(f"{material_id}: cache did not record full-O(3) compatibility")
+            determinant = torch.linalg.det(rotations)
+            if not torch.allclose(determinant.abs(), torch.ones_like(determinant), atol=1e-4, rtol=1e-4):
+                raise ValueError(f"{material_id}: full-O(3) cache contains a non-orthogonal operation")
         symmetry_error = float((target - target.transpose(-1, -2)).abs().max())
         reynolds_error = float((rotate_rank3(target, rotations) - target).abs().max())
         voigt_error = float((piezo_voigt_to_cartesian(piezo_cartesian_to_voigt(target)) - target).abs().max())
@@ -108,6 +127,8 @@ def main() -> None:
         "response_strata": {name: dict(Counter(row["response_stratum"] for row in rows if row["split"] == name)) for name in ("train", "val", "test")},
         "rows_sha256": sha256_file(rows_path),
         "build_manifest_sha256": sha256_file(build_dir / "build_manifest.json"),
+        "target_cache_schema": expected_schema,
+        "crystal_compatibility_group": compatibility_scope,
         "split_sha256": sha256_file(split_path),
     }
     (output_dir / "raw_build_activation_audit.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -119,7 +140,6 @@ def main() -> None:
         encoding="utf-8",
     )
     source_release = json.loads((build_dir / "raw_release_manifest.json").read_text(encoding="utf-8"))
-    build_manifest = json.loads((build_dir / "build_manifest.json").read_text(encoding="utf-8"))
     exclusions = json.loads((build_dir / "exclusions_applied.json").read_text(encoding="utf-8"))
     attestation = {
         "schema": 1,

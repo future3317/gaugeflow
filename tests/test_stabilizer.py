@@ -4,6 +4,7 @@ import torch
 
 from gaugeflow.stabilizer import (
     batched_soft_crystal_stabilizer_actions,
+    crystal_point_group_operations,
     observed_tensor_stabilizer_rotations,
     proper_unimodular_candidates,
     proper_stabilizer_rotations,
@@ -21,6 +22,15 @@ def test_proper_stabilizer_excludes_improper_operations():
     assert rotations.shape[-2:] == (3, 3)
     assert torch.allclose(determinants, torch.ones_like(determinants), atol=1e-4)
     assert any(torch.allclose(rotation, torch.eye(3), atol=1e-5) for rotation in rotations)
+
+
+def test_full_crystal_point_group_retains_improper_operations_for_compatibility_only():
+    structure = Structure(Lattice.cubic(4.0), ["Si"], [[0.0, 0.0, 0.0]])
+    operations = crystal_point_group_operations(structure, proper_only=False)
+    determinants = torch.linalg.det(operations)
+    assert torch.allclose(determinants.abs(), torch.ones_like(determinants), atol=1e-4)
+    assert bool((determinants < 0).any())
+    assert operations.shape[0] > proper_stabilizer_rotations(structure).shape[0]
 
 
 def test_observed_tensor_stabilizer_keeps_only_response_preserving_rotations():

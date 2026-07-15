@@ -96,7 +96,10 @@ def main() -> None:
     parser.add_argument("--hidden-dim", type=int, default=256)
     parser.add_argument("--layers", type=int, default=4)
     parser.add_argument("--orbit-frames", type=int, default=24)
-    parser.add_argument("--conditioning-mode", choices=("raw_tensor", "direct_irrep", "stabilizer_pooling", "orbit_alignment", "double_coset"), default="orbit_alignment",
+    parser.add_argument("--conditioning-mode", choices=(
+                            "raw_tensor", "direct_irrep", "direct_irrep_complete_v1", "invariant_only_v1",
+                            "stabilizer_pooling", "orbit_alignment", "harmonic_alignment_v1", "double_coset"
+                        ), default="orbit_alignment",
                         help="Raw lab-frame control, Cartesian direct-irrep control, orbit pooling, inference-consistent alignment, or legacy alias")
     parser.add_argument("--max-examples", type=int,
                         help="Use a deterministic real-data diagnostic subset; intended for Gate A only")
@@ -233,7 +236,7 @@ def main() -> None:
             batch = batch.to(args.device)
         if not records_are_normalized:
             batch.piezo_irreps = normalize_isotypic(batch.piezo_irreps, scales.to(args.device))
-        if args.conditioning_mode == "direct_irrep" and args.direct_irrep_random_frame:
+        if args.conditioning_mode in {"direct_irrep", "direct_irrep_complete_v1"} and args.direct_irrep_random_frame:
             batch.piezo_irreps = randomize_tensor_orbit_representative(batch.piezo_irreps)
         batch.condition_present = apply_condition_dropout(
             batch.condition_present, args.condition_dropout

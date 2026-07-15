@@ -19,7 +19,15 @@ from .unit_cell import niggli_reduce_structure_with_transform
 
 
 RESPONSE_NORM_BOUNDS = (0.0, 0.05, 0.5, 1.0)
+# Schema 2 is the immutable historical v1 cache contract.  Schema 3 records a
+# full-O(3) crystal-compatibility projection for the prospective v2 rebuild.
+# Keep both readable: accepting a cache is not permission to substitute it for
+# a frozen Gate-A split.
 SYMMETRY_TARGET_CACHE_SCHEMA = 2
+FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA = 3
+SUPPORTED_SYMMETRY_TARGET_CACHE_SCHEMAS = frozenset(
+    (SYMMETRY_TARGET_CACHE_SCHEMA, FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA)
+)
 PREPROCESSED_CRYSTAL_CACHE_SCHEMA = 1
 TENSOR_CONVENTION_VERSION = "gaugeflow-cartesian-ijk=ikj-engineering-shear-v1"
 
@@ -165,7 +173,7 @@ class PiezoCrystalDataset(Dataset):
                 payload: Any = torch.load(cache_file, map_location="cpu", weights_only=True)
             except TypeError:  # PyTorch before weights_only was added.
                 payload = torch.load(cache_file, map_location="cpu")
-            if not isinstance(payload, dict) or payload.get("schema") != SYMMETRY_TARGET_CACHE_SCHEMA:
+            if not isinstance(payload, dict) or payload.get("schema") not in SUPPORTED_SYMMETRY_TARGET_CACHE_SCHEMAS:
                 raise ValueError(f"Unexpected TensorOrbit target-cache payload in {cache_file}")
             tensor = torch.as_tensor(payload.get("target"), dtype=torch.float32)
             if tensor.shape != (3, 3, 3) or not torch.isfinite(tensor).all():

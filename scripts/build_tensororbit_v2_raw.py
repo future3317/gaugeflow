@@ -20,9 +20,17 @@ import pandas as pd
 import torch
 from pymatgen.core import Structure
 
-from gaugeflow.data import SYMMETRY_TARGET_CACHE_SCHEMA, _target_cache_file
-from gaugeflow.provenance import canonicalize_engineering_piezo_voigt, reynolds_project_proper_rank3
-from gaugeflow.stabilizer import proper_stabilizer_rotations
+from gaugeflow.data import (
+    FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA,
+    SYMMETRY_TARGET_CACHE_SCHEMA,
+    _target_cache_file,
+)
+from gaugeflow.provenance import (
+    canonicalize_engineering_piezo_voigt,
+    reynolds_project_crystal_rank3,
+    reynolds_project_proper_rank3,
+)
+from gaugeflow.stabilizer import crystal_point_group_operations, proper_stabilizer_rotations
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,7 +77,7 @@ def main() -> None:
     parser.add_argument("--raw-release-manifest", type=Path, required=True)
     parser.add_argument("--split", type=Path, default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"))
     parser.add_argument("--exclusions", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, default=Path("data/tensororbit_jarvis_v2"))
+    parser.add_argument("--output-dir", type=Path, help="Override the protocol-declared output directory.")
     parser.add_argument(
         "--resume",
         action="store_true",
@@ -84,8 +92,22 @@ def main() -> None:
     parser.add_argument("--cache-only-stop-index", type=int, help="Exclusive index in the fixed train/val/test target order.")
     args = parser.parse_args()
     protocol = json.loads((ROOT / args.protocol if not args.protocol.is_absolute() else args.protocol).read_text(encoding="utf-8"))
-    if protocol.get("name") != "TensorOrbit-JARVIS-v2 raw acquisition and target-cache build v1":
+    protocol_name = protocol.get("name")
+    if protocol_name not in {
+        "TensorOrbit-JARVIS-v2 raw acquisition and target-cache build v1",
+        "TensorOrbit-JARVIS-v2 raw acquisition and full-O(3) target-cache build v2",
+    }:
         raise ValueError("raw builder must be invoked with its matching versioned protocol")
+    compatibility_scope = str(protocol.get("crystal_compatibility_group", "legacy_proper_so3"))
+    cache_schema = int(protocol.get("target_cache_schema", SYMMETRY_TARGET_CACHE_SCHEMA))
+    if compatibility_scope == "legacy_proper_so3":
+        if cache_schema != SYMMETRY_TARGET_CACHE_SCHEMA:
+            raise ValueError("legacy proper-SO(3) builds must retain schema 2")
+    elif compatibility_scope == "full_o3_crystal_point_group":
+        if cache_schema != FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA:
+            raise ValueError("full-O(3) crystal builds must use schema 3")
+    else:
+        raise ValueError("crystal_compatibility_group must be legacy_proper_so3 or full_o3_crystal_point_group")
     if args.cache_only_new_target_limit is not None:
         if not args.resume or args.cache_only_new_target_limit < 1:
             raise ValueError("cache-only target limits require --resume and a positive limit")
@@ -122,7 +144,9 @@ def main() -> None:
         stale = sorted(set(exclusions) - set(unexpected))
         raise ValueError(f"exclusion coverage mismatch; missing={omitted[:5]}, stale={stale[:5]}")
 
-    output_dir = ROOT / args.output_dir if not args.output_dir.is_absolute() else args.output_dir
+    configured_output = Path(str(protocol.get("default_output_dir", "data/tensororbit_jarvis_v2")))
+    requested_output = args.output_dir or configured_output
+    output_dir = ROOT / requested_output if not requested_output.is_absolute() else requested_output
     csv_dir, target_dir = output_dir / "piezo", output_dir / "reynolds_projected_targets"
     csv_dir.mkdir(parents=True, exist_ok=True)
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -159,26 +183,34 @@ def main() -> None:
                     cached = torch.load(cache_path, map_location="cpu")
                 cached_canonical = torch.as_tensor(cached.get("canonical_voigt"), dtype=canonical.dtype)
                 if (
-                    cached.get("schema") != SYMMETRY_TARGET_CACHE_SCHEMA
+                    cached.get("schema") != cache_schema
                     or cached_canonical.shape != (3, 6)
                     or not torch.allclose(cached_canonical, canonical, atol=1e-7, rtol=1e-7)
                 ):
                     raise ValueError(f"{material_id}: existing target cache cannot be resumed safely")
             if cached is None:
                 structure = Structure.from_str(str(record["cif"]), fmt="cif")
-                rotations = proper_stabilizer_rotations(structure)
                 try:
-                    target, residual = reynolds_project_proper_rank3(canonical, rotations)
+                    if compatibility_scope == "full_o3_crystal_point_group":
+                        rotations = crystal_point_group_operations(structure, proper_only=False)
+                        target, residual = reynolds_project_crystal_rank3(canonical, rotations)
+                        projection_label = "full_o3_crystal_point_group_reynolds_v2"
+                    else:
+                        rotations = proper_stabilizer_rotations(structure)
+                        target, residual = reynolds_project_proper_rank3(canonical, rotations)
+                        projection_label = "legacy_proper_so3_reynolds_v1"
                 except ValueError as error:
                     raise ValueError(f"{material_id}: {error}") from error
                 torch.save(
                     {
-                        "schema": SYMMETRY_TARGET_CACHE_SCHEMA,
+                        "schema": cache_schema,
                         "target": target.cpu(),
                         "rotations": rotations.cpu(),
                         "residual": float(residual),
                         "canonical_voigt": canonical.cpu(),
-                        "rotation_projection": "validated_cartesian_operation_then_proper_polar_factor_v1",
+                        "rotation_projection": projection_label,
+                        "crystal_compatibility_group": compatibility_scope,
+                        "tensor_orbit_group": "proper_so3_only",
                     },
                     cache_path,
                 )
@@ -240,11 +272,18 @@ def main() -> None:
         "output_csv_sha256": source_files,
         "target_cache_sha256": canonical_hash(target_index),
         "physical_zero_target_count": zero_count,
-        "tensor_convention": "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> proper-SO(3) Reynolds projection",
+        "target_cache_schema": cache_schema,
+        "crystal_compatibility_group": compatibility_scope,
+        "tensor_orbit_group": "proper_so3_only",
+        "tensor_convention": (
+            "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> "
+            + ("full-O(3) crystal-point-group Reynolds projection" if compatibility_scope == "full_o3_crystal_point_group" else "legacy proper-SO(3) Reynolds projection")
+        ),
     }
     (output_dir / "raw_release_manifest.json").write_text(json.dumps(release, indent=2) + "\n", encoding="utf-8")
     (output_dir / "build_manifest.json").write_text(json.dumps(build_manifest, indent=2) + "\n", encoding="utf-8")
-    report = ROOT / "reports" / "tensororbit_jarvis_v2_raw_build_report.md"
+    configured_report = Path(str(protocol.get("report_path", "reports/tensororbit_jarvis_v2_raw_build_report.md")))
+    report = ROOT / configured_report if not configured_report.is_absolute() else configured_report
     report.write_text(
         "# TensorOrbit-JARVIS-v2 raw build\n\n"
         f"Status: `{build_manifest['status']}`. This build does not qualify an external oracle or a GaugeFlow generator.\n\n"

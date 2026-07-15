@@ -3,7 +3,8 @@
 This module is intentionally isolated from ``GaugeFlowVectorField`` so it
 cannot mutate or reinterpret frozen A5--A11 results.  It is a fixed-geometry,
 discrete-decoration scorer: it receives masked site tokens, physical periodic
-geometry and a graph-level endpoint ID, then emits dense chemical-token scores.
+geometry and (for the legacy two-endpoint control only) an optional graph-level
+endpoint ID, then emits dense chemical-token scores.
 It never accepts a target CIF row order, a species mapping, a target
 composition, a stabilizer, or a tensor condition.
 """
@@ -119,20 +120,25 @@ class GeometryAwareSiteScorer(nn.Module):
         vector_channels: int = 16,
         rbf_dim: int = 16,
         cutoff: float = 8.0,
-        endpoint_classes: int = 2,
+        endpoint_classes: int | None = 2,
         score_bound: float = 20.0,
         use_rbf: bool = True,
         use_vector_invariants: bool = True,
     ):
         super().__init__()
-        if hidden_dim < 1 or layers < 1 or vector_channels < 1 or endpoint_classes < 1 or score_bound <= 0:
-            raise ValueError("hidden_dim, layers, vector_channels, endpoint_classes and score_bound must be positive")
+        if (
+            hidden_dim < 1 or layers < 1 or vector_channels < 1 or score_bound <= 0
+            or (endpoint_classes is not None and endpoint_classes < 1)
+        ):
+            raise ValueError("hidden_dim, layers, vector_channels, optional endpoint_classes and score_bound must be positive")
         self.hidden_dim = hidden_dim
         self.endpoint_classes = endpoint_classes
         self.score_bound = float(score_bound)
         self.use_vector_invariants = use_vector_invariants
         self.type_embedding = nn.Embedding(TYPE_STATE_DIM, hidden_dim)
-        self.endpoint_embedding = nn.Embedding(endpoint_classes, hidden_dim)
+        self.endpoint_embedding = (
+            nn.Embedding(endpoint_classes, hidden_dim) if endpoint_classes is not None else None
+        )
         self.rbf = GaussianRadialBasis(rbf_dim, cutoff)
         self.blocks = nn.ModuleList(
             _GeometryMessageBlock(
@@ -153,21 +159,27 @@ class GeometryAwareSiteScorer(nn.Module):
         frac_coords: torch.Tensor,
         lattice: torch.Tensor,
         batch: torch.Tensor,
-        endpoint_id: torch.Tensor,
+        endpoint_id: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Return permutation-equivariant site features before chemical scores."""
         tokens = validate_type_tokens(type_tokens, allow_mask=True).to(device=frac_coords.device)
         if tokens.shape != (frac_coords.shape[0],):
             raise ValueError("type_tokens must contain exactly one token per node")
-        if endpoint_id.ndim != 1 or endpoint_id.shape != (lattice.shape[0],):
-            raise ValueError("endpoint_id must contain one endpoint class per graph")
-        endpoint_id = endpoint_id.to(device=frac_coords.device, dtype=torch.long)
-        if endpoint_id.numel() and ((endpoint_id < 0) | (endpoint_id >= self.endpoint_classes)).any():
-            raise ValueError("endpoint_id lies outside endpoint_classes")
+        if self.endpoint_embedding is None:
+            if endpoint_id is not None:
+                raise ValueError("this geometry-only scorer was constructed without endpoint IDs")
+        else:
+            if endpoint_id is None or endpoint_id.ndim != 1 or endpoint_id.shape != (lattice.shape[0],):
+                raise ValueError("endpoint_id must contain one endpoint class per graph")
+            endpoint_id = endpoint_id.to(device=frac_coords.device, dtype=torch.long)
+            if endpoint_id.numel() and ((endpoint_id < 0) | (endpoint_id >= self.endpoint_classes)).any():
+                raise ValueError("endpoint_id lies outside endpoint_classes")
         edges = periodic_closest_image_edges(frac_coords, lattice, batch)
         if edges.source.numel() == 0:
             raise ValueError("the site scorer requires at least two sites per graph")
-        scalar = self.type_embedding(tokens) + self.endpoint_embedding(endpoint_id[batch])
+        scalar = self.type_embedding(tokens)
+        if self.endpoint_embedding is not None:
+            scalar = scalar + self.endpoint_embedding(endpoint_id[batch])
         vector = scalar.new_zeros((scalar.shape[0], self.blocks[0].vector_channels, 3))
         rbf = self.rbf(edges.distance)
         for block in self.blocks:
@@ -195,7 +207,7 @@ class GeometryAwareSiteScorer(nn.Module):
         frac_coords: torch.Tensor,
         lattice: torch.Tensor,
         batch: torch.Tensor,
-        endpoint_id: torch.Tensor,
+        endpoint_id: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Return bounded score matrix ``[nodes, 118]`` for dense elements."""
         return self.scores_from_node_features(

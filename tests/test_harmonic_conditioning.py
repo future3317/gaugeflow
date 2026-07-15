@@ -4,11 +4,13 @@ from gaugeflow.harmonic import (
     HarmonicDoubleCosetConditionEncoder,
     HarmonicRelativeAlignment,
     deterministic_so3_grid,
+    finite_grid_shift_residual,
+    harmonic_alignment_scores,
     low_order_orbit_invariants,
     normalized_low_order_orbit_invariants,
     rotate_piezo_irreps_on_grid,
 )
-from gaugeflow.tensor import piezo_to_irreps, rotate_rank3
+from gaugeflow.tensor import piezo_to_irreps, piezo_voigt_to_cartesian, rotate_rank3
 from gaugeflow.tensor import tensor_orbit_shape_magnitude
 
 
@@ -89,6 +91,93 @@ def test_harmonic_alignment_returns_a_finite_state_dependent_posterior():
     assert posterior.shape == (2, 24)
     assert torch.allclose(posterior.sum(dim=-1), torch.ones(2), atol=1e-6)
     assert torch.all(diagnostics["top_mode_mass"] >= 1.0 / 24.0)
+
+
+def test_continuous_harmonic_score_obeys_left_right_covariance_theorem():
+    # s(R; gx, he) = s(g^-1 R h; x, e).  The two sides are evaluated at the
+    # exact transformed rotation nodes, not after nearest-grid reindexing.
+    torch.manual_seed(17)
+    condition = _piezo(2)
+    directions = torch.nn.functional.normalize(torch.randn(12, 3, dtype=torch.float64), dim=-1)
+    edge_graph = torch.tensor([0] * 6 + [1] * 6)
+    grid = deterministic_so3_grid(37, dtype=torch.float64)
+    g, h = grid[11], grid[23]
+    transformed_directions = directions @ g.transpose(-1, -2)
+    from gaugeflow.tensor import piezo_from_irreps
+
+    transformed_condition = piezo_to_irreps(rotate_rank3(piezo_from_irreps(condition), h))
+    weights = {
+        "weight_l1": torch.tensor([0.7, -1.1], dtype=torch.float64),
+        "weight_l2": torch.tensor([0.3], dtype=torch.float64),
+        "weight_l3": torch.tensor([-0.5], dtype=torch.float64),
+    }
+    left, _ = harmonic_alignment_scores(
+        transformed_condition, transformed_directions, edge_graph, grid, **weights
+    )
+    transformed_nodes = g.transpose(-1, -2).unsqueeze(0) @ grid @ h.unsqueeze(0)
+    right, _ = harmonic_alignment_scores(condition, directions, edge_graph, transformed_nodes, **weights)
+    assert torch.allclose(left, right, atol=3e-5, rtol=3e-5)
+
+
+def test_finite_grid_shift_is_exact_for_identity_and_reports_nonclosure_otherwise():
+    grid = deterministic_so3_grid(24, dtype=torch.float64)
+    identity_residual = finite_grid_shift_residual(grid)
+    assert torch.allclose(identity_residual, torch.zeros_like(identity_residual), atol=1e-12)
+    # A rotation from a distinct QMC grid is deliberately not a special
+    # reindexing symmetry of the 24-node grid.  The positive residual is a
+    # diagnostic result, not a failed assertion of the continuous theorem.
+    shift = deterministic_so3_grid(29, dtype=torch.float64)[17]
+    residual = finite_grid_shift_residual(grid, left=shift, right=shift.transpose(-1, -2))
+    assert torch.isfinite(residual).all()
+    assert float(residual.max()) > 1e-4
+
+
+def test_harmonic_representative_and_high_symmetry_conditions_are_handled_explicitly():
+    # This nonzero polar tensor is invariant under a C4z rotation.  A high
+    # symmetry representative must therefore leave every continuous score
+    # unchanged, while a generic representative is covered by the theorem.
+    condition = torch.zeros(1, 3, 6, dtype=torch.float64)
+    condition[0, 2, 0] = 1.0
+    condition[0, 2, 1] = 1.0
+    condition = piezo_to_irreps(piezo_voigt_to_cartesian(condition))
+    c4z = torch.tensor([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]], dtype=torch.float64)
+    from gaugeflow.tensor import piezo_from_irreps
+
+    assert torch.allclose(
+        rotate_rank3(piezo_from_irreps(condition), c4z), piezo_from_irreps(condition), atol=2e-8, rtol=2e-8
+    )
+    directions = torch.nn.functional.normalize(torch.randn(8, 3, dtype=torch.float64), dim=-1)
+    edge_graph = torch.zeros(8, dtype=torch.long)
+    grid = deterministic_so3_grid(19, dtype=torch.float64)
+    weights = {
+        "weight_l1": torch.tensor([1.0, -0.4], dtype=torch.float64),
+        "weight_l2": torch.tensor([0.2], dtype=torch.float64),
+        "weight_l3": torch.tensor([0.6], dtype=torch.float64),
+    }
+    original, _ = harmonic_alignment_scores(condition, directions, edge_graph, grid, **weights)
+    symmetric, _ = harmonic_alignment_scores(
+        piezo_to_irreps(rotate_rank3(piezo_from_irreps(condition), c4z)), directions, edge_graph, grid, **weights
+    )
+    assert torch.allclose(original, symmetric, atol=3e-5, rtol=3e-5)
+
+
+def test_zero_tensor_has_uniform_harmonic_scores_and_finite_gradients():
+    condition = torch.zeros(1, 18, requires_grad=True)
+    directions = torch.nn.functional.normalize(torch.randn(6, 3), dim=-1)
+    edge_graph = torch.zeros(6, dtype=torch.long)
+    score, _ = harmonic_alignment_scores(
+        condition,
+        directions,
+        edge_graph,
+        deterministic_so3_grid(16),
+        weight_l1=torch.tensor([1.0, 1.0]),
+        weight_l2=torch.tensor([1.0]),
+        weight_l3=torch.tensor([1.0]),
+    )
+    posterior = torch.softmax(score, dim=-1)
+    assert torch.allclose(posterior, torch.full_like(posterior, 1.0 / 16.0), atol=1e-6)
+    posterior.square().sum().backward()
+    assert condition.grad is not None and torch.isfinite(condition.grad).all()
 
 
 def test_harmonic_encoder_keeps_null_and_physical_zero_conditions_distinct():

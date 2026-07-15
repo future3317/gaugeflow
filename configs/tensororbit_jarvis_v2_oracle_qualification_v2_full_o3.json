@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "name": "TensorOrbit-JARVIS-v2 full-O(3) external tensor-oracle qualification v2",
+  "status": "prepared_not_started_blocked_on_full_o3_build_and_external_pins",
+  "supersedes_for_future_real_tensor_evaluation_only": "configs/tensororbit_jarvis_v2_oracle_qualification_v1.json",
+  "purpose": "Qualify two independently pinned tensor predictors against a source-pinned, formula-disjoint v2 target artifact whose polar rank-three targets obey full O(3) crystal point-group compatibility. This is not a GaugeFlow generation protocol.",
+  "data": {
+    "raw_build_protocol": "configs/tensororbit_jarvis_v2_raw_build_v2_full_o3.json",
+    "build_directory": "data/tensororbit_jarvis_v2_full_o3",
+    "target_cache_schema": 3,
+    "crystal_compatibility_group": "full_o3_crystal_point_group",
+    "tensor_orbit_group_for_GaugeFlow": "proper_so3_only",
+    "splits": {"train": 4000, "val": 499, "test": 499},
+    "split": "artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"
+  },
+  "oracles": [
+    {
+      "id": "gmtnet",
+      "architecture_class": "pinned GMTNet equivariant material-tensor predictor",
+      "required_before_training": ["source_repository_URL", "immutable_source_commit", "environment_lock", "training_entrypoint", "output_conversion_contract"]
+    },
+    {
+      "id": "se3_transformer_rank3",
+      "architecture_class": "architecture-distinct pinned e3nn SE(3)-Transformer with Cartesian rank-three head",
+      "required_before_training": ["source_repository_URL", "immutable_source_commit", "environment_lock", "training_entrypoint", "output_conversion_contract"]
+    }
+  ],
+  "qualification": {
+    "freeze_before_test": ["v2 full-O(3) build manifest/hash", "source pins", "environment locks", "training manifests", "checkpoint hashes", "prediction ID joins"],
+    "metrics": ["Cartesian tensor strain symmetry", "full-O(3) point-group residual", "response-field error", "orbit-aware target error distribution", "physical-zero false-positive rate", "abstention rate and coverage"],
+    "ensemble_rule": "Both models must meet their separately committed matched v2 qualification criteria before either may be used in a real-tensor fidelity evaluation. PiezoJet is not the primary oracle."
+  },
+  "activation_rule": "Only after this oracle qualification is complete may a separately versioned real piezo v2 tensor-orbit-fidelity protocol be proposed. Relaxation and DFPT remain later frozen-ranking stages.",
+  "prohibited": ["use_legacy_proper_so3_v2_cache", "overwrite_v1_or_historical_reports", "GaugeFlow_full_training", "relaxation", "DFT", "DFPT"]
+}

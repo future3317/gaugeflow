@@ -161,6 +161,18 @@ Execute the research program strictly in order:
    top-K relaxation, symmetry re-identification, oracle recomputation, and the
    pre-registered DFPT audit.
 
+11. **P5 exact synthetic tensor-control gate (completed; not passed).**
+    `configs/gate_p5_exact_synthetic_tensor_control_v1.json` is an
+    oracle-free, coordinate-only control over an exact periodic SO(3)-
+    equivariant rank-three teacher. Its analytic equivariance and target orbit
+    separation passed, but harmonic-alignment coordinate-flow target retrieval
+    was `0.0/0.5/0.5` across its three fixed seeds (minimum `0.9`). Do not
+    rerun, extend, retune, or describe its large between/within ratios as
+    successful control. `configs/gate_p4_matched_production_backbone_v1.json`
+    is consequently blocked and must not start. P3's independent decoder
+    protocol is separately blocked on the full-O(3) v2 raw build; it must not
+    reuse the InN/BN endpoint-ID panel as a held-out qualification.
+
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a
 gate passed. Record negative results and failures; do not silently tune a
@@ -183,6 +195,14 @@ orbit-tensor-error distributions. See `README.md` and
 - Convert lattice-action proposals to proper Cartesian SO(3) actions before
   acting on tensors. Do not pool improper rotations or parity operations into
   a proper-rotation orbit.
+- Do not conflate the preceding SO(3) *condition-orbit* rule with the
+  O(3) crystal point-group compatibility rule. A raw physical polar rank-three
+  target must be Reynolds-projected over the full crystallographic O(3) point
+  group, including improper operations; inversion therefore projects it to
+  zero. `configs/tensororbit_jarvis_v2_raw_build_v2_full_o3.json` is the only
+  prospective v2 build contract for that corrected target. The materialized
+  proper-only v2 cache and all historical v1 artifacts are legacy/read-only
+  and may not be silently used for a future oracle or real-tensor benchmark.
 - The active integer proposal catalogue must contain finite crystallographic
   orders 1, 2, 3, 4, or 6 only. Do not reintroduce infinite-order shear or
   hyperbolic SL(3,Z) matrices as point-group candidates.
@@ -205,6 +225,12 @@ orbit-tensor-error distributions. See `README.md` and
   `0e/0o/1o/1e` parity prototype are operator-qualified only; no historical
   Gate result may be described as using them. Any causal training successor
   must pre-register grid size/refinement, data, seed, budget, and thresholds.
+- The continuous harmonic score theorem is
+  `s(R;g x,h e)=s(g^{-1}R h;x,e)`. It is covered by the deterministic
+  `harmonic_covariance_audit` and by representative/high-symmetry/zero tests.
+  That theorem does not make a finite QMC node set a group: left/right shift
+  residuals must be reported rather than hidden or treated as exact posterior
+  covariance.
 - The production A11-Q0 tiny-panel likelihood remains exact enumeration. The
   new count-partition dynamic program is a tested scalable primitive for a
   future protocol; it must not silently replace Q0/Q1 evidence or evade the

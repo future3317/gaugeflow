@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "not_passed_exact_synthetic_control",
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_exact_synthetic_tensor_control_v1.json",
+  "protocol_sha256": "0b17affd531eeb82aefc432b4640a0807e4ae25e43cf7e6f97917d1e4e186286",
+  "runner_sha256": "d98d095be7eb440fe3267ba395c42fe9a157ee0fa4681549c04f48b9f81c119b",
+  "device": "cuda",
+  "teacher_so3_equivariance_max_error": 2.980232238769531e-07,
+  "two_endpoint_teacher_orbit_distance": 1.04069185256958,
+  "all_pre_registered_seed_criteria_pass": false,
+  "real_tensor_oracle_used": false,
+  "historical_gate_modified": false,
+  "results": "results.csv"
+}

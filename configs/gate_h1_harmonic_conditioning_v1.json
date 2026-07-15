@@ -19,6 +19,9 @@
     "grid_sizes": [24, 60, 120, 240],
     "require_proper_rotation": true,
     "require_cartesian_irrep_consistency": true,
+    "require_continuous_score_left_right_covariance": "s(R;g x,h e)=s(g^{-1} R h;x,e)",
+    "require_finite_grid_left_right_shift_diagnostic": true,
+    "require_representative_high_symmetry_and_zero_tensor_tests": true,
     "require_null_physical_zero_separation": true,
     "require_o3_reflection_equivariance": true,
     "require_count_dp_matches_exact_small_support": true

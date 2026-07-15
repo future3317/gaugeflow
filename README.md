@@ -57,6 +57,51 @@ numerical reference: 24/60/120-node aligned-condition differences are
 pre-registered design choice, not an achieved theorem or a reason to start
 training. See `reports/gate_h1_harmonic_conditioning_v1/`.
 
+The continuous harmonic score has now been audited with
+`s(R;g x,h e)=s(g^{-1}Rh;x,e)`: its maximum numerical discrepancy is
+`3.37e-08`; high-symmetry and physical-zero probes also pass. Crucially, this
+does **not** make the 24-node finite grid exactly covariant: its measured
+nonidentity left/right nearest-node residuals are `1.807/1.776`. The grid is
+therefore still an explicitly refinable approximation, not a finite group or
+an exact quadrature. See
+`reports/gate_h1_harmonic_conditioning_v1/harmonic_covariance_audit.md`.
+
+### Physical point-group correction for future v2 data only
+
+The previous prospective v2 raw builder used only proper crystal rotations in
+its Reynolds step. That is incorrect for **crystal compatibility** of a polar
+rank-three piezoelectric tensor: Neumann compatibility is with the full
+crystal point group in $O(3)$, so mirrors are retained and inversion projects
+the tensor to zero. This does not change the model's SO(3) condition orbit:
+improper operations remain excluded from latent representative alignment.
+
+The historical v1 cache, its gates, and its reports remain immutable. The
+already materialized v2 proper-only cache is quarantined from future tensor
+evaluation; `configs/tensororbit_jarvis_v2_raw_build_v2_full_o3.json` defines
+the new schema-3 full-$O(3)$ rebuild under a new output directory. It is
+prepared but not yet an activated oracle or training artifact.
+
+### P5 exact synthetic tensor-control gate (completed, not passed)
+
+The oracle-free P5 gate uses an analytic periodic rank-three teacher
+`T(X)=sum_(i->j)(a_j-a_i) exp(-r_ij) n_ij^(x3)` on two four-site, triclinic
+coordinate endpoints and four SO(3) representatives per orbit. Its teacher
+equivariance error is `2.98e-07`, and its two target orbits are separated by
+`1.0407`; the synthetic property itself is therefore valid and distinguishable.
+Nevertheless the same harmonic production coordinate flow fails exact-property
+retrieval at all three frozen seeds (`0.0`, `0.5`, `0.5`, required `>=0.9`).
+The large between/within ratios arise from branches that do not retrieve the
+requested tensor orbit and are not counted as control. P5 is thus a versioned
+negative result, not evidence for real piezo generation. Its failure blocks the
+P4 matched six-method comparison; see
+`reports/gate_p5_exact_synthetic_tensor_control_v1/`.
+
+`gate_p3_independent_decoder_qualification_v1` and the P4 comparison are
+prepared but not run. P3 removes the InN/BN endpoint ID and requires held-out
+formula/prototype groups; it is blocked on the corrected full-O(3) v2 build.
+P4 is blocked by the failed P5 precondition. The next real-tensor step remains
+the separately blocked two-oracle full-O(3) v2 qualification.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1

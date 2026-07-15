@@ -53,12 +53,13 @@ def proper_unimodular_candidates() -> torch.Tensor:
         return matrices[finite_order].float()
 
 
-def proper_polar_rotation(value: torch.Tensor, *, iterations: int = 7) -> torch.Tensor:
-    """Proper polar factor with finite gradients at repeated singular values.
+def orthogonal_polar_factor(value: torch.Tensor, *, iterations: int = 7) -> torch.Tensor:
+    """Orthogonal polar factor with finite gradients at repeated singular values.
 
-    Every catalogue proposal has positive determinant.  Scaled Newton polar
-    iteration converges to the same SO(3) factor as `U @ Vh` but avoids the
-    undefined SVD derivative when singular values repeat.
+    Scaled Newton iteration converges to ``U @ Vh`` without the undefined SVD
+    derivative at repeated singular values.  It preserves the input
+    determinant sign: positive matrices yield SO(3) factors and negative
+    matrices yield the corresponding improper O(3) factor.
     """
     if value.shape[-2:] != (3, 3):
         raise ValueError("Expected [...,3,3] matrices")
@@ -70,6 +71,14 @@ def proper_polar_rotation(value: torch.Tensor, *, iterations: int = 7) -> torch.
     for _ in range(iterations):
         inverse_transpose = torch.linalg.solve(rotation.transpose(-1, -2), identity)
         rotation = 0.5 * (rotation + inverse_transpose)
+    return rotation
+
+
+def proper_polar_rotation(value: torch.Tensor, *, iterations: int = 7) -> torch.Tensor:
+    """SO(3) polar factor for the determinant-positive alignment catalogue."""
+    rotation = orthogonal_polar_factor(value, iterations=iterations)
+    if not torch.all(torch.linalg.det(rotation) > 0):
+        raise ValueError("proper_polar_rotation requires determinant-positive matrices")
     return rotation
 
 
@@ -206,14 +215,21 @@ def batched_soft_crystal_stabilizer_actions(
     return row_rotations.transpose(-1, -2), weights
 
 
-def proper_stabilizer_rotations(
-    structure: Structure, *, symprec: float = 1e-3, max_cartesian_orthogonality_error: float = 1e-2
+def crystal_point_group_operations(
+    structure: Structure,
+    *,
+    proper_only: bool,
+    symprec: float = 1e-3,
+    max_cartesian_orthogonality_error: float = 1e-2,
 ) -> torch.Tensor:
-    """Return unique proper Cartesian symmetry rotations of ``structure``.
+    """Return unique Cartesian point-group matrices of ``structure``.
 
-    The returned matrices act on Cartesian column vectors.  Translations are
-    intentionally omitted: they are handled by the periodic crystal graph,
-    while this set removes only the residual rotational alignment ambiguity.
+    These matrices act on Cartesian *column* vectors.  They are for a
+    crystal-compatibility calculation, rather than automatically an orbit
+    quotient: when ``proper_only=False`` they intentionally retain mirrors
+    and inversions.  That distinction is essential for a polar rank-three
+    piezoelectric tensor.  Its condition orbit is an ``SO(3)`` orbit, whereas
+    Neumann compatibility with a crystal point group is an ``O(3)`` statement.
     """
     if max_cartesian_orthogonality_error <= 0:
         raise ValueError("max_cartesian_orthogonality_error must be positive")
@@ -222,26 +238,52 @@ def proper_stabilizer_rotations(
     for operation in analyzer.get_symmetry_operations(cartesian=True):
         rotation = torch.as_tensor(operation.rotation_matrix, dtype=torch.float32)
         determinant = torch.linalg.det(rotation)
-        if not torch.isclose(determinant, torch.ones((), dtype=rotation.dtype), atol=1e-4):
+        if not torch.isclose(determinant.abs(), torch.ones((), dtype=rotation.dtype), atol=1e-4):
+            raise ValueError(
+                "Cartesian symmetry operation has determinant outside {+1,-1}; "
+                "it is not an O(3) point-group action"
+            )
+        if proper_only and not torch.isclose(
+            determinant, torch.ones((), dtype=rotation.dtype), atol=1e-4
+        ):
             continue
-        # CIF decimal precision can make an otherwise proper Cartesian point
+        # CIF decimal precision can make an otherwise orthogonal Cartesian
         # operation slightly non-orthogonal (for example ~3e-4 in its Gram
-        # residual). A rank-three tensor must never be acted on by that raw
-        # matrix: validate the finite numerical residual, then use its nearest
-        # proper polar factor. Grossly non-orthogonal operations fail rather
-        # than being disguised as symmetry.
+        # residual). A tensor must never be acted on by that raw matrix:
+        # validate the finite residual, then use its nearest orthogonal polar
+        # factor. Newton polar iteration preserves the determinant sign, so an
+        # improper crystal operation remains improper instead of being folded
+        # into the SO(3) condition orbit.
         identity = torch.eye(3, dtype=rotation.dtype, device=rotation.device)
         error = (rotation @ rotation.T - identity).abs().max()
         if error > max_cartesian_orthogonality_error:
             raise ValueError(
                 f"Cartesian symmetry operation has Gram residual {float(error):.3e}, exceeding the declared tolerance"
             )
-        rotation = proper_polar_rotation(rotation.unsqueeze(0))[0]
+        rotation = orthogonal_polar_factor(rotation.unsqueeze(0))[0]
         if not any(torch.allclose(rotation, seen, atol=1e-5, rtol=1e-5) for seen in rotations):
             rotations.append(rotation)
     if not rotations:
-        raise ValueError("Symmetry analysis returned no proper stabilizer rotations")
+        scope = "proper" if proper_only else "orthogonal"
+        raise ValueError(f"Symmetry analysis returned no {scope} point-group operations")
     return torch.stack(rotations)
+
+
+def proper_stabilizer_rotations(
+    structure: Structure, *, symprec: float = 1e-3, max_cartesian_orthogonality_error: float = 1e-2
+) -> torch.Tensor:
+    """Return only the proper Cartesian point-group rotations of ``structure``.
+
+    This is intentionally the SO(3)-only helper used for latent tensor-orbit
+    alignment.  Full O(3) point-group compatibility belongs to
+    :func:`crystal_point_group_operations` with ``proper_only=False``.
+    """
+    return crystal_point_group_operations(
+        structure,
+        proper_only=True,
+        symprec=symprec,
+        max_cartesian_orthogonality_error=max_cartesian_orthogonality_error,
+    )
 
 
 def observed_tensor_stabilizer_rotations(

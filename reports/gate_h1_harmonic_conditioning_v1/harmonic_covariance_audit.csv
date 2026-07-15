@@ -1,0 +1,8 @@
+test,value,expectation,result
+continuous_score_covariance,3.370445944561595e-08,<= 5e-5,True
+high_symmetry_tensor_representative,1.484071965318634e-08,<= 5e-7,True
+high_symmetry_score_representative,8.051826039245924e-09,<= 5e-5,True
+zero_tensor_uniform_posterior,0.0,<= 1e-12,True
+finite_grid_identity_shift,0.0,<= 1e-12,True
+finite_grid_left_shift_nonclosure,1.8067498969938716,> 1e-4 (reported limitation),True
+finite_grid_right_shift_nonclosure,1.7761196014712501,> 1e-4 (reported limitation),True

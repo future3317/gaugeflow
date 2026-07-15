@@ -11,6 +11,20 @@ The grid is a deterministic Haar *quasi-Monte-Carlo* rule.  It is not claimed
 to integrate arbitrary functions exactly; a protocol using it must report grid
 refinement.  The score itself is band-limited through l <= 3, exactly matching
 the irreducible content of a piezoelectric rank-three polar tensor.
+
+For a geometry query ``q_l(x)`` with ``q_l(gx)=rho_l(g)q_l(x)`` and a polar
+condition ``e`` the unnormalised continuous score is
+
+``s(R; x, e) = sum_l,m w_lm <rho_l(R)e_lm, q_l(x)> / sqrt(2l+1)``.
+
+Orthogonality of each ``rho_l`` gives the covariance theorem used by the
+alignment posterior:
+
+``s(R; g x, h e) = s(g^{-1} R h; x, e)`` for ``g,h,R in SO(3)``.
+
+The theorem concerns the continuous score.  A finite Hopf grid is generally
+not closed under left/right multiplication, so its sampled softmax is only a
+numerical approximation; callers must measure shift and refinement error.
 """
 
 from __future__ import annotations
@@ -143,6 +157,74 @@ def geometric_harmonic_queries(
     )  # type: ignore[return-value]
 
 
+def harmonic_alignment_scores(
+    piezo_irreps: torch.Tensor,
+    directions: torch.Tensor,
+    edge_graph: torch.Tensor,
+    rotations: torch.Tensor,
+    *,
+    weight_l1: torch.Tensor,
+    weight_l2: torch.Tensor,
+    weight_l3: torch.Tensor,
+) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
+    """Evaluate the band-limited continuous harmonic score at arbitrary SO(3) nodes.
+
+    This is deliberately separate from grid softmaxing so the covariance
+    theorem can be tested at the exact transformed nodes ``g^{-1} R h``.  The
+    return value contains one score per graph and supplied rotation node plus
+    the geometry queries used to construct it.
+    """
+    if piezo_irreps.ndim != 2 or piezo_irreps.shape[-1] != PIEZO_IRREPS.dim:
+        raise ValueError("piezo_irreps must have shape [graphs,18]")
+    if rotations.ndim != 3 or rotations.shape[-2:] != (3, 3):
+        raise ValueError("rotations must have shape [frames,3,3]")
+    determinant = torch.linalg.det(rotations)
+    if not torch.allclose(determinant, torch.ones_like(determinant), atol=2e-5, rtol=2e-5):
+        raise ValueError("harmonic scores accept proper SO(3) rotations only")
+    if weight_l1.shape != (2,) or weight_l2.shape != (1,) or weight_l3.shape != (1,):
+        raise ValueError("harmonic score weights must have shapes [2], [1], [1]")
+    graph_count = piezo_irreps.shape[0]
+    rotated = rotate_piezo_irreps_on_grid(piezo_irreps, rotations)
+    queries = geometric_harmonic_queries(directions, edge_graph, graph_count)
+    blocks = piezo_irrep_blocks(rotated.reshape(-1, PIEZO_IRREPS.dim))
+    first = blocks[0].reshape(graph_count, rotations.shape[0], 2, 3)
+    second = blocks[1].reshape(graph_count, rotations.shape[0], 1, 5)
+    third = blocks[2].reshape(graph_count, rotations.shape[0], 1, 7)
+    score = (
+        torch.einsum("bfmi,bi,m->bf", first, queries[0], weight_l1.to(first)) / math.sqrt(3.0)
+        + torch.einsum("bfmi,bi,m->bf", second, queries[1], weight_l2.to(second)) / math.sqrt(5.0)
+        + torch.einsum("bfmi,bi,m->bf", third, queries[2], weight_l3.to(third)) / math.sqrt(7.0)
+    )
+    return score, queries
+
+
+def finite_grid_shift_residual(
+    rotations: torch.Tensor,
+    *,
+    left: torch.Tensor | None = None,
+    right: torch.Tensor | None = None,
+) -> torch.Tensor:
+    """Return each shifted node's nearest-node Frobenius residual on a finite grid.
+
+    ``left`` and ``right`` implement ``left^{-1} R right``.  A zero result
+    means that particular transformation reindexes the declared finite grid;
+    a nonzero result is expected in general and quantifies why a fixed-grid
+    posterior cannot be advertised as exactly left/right covariant.
+    """
+    if rotations.ndim != 3 or rotations.shape[-2:] != (3, 3):
+        raise ValueError("rotations must have shape [frames,3,3]")
+    device, dtype = rotations.device, rotations.dtype
+    left_matrix = torch.eye(3, device=device, dtype=dtype) if left is None else left.to(rotations)
+    right_matrix = torch.eye(3, device=device, dtype=dtype) if right is None else right.to(rotations)
+    if left_matrix.shape != (3, 3) or right_matrix.shape != (3, 3):
+        raise ValueError("left and right must have shape [3,3]")
+    shifted = left_matrix.transpose(-1, -2).unsqueeze(0) @ rotations @ right_matrix.unsqueeze(0)
+    pairwise = torch.linalg.matrix_norm(
+        shifted[:, None] - rotations[None], ord="fro", dim=(-2, -1)
+    )
+    return pairwise.amin(dim=-1)
+
+
 def low_order_orbit_invariants(piezo_irreps: torch.Tensor) -> torch.Tensor:
     """Return low-order SO(3) invariants plus a parity-odd pseudoscalar.
 
@@ -230,19 +312,20 @@ class HarmonicRelativeAlignment(nn.Module):
     def forward(
         self, piezo_irreps: torch.Tensor, directions: torch.Tensor, edge_graph: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
-        graph_count = piezo_irreps.shape[0]
         rotations = self.rotations.to(piezo_irreps)
-        rotated = rotate_piezo_irreps_on_grid(piezo_irreps, rotations)
-        queries = geometric_harmonic_queries(directions, edge_graph, graph_count)
-        blocks = piezo_irrep_blocks(rotated.reshape(-1, 18))
-        first = blocks[0].reshape(graph_count, rotations.shape[0], 2, 3)
-        second = blocks[1].reshape(graph_count, rotations.shape[0], 1, 5)
-        third = blocks[2].reshape(graph_count, rotations.shape[0], 1, 7)
-        score = (
-            torch.einsum("bfmi,bi,m->bf", first, queries[0], self.weight_l1.to(first)) / math.sqrt(3.0)
-            + torch.einsum("bfmi,bi,m->bf", second, queries[1], self.weight_l2.to(second)) / math.sqrt(5.0)
-            + torch.einsum("bfmi,bi,m->bf", third, queries[2], self.weight_l3.to(third)) / math.sqrt(7.0)
+        score, _ = harmonic_alignment_scores(
+            piezo_irreps,
+            directions,
+            edge_graph,
+            rotations,
+            weight_l1=self.weight_l1,
+            weight_l2=self.weight_l2,
+            weight_l3=self.weight_l3,
         )
+        # Keep the sampled irreps for posterior averaging.  The score helper
+        # is intentionally pure so it can also be evaluated at arbitrary
+        # continuous nodes in the covariance tests.
+        rotated = rotate_piezo_irreps_on_grid(piezo_irreps, rotations)
         temperature = self.log_temperature.exp().clamp_min(1e-4).to(score)
         posterior = torch.softmax(score / temperature, dim=-1)
         aligned = (posterior.unsqueeze(-1) * rotated).sum(dim=1)

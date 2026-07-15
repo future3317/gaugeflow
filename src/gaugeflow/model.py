@@ -23,7 +23,7 @@ from .tensor import (
     rotate_rank3,
 )
 from .direct_irrep import CompleteDirectIrrepCoupling
-from .harmonic import HarmonicDoubleCosetConditionEncoder
+from .harmonic import HarmonicDoubleCosetConditionEncoder, OrbitInvariantConditionEncoder
 from torch_geometric.utils import scatter
 from .uncertainty import VelocityUncertainty, bounded_log_std
 
@@ -124,7 +124,7 @@ class OrbitResponseFieldEncoder(nn.Module):
             mode = "orbit_alignment"
         if mode not in {
             "raw_tensor", "direct_irrep", "direct_irrep_complete_v1",
-            "stabilizer_pooling", "orbit_alignment", "harmonic_alignment_v1",
+            "invariant_only_v1", "stabilizer_pooling", "orbit_alignment", "harmonic_alignment_v1",
         }:
             raise ValueError(
                 "unknown conditioning mode"
@@ -143,6 +143,9 @@ class OrbitResponseFieldEncoder(nn.Module):
         self.harmonic = (
             HarmonicDoubleCosetConditionEncoder(hidden_dim, grid_size=orbit_frames)
             if mode == "harmonic_alignment_v1" else None
+        )
+        self.invariant_only = (
+            OrbitInvariantConditionEncoder(hidden_dim) if mode == "invariant_only_v1" else None
         )
         # Six scalar diagnostics plus six fixed three-vector constitutive
         # probes. These span Sym?(R?), so information is not limited to the
@@ -183,6 +186,31 @@ class OrbitResponseFieldEncoder(nn.Module):
         time: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, ...]:
         graphs = piezo_irreps.shape[0]
+        if self.mode == "invariant_only_v1":
+            if self.invariant_only is None:
+                raise RuntimeError("invariant-only encoder was not constructed")
+            if framed_tensors is not None:
+                raise ValueError("invariant-only conditioning does not accept a tensor-orbit cache")
+            values = self.invariant_only(piezo_irreps).unsqueeze(1)
+            weights = torch.ones((graphs, 1), dtype=values.dtype, device=values.device)
+            aligned = values[:, 0] + self.present_bias
+            mask = present.to(dtype=torch.bool)
+            graph_condition = torch.where(
+                mask, aligned, self.null_condition.unsqueeze(0).expand_as(aligned)
+            )
+            empty_field = edge_directions.new_zeros((edge_directions.shape[0], 3))
+            outputs = (graph_condition, empty_field, empty_field, weights)
+            if not return_diagnostics:
+                return outputs
+            return (*outputs, {
+                "raw_condition_embedding": values[:, 0],
+                "frame_candidate_embeddings": values,
+                "frame_weights": weights,
+                "uniform_pooled_embedding": values[:, 0],
+                "aligned_embedding": aligned,
+                "pool_then_embed": values[:, 0],
+                "stabilizer_posterior": None,
+            })
         if self.mode == "harmonic_alignment_v1":
             if self.harmonic is None:
                 raise RuntimeError("harmonic encoder was not constructed")

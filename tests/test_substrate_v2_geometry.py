@@ -59,6 +59,19 @@ def test_geometry_scorer_is_node_permutation_equivariant_and_uses_dense_vocabula
     assert torch.allclose(relabelled, scores[permutation], atol=2e-6, rtol=2e-6)
 
 
+def test_geometry_only_scorer_has_no_endpoint_identifier_path():
+    torch.manual_seed(12)
+    scorer = GeometryAwareSiteScorer(
+        hidden_dim=24, layers=2, vector_channels=5, rbf_dim=8, endpoint_classes=None
+    )
+    tokens, frac, lattice, batch, _ = _two_graph_geometry()
+    scores = scorer(tokens, frac, lattice, batch)
+    permutation = torch.tensor([2, 0, 3, 1, 6, 4, 7, 5])
+    relabelled = scorer(tokens[permutation], frac[permutation], lattice, batch[permutation])
+    assert scores.shape == (8, 118)
+    assert torch.allclose(relabelled, scores[permutation], atol=2e-6, rtol=2e-6)
+
+
 def test_geometry_scorer_keeps_complete_assignment_law_stable_when_scores_are_sharp():
     torch.manual_seed(23)
     scorer = GeometryAwareSiteScorer(hidden_dim=24, layers=3, vector_channels=5, rbf_dim=8)
