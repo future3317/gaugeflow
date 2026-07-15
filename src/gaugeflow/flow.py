@@ -456,3 +456,55 @@ class RiemannianCrystalFlowMatcher:
             lattice_variance=lattice_variance,
             mean_alignment_entropy=alignment_entropy,
         )
+
+
+class EndpointBridgeCoordinateMatcher(RiemannianCrystalFlowMatcher):
+    """Endpoint-residual coordinate bridge with a nonsingular discrete sampler.
+
+    Raw straight-path velocity targets are not a function of the state at a
+    collapsed single endpoint: many independent sources produce the same
+    quotient geometry at ``t=1`` but have different source-specific velocities.
+    This matcher supervises the observable residual to the endpoint instead.
+    It is zero at the endpoint for every source.  Sampling uses the exact
+    linear-bridge contraction in endpoint-residual coordinates, avoiding the
+    unstable ``1/(1-t)`` Euler factor.
+    """
+
+    def __init__(self, atom_types: int = 119):
+        super().__init__(atom_types=atom_types, active_heads=("coord",))
+
+    def endpoint_residual(self, state: CrystalFlowState, batch) -> torch.Tensor:
+        target = self.target_state(batch)
+        return self._coordinate_velocity(torus_logmap(state.frac_coords, target.frac_coords), batch)
+
+    @torch.no_grad()
+    def sample(
+        self,
+        model,
+        batch,
+        *,
+        steps: int = 100,
+        initial_state: CrystalFlowState | None = None,
+    ) -> CrystalFlowState:
+        if steps < 1:
+            raise ValueError("steps must be positive")
+        if initial_state is None:
+            state = self.random_state(batch)
+        else:
+            state = CrystalFlowState(
+                initial_state.type_state.clone(), initial_state.frac_coords.clone(), initial_state.lattice_log.clone()
+            )
+        for step in range(steps):
+            time = torch.full((batch.num_graphs,), step / steps, device=batch.frac_coords.device)
+            residual = self._coordinate_velocity(
+                self._forward_model(model, state, batch, time, return_uncertainty=False)[1], batch
+            )
+            # If the residual is exact, this is x_{t+dt}=x_t+(dt/(1-t))(x_1-x_t),
+            # evaluated as the bounded bridge contraction 1-(1-t-dt)/(1-t).
+            contraction = (steps - step - 1) / (steps - step)
+            state = CrystalFlowState(
+                state.type_state,
+                wrap01(state.frac_coords + (1.0 - contraction) * residual),
+                state.lattice_log,
+            )
+        return state

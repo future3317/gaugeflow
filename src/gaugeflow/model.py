@@ -724,9 +724,22 @@ class GaugeFlowVectorField(nn.Module):
         )
         self.type_out = nn.Linear(hidden_dim, atom_types)
         self.coord_out = nn.Linear(self.vector_dim, 1, bias=False)
+        # A coordinate tangent is a sum of physical relative displacements.
+        # Reading it only through the accumulated vector channels creates an
+        # unnecessary bottleneck: a scalar edge coefficient times the actual
+        # closest-image displacement is already translation invariant and
+        # SO(3)-covariant.  This direct metric decoder complements, rather
+        # than replaces, the equivariant vector-message contribution.
+        coordinate_edge_features = hidden_dim * 3 + self.coordinate_rbf_dim
+        self.coordinate_edge_out = nn.Sequential(
+            nn.Linear(coordinate_edge_features, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
         self.lattice_out = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
         self.delta_type_out = nn.Linear(hidden_dim, atom_types)
         self.delta_coord_out = nn.Linear(self.vector_dim, 1, bias=False)
+        self.delta_coordinate_edge_out = nn.Sequential(
+            nn.Linear(coordinate_edge_features, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
         self.delta_lattice_out = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
         self.composition_count_out = (
             nn.Sequential(
@@ -740,6 +753,26 @@ class GaugeFlowVectorField(nn.Module):
         self.type_log_std_out = nn.Linear(hidden_dim, 1)
         self.coord_log_std_out = nn.Linear(hidden_dim, 1)
         self.lattice_log_std_out = nn.Linear(hidden_dim, 1)
+
+    @staticmethod
+    def _edge_displacement_field(
+        nodes: torch.Tensor,
+        node_condition: torch.Tensor,
+        source: torch.Tensor,
+        target: torch.Tensor,
+        displacement: torch.Tensor,
+        radial_basis: torch.Tensor,
+        head: nn.Module,
+    ) -> torch.Tensor:
+        """Decode a translation-invariant, SO(3)-covariant edge field."""
+        field = displacement.new_zeros((nodes.shape[0], 3))
+        if source.numel() == 0:
+            return field
+        features = torch.cat(
+            (nodes[source], nodes[target], node_condition[source], radial_basis), dim=-1
+        )
+        field.index_add_(0, target, head(features) * displacement)
+        return field
 
     def forward(
         self,
@@ -805,6 +838,10 @@ class GaugeFlowVectorField(nn.Module):
             graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
             composition_graph_nodes = graph_nodes
             cartesian_velocity = self.coord_out(vectors.transpose(-1, -2)).squeeze(-1)
+            cartesian_velocity = cartesian_velocity + self._edge_displacement_field(
+                nodes, graph_condition[batch], source, target, edge_geometry.displacement,
+                radial_basis, self.coordinate_edge_out,
+            )
             lattice_nodes = lattices[batch]
             fractional_velocity = torch.einsum("ni,nij->nj", cartesian_velocity, torch.linalg.inv(lattice_nodes))
             type_velocity = self.type_out(nodes)
@@ -845,6 +882,14 @@ class GaugeFlowVectorField(nn.Module):
             base_type = self.type_out(base_nodes)
             base_cartesian = self.coord_out(base_vectors.transpose(-1, -2)).squeeze(-1)
             delta_cartesian = self.delta_coord_out(delta_vectors.transpose(-1, -2)).squeeze(-1)
+            base_cartesian = base_cartesian + self._edge_displacement_field(
+                base_nodes, zero_condition, source, target, edge_geometry.displacement,
+                radial_basis, self.coordinate_edge_out,
+            )
+            delta_cartesian = delta_cartesian + self._edge_displacement_field(
+                base_nodes + delta_nodes, graph_condition[batch], source, target,
+                edge_geometry.displacement, radial_basis, self.delta_coordinate_edge_out,
+            )
             lattice_nodes = lattices[batch]
             base_coordinate = torch.einsum("ni,nij->nj", base_cartesian, torch.linalg.inv(lattice_nodes))
             delta_coordinate = torch.einsum("ni,nij->nj", delta_cartesian, torch.linalg.inv(lattice_nodes))

@@ -204,6 +204,20 @@ Execute the research program strictly in order:
     generalization, because no unseen source is used. The frozen failure is at
     `reports/gate_p5_d0_4_fixed_source_full_trajectory_v1/`; stop here and do
     not start P5-D1, harmonic, or real-tensor work.
+    D0.5 nevertheless records one separately pre-registered mathematical
+    repair, not a tuning sweep: it replaces the ambiguous raw terminal
+    velocity with the endpoint residual \(P\operatorname{Log}_{x_t}(x_1)\),
+    which is zero for every source at the collapsed endpoint, uses a bounded
+    exact bridge-contraction sampler, and adds a translation-invariant,
+    SO(3)-covariant metric edge-displacement coordinate decoder. Its rationale
+    and literature basis are in `reports/p5_d0_endpoint_bridge_rationale.md`.
+    It improved D0.4 but failed its own fixed criteria: residual MSE `0.00113`
+    (maximum `0.001`), teacher-forced RMS `0.0314` (maximum `0.02`), and
+    free-running RMS `0.1751` (maximum `0.05`) with zero failures. This is an
+    endpoint-residual fit failure; the D0.5 contract prohibits capacity,
+    schedule, loss, or step tuning. Its result is frozen under
+    `reports/gate_p5_d0_5_endpoint_bridge_metric_v1/`; no next gate is
+    authorized.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

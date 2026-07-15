@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "status": "not_passed_endpoint_bridge",
+  "attribution": "endpoint_residual_fit_failure",
+  "next_step_allowed": "none",
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_d0_5_endpoint_bridge_metric_v1.json",
+  "protocol_sha256": "03a439ed4cf73c25b0f4de07d6741c868093ea0dbb220d13eb98302d00289794",
+  "runner_sha256": "0a943b1b08aafae003466a88a841e3c32b6adbd8d81ef3a39e8c31a0d90242fd",
+  "device": "cuda",
+  "results": "results.csv",
+  "learning_curve": "learning_curve.csv",
+  "time_grid_metrics": "time_grid_metrics.csv",
+  "historical_results_modified": false
+}

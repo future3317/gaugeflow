@@ -89,6 +89,7 @@ def test_metric_rbf_coordinate_field_is_translation_invariant_and_backpropagates
     radial_gate_gradient = model.layers[0].vector_gates[0].weight.grad[:, -8:]
     assert torch.isfinite(radial_gate_gradient).all()
     assert radial_gate_gradient.abs().sum() > 0
+    assert model.coordinate_edge_out[-1].weight.grad.abs().sum() > 0
 
 
 def test_no_drift_path_closes_modulo_global_translation_with_the_production_sampler():

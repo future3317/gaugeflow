@@ -148,6 +148,21 @@ than unseen-source generalization. The result is frozen at
 `reports/gate_p5_d0_4_fixed_source_full_trajectory_v1/`; no P5-D1, harmonic,
 or real-tensor work is authorized.
 
+One separate, literature-grounded repair was then evaluated as D0.5. Rather
+than supervise the source-ambiguous raw velocity at a collapsed endpoint, it
+predicts the translation-quotient endpoint residual
+\(P\operatorname{Log}_{x_t}(x_1)\), whose target is zero for every source at
+the endpoint; its sampler uses the associated bounded bridge contraction. The
+coordinate decoder also adds a direct closest-image metric edge-displacement
+field to the existing equivariant vector messages. The derivation and sources
+are in `reports/p5_d0_endpoint_bridge_rationale.md`. This is a real improvement
+but not a pass: residual MSE `0.00113` (limit `0.001`), teacher-forced aligned
+RMS `0.0314` (limit `0.02`), and free-running aligned RMS `0.1751` (limit
+`0.05`), with zero sampling failures. The pre-registered D0.5 contract
+therefore freezes an endpoint-residual-fit failure at
+`reports/gate_p5_d0_5_endpoint_bridge_metric_v1/`; it forbids further tuning
+or any next gate.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1
