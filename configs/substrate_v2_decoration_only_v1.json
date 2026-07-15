@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "GaugeFlow substrate-v2 decoration-only qualification v1",
-  "status": "pre_registered_implementation_pending_data_reconstruction",
+  "status": "pre_registered_ready_data_built_not_started",
   "objective": "Qualify a geometry-aware categorical site-decoration substrate before any tensor-conditioned flow experiment. This is a new decoder-only control, not a rerun, amendment, or replacement of A5--A11.",
   "historical_evidence_is_immutable": {
     "instruction": "Gate A through A11.0 reports, thresholds, checkpoints, data split, and conclusions remain frozen. A11-Q1 remains unstarted and is not changed by this protocol.",
@@ -29,8 +29,8 @@
       "purpose": "Adds equivariant vector channels; scalar messages consume their dot-product/norm invariants as well as RBF metric geometry."
     },
     {
-      "id": "exact_quotient_assignment",
-      "purpose": "Uses the geometry-aware scorer with exact count-constrained assignment likelihood under the proper-SO(3) residual automorphism group."
+      "id": "exact_quotient_assignment_law",
+      "purpose": "Applied identically to every scorer above: exact count-constrained likelihood under the proper-SO(3) residual automorphism group, rather than a fixed-CIF row loss."
     }
   ],
   "assignment": {
@@ -40,9 +40,21 @@
     "optional_exchangeable_node_noise": "not enabled in v1. Assignment-level Gumbel is the initial exchangeable symmetry-breaking mechanism. Any node noise comparison requires a new versioned protocol."
   },
   "data_and_repetitions": {
-    "panel": "InN/BN only after a source-pinned v2 data reconstruction has supplied their canonical structures and proper automorphisms",
+    "panel": "InN/BN, JVASP-1180/JVASP-22673, from the attested local-pinned TensorOrbit-JARVIS-v2 raw build",
     "seeds": [1701, 1702, 1703],
-    "optimization_budget": "fixed before data reconstruction; no adaptive extension or continuous hyperparameter search",
+    "optimization_budget": {
+      "optimizer": "AdamW",
+      "learning_rate": 0.003,
+      "weight_decay": 0.00001,
+      "steps": 1200,
+      "batch": "both endpoint graphs every update",
+      "hidden_dim": 64,
+      "layers": 3,
+      "vector_channels": 8,
+      "rbf_dim": 16,
+      "cutoff_angstrom": 8.0,
+      "adaptive_extension_forbidden": true
+    },
     "common_noise": "fixed assignment-level Gumbels are reused for counterfactual endpoint-ID samples"
   },
   "primary_metrics": {

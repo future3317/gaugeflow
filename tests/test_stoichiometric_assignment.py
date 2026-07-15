@@ -5,6 +5,7 @@ from gaugeflow.assignment import (
     automorphism_quotient_nll,
     enumerate_count_assignments,
     exact_assignment_distribution,
+    exact_assignment_distribution_permutation_log_probability_error,
     exact_assignment_permutation_log_probability_error,
     exact_assignment_quotient_nll,
     expand_composition_counts,
@@ -148,5 +149,19 @@ def test_exact_assignment_probability_vector_is_node_relabeling_consistent_in_fp
     assert distribution.assignments.shape == (12, 4)
     error = exact_assignment_permutation_log_probability_error(
         scores, torch.tensor([2, 1, 1]), torch.tensor([2, 0, 3, 1])
+    )
+    assert error <= 2e-6
+
+
+def test_exact_assignment_probability_vector_is_stable_after_float32_score_saturation():
+    scores = torch.zeros((4, 5), dtype=torch.float32)
+    scores[:, 1] = torch.tensor([1.0e7, -1.0e7, 1.0e7, -1.0e7])
+    scores[:, 3] = torch.tensor([-1.0e7, 1.0e7, -1.0e7, 1.0e7])
+    permutation = torch.tensor([2, 0, 3, 1])
+    error = exact_assignment_distribution_permutation_log_probability_error(
+        scores,
+        scores[permutation],
+        torch.tensor([0, 2, 0, 2, 0]),
+        permutation,
     )
     assert error <= 2e-6

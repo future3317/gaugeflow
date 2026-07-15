@@ -262,7 +262,11 @@ def assignment_energies(site_species_scores: torch.Tensor, assignments: torch.Te
     if (assignments < 0).any() or (assignments >= site_species_scores.shape[1]).any():
         raise ValueError("assignments are outside the declared species range")
     sites = torch.arange(site_species_scores.shape[0], device=site_species_scores.device).unsqueeze(0)
-    return site_species_scores[sites, assignments].sum(dim=-1)
+    # This exact-enumeration code is restricted to small support sizes.  Use a
+    # float64 reduction so the pre-registered relabeling check measures model
+    # equivariance rather than order-dependent FP32 summation after the scores
+    # have saturated.  The cast remains differentiable to FP32 parameters.
+    return site_species_scores[sites, assignments].to(torch.float64).sum(dim=-1)
 
 
 @dataclass(frozen=True)
@@ -393,27 +397,31 @@ def sample_exact_assignment(
     return distribution.assignments[index], index
 
 
-def exact_assignment_permutation_log_probability_error(
+def exact_assignment_distribution_permutation_log_probability_error(
     site_species_scores: torch.Tensor,
+    relabelled_site_species_scores: torch.Tensor,
     counts: torch.Tensor,
     node_permutation: torch.Tensor,
     *,
     max_assignments: int = 4096,
 ) -> torch.Tensor:
-    """Maximum log-probability error after a node relabeling.
+    """Compare exact laws from original and independently relabelled scores.
 
-    The returned scalar supports the pre-registered FP32 permutation-consistency
-    test.  ``node_permutation`` specifies the old site carried by each new
-    site, so scores and assignment label vectors are indexed by it together.
+    ``node_permutation`` specifies the old site carried by each new site.  A
+    runner must get ``relabelled_site_species_scores`` from a second forward
+    pass on the relabelled graph; only then does this test cover the model as
+    well as the exact categorical law.
     """
     if node_permutation.ndim != 1 or node_permutation.numel() != site_species_scores.shape[0]:
         raise ValueError("node_permutation must have one entry per site")
     permutation = node_permutation.to(device=site_species_scores.device, dtype=torch.long)
     if not torch.equal(torch.sort(permutation).values, torch.arange(permutation.numel(), device=permutation.device)):
         raise ValueError("node_permutation must be a permutation")
+    if relabelled_site_species_scores.shape != site_species_scores.shape:
+        raise ValueError("relabelled_site_species_scores must match site_species_scores")
     original = exact_assignment_distribution(site_species_scores, counts, max_assignments=max_assignments)
     relabelled = exact_assignment_distribution(
-        site_species_scores[permutation], counts, max_assignments=max_assignments
+        relabelled_site_species_scores, counts, max_assignments=max_assignments
     )
     transformed = original.assignments[:, permutation]
     matches = (transformed[:, None, :] == relabelled.assignments[None, :, :]).all(dim=-1)
@@ -421,3 +429,27 @@ def exact_assignment_permutation_log_probability_error(
         raise RuntimeError("Relabeled exact assignment support was not bijective")
     relabelled_index = matches.to(torch.int64).argmax(dim=-1)
     return (original.log_probabilities - relabelled.log_probabilities[relabelled_index]).abs().max()
+
+
+def exact_assignment_permutation_log_probability_error(
+    site_species_scores: torch.Tensor,
+    counts: torch.Tensor,
+    node_permutation: torch.Tensor,
+    *,
+    max_assignments: int = 4096,
+) -> torch.Tensor:
+    """Algebraic check for an already-permuted score matrix.
+
+    New experimental runners must call
+    :func:`exact_assignment_distribution_permutation_log_probability_error`
+    with a fresh model forward pass on relabelled inputs.  This compatibility
+    helper remains useful for testing the categorical law itself.
+    """
+    permutation = node_permutation.to(device=site_species_scores.device, dtype=torch.long)
+    return exact_assignment_distribution_permutation_log_probability_error(
+        site_species_scores,
+        site_species_scores[permutation],
+        counts,
+        permutation,
+        max_assignments=max_assignments,
+    )

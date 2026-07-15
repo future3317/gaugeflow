@@ -130,17 +130,25 @@ Execute the research program strictly in order:
    not start Q1 until Q0's manifest passes; if Q1 later passes, propose a
    separate Q2 material panel with distinct proper-SO(3) orbit structures
    before restoring tensor conditioning.
-7. **Substrate-v2 decoration qualification (new, not a historical rerun).**
-   `configs/substrate_v2_decoration_only_v1.json` isolates the missing physical
-   information in the site decoder: metric PBC distances/RBFs and equivariant
-   vector-state invariants. It uses dense chemical tokens `0..117` and a
-   distinct mask token `118`. It may supply true composition counts only to
-   qualify exact quotient-aware site scoring on fixed geometry; that is not a
-   composition-generator result and must not be silently substituted for A11-Q1.
-   Do not start it until a source-pinned v2 raw build supplies the InN/BN
-   structures and proper automorphisms. Its exact assignment law and
-   permutation checks must pass before proposing a separately versioned
-   model-generated-composition gate.
+7. **Substrate-v2 decoration qualification (completed; not a historical rerun).**
+   The source-pinned v2 raw build supplied the InN/BN structures and proper
+   automorphisms. Versions v1/v2/v3 are all retained under
+   `reports/substrate_v2_decoration_only_v*/`: v1 is implementation-invalid
+   because it did not make a relabelled model forward; v2 is a valid failed
+   numerical-equivalence qualification; v3 qualifies only the
+   `rbf_vector_invariant_scorer` as a fixed-geometry, supplied-composition
+   decoder. On every v3 candidate row it achieves exact proper-SO(3) quotient
+   MAP and species-aware periodic matching of 1.0, exact count, zero masks and
+   failures, and fresh-forward assignment-law relabel error at most `2.22e-16`.
+   The unmodified v3 aggregate manifest remains failed because it incorrectly
+   includes deliberately deficient negative controls; see its immutable CSV
+   and `promotion_metric_audit.md`, not a rewritten manifest. This result uses
+   dense element tokens `0..117`, a distinct mask `118`, float64 tiny-graph
+   accumulation, and a fixed bounded categorical score. True counts were
+   supplied only as exact-assignment support, so this is **not** a
+   composition-generator, tensor-conditioned, or GaugeFlow result. A separate
+   Q1 generated-composition protocol may now be proposed; do not silently
+   substitute the decoder result for Q1.
 8. **Gate B -- coherent representative invariance.** At fixed structure and
    tensor orbit, rotate the input representative and measure velocity
    equivariance, composition/prototype stability, C2ST, MMD, and orbit-error

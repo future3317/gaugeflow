@@ -186,12 +186,13 @@ the Q0/Q1 scientific attribution. Fixed-CIF site accuracy is only a diagnostic:
 high quotient accuracy with approximately 0.5 fixed-CIF accuracy can be the
 correct removal of arbitrary CIF row labels.
 
-Q1 is not authorized by this documentation update. It remains endpoint-ID,
-type-only, fixed-geometry, full-119-element, and model-composition-only, with
-the pre-registered composition/exact-assignment/StructureMatcher/mask/failure/
-relabeling thresholds in its protocol. If it passes, a separately versioned Q2
-must first test materials with different proper-SO(3) orbit structures; tensor
-conditioning does not resume directly.
+Q0 and the subsequent supplied-composition decoder qualification permit a
+separately versioned Q1 proposal, but Q1 has not started. It must remain
+endpoint-ID, type-only, fixed-geometry, full-119-element, and
+model-composition-only, with pre-registered composition/exact-assignment/
+StructureMatcher/mask/failure/relabeling thresholds. If it passes, a separately
+versioned Q2 must first test materials with different proper-SO(3) orbit
+structures; tensor conditioning does not resume directly.
 
 ### TensorOrbit-JARVIS-v2 oracle preparation
 
@@ -205,7 +206,7 @@ preparation manifest are committed and attested in
 `artifacts/tensororbit_jarvis_v2_oracle_qualification_v1/commit_attestation.json`;
 neither external training nor a GaugeFlow 4,000/499/499 run has started.
 
-### Substrate-v2 correction program (implemented; qualification data not present)
+### Substrate-v2 decoder qualification (completed; supplied-composition only)
 
 The negative substrate gates exposed implementation defects, not a reason to
 declare conditional crystal generation impossible. A new isolated
@@ -228,11 +229,30 @@ historical checkpoint or Gate conclusion:
   control. New comparisons must use the complete six-path e3nn CG baseline in
   `src/gaugeflow/direct_irrep.py`.
 
-`configs/substrate_v2_decoration_only_v1.json` fixes the new qualification;
+The local source-pinned TensorOrbit-JARVIS-v2 raw build now supplies the InN/BN
+panel, so this decoder-only qualification has been run on WSL CUDA with three
+fixed seeds and 1,200 updates per seed. Its evidence is deliberately split by
+version rather than overwritten:
+
+| Version | Status | What it established |
+| --- | --- | --- |
+| v1 | implementation-invalid | The saved report is retained, but its relabeling check permuted post-hoc scores rather than executing a relabeled model forward. |
+| v2 | valid failed numerical-equivalence check | The vector-invariant decoder achieved chemical assignment and structure matching, but unbounded FP32 score accumulation violated the unchanged assignment-law relabel threshold. |
+| v3 | candidate decoder qualified | With fixed bounded categorical scores and float64 tiny-neighborhood accumulation, the RBF+vector-invariant candidate passed all six candidate rows: proper-SO(3) quotient MAP and species-aware periodic StructureMatcher rate `1.0`, exact count, zero masks/failures, and maximum fresh-forward assignment-law error `2.22e-16`. |
+
+`reports/substrate_v2_decoration_only_v3/promotion_metric_audit.md` explains
+why the v3 runner's unmodified aggregate manifest remains `not_passed`: it
+incorrectly required the deliberately deficient legacy/RBF-only ablations to
+pass as well. The candidate-only audit does **not** rewrite that manifest or
+relax any threshold. It qualifies only a fixed-geometry decoder with the true
+composition supplied as exact-assignment support; it does not qualify generated
+composition, tensor-conditioned GaugeFlow, a full benchmark, or physical
+validation. The next permitted step is a separately versioned Q1
+model-generated-composition qualification.
+
 `configs/synthetic_rank3_tensor_control_v1.json` provides a non-cancelling,
 exactly SO(3)-equivariant synthetic rank-three teacher for tensor-plumbing
-tests. Neither has been trained: this worktree has no raw JARVIS data directory,
-so manufacturing a positive score would be scientifically invalid.
+tests.
 
 Two implementation defects were found before restarting the frozen run:
 

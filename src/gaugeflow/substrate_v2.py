@@ -19,7 +19,22 @@ from .vocabulary import MASK_TOKEN, TYPE_STATE_DIM, validate_type_tokens
 
 
 def _scatter_mean(value: torch.Tensor, index: torch.Tensor, *, dim_size: int) -> torch.Tensor:
-    return scatter(value, index, dim=0, dim_size=dim_size, reduce="mean")
+    """Permutation-stable tiny-graph mean aggregation.
+
+    Assignment likelihood can become extremely sharp.  With a float32
+    scatter reduction, merely relabeling nodes changes the order of the three
+    incoming messages and the resulting round-off is amplified into a large
+    categorical log-probability difference.  Accumulating this small physical
+    neighbourhood in float64, then returning to the model dtype, prevents an
+    arbitrary input row order from becoming a chemical signal.  Gradients
+    remain connected to the original parameter dtype.
+    """
+    if not value.dtype.is_floating_point:
+        raise ValueError("message values must be floating point")
+    accumulated = scatter(value.to(torch.float64), index, dim=0, dim_size=dim_size, reduce="sum")
+    counts = torch.bincount(index, minlength=dim_size).to(device=value.device, dtype=torch.float64)
+    shape = (dim_size,) + (1,) * (value.ndim - 1)
+    return (accumulated / counts.reshape(shape)).to(value.dtype)
 
 
 class _GeometryMessageBlock(nn.Module):
@@ -47,8 +62,9 @@ class _GeometryMessageBlock(nn.Module):
         self.edge_vector = nn.Sequential(
             nn.Linear(scalar_input, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_channels)
         )
+        scalar_update_input = 2 * hidden_dim + (vector_channels if use_vector_invariants else 0)
         self.scalar_update = nn.Sequential(
-            nn.Linear(2 * hidden_dim + vector_channels, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+            nn.Linear(scalar_update_input, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
         )
         self.vector_self_gate = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_channels)
@@ -79,7 +95,10 @@ class _GeometryMessageBlock(nn.Module):
         self_vector = vector * self.vector_self_gate(scalar).unsqueeze(-1)
         next_vector = vector + aggregated_vector + self_vector
         next_invariant = next_vector.square().sum(dim=-1)
-        update = self.scalar_update(torch.cat((scalar, aggregated_scalar, next_invariant), dim=-1))
+        scalar_parts = [scalar, aggregated_scalar]
+        if self.use_vector_invariants:
+            scalar_parts.append(next_invariant)
+        update = self.scalar_update(torch.cat(scalar_parts, dim=-1))
         return self.norm(scalar + update), next_vector
 
 
@@ -101,14 +120,17 @@ class GeometryAwareSiteScorer(nn.Module):
         rbf_dim: int = 16,
         cutoff: float = 8.0,
         endpoint_classes: int = 2,
+        score_bound: float = 20.0,
         use_rbf: bool = True,
         use_vector_invariants: bool = True,
     ):
         super().__init__()
-        if hidden_dim < 1 or layers < 1 or vector_channels < 1 or endpoint_classes < 1:
-            raise ValueError("hidden_dim, layers, vector_channels and endpoint_classes must be positive")
+        if hidden_dim < 1 or layers < 1 or vector_channels < 1 or endpoint_classes < 1 or score_bound <= 0:
+            raise ValueError("hidden_dim, layers, vector_channels, endpoint_classes and score_bound must be positive")
         self.hidden_dim = hidden_dim
         self.endpoint_classes = endpoint_classes
+        self.score_bound = float(score_bound)
+        self.use_vector_invariants = use_vector_invariants
         self.type_embedding = nn.Embedding(TYPE_STATE_DIM, hidden_dim)
         self.endpoint_embedding = nn.Embedding(endpoint_classes, hidden_dim)
         self.rbf = GaussianRadialBasis(rbf_dim, cutoff)
@@ -122,11 +144,10 @@ class GeometryAwareSiteScorer(nn.Module):
             )
             for _ in range(layers)
         )
-        self.score_head = nn.Sequential(
-            nn.Linear(hidden_dim + vector_channels, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, MASK_TOKEN)
-        )
+        score_input = hidden_dim + (vector_channels if use_vector_invariants else 0)
+        self.score_head = nn.Sequential(nn.Linear(score_input, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, MASK_TOKEN))
 
-    def forward(
+    def node_features(
         self,
         type_tokens: torch.Tensor,
         frac_coords: torch.Tensor,
@@ -134,7 +155,7 @@ class GeometryAwareSiteScorer(nn.Module):
         batch: torch.Tensor,
         endpoint_id: torch.Tensor,
     ) -> torch.Tensor:
-        """Return score matrix ``[nodes, 118]`` for dense chemical tokens."""
+        """Return permutation-equivariant site features before chemical scores."""
         tokens = validate_type_tokens(type_tokens, allow_mask=True).to(device=frac_coords.device)
         if tokens.shape != (frac_coords.shape[0],):
             raise ValueError("type_tokens must contain exactly one token per node")
@@ -151,5 +172,32 @@ class GeometryAwareSiteScorer(nn.Module):
         rbf = self.rbf(edges.distance)
         for block in self.blocks:
             scalar, vector = block(scalar, vector, edges.source, edges.target, edges.direction, rbf)
-        invariants = vector.square().sum(dim=-1)
-        return self.score_head(torch.cat((scalar, invariants), dim=-1))
+        if self.use_vector_invariants:
+            invariants = vector.square().sum(dim=-1)
+            scalar = torch.cat((scalar, invariants), dim=-1)
+        return scalar
+
+    def scores_from_node_features(self, node_features: torch.Tensor) -> torch.Tensor:
+        """Map site features to bounded dense chemical assignment scores."""
+        if node_features.ndim != 2 or node_features.shape[-1] != self.score_head[0].in_features:
+            raise ValueError("node_features have an incompatible shape")
+        # The exact finite assignment law is insensitive to score offsets but
+        # becomes numerically ill-conditioned when unconstrained logits grow
+        # without bound after NLL saturation.  A fixed, declared tanh bound
+        # retains a differentiable categorical energy while preventing an
+        # arbitrary FP32 reduction order from turning into a chemical label.
+        raw_scores = self.score_head(node_features)
+        return self.score_bound * torch.tanh(raw_scores / self.score_bound)
+
+    def forward(
+        self,
+        type_tokens: torch.Tensor,
+        frac_coords: torch.Tensor,
+        lattice: torch.Tensor,
+        batch: torch.Tensor,
+        endpoint_id: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return bounded score matrix ``[nodes, 118]`` for dense elements."""
+        return self.scores_from_node_features(
+            self.node_features(type_tokens, frac_coords, lattice, batch, endpoint_id)
+        )

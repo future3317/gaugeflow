@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "status": "not_passed_primary_metrics",
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/substrate_v2_decoration_only_v3.json",
+  "protocol_sha256": "b7689d16ca9a09bccd435b9334ef8110bcb54f811322b1fd00215730cad70ef7",
+  "runner_sha256": "1b627f7aa61f61efb84ad862721cc02ca5f2fc1781dd5b7e4fe46e3597a7ee1a",
+  "data_build_attestation": "artifacts/tensororbit_jarvis_v2_raw_build_v1/attestation.json",
+  "device": "cuda",
+  "variants": [
+    "legacy_scalar_direction_baseline",
+    "rbf_metric_scorer",
+    "rbf_vector_invariant_scorer"
+  ],
+  "seeds": [
+    1701,
+    1702,
+    1703
+  ],
+  "fixed_steps": 1200,
+  "results_csv": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/reports/substrate_v2_decoration_only_v3/decoration_results.csv",
+  "primary_pass": false
+}
