@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "status": "raw_build_audit_passed_oracle_still_unqualified",
+  "split_counts": {
+    "train": 4000,
+    "val": 499,
+    "test": 499
+  },
+  "formula_overlap": {
+    "train_val": [],
+    "train_test": [],
+    "val_test": []
+  },
+  "physical_zero_counts": {
+    "train": 1826,
+    "val": 231,
+    "test": 243
+  },
+  "response_strata": {
+    "train": {
+      "0": 1826,
+      "2": 1041,
+      "3": 420,
+      "1": 286,
+      "4": 427
+    },
+    "val": {
+      "2": 140,
+      "3": 42,
+      "1": 36,
+      "4": 50,
+      "0": 231
+    },
+    "test": {
+      "3": 44,
+      "2": 115,
+      "0": 243,
+      "4": 53,
+      "1": 44
+    }
+  },
+  "rows_sha256": "e4381220bf5e1c285234b3bd028d4551f68946f37c1a7619d99e073c92529cbb",
+  "build_manifest_sha256": "d52b306801ae3153da2e3a3018f4dfebafceab10111e6dcdff76fece2b15064e",
+  "target_cache_schema": 3,
+  "crystal_compatibility_group": "full_o3_crystal_point_group",
+  "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+}

@@ -148,7 +148,7 @@ def main() -> None:
         "source": {
             key: source_release[key]
             for key in (
-                "source_name", "source_release", "source_url", "source_copy_status",
+                "source_name", "source_release", "source_url", "source_copy_status", "retrieved_utc",
                 "source_pickle_sha256", "download_sha256", "record_count", "tensor_unit",
                 "source_voigt_order", "engineering_shear", "frozen_split_sha256",
             )
@@ -163,10 +163,12 @@ def main() -> None:
         },
         "exclusions": exclusions,
         "audit": summary,
-        "limitations": [
-            "The raw source is a locally pinned GMTNet release copy; its direct-download timestamp is unavailable.",
-            "This attestation does not qualify either external tensor oracle or any GaugeFlow generation result.",
-        ],
+        "limitations": (
+            ([] if source_release.get("retrieved_utc") else [
+                "The raw source direct-download timestamp is unavailable."
+            ])
+            + ["This attestation does not qualify either external tensor oracle or any GaugeFlow generation result."]
+        ),
     }
     attestation_path.parent.mkdir(parents=True, exist_ok=True)
     attestation_path.write_text(json.dumps(attestation, indent=2) + "\n", encoding="utf-8")

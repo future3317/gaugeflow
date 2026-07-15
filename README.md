@@ -77,9 +77,16 @@ improper operations remain excluded from latent representative alignment.
 
 The historical v1 cache, its gates, and its reports remain immutable. The
 already materialized v2 proper-only cache is quarantined from future tensor
-evaluation; `configs/tensororbit_jarvis_v2_raw_build_v2_full_o3.json` defines
-the new schema-3 full-$O(3)$ rebuild under a new output directory. It is
-prepared but not yet an activated oracle or training artifact.
+evaluation. The source-verified successor
+`configs/tensororbit_jarvis_v2_raw_build_v3_full_o3_source_verified.json` has
+now rebuilt all 4,998 targets as schema 3 under
+`data/tensororbit_jarvis_v2_full_o3_v2/` and passed its raw-build audit. The
+audit also corrected the source repository from the incorrectly recorded
+`divelab/AIRS` to the actual pinned `YKQ98/GMTNet` commit; a fresh upstream
+pickle reproduces the old normalized records byte-for-byte. This is a valid
+data artifact for future external-oracle qualification, not an activated
+oracle, GaugeFlow checkpoint, or generation result. See
+`reports/tensororbit_jarvis_v2_full_o3_v2_data_quality_report.md`.
 
 ### P5 exact synthetic tensor-control gate (completed, not passed)
 

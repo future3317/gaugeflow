@@ -93,18 +93,20 @@ def main() -> None:
     records_path.write_text(json.dumps(records, separators=(",", ":")) + "\n", encoding="utf-8")
     raw_sha256 = sha256_file(records_path)
     manifest = {
-        "source_name": "GMTNet JARVIS dielectric/piezo release local pinned copy",
+        "source_name": "GMTNet JARVIS dielectric/piezo release",
         "source_release": f"GMTNet source commit {args.source_commit}",
         "source_url": args.source_url,
         "downloaded_filename": args.source_pickle.name,
         "download_sha256": raw_sha256,
+        "normalized_records_sha256": raw_sha256,
         "source_pickle_sha256": sha256_file(args.source_pickle),
+        "upstream_file_sha256": sha256_file(args.source_pickle),
         "retrieved_utc": args.retrieved_utc,
         "observed_utc": datetime.now(timezone.utc).isoformat(),
         "source_copy_status": (
             "direct_download_timestamp_pinned" if args.retrieved_utc else "local_pinned_copy_direct_download_timestamp_unavailable"
         ),
-        "license": "See the upstream GMTNet/AIRS release and JARVIS-DFT source terms.",
+        "license": "See the upstream YKQ98/GMTNet repository and JARVIS-DFT source terms.",
         "record_schema": "material_id,cif,piezo_voigt[3,6],voigt_order,engineering_shear,unit",
         "tensor_unit": "C/m^2",
         "source_voigt_order": SOURCE_ORDER,

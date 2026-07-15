@@ -279,10 +279,20 @@ orbit-tensor-error distributions. See `README.md` and
   O(3) crystal point-group compatibility rule. A raw physical polar rank-three
   target must be Reynolds-projected over the full crystallographic O(3) point
   group, including improper operations; inversion therefore projects it to
-  zero. `configs/tensororbit_jarvis_v2_raw_build_v2_full_o3.json` is the only
-  prospective v2 build contract for that corrected target. The materialized
-  proper-only v2 cache and all historical v1 artifacts are legacy/read-only
-  and may not be silently used for a future oracle or real-tensor benchmark.
+  zero. `configs/tensororbit_jarvis_v2_raw_build_v3_full_o3_source_verified.json`
+  is the completed source-verified build contract for that corrected target.
+  Its 4,998 schema-3 caches live under the ignored local data directory
+  `data/tensororbit_jarvis_v2_full_o3_v2/`; the committed attestation is
+  `artifacts/tensororbit_jarvis_v2_full_o3_v2/attestation.json`. The source
+  audit corrected an old provenance error: commit `7a606a...` belongs to
+  `YKQ98/GMTNet`, not `divelab/AIRS`; a fresh download matches the recorded
+  pickle hash and regenerates byte-identical normalized records. The complete
+  build has zero cross-split formula groups, 2,300 physical-zero targets, and
+  passed full-O(3) Reynolds/Voigt/ID/hash checks. It remains
+  `oracle_still_unqualified`: do not start GaugeFlow real-tensor training until
+  two architecture-distinct external oracles qualify on this exact build. The
+  materialized proper-only v2 cache, interrupted four-file full-O(3) directory,
+  and all historical v1 artifacts remain legacy/read-only.
 - The active integer proposal catalogue must contain finite crystallographic
   orders 1, 2, 3, 4, or 6 only. Do not reintroduce infinite-order shear or
   hyperbolic SL(3,Z) matrices as point-group candidates.

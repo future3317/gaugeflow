@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "name": "TensorOrbit-JARVIS-v2 raw-build attestation v1",
+  "status": "raw_build_audit_passed_oracle_still_unqualified",
+  "source": {
+    "source_name": "GMTNet JARVIS dielectric/piezo release",
+    "source_release": "GMTNet source commit 7a606a459ee48a320ed38450e391811fb43d5e19",
+    "source_url": "https://github.com/YKQ98/GMTNet",
+    "source_copy_status": "direct_download_timestamp_pinned",
+    "retrieved_utc": "2026-07-15T14:27:27.3679541Z",
+    "source_pickle_sha256": "2a57e081f0072b2ac7fca7769095adcded1d299d2cd971db5c93fd25eb66929d",
+    "download_sha256": "492278c8173cd21f6d7f4ca6ac8ee3e5da72fd8386fccb6bb2d1aae136ecd068",
+    "record_count": 5000,
+    "tensor_unit": "C/m^2",
+    "source_voigt_order": [
+      "xx",
+      "yy",
+      "zz",
+      "xy",
+      "yz",
+      "xz"
+    ],
+    "engineering_shear": true,
+    "frozen_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "build": {
+    "protocol_sha256": "2a9157cdaa53fbd304f10a4a703a30f57b4336c6a0530d93b9dedd7a853ab196",
+    "raw_release_manifest_sha256": "051b64283951f863c9d87d783a9bf926473086f2c81a0d8c7f18e0ce937f2085",
+    "raw_records_sha256": "492278c8173cd21f6d7f4ca6ac8ee3e5da72fd8386fccb6bb2d1aae136ecd068",
+    "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd",
+    "split_counts": {
+      "train": 4000,
+      "val": 499,
+      "test": 499
+    },
+    "excluded_record_count": 2,
+    "exclusions_sha256": "670730e31b3c85fb595b2fb0f9b43a90bfcef6c54ce93c1bb5e02c9634365066",
+    "output_csv_sha256": {
+      "train": "e772c998245823962970bdcf3dbd30a367575e09bcaa5dcb168d15df9da3fd46",
+      "val": "921850ebcd751a833d2836c7606ae066fb27b055996735193fe39a87fc21d002",
+      "test": "8c28a052377c54acbd1efa2facde285385fb209cbf82108a01e855efdba0705e"
+    },
+    "target_cache_sha256": "e6432cc61448a8ee2644649584f11e6c4a6ecabe907f6e37ef42c4ef53389a4d",
+    "physical_zero_target_count": 2300,
+    "tensor_convention": "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> full-O(3) crystal-point-group Reynolds projection"
+  },
+  "exclusions": {
+    "JVASP-44417": "absent_from_frozen_tensororbit_4998_parent_population",
+    "JVASP-8639": "absent_from_frozen_tensororbit_4998_parent_population"
+  },
+  "audit": {
+    "schema": 1,
+    "status": "raw_build_audit_passed_oracle_still_unqualified",
+    "split_counts": {
+      "train": 4000,
+      "val": 499,
+      "test": 499
+    },
+    "formula_overlap": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    },
+    "physical_zero_counts": {
+      "train": 1826,
+      "val": 231,
+      "test": 243
+    },
+    "response_strata": {
+      "train": {
+        "0": 1826,
+        "2": 1041,
+        "3": 420,
+        "1": 286,
+        "4": 427
+      },
+      "val": {
+        "2": 140,
+        "3": 42,
+        "1": 36,
+        "4": 50,
+        "0": 231
+      },
+      "test": {
+        "3": 44,
+        "2": 115,
+        "0": 243,
+        "4": 53,
+        "1": 44
+      }
+    },
+    "rows_sha256": "e4381220bf5e1c285234b3bd028d4551f68946f37c1a7619d99e073c92529cbb",
+    "build_manifest_sha256": "d52b306801ae3153da2e3a3018f4dfebafceab10111e6dcdff76fece2b15064e",
+    "target_cache_schema": 3,
+    "crystal_compatibility_group": "full_o3_crystal_point_group",
+    "split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+  },
+  "limitations": [
+    "This attestation does not qualify either external tensor oracle or any GaugeFlow generation result."
+  ]
+}
