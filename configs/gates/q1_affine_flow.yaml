@@ -1,0 +1,36 @@
+schema: 1
+gate: Q1
+name: regular_affine_flow_qualification
+status: pre_registered_not_run
+requires:
+  gate: Q0
+  status: complete
+seeds: [6101, 6102, 6103]
+hardware: NVIDIA GeForce RTX 4060 Ti 16GB
+process:
+  sites: 4
+  reduced_dimension: 9
+  terminal_scale: 0.25
+  source_distribution: standard_normal
+  mean_seed: 6110
+training:
+  steps: 5000
+  batch_size: 64
+  width: 64
+  message_blocks: 2
+  held_out_sources: 1024
+  arms: [analytic_oracle, full_state_mlp, reduced_periodic_mpnn]
+evaluation:
+  rk4_steps: [64, 128]
+  sample_count: 1024
+thresholds:
+  oracle_endpoint_nrmse_max: 1.0e-5
+  mlp_velocity_nmse_max: 1.0e-4
+  mpnn_velocity_nmse_max: 1.0e-3
+  mpnn_endpoint_nrmse_max: 0.05
+  median_absolute_log_det_error_max: 0.5
+  semigroup_defect_max: 0.01
+  rk4_64_128_difference_fraction_max: 0.1
+  sampling_failures_max: 0
+prohibited: [Q2_if_failed, hyperparameter_search, real_tensor, oracle, relaxation, DFT, DFPT]
+
