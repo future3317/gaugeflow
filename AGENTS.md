@@ -172,8 +172,8 @@ Execute the research program strictly in order:
     is consequently blocked and must not start. P3's independent decoder
     protocol is separately blocked on the full-O(3) v2 raw build; it must not
     reuse the InN/BN endpoint-ID panel as a held-out qualification.
-12. **P5-D0 coordinate-substrate diagnosis and repair (implementation
-    prepared; not run).** P5-D0.1's 64-source fixed-batch failure is not a
+12. **P5-D0 coordinate-substrate diagnosis and repair (D0.3 completed; not
+    sufficient for progression).** P5-D0.1's 64-source fixed-batch failure is not a
     generic inability to memorize: D0.2 memorized one state to `1.84e-11`
     velocity MSE. The diagnosis is structural. The historical
     `coordinate_gauge="absolute"` target contains a graphwise translation
@@ -181,13 +181,19 @@ Execute the research program strictly in order:
     to a common fractional translation and discards edge length. Therefore it
     cannot infer that target component across independent sources. Historical
     D0/D0.1/D0.2 code, reports, thresholds, and conclusions remain immutable.
-    The only prepared successor is
+    The successor
     `configs/gate_p5_d0_3_translation_quotient_metric_v1.json`: it defines
     coordinate tangents modulo one graphwise translation
     (`coordinate_gauge="no_drift"`), evaluates translation-aligned periodic
     RMS, and uses the sole production closest-image distance/RBF coordinate
-    feature. The new implementation is untrained and unevaluated; do not execute D0.3
-    without explicit authorization and do not use it to amend the P5 failure.
+    feature. Its authorized CUDA run passed its *fixed-batch* qualification
+    (`8.95e-5` velocity MSE, `0.00483` translation-aligned RMS), confirming
+    that the corrected field can memorize the 64 quotient targets. It then
+    failed source generalization (`0.1666` unseen aligned RMS) and free-running
+    closure (`0.2107` aligned RMS); see
+    `reports/gate_p5_d0_3_translation_quotient_metric_v1/`. Therefore D0.3
+    does not authorize P5-D1 or amend the P5 failure. Do not rerun or tune it
+    without another explicit versioned protocol.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

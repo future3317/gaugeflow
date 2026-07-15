@@ -115,7 +115,7 @@ that one fixed state can be memorized (`1.84e-11` velocity MSE), which rules
 out a broken coordinate-head gradient chain while leaving the multi-source
 target unidentifiable.
 
-The repair is implemented but deliberately untrained. The sole current
+The repair is implemented. The sole current
 coordinate backbone reuses the shared closest-image PBC primitive and appends
 a finite-cutoff Gaussian radial encoding of physical Cartesian edge distance
 to each equivariant message. The coordinate flow always projects both target
@@ -125,9 +125,16 @@ removing the arbitrary cell-origin degree of freedom. The erroneous absolute
 coordinate gauge and directions-only backbone have been removed rather than
 retained as runtime compatibility paths; the frozen Git commits preserve
 historical reproducibility. None of the D0, D0.1, D0.2, or P5 results has been
-altered or rerun. The only successor contract is
-`configs/gate_p5_d0_3_translation_quotient_metric_v1.json`, marked
-`prepared_not_started`; it must not run without explicit authorization.
+altered or rerun. The authorized D0.3 run passed the narrow fixed-batch
+qualification (`8.95e-5` velocity MSE and `0.00483` translation-aligned RMS),
+so the corrected model can learn the 64 frozen quotient targets. It did **not**
+generalize to 64 unseen sources (aligned RMS `0.1666`) or free-run from a
+training source (aligned RMS `0.2107`); it is classified as a
+source-coupling-generalization failure, with zero non-finite samples. Thus it
+does not authorize P5-D1 or any tensor-conditioned follow-up. The frozen
+contract and full result are
+`configs/gate_p5_d0_3_translation_quotient_metric_v1.json` and
+`reports/gate_p5_d0_3_translation_quotient_metric_v1/`.
 
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
