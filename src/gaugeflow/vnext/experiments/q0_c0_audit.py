@@ -7,6 +7,7 @@ import csv
 import hashlib
 import json
 import platform
+import re
 import subprocess
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -43,8 +44,50 @@ def _sha256_file(path: Path) -> str:
     return _sha256_bytes(path.read_bytes())
 
 
+def _wsl_path(value: str) -> Path:
+    match = re.match(r"^([A-Za-z]):[\\/](.*)$", value)
+    if match and platform.system() == "Linux":
+        return Path("/mnt") / match.group(1).lower() / Path(match.group(2))
+    return Path(value)
+
+
+def _git_commit_from_metadata(root: Path) -> str:
+    marker = root / ".git"
+    gitdir = marker
+    if marker.is_file():
+        line = marker.read_text(encoding="utf-8").strip()
+        if not line.startswith("gitdir: "):
+            raise RuntimeError("worktree .git file has no gitdir entry")
+        gitdir = _wsl_path(line.removeprefix("gitdir: "))
+    head = (gitdir / "HEAD").read_text(encoding="utf-8").strip()
+    if not head.startswith("ref: "):
+        return head
+    reference = head.removeprefix("ref: ")
+    common = gitdir
+    common_marker = gitdir / "commondir"
+    if common_marker.is_file():
+        common = (gitdir / common_marker.read_text(encoding="utf-8").strip()).resolve()
+    for base in (gitdir, common):
+        loose = base / reference
+        if loose.is_file():
+            return loose.read_text(encoding="utf-8").strip()
+    packed = common / "packed-refs"
+    if packed.is_file():
+        for line in packed.read_text(encoding="utf-8").splitlines():
+            if line and not line.startswith(("#", "^")):
+                commit, name = line.split(" ", maxsplit=1)
+                if name == reference:
+                    return commit
+    raise RuntimeError(f"cannot resolve git reference {reference}")
+
+
 def _git_commit() -> str:
-    return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return _git_commit_from_metadata(ROOT)
 
 
 def _endpoint_batch(count: int, device: torch.device) -> Batch:

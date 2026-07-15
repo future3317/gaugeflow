@@ -14,6 +14,7 @@ from gaugeflow.vnext.diagnostics import (
     variational_flow_jacobian,
 )
 from gaugeflow.vnext.experiments import GateBlockedError, require_gate_status
+from gaugeflow.vnext.experiments.q0_c0_audit import _git_commit_from_metadata
 
 
 def test_knn_conditional_variance_detects_collapsed_representation():
@@ -92,3 +93,17 @@ def test_gate_status_blocks_missing_wrong_and_failed_predecessors(tmp_path):
     status.write_text(json.dumps({"gate": "Q0", "status": "complete"}), encoding="utf-8")
     payload = require_gate_status(status, gate="Q0", accepted=frozenset({"complete"}))
     assert payload["status"] == "complete"
+
+
+def test_worktree_git_commit_resolves_loose_common_reference(tmp_path):
+    common = tmp_path / "main" / ".git"
+    worktree = common / "worktrees" / "audit"
+    worktree.mkdir(parents=True)
+    (tmp_path / ".git").write_text(f"gitdir: {worktree}\n", encoding="utf-8")
+    (worktree / "HEAD").write_text("ref: refs/heads/audit\n", encoding="utf-8")
+    (worktree / "commondir").write_text("../..\n", encoding="utf-8")
+    reference = common / "refs" / "heads" / "audit"
+    reference.parent.mkdir(parents=True)
+    expected = "a" * 40
+    reference.write_text(expected + "\n", encoding="utf-8")
+    assert _git_commit_from_metadata(tmp_path) == expected
