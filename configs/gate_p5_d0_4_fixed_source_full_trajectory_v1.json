@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow P5-D0.4 fixed-source full-trajectory coordinate-flow learning test v1",
+  "status": "pre_registered_not_started",
+  "purpose": "Determine whether the corrected unconditional coordinate field can learn the complete quotient trajectory for the fixed 64 D0.3 sources, without testing source generalization.",
+  "parent_evidence": {
+    "gate_p5_d0_3_translation_quotient_metric_v1": "fixed_batch_passed_but_unseen_source_and_free_running_not_passed; D0.4 isolates incomplete temporal coverage by retaining the same 64 source noises"
+  },
+  "state": {
+    "endpoint_source": "P5-D0 / P5 v1 endpoint index 0",
+    "conditions_removed": ["tensor", "tensor orbit", "harmonic", "condition-present/null mask", "CFG", "endpoint ID"],
+    "fixed_atom_types_and_lattice": true,
+    "coordinate_gauge": "translation_quotient_no_drift",
+    "periodic_geometry": "closest_image_cartesian_distance_and_direction"
+  },
+  "training": {
+    "fixed_sources": {"count": 64, "source_noise_seed": 520101},
+    "time_sampling": {"distribution": "independent Uniform[0,1] per fixed source per optimizer step", "seed": 520105},
+    "hidden_dim": 64,
+    "layers": 2,
+    "coordinate_rbf_dim": 16,
+    "coordinate_rbf_cutoff_angstrom": 8.0,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "model_seed": 5201,
+    "steps": 5000,
+    "loss": "translation-quotient coordinate velocity MSE only",
+    "adaptive_extension_or_hyperparameter_search": false
+  },
+  "evaluation": {
+    "time_grid": {"count": 33, "definition": "linspace(0,1,33)"},
+    "teacher_forced_metric": "RMS after independently aligning one common fractional translation per graph, then mean-reducing all 64 sources and 33 time points",
+    "free_running": {"sources": "the same 64 fixed training sources", "sampler_steps": 100, "guidance_scale": 0.0},
+    "excluded": ["unseen_source_evaluation", "tensor_orbit_evaluation", "harmonic", "endpoint_ID"]
+  },
+  "pass_criteria": {
+    "all_time_grid_velocity_mse_max": 0.001,
+    "teacher_forced_translation_aligned_rms_max": 0.02,
+    "free_running_translation_aligned_rms_max": 0.05,
+    "sampling_failures_max": 0
+  },
+  "decision_rule": "If every criterion passes, only a separately versioned fixed-endpoint unseen-source generalization test may be proposed. If it fails, inspect time conditioning, vector-field capacity/expression, and trajectory stability. In all cases stop after this test; do not start P5-D1, harmonic, oracle, real tensor, relaxation, DFT, or DFPT work.",
+  "prohibited": ["P5_D1", "unseen_source_evaluation", "harmonic", "oracle", "real_tensor_training", "P3", "P4", "P6", "relaxation", "DFT", "DFPT", "step_extension", "hyperparameter_search", "posthoc_threshold_change"]
+}

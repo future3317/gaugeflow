@@ -194,6 +194,16 @@ Execute the research program strictly in order:
     `reports/gate_p5_d0_3_translation_quotient_metric_v1/`. Therefore D0.3
     does not authorize P5-D1 or amend the P5 failure. Do not rerun or tune it
     without another explicit versioned protocol.
+    D0.4 then held exactly those 64 sources fixed but resampled an independent
+    Uniform path time for every source and every one of 5,000 updates. It
+    failed the complete-trajectory test: mean 33-time-grid velocity MSE was
+    `0.00871` (maximum `0.001`), mean teacher-forced aligned RMS was `0.0423`
+    (maximum `0.02`), and 100-step free-running aligned RMS was `0.1996`
+    (maximum `0.05`), with zero sampling failures. Its attribution is
+    time-conditioning/vector-field expression rather than source
+    generalization, because no unseen source is used. The frozen failure is at
+    `reports/gate_p5_d0_4_fixed_source_full_trajectory_v1/`; stop here and do
+    not start P5-D1, harmonic, or real-tensor work.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

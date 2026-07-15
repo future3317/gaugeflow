@@ -136,6 +136,18 @@ contract and full result are
 `configs/gate_p5_d0_3_translation_quotient_metric_v1.json` and
 `reports/gate_p5_d0_3_translation_quotient_metric_v1/`.
 
+D0.4 then tested whether the same 64 training sources can support an entire
+trajectory rather than one sampled time per source. It resampled an independent
+Uniform path time for every source at every one of 5,000 updates, evaluated 33
+fixed times, and free-ran only those same sources. It failed: mean grid velocity
+MSE was `0.00871` (required `<=0.001`), teacher-forced aligned RMS was `0.0423`
+(required `<=0.02`), and free-running aligned RMS was `0.1996` (required
+`<=0.05`), despite zero sampling failures. This isolates the remaining defect
+to time conditioning/vector-field expression or trajectory stability, rather
+than unseen-source generalization. The result is frozen at
+`reports/gate_p5_d0_4_fixed_source_full_trajectory_v1/`; no P5-D1, harmonic,
+or real-tensor work is authorized.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1
