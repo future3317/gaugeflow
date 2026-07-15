@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow P5-D0.2 single-sample unconditional coordinate-flow overfit test v1",
+  "status": "pre_registered_not_started",
+  "purpose": "Test whether the unchanged unconditional coordinate field can memorize exactly the first frozen (source noise, t, target velocity) example from P5-D0.1.",
+  "parent_evidence": {
+    "gate_p5_d0_1_fixed_batch_overfit_v1": "failed_frozen_not_modified",
+    "source_contract": "Reconstruct the 64 D0.1 fixed examples with source_noise_seed=520101 and time_seed=520102, then select graph index 0."
+  },
+  "state": {
+    "endpoint_source": "P5-D0 / P5 v1 endpoint index 0",
+    "selected_fixed_example_index": 0,
+    "conditions_removed": ["tensor", "tensor orbit", "harmonic", "condition-present/null mask", "CFG", "endpoint ID"],
+    "fixed_atom_types_and_lattice": true
+  },
+  "training": {
+    "conditioning_mode": "unconditional",
+    "hidden_dim": 64,
+    "layers": 2,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "model_seed": 5201,
+    "steps": 5000,
+    "resampling_during_training": false,
+    "model_structure_change": false,
+    "loss": "coordinate velocity MSE on the selected single state"
+  },
+  "trace": {
+    "record_every_step": true,
+    "coordinate_head_parameter": "model.coord_out.weight",
+    "required": ["velocity_mse", "endpoint_periodic_rms", "coordinate_head_gradient_norm", "coordinate_head_output_norm", "target_velocity_norm", "per_node_per_dimension_prediction_target"]
+  },
+  "pass_criteria": {
+    "velocity_mse_max": 0.00001,
+    "endpoint_periodic_rms_max": 0.005
+  },
+  "decision_rule": "If either criterion fails after exactly 5,000 updates, classify the result as an implementation-chain failure in the model forward, coordinate head, loss, or gradient path. Do not increase steps, capacity, or alter the optimizer. This audit never starts P5-D1, harmonic conditioning, oracle work, or any other experiment.",
+  "prohibited": ["P5_D1", "harmonic", "oracle", "P3", "P4", "P6", "real_tensor_training", "relaxation", "DFT", "DFPT", "capacity_change", "step_extension", "posthoc_threshold_change"]
+}

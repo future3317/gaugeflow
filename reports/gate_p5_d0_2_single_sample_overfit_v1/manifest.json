@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "status": "passed_single_sample_overfit",
+  "failure_attribution": "passed",
+  "p5_d1_allowed": false,
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_d0_2_single_sample_overfit_v1.json",
+  "protocol_sha256": "14d6357898ccd5ba13c9872870726fb05fa65e03f3887ffd3988d58c30a8a597",
+  "runner_sha256": "42cf4b056861d63d7ac9dbff196f32bca2a9e602492a76dda08f16d4085e4b7d",
+  "device": "cuda",
+  "selected_example_audit": "selected_example_audit.json",
+  "loss_curve": "loss_curve.csv",
+  "coordinate_components": "coordinate_components.csv",
+  "historical_p5_d0_1_modified": false,
+  "results": "results.csv"
+}
