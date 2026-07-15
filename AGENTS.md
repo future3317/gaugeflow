@@ -230,6 +230,28 @@ Execute the research program strictly in order:
     fitting. `reports/gate_p5_d0_6_quotient_rollout_corrected_flow_map_v1/`
     is the immutable result. Do not alter D0.5 code, tune D0.6, start P5-D1,
     or work on harmonic/real tensors from this evidence.
+    D0.7 is the completed, versioned multiscale semigroup-consistency follow-up
+    at `configs/gate_p5_d0_7_multiscale_semigroup_flow_map_v1.json`. Its
+    read-only D0.6 reconstruction showed direct-map MSE/semigroup defect
+    increasing from `3.92e-5/0.00507` at span `1/32` to `1.87e-2/0.11102` at
+    span `1`, and quotient perturbation amplification of `3.56x` initially
+    and `1.17x` on average. The prescribed uniform span sampling, endpoint
+    maps, differentiable rollout, and semigroup objective did not qualify:
+    adjacent map MSE was `3.91e-5`, but teacher RMS `0.1100` and 100-step RMS
+    `0.2248` exceed `0.02/0.05`; failures remained zero. Its phase-1 evidence,
+    Flow Map Matching/Consistency rationale, code, configuration, tests, and
+    results are retained at `reports/gate_p5_d0_7_multiscale_semigroup_flow_map_v1/`.
+    The single D0.8 option authorized by that protocol was a finite-difference
+    quotient contractivity constraint, selected solely because amplification
+    exceeded one. `configs/gate_p5_d0_8_contractive_quotient_flow_map_v1.json`
+    freezes the same capacity, 64 sources, 5,000 steps, and thresholds; it
+    changes no architecture or sampler. The completed run reduced measured
+    first-step/mean-step amplification to `1.015x/1.033x`, but did not pass:
+    MSE `6.19e-5`, teacher RMS `0.1256`, and 100-step RMS `0.2474`, with zero
+    failures. The equal-weight contractivity loss therefore reduced local
+    expansion without restoring accurate maps. D0.8 is terminal: do not run
+    D0.9, change the constraint/bound/weight, or enter P5-D1, harmonic,
+    oracle, or real-tensor work from it.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a

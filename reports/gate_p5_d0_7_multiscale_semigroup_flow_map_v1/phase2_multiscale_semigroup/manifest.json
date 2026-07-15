@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "status": "not_passed_d0_7",
+  "attribution": "multiscale_semigroup_not_qualified",
+  "d0_8_allowed": true,
+  "protocol": "/mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit/configs/gate_p5_d0_7_multiscale_semigroup_flow_map_v1.json",
+  "protocol_sha256": "99c18ec48b684cbefa4f8e4df5da306d49aa70887fd651ac14fe16051b12bf96",
+  "runner_sha256": "2984af236b8e4c41dff0f7bcdc3ff91441f3ddc6c53bb8045bfc56635fbf2ff0",
+  "device": "cuda",
+  "historical_results_modified": false
+}

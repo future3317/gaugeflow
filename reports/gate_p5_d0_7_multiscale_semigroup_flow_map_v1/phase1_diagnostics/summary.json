@@ -1,0 +1,21 @@
+{
+  "baseline": "D0.6 deterministic reconstruction; no checkpoint persisted",
+  "max_span_direct_map_mse": 0.018693719059228897,
+  "max_semigroup_defect_rms": 0.11102171987295151,
+  "mean_local_amplification": 1.1748832088464805,
+  "max_local_amplification": 3.5566297067439976,
+  "rationale_sources": [
+    {
+      "citation": "Boffi, Albergo, Vanden-Eijnden, Flow map matching with stochastic interpolants, 2024",
+      "url": "https://arxiv.org/abs/2406.07507"
+    },
+    {
+      "citation": "Song et al., Consistency Models, 2023",
+      "url": "https://arxiv.org/abs/2303.01469"
+    },
+    {
+      "citation": "Song and Dhariwal, Improved Techniques for Training Consistency Models, 2023",
+      "url": "https://arxiv.org/abs/2310.14189"
+    }
+  ]
+}

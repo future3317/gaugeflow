@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow P5-D0.8 Contractive Quotient Flow Map v1",
+  "status": "pre_registered_not_started",
+  "scope": "The sole authorized follow-up to failed D0.7. It keeps the D0.7 multiscale sampler, model capacity, fixed sources, optimizer, duration, direct, rollout, and semigroup losses. The only new term is a quotient finite-difference contractivity penalty. D0.3--D0.7 artifacts remain immutable.",
+  "rationale": {
+    "selection_rule": "D0.7 phase-1 perturbation audit measured first-step amplification 3.5566, mean per-step amplification 1.1749, and 32-step perturbed-state RMS 0.05351 from a 0.001 quotient perturbation. Since amplification exceeds one, the D0.7 authorization selects the contractive/Lipschitz option, rather than local/global maps or EMA distillation.",
+    "method": "For an analytic on-path state x_s and a graphwise-translation-quotiented finite perturbation xi of RMS 0.001, penalize positive excess of the map quotient distance ratio: mean_g max(0, d_Q(Phi(x_s+xi), Phi(x_s))^2 / d_Q(x_s+xi, x_s)^2 - 1)^2. This is a finite-difference 1-Lipschitz constraint in the physical translation quotient; it does not alter the map architecture or sampler.",
+    "literature": [
+      {"citation": "Boffi, Albergo, Vanden-Eijnden, Flow map matching with stochastic interpolants: A mathematical framework for consistency models, 2024", "url": "https://arxiv.org/abs/2406.07507"},
+      {"citation": "Song et al., Consistency Models, 2023", "url": "https://arxiv.org/abs/2303.01469"},
+      {"citation": "Song and Dhariwal, Improved Techniques for Training Consistency Models, 2023", "url": "https://arxiv.org/abs/2310.14189"}
+    ]
+  },
+  "model": {
+    "class": "QuotientRolloutFlowMap",
+    "hidden_dim": 64,
+    "layers": 2,
+    "coordinate_rbf_dim": 16,
+    "coordinate_rbf_cutoff_angstrom": 8.0,
+    "fourier_frequencies": 8,
+    "time_epsilon": 0.0001,
+    "time_injection": "unchanged D0.6 Fourier interval FiLM at every block"
+  },
+  "training": {
+    "fixed_sources": {"count": 64, "source_noise_seed": 520101},
+    "span_sampling": {"buckets": [0.03125, 0.0625, 0.125, 0.25, 0.5, 1.0], "probability": "uniform over buckets", "endpoint_probability": 0.25, "seed": 520108},
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "model_seed": 5201,
+    "steps": 5000,
+    "loss": "L_direct + L_rollout + L_semi + L_contract, where the first three are unchanged D0.7 energy-normalized losses and L_contract is the registered unit-weight finite-difference quotient penalty",
+    "contractivity": {"perturbation_quotient_rms": 0.001, "lipschitz_bound": 1.0, "seed": 520109, "normalization_epsilon": 1e-12},
+    "adaptive_extension_or_hyperparameter_search": false
+  },
+  "evaluation": {
+    "time_grid": {"count": 33, "definition": "linspace(0,1,33)"},
+    "flow_map_mse": "mean over 32 adjacent analytic maps",
+    "teacher_forced_metric": "mean direct analytic-state-to-endpoint quotient RMS over 33 grid times",
+    "sampling_steps": [1, 2, 4, 8, 16, 32, 100],
+    "perturbation": {"quotient_fractional_rms": 0.001, "rollout_steps": 32, "seed": 520107}
+  },
+  "pass_criteria": {"all_time_flow_map_mse_max": 0.001, "teacher_forced_translation_aligned_rms_max": 0.02, "free_running_translation_aligned_rms_max": 0.05, "sampling_failures_max": 0},
+  "prohibited": ["P5_D1", "harmonic", "oracle", "real_tensor", "unseen_source_evaluation", "threshold_change", "additional_D0_8_changes", "relaxation", "DFT", "DFPT"]
+}

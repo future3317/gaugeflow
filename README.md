@@ -102,7 +102,7 @@ formula/prototype groups; it is blocked on the corrected full-O(3) v2 build.
 P4 is blocked by the failed P5 precondition. The next real-tensor step remains
 the separately blocked two-oracle full-O(3) v2 qualification.
 
-### P5-D0 coordinate-flow root-cause repair (prepared only; no new result)
+### P5-D0 coordinate-flow root-cause repair (D0.3--D0.8 completed; not passed)
 
 The fixed-batch P5-D0.1 negative result has a concrete representation/path
 mismatch, not evidence that the coordinate head is disconnected. The old path
@@ -175,6 +175,29 @@ non-finite samples. This cleanly localizes the remaining issue to cross-horizon
 map composition/rollout stability, not local map fitting. D0.6 is frozen at
 `reports/gate_p5_d0_6_quotient_rollout_corrected_flow_map_v1/`; no P5-D1,
 harmonic, or real-tensor work is authorized.
+
+D0.7 is a separately frozen long-horizon stability study, recorded under
+`reports/gate_p5_d0_7_multiscale_semigroup_flow_map_v1/`. Its read-only D0.6
+reconstruction found direct-map MSE rising from `3.92e-5` at span `1/32` to
+`1.87e-2` at span `1`, while the semigroup defect rises from `0.00507` to
+`0.11102`. A quotient perturbation was amplified `3.56x` in the first learned
+step and `1.17x` per step on average. The registered multiscale direct/endpoint,
+differentiable rollout, and semigroup losses preserved low adjacent-map MSE
+(`3.91e-5`) and zero sampling failures, but failed teacher-forced RMS (`0.1100`)
+and 100-step RMS (`0.2248`). The result is a frozen negative result, not a
+replacement for D0.6.
+
+The one and only authorized D0.8 follow-up selected the finite-difference
+translation-quotient 1-Lipschitz penalty because the D0.7 amplification was
+above one; it did not add a global/local hierarchy or EMA distillation. The
+penalty reduced the measured first-step amplification to `1.015x` and mean
+per-step amplification to `1.033x`, but its fixed equal-weight training run
+collapsed map fitting: map MSE `6.19e-5` remained below the local threshold,
+while teacher-forced RMS worsened to `0.1256` and 100-step RMS to `0.2474`
+(zero failures). Thus neither long-map error nor stability is qualified under
+the fixed D0.7/D0.8 capacity, budget, and thresholds. D0.8 is terminal for
+this authorization: do not start P5-D1, D0.9, harmonic, oracle, or real-tensor
+experiments from these results.
 
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
