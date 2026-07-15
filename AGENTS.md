@@ -197,6 +197,18 @@ orbit-tensor-error distributions. See `README.md` and
   fair direct comparison must use `CompleteDirectIrrepCoupling`, which retains
   all six `1o` CG paths of `(2x1o + 1x2o + 1x3o) x (0e + 2e)`, and must pass its
   SO(3)-equivariance regression test.
+- `direct_irrep_complete_v1` and `harmonic_alignment_v1` are new, untrained
+  versioned modes under `configs/gate_h1_harmonic_conditioning_v1.json`. The
+  latter uses deterministic SO(3) quasi-Monte-Carlo nodes, not an exact
+  quadrature or a substitute for a reported refinement study. Its early
+  proper-SO(3)-invariant token, harmonic posterior, and the separate
+  `0e/0o/1o/1e` parity prototype are operator-qualified only; no historical
+  Gate result may be described as using them. Any causal training successor
+  must pre-register grid size/refinement, data, seed, budget, and thresholds.
+- The production A11-Q0 tiny-panel likelihood remains exact enumeration. The
+  new count-partition dynamic program is a tested scalable primitive for a
+  future protocol; it must not silently replace Q0/Q1 evidence or evade the
+  state-dependent proper-SO(3) residual-group requirement.
 - The historical production vocabulary is raw atomic number in 119 logits and
   has an untrained index zero. Never reuse it in a new categorical protocol:
   use `vocabulary.py` dense elements `0..117` and internal mask `118`.

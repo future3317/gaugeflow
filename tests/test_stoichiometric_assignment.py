@@ -1,8 +1,11 @@
 import torch
 
 from gaugeflow.assignment import (
+    assignment_energies,
     automorphism_orbit_targets,
     automorphism_quotient_nll,
+    count_constrained_assignment_quotient_nll,
+    count_constrained_log_partition,
     enumerate_count_assignments,
     exact_assignment_distribution,
     exact_assignment_distribution_permutation_log_probability_error,
@@ -165,3 +168,30 @@ def test_exact_assignment_probability_vector_is_stable_after_float32_score_satur
         permutation,
     )
     assert error <= 2e-6
+
+
+def test_count_dynamic_program_matches_tiny_exact_enumeration_and_has_gradients():
+    torch.manual_seed(29)
+    counts = torch.tensor([2, 1, 1])
+    scores = torch.randn(4, 3, requires_grad=True)
+    dynamic = count_constrained_log_partition(scores, counts)
+    assignments = enumerate_count_assignments(counts)
+    direct = torch.logsumexp(assignment_energies(scores, assignments).to(scores), dim=0)
+    assert torch.allclose(dynamic, direct, atol=1e-6, rtol=1e-6)
+    dynamic.backward()
+    assert scores.grad is not None and torch.isfinite(scores.grad).all()
+
+
+def test_dynamic_quotient_nll_uses_residual_group_without_factorial_support():
+    scores = torch.tensor(
+        [[1.2, -0.5], [-0.3, 1.0], [0.4, -0.1], [0.2, 0.7]], requires_grad=True
+    )
+    counts = torch.tensor([2, 2])
+    target = torch.tensor([0, 1, 0, 1])
+    operations = torch.tensor([[0, 1, 2, 3], [2, 3, 0, 1]])
+    partial = torch.tensor([2, 2, 2, 2])
+    result = count_constrained_assignment_quotient_nll(scores, counts, target, operations, partial)
+    reference = exact_assignment_quotient_nll(scores, counts, target, operations, partial)
+    assert torch.allclose(result.quotient_nll, reference.quotient_nll.to(result.quotient_nll), atol=1e-6, rtol=1e-6)
+    result.quotient_nll.backward()
+    assert scores.grad is not None and torch.isfinite(scores.grad).all()

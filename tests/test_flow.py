@@ -131,6 +131,22 @@ def test_gate_a_conditioning_controls_have_finite_objectives():
         assert torch.isfinite(matcher.loss(model, batch)["loss"]), mode
 
 
+def test_next_generation_complete_cg_and_harmonic_modes_have_finite_objectives():
+    """New modes are versioned successors, not replacements for frozen Gate A."""
+    batch = Batch.from_data_list([
+        Data(atom_types=torch.tensor([14, 8, 7]), frac_coords=torch.rand(3, 3),
+             lattice=torch.eye(3).unsqueeze(0), piezo_irreps=torch.randn(1, 18),
+             condition_present=torch.ones(1, 1, dtype=torch.bool), num_nodes=3),
+    ])
+    matcher = RiemannianCrystalFlowMatcher()
+    for mode in ("direct_irrep_complete_v1", "harmonic_alignment_v1"):
+        model = GaugeFlowVectorField(hidden_dim=32, layers=1, orbit_frames=12, conditioning_mode=mode)
+        terms = matcher.loss(model, batch)
+        assert torch.isfinite(terms["loss"]), mode
+        terms["loss"].backward()
+        assert any(parameter.grad is not None for parameter in model.parameters())
+
+
 def test_residual_conditional_field_keeps_base_condition_free_and_records_three_heads():
     torch.manual_seed(101)
     batch = Batch.from_data_list([

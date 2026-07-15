@@ -22,6 +22,8 @@ from .tensor import (
     piezo_to_irreps,
     rotate_rank3,
 )
+from .direct_irrep import CompleteDirectIrrepCoupling
+from .harmonic import HarmonicDoubleCosetConditionEncoder
 from torch_geometric.utils import scatter
 from .uncertainty import VelocityUncertainty, bounded_log_std
 
@@ -104,8 +106,10 @@ def direct_irrep_cartesian_products(
 class OrbitResponseFieldEncoder(nn.Module):
     """Discrete orbit-alignment constitutive-query encoder.
 
-    SO(3) integration is a finite quadrature, hence representative invariance
-    is approximate in the number of nodes.  The encoder intentionally consumes
+    The legacy finite-frame modes use seeded Haar-Monte-Carlo nodes, not an
+    exact finite quadrature; representative invariance is approximate in node
+    count.  ``harmonic_alignment_v1`` is a separate, deterministic-grid
+    implementation with an early invariant channel.  The encoder consumes
     only the tensor condition and the evolving flow state.  In particular, it
     never accepts a target-CIF stabilizer during training because that object is
     unavailable in tensor-only sampling.
@@ -118,9 +122,12 @@ class OrbitResponseFieldEncoder(nn.Module):
             # target-CIF stabilizer during training, which tensor-only sampling
             # cannot provide.
             mode = "orbit_alignment"
-        if mode not in {"raw_tensor", "direct_irrep", "stabilizer_pooling", "orbit_alignment"}:
+        if mode not in {
+            "raw_tensor", "direct_irrep", "direct_irrep_complete_v1",
+            "stabilizer_pooling", "orbit_alignment", "harmonic_alignment_v1",
+        }:
             raise ValueError(
-                "mode must be 'raw_tensor', 'direct_irrep', 'stabilizer_pooling', or 'orbit_alignment'"
+                "unknown conditioning mode"
             )
         self.mode = mode
         self.register_buffer("rotations", fixed_so3_frames(orbit_frames))
@@ -132,10 +139,18 @@ class OrbitResponseFieldEncoder(nn.Module):
             else torch.empty((0, 3, 3), dtype=torch.float32)
         )
         self.register_buffer("automorphism_candidates", catalogue, persistent=False)
+        self.complete_direct = CompleteDirectIrrepCoupling() if mode == "direct_irrep_complete_v1" else None
+        self.harmonic = (
+            HarmonicDoubleCosetConditionEncoder(hidden_dim, grid_size=orbit_frames)
+            if mode == "harmonic_alignment_v1" else None
+        )
         # Six scalar diagnostics plus six fixed three-vector constitutive
         # probes. These span Sym?(R?), so information is not limited to the
         # accidental local bond directions of a noisy state.
         self.candidate = nn.Sequential(nn.Linear(24, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
+        self.complete_candidate = nn.Sequential(
+            nn.Linear(24, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
         # Deliberately non-equivariant lab-frame control.  It is kept separate
         # from the Cartesian direct-irrep baseline so Gate A can distinguish a
         # raw component shortcut from an actual tensor--geometry interaction.
@@ -165,8 +180,33 @@ class OrbitResponseFieldEncoder(nn.Module):
         type_state: torch.Tensor,
         framed_tensors: torch.Tensor | None = None,
         return_diagnostics: bool = False,
+        time: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, ...]:
         graphs = piezo_irreps.shape[0]
+        if self.mode == "harmonic_alignment_v1":
+            if self.harmonic is None:
+                raise RuntimeError("harmonic encoder was not constructed")
+            if framed_tensors is not None:
+                raise ValueError("harmonic alignment does not accept legacy finite-frame caches")
+            if time is None:
+                raise ValueError("harmonic alignment requires path time")
+            harmonic_outputs = self.harmonic(
+                piezo_irreps, present, edge_directions, edge_graph, time,
+                return_diagnostics=return_diagnostics,
+            )
+            if not return_diagnostics:
+                return harmonic_outputs  # type: ignore[return-value]
+            graph_condition, field, auxiliary, weights, diagnostics = harmonic_outputs
+            return graph_condition, field, auxiliary, weights, {
+                "raw_condition_embedding": diagnostics["invariant_embedding"],
+                "frame_candidate_embeddings": diagnostics["aligned_irreps"].unsqueeze(1),
+                "frame_weights": weights,
+                "uniform_pooled_embedding": diagnostics["invariant_embedding"],
+                "aligned_embedding": diagnostics["aligned_embedding"],
+                "pool_then_embed": diagnostics["aligned_embedding"],
+                "stabilizer_posterior": None,
+                "harmonic": diagnostics,
+            }
         if self.mode == "raw_tensor":
             values = self.raw_tensor(piezo_irreps).unsqueeze(1)
             weights = torch.ones((graphs, 1), dtype=values.dtype, device=values.device)
@@ -187,8 +227,43 @@ class OrbitResponseFieldEncoder(nn.Module):
                 "stabilizer_posterior": None,
             })
 
-        if self.mode == "direct_irrep":
+        if self.mode in {"direct_irrep", "direct_irrep_complete_v1"}:
             tensors = piezo_from_irreps(piezo_irreps, self.piezo_basis)
+            if self.mode == "direct_irrep_complete_v1":
+                if self.complete_direct is None:
+                    raise RuntimeError("complete direct-irrep module was not constructed")
+                edge_tensors = tensors[edge_graph]
+                fields = self.complete_direct(edge_tensors, edge_directions)
+                path_norms = scatter_mean(safe_norm(fields, dim=-1), edge_graph, graphs)
+                pairwise = torch.einsum("efi,egi->efg", fields, fields)
+                upper = torch.triu_indices(6, 6, offset=1, device=fields.device)
+                path_pairs = scatter_mean(pairwise[:, upper[0], upper[1]], edge_graph, graphs)
+                component_norms = torch.stack(
+                    [safe_norm(piezo_irreps[:, block], dim=-1) for block in isotypic_slices()], dim=-1
+                )
+                features = torch.cat((component_norms, path_norms, path_pairs), dim=-1)
+                values = self.complete_candidate(features).unsqueeze(1)
+                weights = torch.ones((graphs, 1), dtype=values.dtype, device=values.device)
+                aligned = values[:, 0] + self.present_bias
+                mask = present.to(dtype=torch.bool)
+                graph_condition = torch.where(mask, aligned, self.null_condition.unsqueeze(0).expand_as(aligned))
+                selected_field = torch.where(
+                    mask[edge_graph].view(-1, 1, 1), fields, torch.zeros_like(fields)
+                ) if fields.numel() else fields
+                auxiliary = edge_directions.new_zeros((edge_directions.shape[0], 3))
+                outputs = (graph_condition, selected_field, auxiliary, weights)
+                if not return_diagnostics:
+                    return outputs
+                return (*outputs, {
+                    "raw_condition_embedding": values[:, 0],
+                    "frame_candidate_embeddings": values,
+                    "frame_weights": weights,
+                    "uniform_pooled_embedding": values[:, 0],
+                    "aligned_embedding": aligned,
+                    "pool_then_embed": values[:, 0],
+                    "stabilizer_posterior": None,
+                    "complete_direct_path_norms": path_norms,
+                })
             primary, secondary = direct_irrep_cartesian_products(tensors, edge_directions, edge_graph)
             field_norm = scatter_mean(safe_norm(primary, dim=-1), edge_graph, graphs)
             auxiliary_norm = scatter_mean(safe_norm(secondary, dim=-1), edge_graph, graphs)
@@ -371,10 +446,17 @@ class ResponseMessageLayer(nn.Module):
     and an incoming vector feature, so it transforms covariantly under SO(3).
     """
 
-    def __init__(self, hidden_dim: int, vector_dim: int):
+    def __init__(self, hidden_dim: int, vector_dim: int, response_channels: int = 1):
         super().__init__()
+        if response_channels < 1:
+            raise ValueError("response_channels must be positive")
         self.vector_dim = vector_dim
-        scalar_features = hidden_dim * 3 + 6
+        self.response_channels = response_channels
+        # Preserve the historical K=1 parameter shapes and forward equations
+        # exactly.  K=6 is used only by the new complete-CG baseline.
+        field_count = response_channels + 1  # primary fields plus auxiliary
+        invariant_features = 1 + 2 * field_count + field_count * (field_count - 1) // 2
+        scalar_features = hidden_dim * 3 + (6 if response_channels == 1 else invariant_features)
         self.scalar_message = nn.Sequential(
             nn.Linear(scalar_features, hidden_dim),
             nn.SiLU(),
@@ -382,7 +464,8 @@ class ResponseMessageLayer(nn.Module):
         )
         self.update = nn.Sequential(nn.Linear(hidden_dim * 2, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.vector_gates = nn.Sequential(
-            nn.Linear(scalar_features, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim * 4)
+            nn.Linear(scalar_features, hidden_dim), nn.SiLU(),
+            nn.Linear(hidden_dim, vector_dim * (4 if response_channels == 1 else response_channels + 3))
         )
         self.vector_update = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim), nn.Sigmoid()
@@ -395,6 +478,33 @@ class ResponseMessageLayer(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if source.numel() == 0:
             return nodes, vectors
+        if self.response_channels != 1:
+            if response.ndim != 3 or response.shape[1:] != (self.response_channels, 3):
+                raise ValueError("multi-response layer received an incompatible response field")
+            if auxiliary_response.shape != (response.shape[0], 3):
+                raise ValueError("multi-response layer requires one auxiliary polar vector per edge")
+            fields = torch.cat((response, auxiliary_response.unsqueeze(1)), dim=1)
+            direction_norm = safe_norm(directions, dim=-1, keepdim=True)
+            direction_dots = (fields * directions.unsqueeze(1)).sum(dim=-1)
+            field_norms = safe_norm(fields, dim=-1)
+            pairwise = torch.einsum("efi,egi->efg", fields, fields)
+            upper = torch.triu_indices(fields.shape[1], fields.shape[1], offset=1, device=fields.device)
+            pair_features = pairwise[:, upper[0], upper[1]]
+            invariants = torch.cat((direction_norm, direction_dots, field_norms, pair_features), dim=-1)
+            edge_scalars = torch.cat((nodes[source], nodes[target], node_condition[source], invariants), dim=-1)
+            messages = self.scalar_message(edge_scalars)
+            aggregate = nodes.new_zeros(nodes.shape)
+            aggregate.index_add_(0, target, messages)
+            updated_nodes = nodes + self.update(torch.cat((nodes, aggregate), dim=-1))
+            gates = self.vector_gates(edge_scalars).reshape(
+                -1, self.response_channels + 3, self.vector_dim, 1
+            )
+            vector_messages = gates[:, 0] * directions.unsqueeze(1) + gates[:, -1] * vectors[source]
+            for field_index in range(fields.shape[1]):
+                vector_messages = vector_messages + gates[:, field_index + 1] * fields[:, field_index].unsqueeze(1)
+            vector_aggregate = vectors.new_zeros(vectors.shape)
+            vector_aggregate.index_add_(0, target, vector_messages)
+            return updated_nodes, vectors + self.vector_update(updated_nodes).unsqueeze(-1) * vector_aggregate
         invariants = torch.stack(
             (
                 (directions * response).sum(dim=-1),
@@ -433,9 +543,9 @@ class ConditionedResidualBlock(nn.Module):
     residual state, not a replacement for the condition-free message field.
     """
 
-    def __init__(self, hidden_dim: int, vector_dim: int):
+    def __init__(self, hidden_dim: int, vector_dim: int, response_channels: int = 1):
         super().__init__()
-        self.message = ResponseMessageLayer(hidden_dim, vector_dim)
+        self.message = ResponseMessageLayer(hidden_dim, vector_dim, response_channels=response_channels)
         self.film = nn.Linear(hidden_dim, hidden_dim * 2)
         self.residual_gate = nn.Linear(hidden_dim, hidden_dim)
         self.vector_gate = nn.Linear(hidden_dim, vector_dim)
@@ -498,8 +608,9 @@ class EndpointIdConditionEncoder(nn.Module):
         type_state: torch.Tensor,
         framed_tensors: torch.Tensor | None = None,
         return_diagnostics: bool = False,
+        time: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, ...]:
-        del graph_query, edge_graph, frac_coords, lattices, batch, type_state
+        del graph_query, edge_graph, frac_coords, lattices, batch, type_state, time
         if framed_tensors is not None:
             raise ValueError("endpoint-ID control has no tensor orbit cache")
         if endpoint_id.ndim != 2 or endpoint_id.shape[-1] != 2:
@@ -573,13 +684,17 @@ class GaugeFlowVectorField(nn.Module):
             "periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False
         )
         self.vector_dim = vector_dim or max(16, hidden_dim // 8)
-        self.layers = nn.ModuleList([ResponseMessageLayer(hidden_dim, self.vector_dim) for _ in range(layers)])
+        self.response_channels = 6 if conditioning_mode == "direct_irrep_complete_v1" else 1
+        self.layers = nn.ModuleList([
+            ResponseMessageLayer(hidden_dim, self.vector_dim, response_channels=self.response_channels)
+            for _ in range(layers)
+        ])
         # Construct these adapters in both A2 variants so hidden width, depth,
         # and total parameter capacity remain fixed across the pre-registered
         # mechanism comparison.  They are deliberately inactive in the
         # original-injection control.
         self.conditional_layers = nn.ModuleList(
-            [ConditionedResidualBlock(hidden_dim, self.vector_dim) for _ in range(layers)]
+            [ConditionedResidualBlock(hidden_dim, self.vector_dim, response_channels=self.response_channels) for _ in range(layers)]
         )
         self.type_out = nn.Linear(hidden_dim, atom_types)
         self.coord_out = nn.Linear(self.vector_dim, 1, bias=False)
@@ -633,7 +748,7 @@ class GaugeFlowVectorField(nn.Module):
         response_outputs = self.response(
             piezo_irreps, condition_present, graph_seed, directions, edge_graph,
             frac_coords, lattices, batch, type_state, condition_orbit,
-            return_diagnostics=return_condition_diagnostics,
+            return_diagnostics=return_condition_diagnostics, time=time,
         )
         graph_condition, edge_response, edge_auxiliary, alignment = response_outputs[:4]
         condition_diagnostics = response_outputs[4] if return_condition_diagnostics else None

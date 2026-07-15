@@ -34,6 +34,29 @@ decision additionally requires a pre-qualified frozen external tensor-oracle
 ensemble, the training-set orbit-tensor-error distribution, and the registered
 physical micro-audit. See `reports/performance_data_scientific_audit.md`.
 
+### Next-generation mathematical implementation (H1; no training)
+
+`configs/gate_h1_harmonic_conditioning_v1.json` records a new, versioned
+operator qualification. It does not modify a historical checkpoint or claim a
+Gate A result. The implementation adds:
+
+- `direct_irrep_complete_v1`, which retains the six independent polar-vector
+  Clebsch--Gordan pathways before message passing;
+- `harmonic_alignment_v1`, a state-derived $l\leq3$ relative-alignment score
+  on a deterministic SO(3) Hopf quasi-Monte-Carlo grid, paired with an early
+  proper-SO(3)-invariant condition token, normalized orbit-shape plus
+  log-magnitude/physical-zero decomposition, and an entropy/time alignment gate;
+- a tested O(3)-typed prototype with separate $0e$, $0o$, $1o$, and $1e$
+  channels; and
+- a differentiable count-partition dynamic program, checked against exact
+  small-support assignment enumeration.
+
+The H1 CUDA operator audit deliberately treats the 240-node grid only as a
+numerical reference: 24/60/120-node aligned-condition differences are
+`2.0143/0.5956/0.1724`, respectively. Thus finite grid convergence is an open
+pre-registered design choice, not an achieved theorem or a reason to start
+training. See `reports/gate_h1_harmonic_conditioning_v1/`.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import torch
 from e3nn.io import CartesianTensor
 
@@ -14,6 +16,38 @@ VOIGT_ORDER = ("xx", "yy", "zz", "yz", "xz", "xy")
 _PIEZO_CHANGE_OF_BASIS = (
     PIEZO_IRREPS.reduced_tensor_products().change_of_basis.detach().contiguous()
 )
+
+
+@dataclass(frozen=True)
+class TensorOrbitShapeMagnitude:
+    """A nonzero-orbit shape, log magnitude, and physical-zero indicator."""
+
+    shape: torch.Tensor
+    log_magnitude: torch.Tensor
+    physical_zero: torch.Tensor
+
+
+def tensor_orbit_shape_magnitude(
+    piezo_irreps: torch.Tensor, *, near_zero_tolerance: float = 0.0
+) -> TensorOrbitShapeMagnitude:
+    """Separate orbit shape from magnitude without turning a physical zero into null.
+
+    For nonzero conditions, ``shape`` has unit Frobenius norm and
+    ``log_magnitude=log(||e||)``.  For a declared physical/near zero condition
+    the shape and log magnitude are finite placeholders and the explicit
+    ``physical_zero`` flag carries the semantic distinction.  The tolerance is
+    an input to a future data protocol, not an inferred DFPT uncertainty model.
+    """
+    if piezo_irreps.shape[-1] != PIEZO_IRREPS.dim or not piezo_irreps.dtype.is_floating_point:
+        raise ValueError("piezo irreps must be floating tensors with final dimension 18")
+    if near_zero_tolerance < 0:
+        raise ValueError("near_zero_tolerance must be non-negative")
+    magnitude = torch.linalg.vector_norm(piezo_irreps, dim=-1)
+    physical_zero = magnitude <= near_zero_tolerance
+    safe = magnitude.clamp_min(torch.finfo(piezo_irreps.dtype).tiny)
+    shape = torch.where(physical_zero.unsqueeze(-1), torch.zeros_like(piezo_irreps), piezo_irreps / safe.unsqueeze(-1))
+    log_magnitude = torch.where(physical_zero, torch.zeros_like(magnitude), safe.log())
+    return TensorOrbitShapeMagnitude(shape=shape, log_magnitude=log_magnitude, physical_zero=physical_zero)
 
 
 def piezo_change_of_basis(

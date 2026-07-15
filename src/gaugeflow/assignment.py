@@ -294,6 +294,104 @@ def exact_assignment_distribution(
     return ExactAssignmentDistribution(assignments, energies, torch.log_softmax(energies, dim=0))
 
 
+def count_constrained_log_partition(
+    site_species_scores: torch.Tensor,
+    counts: torch.Tensor,
+) -> torch.Tensor:
+    """Differentiable log partition for count-constrained site assignments.
+
+    This coefficient dynamic program evaluates
+
+    ``[z_1^n1 ... z_K^nK] prod_i sum_k exp(C[i,k]) z_k``
+
+    without enumerating the ``N! / prod_k n_k!`` chemical labelings.  Its
+    state space is the declared count box, so it is appropriate when the
+    number of active species is small; callers must still budget its
+    ``prod_k (n_k + 1)`` memory explicitly for large compositions.
+    """
+    if site_species_scores.ndim != 2 or not site_species_scores.dtype.is_floating_point:
+        raise ValueError("site_species_scores must be a floating [sites, species] tensor")
+    if counts.ndim != 1 or counts.numel() != site_species_scores.shape[1]:
+        raise ValueError("counts must provide one non-negative integer per species")
+    if bool((counts < 0).any()) or not torch.equal(counts, counts.to(torch.long)):
+        raise ValueError("counts must be non-negative integers")
+    if int(counts.sum()) != site_species_scores.shape[0]:
+        raise ValueError("composition counts must sum to the number of sites")
+    if not torch.isfinite(site_species_scores).all():
+        raise ValueError("site_species_scores must be finite")
+    shape = tuple(int(value) + 1 for value in counts.detach().cpu().tolist())
+    # ``logsumexp([-inf, ...])`` is numerically correct forward but its
+    # backward can create NaNs on unreachable DP states.  A dtype-safe finite
+    # sentinel is exponentially negligible relative to any finite score while
+    # retaining a well-defined autograd path through the whole state box.
+    negative_sentinel = torch.finfo(site_species_scores.dtype).min / 4.0
+    dp = site_species_scores.new_full(shape, negative_sentinel)
+    dp[(0,) * counts.numel()] = 0.0
+    for site in range(site_species_scores.shape[0]):
+        candidates = []
+        for species, count in enumerate(counts.detach().cpu().tolist()):
+            if count == 0:
+                continue
+            source = [slice(None)] * counts.numel()
+            destination = [slice(None)] * counts.numel()
+            source[species] = slice(0, count)
+            destination[species] = slice(1, count + 1)
+            padded = site_species_scores.new_full(shape, negative_sentinel)
+            padded[tuple(destination)] = dp[tuple(source)] + site_species_scores[site, species]
+            candidates.append(padded)
+        if not candidates:
+            raise RuntimeError("no species count state was available during dynamic programming")
+        dp = torch.logsumexp(torch.stack(candidates, dim=0), dim=0)
+    return dp[tuple(int(value) for value in counts.detach().cpu().tolist())]
+
+
+@dataclass(frozen=True)
+class DynamicQuotientResult:
+    """Exact quotient likelihood with a DP denominator and finite orbit numerator."""
+
+    residual_automorphisms: torch.Tensor
+    unique_orbit_targets: torch.Tensor
+    target_log_probability: torch.Tensor
+    quotient_nll: torch.Tensor
+    log_partition: torch.Tensor
+
+
+def count_constrained_assignment_quotient_nll(
+    site_species_scores: torch.Tensor,
+    counts: torch.Tensor,
+    target_types: torch.Tensor,
+    automorphism_permutations: torch.Tensor,
+    partial_tokens: torch.Tensor,
+) -> DynamicQuotientResult:
+    """Compute exact quotient NLL without factorial assignment enumeration.
+
+    Only the target's finite residual-automorphism orbit is enumerated.  The
+    normalizing partition is computed by :func:`count_constrained_log_partition`.
+    This is the scalable successor to the A11-Q0 tiny-panel enumerator, not a
+    silent alteration of that frozen protocol.
+    """
+    if target_types.ndim != 1 or target_types.numel() != site_species_scores.shape[0]:
+        raise ValueError("target_types must contain one species per site")
+    target_types = target_types.to(device=site_species_scores.device, dtype=torch.long)
+    if not torch.equal(torch.bincount(target_types, minlength=counts.numel()), counts.to(target_types)):
+        raise ValueError("target types must match the declared composition counts")
+    residual = residual_automorphism_permutations(partial_tokens, automorphism_permutations)
+    orbit_targets = automorphism_orbit_targets(target_types, residual)
+    sites = torch.arange(target_types.numel(), device=site_species_scores.device)
+    orbit_energies = torch.stack(
+        [site_species_scores[sites, labels.to(device=sites.device)].sum() for labels in orbit_targets]
+    )
+    log_partition = count_constrained_log_partition(site_species_scores, counts)
+    target_log_probability = torch.logsumexp(orbit_energies, dim=0) - log_partition
+    return DynamicQuotientResult(
+        residual_automorphisms=residual,
+        unique_orbit_targets=orbit_targets,
+        target_log_probability=target_log_probability,
+        quotient_nll=-target_log_probability,
+        log_partition=log_partition,
+    )
+
+
 def residual_automorphism_permutations(
     partial_tokens: torch.Tensor,
     automorphism_permutations: torch.Tensor,
