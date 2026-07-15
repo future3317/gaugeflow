@@ -9,9 +9,32 @@ description = "Stabilizer-aware response-field flow for tensor-orbit conditioned
 requires-python = ">=3.10"
 dependencies = ["torch>=2.5", "torch-geometric>=2.5", "e3nn>=0.5", "pymatgen>=2023.8", "pandas>=2.0"]
 
+[project.optional-dependencies]
+dev = ["mypy==1.16.1", "ruff==0.12.3", "pytest>=8"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = ["artifacts", "data", "outputs", "reports"]
+include = [
+  "src/gaugeflow/vnext/**/*.py",
+  "scripts/freeze_vnext_legacy_evidence.py",
+  "tests/test_vnext_*.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+follow_imports = "skip"
+check_untyped_defs = true
+exclude = ["src/gaugeflow/(?!vnext/).*\\.py$"]

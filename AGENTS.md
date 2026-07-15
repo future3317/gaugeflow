@@ -44,6 +44,23 @@ test it at small scale, and only then update scientific claims.
 
 ## Experimental gates
 
+### vNext execution lock
+
+- The controlling vNext specification hash is
+  `3bdac52ba00a14c40e8bb6f9de732d16d8a91eb5f81e1a9a2e9b2334e8dd952b`.
+  New work lives under `gaugeflow.vnext`; no historical Gate A--P5-C0 result
+  may be overwritten or reinterpreted.
+- Execute Q0 through Q9 strictly in order. A failed or blocked predecessor
+  makes every later command exit. Q10 (real v2, oracle, relaxation, DFT, DFPT)
+  always requires a separate human unlock even if Q8/Q9 eventually pass.
+- Q0 is a no-training diagnostic and ends as `complete` or `blocked`, not a
+  scientific pass. Q1 requires Q0 `complete`. The historical P5-C0 checkpoint
+  was not saved; do not recreate it by retraining under the Q0 protocol.
+- Commit the vNext sequence separately: evidence freeze; analytic affine/torus
+  processes; variance/collision/Jacobian diagnostics; wrapped score; masked
+  categorical process; lattice diffusion; backbone; conditioner; baselines;
+  gated experiments; paper; release artifacts.
+
 Execute the research program strictly in order:
 
 1. **Gate A -- conditioning works on a tiny real panel.** Use the frozen IDs,
