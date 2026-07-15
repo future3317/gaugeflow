@@ -244,7 +244,7 @@ F_e(n)=e:(n\otimes n),\quad F_e(n)_i=e_{ijk}n_jn_k.
 
 ### 5.3 周期图和 message passing
 
-`periodic_complete_edges` 对每个 graph 构造有向完全图（不含 self edge）。对于每对 atom，枚举 ([-2,2]^3) 共 125 个 periodic translation image，选 Cartesian distance 最小的 image，并只保留归一化 direction (n_{ij})。
+当前 production backbone 直接复用 `geometry.periodic_closest_image_edges`：对每个 graph 构造有向完全图（不含 self edge），对于每对 atom 枚举 \([-2,2]^3\) 共 125 个 periodic translation image，保留最小 Cartesian distance 的 displacement、unit direction、distance 与 image shift。distance 经 finite-cutoff Gaussian RBF 进入每个 scalar/vector message；早期只保留 direction 的 `periodic_complete_edges` 已删除，防止和 decoder 的 PBC 定义漂移。
 
 初始 node scalar 是 `Linear(119, hidden_dim)` 的 type state，vector feature 初始化为零。time 是 `MLP(1→h→h)` 后 broadcast 到每个 node；这个显式 time 注入是 A8 修复的真实 bug：此前 original-injection 在 endpoint-ID/raw/direct condition 下，message path 实际可能 time-blind。
 
@@ -585,7 +585,7 @@ after benchmark（warmup 10 + measure 20 resident CUDA optimizer steps）：
 
 ### 10.3 symmetry/equivariance
 
-1. `periodic_complete_edges` only preserves nearest direction、不含 distance；它在 cell basis change、degenerate nearest image 和 symmetry operation 下是否真正 equivariant/continuous？
+1. closest-image selection 在 exact nearest-image degeneracy 处仍是 piecewise 而非 globally smooth；需要在未来大规模 protocol 中报告这类 boundary 的比例，并继续测试 cell-basis/symmetry covariance。direction-only omission 已修复：当前 backbone 同时使用 distance/RBF，且与 decoder 共用 PBC primitive。
 2. direct-irrep 两个 contraction 是否构成充分且正确的 condition-to-geometry equivariant feature basis？
 3. finite random SO(3) frames + attention 是否仅 approximate invariant；是否可用 exact irreps/equivariant network 或 deterministic quadrature 更严谨地处理？
 4. 792 lattice proposals 的 construction、polar projection、soft type-aware match 是否物理上对应 latent gauge，还是可能把 generic noisy geometry 当作伪 symmetry？

@@ -102,6 +102,33 @@ formula/prototype groups; it is blocked on the corrected full-O(3) v2 build.
 P4 is blocked by the failed P5 precondition. The next real-tensor step remains
 the separately blocked two-oracle full-O(3) v2 qualification.
 
+### P5-D0 coordinate-flow root-cause repair (prepared only; no new result)
+
+The fixed-batch P5-D0.1 negative result has a concrete representation/path
+mismatch, not evidence that the coordinate head is disconnected. The old path
+uses an **absolute** fractional-coordinate velocity. Its target has a
+source-dependent graphwise translation component (26.8% of target velocity
+energy in the fixed audit), but the old backbone only observes pairwise
+nearest-image **unit directions**. A common fractional translation leaves
+those inputs unchanged; it also discards every bond length. D0.2 then showed
+that one fixed state can be memorized (`1.84e-11` velocity MSE), which rules
+out a broken coordinate-head gradient chain while leaving the multi-source
+target unidentifiable.
+
+The repair is implemented but deliberately untrained. The sole current
+coordinate backbone reuses the shared closest-image PBC primitive and appends
+a finite-cutoff Gaussian radial encoding of physical Cartesian edge distance
+to each equivariant message. The coordinate flow always projects both target
+and predicted tangents to zero graphwise mean and evaluates a
+translation-aligned periodic RMS. This retains all relative geometry while
+removing the arbitrary cell-origin degree of freedom. The erroneous absolute
+coordinate gauge and directions-only backbone have been removed rather than
+retained as runtime compatibility paths; the frozen Git commits preserve
+historical reproducibility. None of the D0, D0.1, D0.2, or P5 results has been
+altered or rerun. The only successor contract is
+`configs/gate_p5_d0_3_translation_quotient_metric_v1.json`, marked
+`prepared_not_started`; it must not run without explicit authorization.
+
 ### Gate A2 conditional-control successor (S1 completed, not passed)
 
 `configs/gate_a2_conditional_control_v1.json` is a separate, immutable S1

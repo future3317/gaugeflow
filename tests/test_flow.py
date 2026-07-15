@@ -4,14 +4,15 @@ import torch
 
 from gaugeflow.conditioning import apply_condition_dropout, randomize_tensor_orbit_representative
 from gaugeflow.flow import CrystalFlowState, RiemannianCrystalFlowMatcher
+from gaugeflow.coupling import translation_aligned_torus_rms
 from gaugeflow.manifold import torus_logmap
 from gaugeflow.model import (
     GaugeFlowVectorField,
     OrbitResponseFieldEncoder,
     ResponseMessageLayer,
     direct_irrep_cartesian_products,
-    periodic_complete_edges,
 )
+from gaugeflow.geometry import periodic_closest_image_edges
 from gaugeflow.tensor import fixed_so3_frames, piezo_from_irreps, piezo_voigt_to_cartesian, rotate_rank3
 from torch_geometric.data import Batch, Data
 
@@ -42,15 +43,16 @@ def test_standalone_flow_has_finite_loss_and_distinguishes_null_from_zero_tensor
 
 def test_response_message_layer_is_so3_equivariant():
     torch.manual_seed(7)
-    layer = ResponseMessageLayer(hidden_dim=8, vector_dim=3).eval()
+    layer = ResponseMessageLayer(hidden_dim=8, vector_dim=3, radial_basis_dim=4).eval()
     rotation = fixed_so3_frames(2)[1]
     nodes, vectors = torch.randn(3, 8), torch.randn(3, 3, 3)
     source, target = torch.tensor([0, 1, 2]), torch.tensor([1, 2, 0])
     directions, response, auxiliary, condition = (
         torch.randn(3, 3), torch.randn(3, 3), torch.randn(3, 3), torch.randn(3, 8)
     )
+    radial_basis = torch.randn(3, 4)
     with torch.no_grad():
-        original = layer(nodes, vectors, source, target, directions, response, auxiliary, condition)
+        original = layer(nodes, vectors, source, target, directions, response, auxiliary, condition, radial_basis)
         rotated = layer(
             nodes,
             vectors @ rotation.T,
@@ -60,6 +62,7 @@ def test_response_message_layer_is_so3_equivariant():
             response @ rotation.T,
             auxiliary @ rotation.T,
             condition,
+            radial_basis,
         )
     assert torch.allclose(original[0], rotated[0], atol=2e-5, rtol=2e-5)
     assert torch.allclose(original[1] @ rotation.T, rotated[1], atol=2e-5, rtol=2e-5)
@@ -100,11 +103,11 @@ def test_periodic_bond_directions_survive_a_unimodular_cell_change():
     frac = torch.tensor([[0.10, 0.20, 0.30], [0.85, 0.20, 0.30], [0.40, 0.65, 0.30]])
     lattice = torch.eye(3).unsqueeze(0)
     batch = torch.zeros(3, dtype=torch.long)
-    _, _, original = periodic_complete_edges(frac, lattice, batch)
+    original = periodic_closest_image_edges(frac, lattice, batch).direction
     transform = torch.tensor([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     transformed_frac = frac @ torch.linalg.inv(transform)
     transformed_lattice = (transform @ lattice[0]).unsqueeze(0)
-    _, _, transformed = periodic_complete_edges(transformed_frac, transformed_lattice, batch)
+    transformed = periodic_closest_image_edges(transformed_frac, transformed_lattice, batch).direction
     assert torch.allclose(original, transformed, atol=1e-6, rtol=1e-6)
 
 
@@ -263,7 +266,7 @@ def test_sampler_accepts_a_fixed_initial_state_and_preserves_inactive_subspaces(
     assert torch.allclose(sampled.lattice_log, target.lattice_log)
 
 
-def test_exact_production_path_velocity_closes_type_torus_and_spd_endpoints():
+def test_exact_production_path_velocity_closes_type_torus_and_spd_endpoints_modulo_origin():
     class ConstantVelocity(torch.nn.Module):
         def __init__(self, velocity):
             super().__init__()
@@ -289,7 +292,7 @@ def test_exact_production_path_velocity_closes_type_torus_and_spd_endpoints():
     )
     sampled = matcher.sample(ConstantVelocity(velocity), batch, steps=16, initial_state=base)
     assert torch.allclose(sampled.type_state, target.type_state, atol=3e-6, rtol=3e-6)
-    assert torch.allclose(torus_logmap(sampled.frac_coords, target.frac_coords), torch.zeros_like(target.frac_coords), atol=3e-6, rtol=3e-6)
+    assert translation_aligned_torus_rms(sampled.frac_coords, target.frac_coords) < 3e-6
     assert torch.allclose(sampled.lattice_log, target.lattice_log, atol=3e-6, rtol=3e-6)
 
 

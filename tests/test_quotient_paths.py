@@ -56,7 +56,7 @@ def test_riemannian_simplex_endpoint_objective_and_quotient_coupling_are_finite(
     model = GaugeFlowVectorField(hidden_dim=32, layers=1, conditioning_mode="endpoint_id")
     matcher = RiemannianCrystalFlowMatcher(
         active_heads=("type", "coord", "lattice"), type_path="riemannian_simplex",
-        target_coupling="optimal_transport", coordinate_gauge="no_drift",
+        target_coupling="optimal_transport",
         loss_normalization="target_velocity_rms", endpoint_type_nll_weight=1.0,
     )
     terms = matcher.loss(model, batch)

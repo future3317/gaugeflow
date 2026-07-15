@@ -172,6 +172,22 @@ Execute the research program strictly in order:
     is consequently blocked and must not start. P3's independent decoder
     protocol is separately blocked on the full-O(3) v2 raw build; it must not
     reuse the InN/BN endpoint-ID panel as a held-out qualification.
+12. **P5-D0 coordinate-substrate diagnosis and repair (implementation
+    prepared; not run).** P5-D0.1's 64-source fixed-batch failure is not a
+    generic inability to memorize: D0.2 memorized one state to `1.84e-11`
+    velocity MSE. The diagnosis is structural. The historical
+    `coordinate_gauge="absolute"` target contains a graphwise translation
+    component, while the historical direction-only PBC backbone is invariant
+    to a common fractional translation and discards edge length. Therefore it
+    cannot infer that target component across independent sources. Historical
+    D0/D0.1/D0.2 code, reports, thresholds, and conclusions remain immutable.
+    The only prepared successor is
+    `configs/gate_p5_d0_3_translation_quotient_metric_v1.json`: it defines
+    coordinate tangents modulo one graphwise translation
+    (`coordinate_gauge="no_drift"`), evaluates translation-aligned periodic
+    RMS, and uses the sole production closest-image distance/RBF coordinate
+    feature. The new implementation is untrained and unevaluated; do not execute D0.3
+    without explicit authorization and do not use it to amend the P5 failure.
 
 Do not start the full 4,000/499/499 run while Gate A is unresolved. A finite
 training loss, a smoke sample, or a completed checkpoint is not evidence that a
@@ -240,6 +256,13 @@ orbit-tensor-error distributions. See `README.md` and
   use `vocabulary.py` dense elements `0..117` and internal mask `118`.
 - Use numerically safe norms on quantities that can be exactly zero and test
   both finite forward values and finite backward gradients.
+- The current coordinate flow is defined only modulo a graphwise translation.
+  It always projects coordinate tangents to zero graphwise mean and every
+  message layer receives closest-image distance/RBF features as well as the
+  direction. The absolute-coordinate gauge and direction-only backbone have
+  been removed from the current runtime; historical commits, not hidden
+  fallbacks, preserve their evidence. Endpoint metrics must align one common
+  fractional translation per graph.
 - Feed path time directly to every message-passing node state. Passing time
   only through a condition encoder query is invalid because several legitimate
   conditioning encoders do not use that query.

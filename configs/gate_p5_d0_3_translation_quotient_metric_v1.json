@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "name": "GaugeFlow P5-D0.3 translation-quotient metric coordinate-flow qualification v1",
+  "status": "prepared_not_started",
+  "purpose": "Test the repaired unconditional coordinate substrate only after explicit authorization. The path is defined on periodic coordinates modulo one graphwise fractional translation, and the backbone receives closest-image Cartesian distances in addition to directions.",
+  "parent_evidence": {
+    "gate_p5_d0_unconditional_coordinate_v1": "failed_frozen_not_modified",
+    "gate_p5_d0_1_fixed_batch_overfit_v1": "failed_frozen_not_modified; diagnosis is an absolute-translation target that the direction-only translation-invariant backbone cannot identify across sources",
+    "gate_p5_d0_2_single_sample_overfit_v1": "passed_single_sample; forward, coordinate head, loss, and gradient chain can memorize one state"
+  },
+  "state": {
+    "endpoint_source": "P5-D0 / P5 v1 endpoint index 0",
+    "conditions_removed": ["tensor", "tensor orbit", "harmonic", "condition-present/null mask", "CFG", "endpoint ID"],
+    "fixed_atom_types_and_lattice": true,
+    "coordinate_gauge": "translation_quotient_no_drift",
+    "coordinate_target": "P_torus_logmap(source, endpoint), where P subtracts the graphwise mean fractional tangent",
+    "coordinate_evaluation": "translation-aligned periodic RMS; absolute fractional-origin RMS is diagnostic only"
+  },
+  "backbone": {
+    "conditioning_mode": "unconditional",
+    "periodic_geometry": "closest_image_cartesian_distance_and_direction",
+    "periodic_geometry_detail": "all directed closest-image Cartesian displacements over the fixed [-2,2]^3 image shell under row-lattice convention r=f@L",
+    "coordinate_rbf_dim": 16,
+    "coordinate_rbf_cutoff_angstrom": 8.0,
+    "legacy_implementations_removed": ["absolute_coordinate_gauge", "directions_only_backbone"]
+  },
+  "training": {
+    "fixed_examples": {
+      "count": 64,
+      "source_noise_seed": 520101,
+      "time_seed": 520102
+    },
+    "hidden_dim": 64,
+    "layers": 2,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "model_seed": 5201,
+    "steps": 5000,
+    "resampling_during_training": false,
+    "loss": "projected coordinate velocity MSE only"
+  },
+  "evaluation": {
+    "unseen_examples": {
+      "count": 64,
+      "source_noise_seed": 520103,
+      "time_seed": 520104
+    },
+    "free_running": {
+      "source": "fixed training source graph index 0",
+      "sampler_steps": 100,
+      "guidance_scale": 0.0
+    },
+    "required": ["fixed_batch_velocity_mse", "translation_aligned_teacher_forced_endpoint_rms", "translation_aligned_free_running_endpoint_rms", "absolute_origin_rms_diagnostic", "sampling_failures"]
+  },
+  "pass_criteria": {
+    "fixed_batch_velocity_mse_max": 0.0001,
+    "fixed_batch_translation_aligned_endpoint_rms_max": 0.02,
+    "sampling_failures_max": 0
+  },
+  "decision_rule": "This is a new, versioned substrate qualification. It cannot alter D0, D0.1, or D0.2. Do not execute it without explicit authorization; a result may at most determine whether the repaired unconditional coordinate substrate merits a separately versioned next test.",
+  "prohibited": ["automatic_execution", "P5_D1", "two_endpoint_ID", "harmonic", "P3", "P4", "P6", "oracle", "real_tensor_training", "full_4000_499_499_training", "relaxation", "DFT", "DFPT", "posthoc_threshold_change"]
+}

@@ -87,7 +87,7 @@ def _common_initial(matcher: RiemannianCrystalFlowMatcher, batch, atoms: int, re
 def _coupling_audit(raw_batch, protocol: dict[str, Any]):
     settings = protocol["a5_0_path_and_coupling_audit"]
     matcher = RiemannianCrystalFlowMatcher(
-        type_path="riemannian_simplex", target_coupling="optimal_transport", coordinate_gauge="no_drift"
+        type_path="riemannian_simplex", target_coupling="optimal_transport"
     )
     target = matcher.target_state(raw_batch)
     rows = []
@@ -149,7 +149,7 @@ def _train(batch, variant: dict[str, Any], settings: dict[str, Any], seed: int):
     ).to(batch.batch.device)
     matcher = RiemannianCrystalFlowMatcher(
         atom_types=119, active_heads=tuple(variant["active_heads"]), type_path=variant["type_path"],
-        target_coupling=variant["target_coupling"], coordinate_gauge=variant["coordinate_gauge"],
+        target_coupling=variant["target_coupling"],
         loss_normalization=variant["loss_normalization"], endpoint_type_nll_weight=variant["endpoint_type_nll_weight"],
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=settings["learning_rate"])

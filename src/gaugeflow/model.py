@@ -23,6 +23,7 @@ from .tensor import (
     rotate_rank3,
 )
 from .direct_irrep import CompleteDirectIrrepCoupling
+from .geometry import GaussianRadialBasis, periodic_closest_image_edges
 from .harmonic import HarmonicDoubleCosetConditionEncoder, OrbitInvariantConditionEncoder
 from torch_geometric.utils import scatter
 from .uncertainty import VelocityUncertainty, bounded_log_std
@@ -43,44 +44,6 @@ def safe_norm(
     """
     eps = torch.finfo(value.dtype).eps
     return (value.square().sum(dim=dim, keepdim=keepdim) + eps * eps).sqrt()
-
-
-def periodic_complete_edges(
-    frac_coords: torch.Tensor,
-    lattice: torch.Tensor,
-    batch: torch.Tensor,
-    shifts: torch.Tensor | None = None,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Dense edges queried by nearest periodic Cartesian displacements.
-
-    The query directions are local physical bonds, not the three columns of a
-    chosen unit cell.  We solve the finite-shell closest-image problem directly
-    in Cartesian space; the shell is intentionally explicit so callers can
-    stress-test it under unimodular cell changes.
-    """
-    with record_function("model.periodic_neighbor_graph"):
-        atom_count = frac_coords.shape[0]
-        same_graph = batch[:, None] == batch[None, :]
-        keep = same_graph & ~torch.eye(atom_count, dtype=torch.bool, device=batch.device)
-        source, target = torch.nonzero(keep, as_tuple=True)
-        if source.numel() == 0:
-            empty = batch.new_empty((0,))
-            return empty, empty, frac_coords.new_empty((0, 3))
-        delta = frac_coords[target] - frac_coords[source]
-        if shifts is None:
-            axis = torch.arange(-2, 3, device=delta.device, dtype=delta.dtype)
-            shifts = torch.cartesian_prod(axis, axis, axis)
-        else:
-            shifts = shifts.to(delta)
-        images = delta.unsqueeze(1) + shifts.unsqueeze(0)
-        edge_lattice = lattice[batch[source]]
-        cart_images = torch.einsum("esi,eij->esj", images, edge_lattice)
-        closest = cart_images.square().sum(dim=-1).argmin(dim=-1)
-        cart = cart_images[
-            torch.arange(cart_images.shape[0], device=cart_images.device), closest
-        ]
-        directions = cart / torch.linalg.vector_norm(cart, dim=-1, keepdim=True).clamp_min(1e-8)
-        return source, target, directions
 
 
 def direct_irrep_cartesian_products(
@@ -474,17 +437,20 @@ class ResponseMessageLayer(nn.Module):
     and an incoming vector feature, so it transforms covariantly under SO(3).
     """
 
-    def __init__(self, hidden_dim: int, vector_dim: int, response_channels: int = 1):
+    def __init__(
+        self, hidden_dim: int, vector_dim: int, radial_basis_dim: int, response_channels: int = 1,
+    ):
         super().__init__()
-        if response_channels < 1:
-            raise ValueError("response_channels must be positive")
+        if response_channels < 1 or radial_basis_dim < 2:
+            raise ValueError("response_channels must be positive and radial_basis_dim at least two")
         self.vector_dim = vector_dim
         self.response_channels = response_channels
+        self.radial_basis_dim = radial_basis_dim
         # Preserve the historical K=1 parameter shapes and forward equations
         # exactly.  K=6 is used only by the new complete-CG baseline.
         field_count = response_channels + 1  # primary fields plus auxiliary
         invariant_features = 1 + 2 * field_count + field_count * (field_count - 1) // 2
-        scalar_features = hidden_dim * 3 + (6 if response_channels == 1 else invariant_features)
+        scalar_features = hidden_dim * 3 + (6 if response_channels == 1 else invariant_features) + radial_basis_dim
         self.scalar_message = nn.Sequential(
             nn.Linear(scalar_features, hidden_dim),
             nn.SiLU(),
@@ -502,10 +468,12 @@ class ResponseMessageLayer(nn.Module):
     def forward(
         self, nodes: torch.Tensor, vectors: torch.Tensor, source: torch.Tensor, target: torch.Tensor,
         directions: torch.Tensor, response: torch.Tensor, auxiliary_response: torch.Tensor,
-        node_condition: torch.Tensor,
+        node_condition: torch.Tensor, radial_basis: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if source.numel() == 0:
             return nodes, vectors
+        if radial_basis.shape != (source.numel(), self.radial_basis_dim):
+            raise ValueError("metric layer received an incompatible radial basis")
         if self.response_channels != 1:
             if response.ndim != 3 or response.shape[1:] != (self.response_channels, 3):
                 raise ValueError("multi-response layer received an incompatible response field")
@@ -519,7 +487,9 @@ class ResponseMessageLayer(nn.Module):
             upper = torch.triu_indices(fields.shape[1], fields.shape[1], offset=1, device=fields.device)
             pair_features = pairwise[:, upper[0], upper[1]]
             invariants = torch.cat((direction_norm, direction_dots, field_norms, pair_features), dim=-1)
-            edge_scalars = torch.cat((nodes[source], nodes[target], node_condition[source], invariants), dim=-1)
+            edge_scalars = torch.cat(
+                (nodes[source], nodes[target], node_condition[source], invariants, radial_basis), dim=-1
+            )
             messages = self.scalar_message(edge_scalars)
             aggregate = nodes.new_zeros(nodes.shape)
             aggregate.index_add_(0, target, messages)
@@ -544,7 +514,9 @@ class ResponseMessageLayer(nn.Module):
             ),
             dim=-1,
         )
-        edge_scalars = torch.cat((nodes[source], nodes[target], node_condition[source], invariants), dim=-1)
+        edge_scalars = torch.cat(
+            (nodes[source], nodes[target], node_condition[source], invariants, radial_basis), dim=-1
+        )
         messages = self.scalar_message(edge_scalars)
         aggregate = nodes.new_zeros(nodes.shape)
         aggregate.index_add_(0, target, messages)
@@ -571,9 +543,13 @@ class ConditionedResidualBlock(nn.Module):
     residual state, not a replacement for the condition-free message field.
     """
 
-    def __init__(self, hidden_dim: int, vector_dim: int, response_channels: int = 1):
+    def __init__(
+        self, hidden_dim: int, vector_dim: int, radial_basis_dim: int, response_channels: int = 1,
+    ):
         super().__init__()
-        self.message = ResponseMessageLayer(hidden_dim, vector_dim, response_channels=response_channels)
+        self.message = ResponseMessageLayer(
+            hidden_dim, vector_dim, response_channels=response_channels, radial_basis_dim=radial_basis_dim
+        )
         self.film = nn.Linear(hidden_dim, hidden_dim * 2)
         self.residual_gate = nn.Linear(hidden_dim, hidden_dim)
         self.vector_gate = nn.Linear(hidden_dim, vector_dim)
@@ -589,6 +565,7 @@ class ConditionedResidualBlock(nn.Module):
         response: torch.Tensor,
         auxiliary_response: torch.Tensor,
         node_condition: torch.Tensor,
+        radial_basis: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         scale, shift = self.film(node_condition).chunk(2, dim=-1)
         context = (base_nodes + delta_nodes) * (1.0 + scale) + shift
@@ -596,7 +573,7 @@ class ConditionedResidualBlock(nn.Module):
         vector_context = delta_vectors * vector_scale
         updated_nodes, updated_vectors = self.message(
             context, vector_context, source, target, directions, response,
-            auxiliary_response, node_condition,
+            auxiliary_response, node_condition, radial_basis,
         )
         node_update = updated_nodes - context
         vector_update = updated_vectors - vector_context
@@ -682,6 +659,8 @@ class GaugeFlowVectorField(nn.Module):
         conditioning_mode: str = "orbit_alignment",
         conditional_control: str = "original_injection",
         residual_g_min: float = 0.25,
+        coordinate_rbf_dim: int = 16,
+        coordinate_rbf_cutoff: float = 8.0,
         composition_max_atoms: int | None = None,
         composition_atom_types: int | None = None,
     ):
@@ -690,6 +669,8 @@ class GaugeFlowVectorField(nn.Module):
             raise ValueError("conditional_control must be 'original_injection' or 'residual_field'")
         if not 0.0 <= residual_g_min <= 1.0:
             raise ValueError("residual_g_min must lie in [0, 1]")
+        if coordinate_rbf_dim < 2 or coordinate_rbf_cutoff <= 0:
+            raise ValueError("coordinate RBF requires at least two features and a positive cutoff")
         if composition_max_atoms is not None and composition_max_atoms < 1:
             raise ValueError("composition_max_atoms must be positive when set")
         if composition_atom_types is not None and not 1 <= composition_atom_types <= atom_types:
@@ -697,6 +678,7 @@ class GaugeFlowVectorField(nn.Module):
         self.atom_types = atom_types
         self.conditional_control = conditional_control
         self.residual_g_min = residual_g_min
+        self.coordinate_rbf_dim = coordinate_rbf_dim
         self.composition_max_atoms = composition_max_atoms
         self.composition_atom_types = composition_atom_types or atom_types
         self.type_input = nn.Linear(atom_types, hidden_dim)
@@ -719,8 +701,12 @@ class GaugeFlowVectorField(nn.Module):
         )
         self.vector_dim = vector_dim or max(16, hidden_dim // 8)
         self.response_channels = 6 if conditioning_mode == "direct_irrep_complete_v1" else 1
+        self.coordinate_rbf = GaussianRadialBasis(coordinate_rbf_dim, coordinate_rbf_cutoff)
         self.layers = nn.ModuleList([
-            ResponseMessageLayer(hidden_dim, self.vector_dim, response_channels=self.response_channels)
+            ResponseMessageLayer(
+                hidden_dim, self.vector_dim, response_channels=self.response_channels,
+                radial_basis_dim=self.coordinate_rbf_dim,
+            )
             for _ in range(layers)
         ])
         # Construct these adapters in both A2 variants so hidden width, depth,
@@ -728,7 +714,13 @@ class GaugeFlowVectorField(nn.Module):
         # mechanism comparison.  They are deliberately inactive in the
         # original-injection control.
         self.conditional_layers = nn.ModuleList(
-            [ConditionedResidualBlock(hidden_dim, self.vector_dim, response_channels=self.response_channels) for _ in range(layers)]
+            [
+                ConditionedResidualBlock(
+                    hidden_dim, self.vector_dim, response_channels=self.response_channels,
+                    radial_basis_dim=self.coordinate_rbf_dim,
+                )
+                for _ in range(layers)
+            ]
         )
         self.type_out = nn.Linear(hidden_dim, atom_types)
         self.coord_out = nn.Linear(self.vector_dim, 1, bias=False)
@@ -765,9 +757,12 @@ class GaugeFlowVectorField(nn.Module):
         return_composition_counts: bool = False,
     ) -> tuple[torch.Tensor, ...]:
         lattices = log_vector_to_lattice(lattice_log)
-        source, target, directions = periodic_complete_edges(
-            frac_coords, lattices, batch, self.periodic_shifts
+        edge_geometry = periodic_closest_image_edges(
+            frac_coords, lattices, batch, shifts=self.periodic_shifts
         )
+        source, target = edge_geometry.source, edge_geometry.target
+        directions = edge_geometry.direction
+        radial_basis = self.coordinate_rbf(edge_geometry.distance)
         edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
         nodes = self.type_input(type_state)
         # Flow matching needs the scalar path time in the vector-field state
@@ -805,7 +800,7 @@ class GaugeFlowVectorField(nn.Module):
             for layer in self.layers:
                 nodes, vectors = layer(
                     nodes, vectors, source, target, directions, edge_response,
-                    edge_auxiliary, graph_condition[batch],
+                    edge_auxiliary, graph_condition[batch], radial_basis,
                 )
             graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
             composition_graph_nodes = graph_nodes
@@ -838,11 +833,11 @@ class GaugeFlowVectorField(nn.Module):
             for base_layer, conditional_layer in zip(self.layers, self.conditional_layers):
                 base_nodes, base_vectors = base_layer(
                     base_nodes, base_vectors, source, target, directions, zero_response,
-                    zero_auxiliary, zero_condition,
+                    zero_auxiliary, zero_condition, radial_basis,
                 )
                 delta_nodes, delta_vectors = conditional_layer(
                     base_nodes, delta_nodes, delta_vectors, source, target, directions,
-                    edge_response, edge_auxiliary, graph_condition[batch],
+                    edge_response, edge_auxiliary, graph_condition[batch], radial_basis,
                 )
             base_graph_nodes = scatter_mean(base_nodes, batch, lattices.shape[0])
             delta_graph_nodes = scatter_mean(delta_nodes, batch, lattices.shape[0])

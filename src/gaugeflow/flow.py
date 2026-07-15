@@ -34,7 +34,6 @@ class RiemannianCrystalFlowMatcher:
         active_heads: tuple[str, ...] | list[str] = _HEADS,
         type_path: str = "euclidean_logits",
         target_coupling: str = "identity",
-        coordinate_gauge: str = "absolute",
         loss_normalization: str = "none",
         endpoint_type_nll_weight: float = 0.0,
     ):
@@ -48,8 +47,6 @@ class RiemannianCrystalFlowMatcher:
             raise ValueError("unknown type_path")
         if target_coupling not in {"identity", "optimal_transport", "typewise_optimal_transport"}:
             raise ValueError("unknown target_coupling")
-        if coordinate_gauge not in {"absolute", "no_drift"}:
-            raise ValueError("coordinate_gauge must be 'absolute' or 'no_drift'")
         if loss_normalization not in {"none", "target_velocity_rms"}:
             raise ValueError("unknown loss_normalization")
         if endpoint_type_nll_weight < 0:
@@ -60,7 +57,6 @@ class RiemannianCrystalFlowMatcher:
         self.active_heads = active
         self.type_path = type_path
         self.target_coupling = target_coupling
-        self.coordinate_gauge = coordinate_gauge
         self.loss_normalization = loss_normalization
         self.endpoint_type_nll_weight = endpoint_type_nll_weight
 
@@ -120,9 +116,15 @@ class RiemannianCrystalFlowMatcher:
         return simplex_tangent(value) if self.type_path == "riemannian_simplex" else value
 
     def _coordinate_velocity(self, value: torch.Tensor, batch) -> torch.Tensor:
-        if self.coordinate_gauge == "no_drift":
-            return remove_graphwise_translation(value, batch.batch, batch.num_graphs)
-        return value
+        """Return the periodic-coordinate tangent modulo a global translation.
+
+        A generated crystal has no physical fractional origin.  The flow is
+        therefore defined on the translation quotient, and every target and
+        prediction is projected to the zero-mean tangent before loss or Euler
+        integration.  Historical absolute-coordinate experiments live in
+        their frozen commits rather than as a current runtime fallback.
+        """
+        return remove_graphwise_translation(value, batch.batch, batch.num_graphs)
 
     def _head_loss(self, value: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         loss = (value - target).square().mean()
