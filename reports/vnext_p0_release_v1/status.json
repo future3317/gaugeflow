@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "name": "vnext_p0_release_v1",
+  "all_passed": true,
+  "checks": {
+    "q0_corrected_metric_regressions": true,
+    "explicit_time_every_conditioning_mode": true,
+    "explicit_time_every_message_block": true,
+    "translation_horizontal_coordinate_velocity": true,
+    "exact_adaptive_triclinic_cvp": true,
+    "all_792_actions_contract": true,
+    "dense_element_token_decode_contract": true,
+    "safe_checkpoint_loading_contract": true,
+    "published_run_manifest_hashes": true,
+    "full_test_suite": true,
+    "ruff": true,
+    "mypy": true
+  },
+  "git_commit": "13a0ebf02988a5a79bb0749cb732da4e4abca9fd",
+  "timestamp_utc": "2026-07-16T02:27:28.328527+00:00",
+  "q1_execution_allowed_after_q0_1": true,
+  "real_tensor_or_physical_validation_allowed": false
+}
