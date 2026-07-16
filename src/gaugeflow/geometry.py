@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import torch
 
 
@@ -25,20 +26,70 @@ class PeriodicEdges:
     image_shift: torch.Tensor
 
 
+def _closest_integer_shift(delta: torch.Tensor, lattice: torch.Tensor) -> torch.Tensor:
+    """Solve the three-dimensional closest-vector problem by sphere decoding.
+
+    The discrete image choice is necessarily piecewise constant. Selection is
+    therefore performed in detached float64 QR coordinates, while callers
+    reconstruct the winning Cartesian displacement from the original tensors
+    so gradients inside each Voronoi cell remain exact.
+    """
+    matrix = lattice.detach().to(dtype=torch.float64, device="cpu").numpy().T
+    fractional = delta.detach().to(dtype=torch.float64, device="cpu").numpy()
+    if not np.isfinite(matrix).all() or not np.isfinite(fractional).all():
+        raise ValueError("closest-image CVP inputs must be finite")
+    orthogonal, triangular = np.linalg.qr(matrix)
+    if np.min(np.abs(np.diag(triangular))) <= np.finfo(np.float64).tiny:
+        raise ValueError("closest-image CVP requires an invertible lattice")
+    transformed = orthogonal.T @ (-matrix @ fractional)
+    dimension = 3
+    babai = np.zeros(dimension, dtype=np.int64)
+    for level in range(dimension - 1, -1, -1):
+        remainder = transformed[level] - triangular[level, level + 1 :] @ babai[level + 1 :]
+        babai[level] = int(np.rint(remainder / triangular[level, level]))
+    best = babai.copy()
+    best_cost = float(np.square(triangular @ babai - transformed).sum())
+    current = np.zeros(dimension, dtype=np.int64)
+
+    def search(level: int, partial_cost: float) -> None:
+        nonlocal best, best_cost
+        if level < 0:
+            if partial_cost < best_cost:
+                best_cost = partial_cost
+                best = current.copy()
+            return
+        remainder = transformed[level] - triangular[level, level + 1 :] @ current[level + 1 :]
+        diagonal = triangular[level, level]
+        center = remainder / diagonal
+        radius = np.sqrt(max(best_cost - partial_cost, 0.0)) / abs(diagonal)
+        lower = int(np.ceil(center - radius - 16.0 * np.finfo(np.float64).eps))
+        upper = int(np.floor(center + radius + 16.0 * np.finfo(np.float64).eps))
+        candidates = sorted(range(lower, upper + 1), key=lambda value: abs(value - center))
+        for candidate in candidates:
+            residual = diagonal * candidate - remainder
+            next_cost = partial_cost + float(residual * residual)
+            if next_cost <= best_cost + 64.0 * np.finfo(np.float64).eps * max(1.0, best_cost):
+                current[level] = candidate
+                search(level - 1, next_cost)
+
+    search(dimension - 1, 0.0)
+    return torch.tensor(best, dtype=delta.dtype, device=delta.device)
+
+
 def periodic_closest_image_edges(
     frac_coords: torch.Tensor,
     lattice: torch.Tensor,
     batch: torch.Tensor,
-    *,
-    shifts: torch.Tensor | None = None,
 ) -> PeriodicEdges:
-    """Build all directed inter-site closest-image edges inside each graph.
+    """Build exact directed closest-image edges inside each graph.
 
     ``frac_coords`` are row fractional coordinates and ``lattice[g]`` has real
     basis vectors as rows.  For the directed edge ``i -> j`` we use
-    ``(f_j - f_i + s) @ L`` with the minimum-norm integer image ``s`` from the
-    supplied finite shell.  The selected shift is returned so representation
-    and cell-gauge tests can inspect it rather than treating PBC as opaque.
+    ``(f_j - f_i + s) @ L`` with the globally minimum-norm integer image
+    ``s``. A float64 QR sphere decoder uses a Babai upper bound and exact
+    branch-and-bound in the three-dimensional triangular system. This remains
+    rigorous for ill-conditioned triclinic cells where a fixed shell or a
+    loose singular-value bounding box is not practical.
     """
     if frac_coords.ndim != 2 or frac_coords.shape[-1] != 3:
         raise ValueError("frac_coords must have shape [nodes, 3]")
@@ -60,33 +111,23 @@ def periodic_closest_image_edges(
         empty_vec = frac_coords.new_empty((0, 3))
         return PeriodicEdges(empty_long, empty_long, empty_vec, empty_vec, frac_coords.new_empty((0,)), empty_vec)
 
-    if shifts is None:
-        axis = torch.arange(-2, 3, device=frac_coords.device, dtype=frac_coords.dtype)
-        shifts = torch.cartesian_prod(axis, axis, axis)
-    else:
-        if shifts.ndim != 2 or shifts.shape[-1] != 3:
-            raise ValueError("shifts must have shape [images, 3]")
-        shifts = shifts.to(device=frac_coords.device, dtype=frac_coords.dtype)
-    if shifts.numel() == 0 or not torch.isfinite(shifts).all():
-        raise ValueError("shifts must contain at least one finite periodic image")
-
-    # Treat the supplied shell as local offsets around the componentwise
-    # nearest integer image.  This makes the geometry invariant to arbitrary
-    # universal-cover lifts of either endpoint; using the shell as absolute
-    # shifts silently fails once a fixed lift leaves [0,1)^3.
     relative = frac_coords[target] - frac_coords[source]
-    image_center = -torch.round(relative)
-    candidate_shifts = image_center.unsqueeze(1) + shifts.unsqueeze(0)
-    fractional_images = relative.unsqueeze(1) + candidate_shifts
-    cartesian_images = torch.einsum("esi,eij->esj", fractional_images, lattice[batch[source]])
-    nearest = cartesian_images.square().sum(dim=-1).argmin(dim=-1)
-    rows = torch.arange(source.numel(), device=source.device)
-    displacement = cartesian_images[rows, nearest]
+    edge_lattices = lattice[batch[source]]
+    displacements = []
+    image_shifts = []
+    for edge in range(source.numel()):
+        delta = relative[edge]
+        edge_lattice = edge_lattices[edge]
+        selected_shift = _closest_integer_shift(delta, edge_lattice)
+        displacements.append((delta + selected_shift) @ edge_lattice)
+        image_shifts.append(selected_shift)
+    displacement = torch.stack(displacements)
+    selected_shifts = torch.stack(image_shifts)
     distance = torch.linalg.vector_norm(displacement, dim=-1)
     if bool((distance <= 1e-10).any()):
         raise ValueError("distinct periodic sites have a zero closest-image displacement")
     direction = displacement / distance.unsqueeze(-1)
-    return PeriodicEdges(source, target, displacement, direction, distance, candidate_shifts[rows, nearest])
+    return PeriodicEdges(source, target, displacement, direction, distance, selected_shifts)
 
 
 class GaussianRadialBasis(torch.nn.Module):

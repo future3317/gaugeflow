@@ -60,6 +60,26 @@ def test_metric_edge_geometry_preserves_legacy_direction_wrapper_and_exposes_dis
     assert not torch.allclose(rbf(short_distance), rbf(long_distance))
 
 
+def test_adaptive_cvp_beats_fixed_shell_counterexample():
+    lattice = torch.tensor(
+        [[[1.0, 0.0, 0.0], [14.554425, 0.061259, 0.0], [5.614603, -0.193389, 0.164521]]],
+        dtype=torch.float64,
+    )
+    delta = torch.tensor([0.825511, 0.213272, 0.458993], dtype=torch.float64)
+    frac = torch.stack((torch.zeros(3, dtype=torch.float64), delta))
+    edges = periodic_closest_image_edges(frac, lattice, torch.zeros(2, dtype=torch.long))
+    forward = torch.nonzero((edges.source == 0) & (edges.target == 1), as_tuple=False).flatten()
+    assert forward.numel() == 1
+    index = int(forward[0])
+    # The review's [-8,8]^3 witness [8,-1,0] is better than [-2,2]^3 but is
+    # itself not globally optimal. Exact CVP finds an even shorter image.
+    assert torch.equal(edges.image_shift[index], torch.tensor([-21.0, 1.0, 0.0], dtype=torch.float64))
+    assert torch.allclose(
+        edges.distance[index].square(), torch.tensor(0.0096380871, dtype=torch.float64), atol=1.0e-10
+    )
+    assert edges.distance[index].square() < 0.0267454
+
+
 def test_metric_rbf_coordinate_field_is_translation_invariant_and_backpropagates():
     torch.manual_seed(1401)
     batch = _coordinate_batch()

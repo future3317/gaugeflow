@@ -464,16 +464,21 @@ class ResponseMessageLayer(nn.Module):
         self.vector_update = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim), nn.Sigmoid()
         )
+        self.time_film = nn.Linear(hidden_dim, hidden_dim * 2)
 
     def forward(
         self, nodes: torch.Tensor, vectors: torch.Tensor, source: torch.Tensor, target: torch.Tensor,
         directions: torch.Tensor, response: torch.Tensor, auxiliary_response: torch.Tensor,
-        node_condition: torch.Tensor, radial_basis: torch.Tensor,
+        node_condition: torch.Tensor, radial_basis: torch.Tensor, time_condition: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if source.numel() == 0:
             return nodes, vectors
         if radial_basis.shape != (source.numel(), self.radial_basis_dim):
             raise ValueError("metric layer received an incompatible radial basis")
+        if time_condition.shape != nodes.shape:
+            raise ValueError("every message block requires one explicit time embedding per node")
+        time_scale, time_shift = self.time_film(time_condition).chunk(2, dim=-1)
+        message_nodes = nodes * (1.0 + time_scale) + time_shift
         if self.response_channels != 1:
             if response.ndim != 3 or response.shape[1:] != (self.response_channels, 3):
                 raise ValueError("multi-response layer received an incompatible response field")
@@ -488,7 +493,11 @@ class ResponseMessageLayer(nn.Module):
             pair_features = pairwise[:, upper[0], upper[1]]
             invariants = torch.cat((direction_norm, direction_dots, field_norms, pair_features), dim=-1)
             edge_scalars = torch.cat(
-                (nodes[source], nodes[target], node_condition[source], invariants, radial_basis), dim=-1
+                (
+                    message_nodes[source], message_nodes[target], node_condition[source],
+                    invariants, radial_basis,
+                ),
+                dim=-1,
             )
             messages = self.scalar_message(edge_scalars)
             aggregate = nodes.new_zeros(nodes.shape)
@@ -515,7 +524,11 @@ class ResponseMessageLayer(nn.Module):
             dim=-1,
         )
         edge_scalars = torch.cat(
-            (nodes[source], nodes[target], node_condition[source], invariants, radial_basis), dim=-1
+            (
+                message_nodes[source], message_nodes[target], node_condition[source],
+                invariants, radial_basis,
+            ),
+            dim=-1,
         )
         messages = self.scalar_message(edge_scalars)
         aggregate = nodes.new_zeros(nodes.shape)
@@ -566,6 +579,7 @@ class ConditionedResidualBlock(nn.Module):
         auxiliary_response: torch.Tensor,
         node_condition: torch.Tensor,
         radial_basis: torch.Tensor,
+        time_condition: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         scale, shift = self.film(node_condition).chunk(2, dim=-1)
         context = (base_nodes + delta_nodes) * (1.0 + scale) + shift
@@ -573,7 +587,7 @@ class ConditionedResidualBlock(nn.Module):
         vector_context = delta_vectors * vector_scale
         updated_nodes, updated_vectors = self.message(
             context, vector_context, source, target, directions, response,
-            auxiliary_response, node_condition, radial_basis,
+            auxiliary_response, node_condition, radial_basis, time_condition,
         )
         node_update = updated_nodes - context
         vector_update = updated_vectors - vector_context
@@ -695,10 +709,6 @@ class GaugeFlowVectorField(nn.Module):
                 if conditioning_mode == "endpoint_id"
                 else OrbitResponseFieldEncoder(hidden_dim, orbit_frames, conditioning_mode)
             )
-        axis = torch.arange(-2, 3, dtype=torch.float32)
-        self.register_buffer(
-            "periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False
-        )
         self.vector_dim = vector_dim or max(16, hidden_dim // 8)
         self.response_channels = 6 if conditioning_mode == "direct_irrep_complete_v1" else 1
         self.coordinate_rbf = GaussianRadialBasis(coordinate_rbf_dim, coordinate_rbf_cutoff)
@@ -790,9 +800,7 @@ class GaugeFlowVectorField(nn.Module):
         return_composition_counts: bool = False,
     ) -> tuple[torch.Tensor, ...]:
         lattices = log_vector_to_lattice(lattice_log)
-        edge_geometry = periodic_closest_image_edges(
-            frac_coords, lattices, batch, shifts=self.periodic_shifts
-        )
+        edge_geometry = periodic_closest_image_edges(frac_coords, lattices, batch)
         source, target = edge_geometry.source, edge_geometry.target
         directions = edge_geometry.direction
         radial_basis = self.coordinate_rbf(edge_geometry.distance)
@@ -833,7 +841,7 @@ class GaugeFlowVectorField(nn.Module):
             for layer in self.layers:
                 nodes, vectors = layer(
                     nodes, vectors, source, target, directions, edge_response,
-                    edge_auxiliary, graph_condition[batch], radial_basis,
+                    edge_auxiliary, graph_condition[batch], radial_basis, node_time_embedding,
                 )
             graph_nodes = scatter_mean(nodes, batch, lattices.shape[0])
             composition_graph_nodes = graph_nodes
@@ -870,11 +878,12 @@ class GaugeFlowVectorField(nn.Module):
             for base_layer, conditional_layer in zip(self.layers, self.conditional_layers):
                 base_nodes, base_vectors = base_layer(
                     base_nodes, base_vectors, source, target, directions, zero_response,
-                    zero_auxiliary, zero_condition, radial_basis,
+                    zero_auxiliary, zero_condition, radial_basis, node_time_embedding,
                 )
                 delta_nodes, delta_vectors = conditional_layer(
                     base_nodes, delta_nodes, delta_vectors, source, target, directions,
                     edge_response, edge_auxiliary, graph_condition[batch], radial_basis,
+                    node_time_embedding,
                 )
             base_graph_nodes = scatter_mean(base_nodes, batch, lattices.shape[0])
             delta_graph_nodes = scatter_mean(delta_nodes, batch, lattices.shape[0])
@@ -986,7 +995,7 @@ class FlowMapMessageBlock(nn.Module):
         zero_response = directions.new_zeros((directions.shape[0], 3))
         return self.message(
             context, vectors, source, target, directions, zero_response,
-            zero_response, interval_condition, radial_basis,
+            zero_response, interval_condition, radial_basis, interval_condition,
         )
 
 
@@ -1016,8 +1025,6 @@ class QuotientRolloutFlowMap(nn.Module):
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.interval_time = FourierIntervalEmbedding(hidden_dim, fourier_frequencies, time_epsilon)
         self.coordinate_rbf = GaussianRadialBasis(coordinate_rbf_dim, coordinate_rbf_cutoff)
-        axis = torch.arange(-2, 3, dtype=torch.float32)
-        self.register_buffer("periodic_shifts", torch.cartesian_prod(axis, axis, axis), persistent=False)
         self.vector_dim = vector_dim or max(16, hidden_dim // 8)
         self.blocks = nn.ModuleList(
             [FlowMapMessageBlock(hidden_dim, self.vector_dim, coordinate_rbf_dim) for _ in range(layers)]
@@ -1037,7 +1044,7 @@ class QuotientRolloutFlowMap(nn.Module):
         end: torch.Tensor,
     ) -> torch.Tensor:
         lattices = log_vector_to_lattice(lattice_log)
-        geometry = periodic_closest_image_edges(frac_coords, lattices, batch, shifts=self.periodic_shifts)
+        geometry = periodic_closest_image_edges(frac_coords, lattices, batch)
         radial_basis = self.coordinate_rbf(geometry.distance)
         node_interval = self.interval_time(start, end)[batch]
         nodes = self.type_input(type_state)

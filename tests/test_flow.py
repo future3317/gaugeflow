@@ -51,8 +51,12 @@ def test_response_message_layer_is_so3_equivariant():
         torch.randn(3, 3), torch.randn(3, 3), torch.randn(3, 3), torch.randn(3, 8)
     )
     radial_basis = torch.randn(3, 4)
+    time_condition = torch.randn(3, 8)
     with torch.no_grad():
-        original = layer(nodes, vectors, source, target, directions, response, auxiliary, condition, radial_basis)
+        original = layer(
+            nodes, vectors, source, target, directions, response, auxiliary,
+            condition, radial_basis, time_condition,
+        )
         rotated = layer(
             nodes,
             vectors @ rotation.T,
@@ -63,6 +67,7 @@ def test_response_message_layer_is_so3_equivariant():
             auxiliary @ rotation.T,
             condition,
             radial_basis,
+            time_condition,
         )
     assert torch.allclose(original[0], rotated[0], atol=2e-5, rtol=2e-5)
     assert torch.allclose(original[1] @ rotation.T, rotated[1], atol=2e-5, rtol=2e-5)
