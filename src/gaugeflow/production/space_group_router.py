@@ -7,14 +7,14 @@ from functools import lru_cache
 
 import numpy as np
 import torch
-from pymatgen.symmetry.groups import PointGroup, SpaceGroup
+from pymatgen.symmetry.groups import SpaceGroup
 from torch import nn
 
 from gaugeflow.harmonic import normalized_low_order_orbit_invariants
-from gaugeflow.stabilizer import orthogonal_polar_factor
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, rotate_rank3
 
 from .harmonic_gaugeflow import nested_hopf_so3_grid
+from .lattice_volume_shape import PointGroupMetricChart
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,10 @@ class SpaceGroupCompatibilityRecord:
     number: int
     symbol: str
     point_group: str
+    fractional_operations: torch.Tensor
     operations: torch.Tensor
+    fractional_to_cartesian: torch.Tensor
+    metric_chart: PointGroupMetricChart
     reynolds_irrep: torch.Tensor
     compatible_rank: int
 
@@ -44,29 +47,38 @@ def reynolds_irrep_matrix(operations: torch.Tensor) -> torch.Tensor:
     projected = reynolds_project(tensors, operations)
     # Rows are projected basis inputs, hence transpose for column-operator
     # diagnostics.  Applying row irreps remains ``x @ matrix.T``.
-    return piezo_to_irreps(projected).transpose(0, 1).contiguous()
+    numerical = piezo_to_irreps(projected).transpose(0, 1).contiguous()
+    # The Cartesian/e3nn conversion contains float32 Clebsch--Gordan constants
+    # in the installed e3nn build, leaving O(1e-8) idempotence drift even for
+    # float64 inputs.  Reynolds averaging is mathematically an orthogonal
+    # projector, so recover its range by SVD and return the exact numerical
+    # projector rather than propagating that basis-conversion drift.
+    left, singular_values, _ = torch.linalg.svd(numerical)
+    retained = left[:, singular_values > 0.5]
+    return retained @ retained.transpose(-1, -2)
 
 
 @lru_cache(maxsize=230)
-def cartesian_point_group_operations(space_group_number: int) -> tuple[str, str, torch.Tensor]:
+def cartesian_point_group_operations(
+    space_group_number: int,
+) -> tuple[str, str, torch.Tensor, PointGroupMetricChart]:
     """Build the conventional Cartesian O(3) point group for a space group."""
     if not 1 <= space_group_number <= 230:
         raise ValueError("space-group number must lie in 1..230")
     space_group = SpaceGroup.from_int_number(space_group_number)
-    point_group = PointGroup(space_group.point_group)
-    fractional = torch.from_numpy(
-        np.stack([operation.rotation_matrix for operation in point_group.symmetry_ops])
-    ).to(dtype=torch.float64)
-    # Pymatgen exposes crystallographic integer matrices in a conventional
-    # fractional basis.  They are not Cartesian-orthogonal for hexagonal and
-    # trigonal settings.  Averaging R^T R over the finite group constructs an
-    # invariant positive metric M.  With C^T C=M, Q=C R C^-1 is an exact
-    # Cartesian O(3) representation and preserves group multiplication.
-    invariant_metric = torch.einsum("oji,ojk->ik", fractional, fractional)
-    cartesian_map = torch.linalg.cholesky(invariant_metric).transpose(-1, -2)
-    inverse_map = torch.linalg.inv(cartesian_map)
-    cartesian = cartesian_map.unsqueeze(0) @ fractional @ inverse_map.unsqueeze(0)
-    operations = orthogonal_polar_factor(cartesian)
+    # Extract the point-group action from the actual space-group setting.
+    # Constructing ``PointGroup(space_group.point_group)`` is not total over
+    # pymatgen's orientation aliases (for example ``-4m2``), and silently
+    # canonicalising those aliases would lose the fractional setting needed by
+    # the lattice chart.
+    fractional_unique: list[np.ndarray] = []
+    for operation in space_group.symmetry_ops:
+        rotation = np.asarray(operation.rotation_matrix, dtype=np.float64)
+        if not any(np.array_equal(rotation, seen) for seen in fractional_unique):
+            fractional_unique.append(rotation)
+    fractional = torch.from_numpy(np.stack(fractional_unique)).to(dtype=torch.float64)
+    metric_chart = PointGroupMetricChart.from_fractional_operations(fractional)
+    operations = metric_chart.cartesian_operations
     determinant = torch.linalg.det(operations)
     if not torch.allclose(determinant.abs(), torch.ones_like(determinant), atol=1e-10, rtol=1e-10):
         raise RuntimeError("pymatgen point group did not produce O(3) operations")
@@ -76,12 +88,18 @@ def cartesian_point_group_operations(space_group_number: int) -> tuple[str, str,
     for operation in operations:
         if not any(torch.allclose(operation, seen, atol=1e-10, rtol=1e-10) for seen in unique):
             unique.append(operation)
-    return space_group.symbol, point_group.symbol, torch.stack(unique)
+    # PointGroup already provides unique fractional operations. Keep the
+    # chart and operation arrays index-aligned for closure/invariance audits.
+    if len(unique) != operations.shape[0]:
+        raise RuntimeError("point-group operation catalogue contains numerical duplicates")
+    return space_group.symbol, space_group.point_group, operations, metric_chart
 
 
 @lru_cache(maxsize=230)
 def compatibility_record(space_group_number: int) -> SpaceGroupCompatibilityRecord:
-    symbol, point_group, operations = cartesian_point_group_operations(space_group_number)
+    symbol, point_group, operations, metric_chart = cartesian_point_group_operations(
+        space_group_number
+    )
     reynolds = reynolds_irrep_matrix(operations)
     singular_values = torch.linalg.svdvals(reynolds)
     rank = int((singular_values > 1e-8).sum())
@@ -89,7 +107,10 @@ def compatibility_record(space_group_number: int) -> SpaceGroupCompatibilityReco
         number=space_group_number,
         symbol=symbol,
         point_group=point_group,
+        fractional_operations=metric_chart.fractional_operations,
         operations=operations,
+        fractional_to_cartesian=metric_chart.fractional_to_cartesian,
+        metric_chart=metric_chart,
         reynolds_irrep=reynolds,
         compatible_rank=rank,
     )

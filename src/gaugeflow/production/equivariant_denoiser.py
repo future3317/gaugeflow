@@ -11,8 +11,12 @@ from torch_geometric.utils import scatter
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_closest_image_edges
 
-from .harmonic_gaugeflow import HarmonicGaugeFlowConditioner, HarmonicGaugeFlowOutput
-from .lattice_volume_shape import LatticeVolumeShape
+from .harmonic_gaugeflow import (
+    ConditionFreeGeometryQueryEncoder,
+    HarmonicGaugeFlowConditioner,
+    HarmonicGaugeFlowOutput,
+)
+from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 
 
 def graph_mean(value: torch.Tensor, batch: torch.Tensor, graphs: int) -> torch.Tensor:
@@ -144,10 +148,8 @@ class HybridCrystalDenoiser(nn.Module):
             hidden_dim, grid_size=harmonic_grid, query_channels=2
         )
         self.radial = GaussianRadialBasis(radial_dim, radial_cutoff)
-        self.structural_query = nn.Sequential(
-            nn.Linear(3 * hidden_dim + radial_dim, hidden_dim),
-            nn.SiLU(),
-            nn.Linear(hidden_dim, 2),
+        self.geometry_query_encoder = ConditionFreeGeometryQueryEncoder(
+            hidden_dim, radial_dim, query_channels=2, layers=3
         )
         self.blocks = nn.ModuleList(
             [EquivariantDenoisingBlock(hidden_dim, vector_dim, radial_dim) for _ in range(layers)]
@@ -179,6 +181,7 @@ class HybridCrystalDenoiser(nn.Module):
         tensor_condition: torch.Tensor,
         condition_present: torch.Tensor,
         shape_projector: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
     ) -> HybridDenoiserOutput:
         """Denoise one hybrid state.
 
@@ -199,21 +202,31 @@ class HybridCrystalDenoiser(nn.Module):
             raise ValueError("tensor condition must have shape [graphs,18]")
         if shape_projector.shape != (graphs, 6, 6):
             raise ValueError("shape projector must have shape [graphs,6,6]")
-        lattice = LatticeVolumeShape(log_volume, log_shape).lattice()
+        if fractional_to_cartesian.shape != (graphs, 3, 3):
+            raise ValueError("fractional-to-Cartesian chart must have shape [graphs,3,3]")
+        # Projection is part of the state contract, not only an output-head
+        # constraint. A reverse integrator must call the same projection after
+        # every update through ``project_lattice_state``.
+        log_shape = project_lattice_state(log_shape, shape_projector)
+        lattice = LatticeVolumeShape(log_volume, log_shape).lattice(fractional_to_cartesian)
         edges = periodic_closest_image_edges(frac_coords, lattice, batch)
         source, target = edges.source, edges.target
         edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
         node_time = self.time_embedding(time)[batch]
         initial_nodes = self.element_embedding(element_tokens)
         radial = self.radial(edges.distance)
-        edge_query_weights = (
-            self.structural_query(
-                torch.cat((initial_nodes[source], initial_nodes[target], node_time[source], radial), dim=-1)
-            )
-            if source.numel() else initial_nodes.new_empty((0, 2))
+        geometry_queries = self.geometry_query_encoder(
+            initial_nodes,
+            node_time,
+            source,
+            target,
+            edges.direction,
+            radial,
+            batch,
+            graphs,
         )
         gaugeflow = self.conditioner(
-            tensor_condition, condition_present, edges.direction, edge_graph, edge_query_weights, time
+            tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
         )
         node_condition = gaugeflow.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition

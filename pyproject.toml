@@ -27,8 +27,10 @@ include = [
   "src/gaugeflow/vnext/**/*.py",
   "src/gaugeflow/production/**/*.py",
   "scripts/freeze_vnext_legacy_evidence.py",
+  "scripts/run_paper_s0_2_audit.py",
   "tests/test_vnext_*.py",
   "tests/test_paper_s0_production.py",
+  "tests/test_paper_s0_2_scalability_symmetry.py",
 ]
 
 [tool.ruff.lint]

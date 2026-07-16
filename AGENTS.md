@@ -80,6 +80,14 @@ test it at small scale, and only then update scientific claims.
   physical software qualification only. Until S0 passes, do not train S1 or
   run any later stage. A passed S0 still does not authorize real tensor,
   learned oracle, MLIP screening, relaxation, DFT, or DFPT.
+- S0.1 is frozen as passed within its small-site mathematical/interface scope.
+  The versioned no-training successor
+  `configs/paper_s0_2_scalability_symmetry_chart_v1.json` is mandatory before
+  S1a. It corrects the fractional/Cartesian lattice metric chart, qualifies a
+  scalable translation-integral wrapped quotient, replaces degenerate
+  edge-only harmonic queries with a condition-free angular geometry encoder,
+  and audits all 230 space groups plus finite-QMC/full-denoiser equivariance.
+  Never edit the S0.1 status or use S0.2 to start real tensor or physical work.
 - The earlier Q1v2 authorization is preserved as historical protocol state but
   is not an instruction to run that affine-ODE experiment after adoption of
   the revised hybrid-diffusion design.

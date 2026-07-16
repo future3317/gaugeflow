@@ -8,6 +8,7 @@ from gaugeflow.manifold import vector_to_symmetric
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.harmonic_gaugeflow import (
+    GeometryHarmonicQueries,
     HarmonicGaugeFlowConditioner,
     nested_hopf_so3_grid,
     weighted_geometric_harmonic_queries,
@@ -42,7 +43,8 @@ def _small_hybrid_input():
     condition = torch.randn((2, 18), generator=torch.Generator().manual_seed(7))
     present = torch.ones((2, 1), dtype=torch.bool)
     projectors = _trace_free_projector().expand(2, -1, -1).clone()
-    return tokens, frac, log_volume, log_shape, batch, condition, present, projectors
+    charts = torch.eye(3).expand(2, -1, -1).clone()
+    return tokens, frac, log_volume, log_shape, batch, condition, present, projectors, charts
 
 
 def test_element_vocabulary_roundtrip():
@@ -147,8 +149,11 @@ def test_lattice_volume_shape_roundtrip_and_symmetry_projection():
     lattice = torch.tensor(
         [[[3.0, 0.0, 0.0], [0.2, 4.0, 0.0], [0.1, 0.3, 5.0]]], dtype=torch.float64
     )
-    state = LatticeVolumeShape.from_lattice(lattice)
-    assert torch.allclose(state.metric(), lattice @ lattice.transpose(-1, -2), atol=2e-12, rtol=2e-12)
+    chart = torch.eye(3, dtype=torch.float64).unsqueeze(0)
+    state = LatticeVolumeShape.from_lattice(lattice, chart)
+    assert torch.allclose(
+        state.metric(chart), lattice @ lattice.transpose(-1, -2), atol=2e-12, rtol=2e-12
+    )
     record = compatibility_record(75)
     basis = SymmetryShapeBasis.from_operations(record.operations)
     assert basis.dimension == 1
@@ -252,10 +257,14 @@ def test_double_coset_stabilizer_identity_and_physical_zero_is_not_cfg_null():
     condition = torch.zeros((2, 18))
     directions = torch.nn.functional.normalize(torch.randn((6, 3)), dim=-1)
     edge_graph = torch.tensor([0, 0, 0, 1, 1, 1])
-    query_weights = torch.randn((6, 2))
+    queries = GeometryHarmonicQueries(
+        first=torch.randn((2, 2, 3)),
+        second=torch.randn((2, 2, 5)),
+        third=torch.randn((2, 2, 7)),
+    )
     output = conditioner(
         condition, torch.tensor([[True], [False]]), directions, edge_graph,
-        query_weights, torch.tensor([0.4, 0.4])
+        queries, torch.tensor([0.4, 0.4])
     )
     assert torch.allclose(output.posterior, torch.full_like(output.posterior, 1.0 / 32), atol=1e-6)
     assert not torch.allclose(output.graph_condition[0], output.graph_condition[1])
@@ -289,7 +298,7 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
     for graph in range(2):
         selected = first.coordinate_fractional_score[batch == graph]
         assert torch.allclose(selected.mean(dim=0), torch.zeros(3), atol=2e-6)
-    lattice = LatticeVolumeShape(values[2], values[3]).lattice()
+    lattice = LatticeVolumeShape(values[2], values[3]).lattice(values[8])
     expected_fractional = torch.einsum(
         "ni,nij->nj", first.coordinate_cartesian_score, lattice[batch].transpose(-1, -2)
     )
