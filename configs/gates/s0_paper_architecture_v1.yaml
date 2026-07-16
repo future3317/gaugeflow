@@ -1,0 +1,46 @@
+schema: 1
+gate: S0
+name: paper_architecture_mathematical_qualification_v1
+status: pre_registered_not_run
+design_source:
+  path_at_submission: E:/Downloads/GaugeFlow_PiezoGen_Revised.tex
+  sha256: 9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31
+scope:
+  implementation_package: gaugeflow.production
+  historical_runtime_is_production: false
+  training_allowed: false
+  real_tensor_allowed: false
+  mlip_allowed: false
+  relaxation_allowed: false
+  dft_allowed: false
+  dfpt_allowed: false
+fixed_contracts:
+  element_vocabulary: 118 chemical tokens plus one absorbing MASK
+  coordinate_path: adaptive wrapped Gaussian on the graphwise translation quotient
+  lattice_path: log volume plus full-O3-compatible trace-free log shape
+  tensor_orbit: proper SO3
+  physical_compatibility: full O3 Reynolds projector
+  condition_path: one graph-level harmonic posterior and six lossless response probes
+  denoiser: time and condition FiLM in every message block and explicit time in every head
+tests:
+  - test_element_vocabulary_roundtrip
+  - test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_mean
+  - test_wrapped_score_matches_autograd
+  - test_wrapped_kernel_translation_invariance
+  - test_wrapped_kernel_unimodular_basis_invariance
+  - test_adaptive_image_sum_tail_bound
+  - test_space_group_expansion_exact
+  - test_router_is_tensor_representative_invariant
+  - test_response_field_is_lossless
+  - test_continuous_harmonic_score_covariance
+  - test_double_coset_stabilizer_identity_and_physical_zero_is_not_cfg_null
+  - test_finite_grid_error_decreases_with_k
+  - test_no_target_metadata_in_model_signature
+  - test_checkpoint_manifest_hashes
+advancement_rule:
+  targeted_tests: all_pass
+  full_tests: all_pass
+  ruff: all_pass
+  mypy: all_pass
+  manual_contract_review: all_pass
+prohibited_successors_if_failed: [S1, S2, S3, S4, S5]

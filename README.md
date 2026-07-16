@@ -1,5 +1,12 @@
 # GaugeFlow
 
+> **Production redesign:** new implementation work follows the revised
+> GaugeFlow-Piezo hybrid-diffusion design frozen in
+> `docs/paper_design_contract_v1.md`. The new code is under
+> `src/gaugeflow/production/`. Historical continuous-logit/ODE modules and
+> reports remain available for audit but are not the revised production
+> generator.
+
 GaugeFlow is a standalone implementation of tensor-orbit-conditioned crystal
 generation. It does not import FlowMM at
 runtime. The former local FlowMM working tree has been removed; the upstream

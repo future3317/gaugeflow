@@ -1,0 +1,259 @@
+"""Shared equivariant denoiser for the production hybrid diffusion."""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+
+import torch
+from torch import nn
+from torch_geometric.utils import scatter
+
+from gaugeflow.geometry import GaussianRadialBasis, periodic_closest_image_edges
+
+from .harmonic_gaugeflow import HarmonicGaugeFlowConditioner, HarmonicGaugeFlowOutput
+from .lattice_volume_shape import LatticeVolumeShape
+
+
+def graph_mean(value: torch.Tensor, batch: torch.Tensor, graphs: int) -> torch.Tensor:
+    return scatter(value, batch, dim=0, dim_size=graphs, reduce="mean")
+
+
+class FourierTimeEmbedding(nn.Module):
+    def __init__(self, hidden_dim: int, frequencies: int = 16) -> None:
+        super().__init__()
+        if frequencies < 1:
+            raise ValueError("time embedding needs at least one Fourier frequency")
+        values = 2.0 ** torch.arange(frequencies, dtype=torch.float32)
+        self.register_buffer("frequencies", values)
+        self.network = nn.Sequential(
+            nn.Linear(2 * frequencies + 1, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+
+    def forward(self, time: torch.Tensor) -> torch.Tensor:
+        if time.ndim != 1:
+            raise ValueError("time embedding requires a graph vector")
+        phase = math.pi * time.unsqueeze(-1) * self.frequencies.to(time)
+        return self.network(torch.cat((time.unsqueeze(-1), phase.sin(), phase.cos()), dim=-1))
+
+
+class EquivariantDenoisingBlock(nn.Module):
+    """O(3)-typed scalar/vector message block with explicit time and condition FiLM."""
+
+    def __init__(self, hidden_dim: int, vector_dim: int, radial_dim: int) -> None:
+        super().__init__()
+        scalar_inputs = 2 * hidden_dim + 2 * vector_dim + radial_dim + 2
+        self.scalar_message = nn.Sequential(
+            nn.Linear(scalar_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
+        self.vector_coefficients = nn.Sequential(
+            nn.Linear(scalar_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 3 * vector_dim)
+        )
+        self.scalar_update = nn.Sequential(
+            nn.Linear(2 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
+        self.time_film = nn.Linear(hidden_dim, 2 * hidden_dim)
+        self.condition_film = nn.Linear(hidden_dim, 2 * hidden_dim)
+        self.vector_gate = nn.Sequential(
+            nn.Linear(2 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim)
+        )
+        self.norm = nn.LayerNorm(hidden_dim)
+
+    def forward(
+        self,
+        nodes: torch.Tensor,
+        vectors: torch.Tensor,
+        source: torch.Tensor,
+        target: torch.Tensor,
+        directions: torch.Tensor,
+        edge_response: torch.Tensor,
+        radial: torch.Tensor,
+        node_time: torch.Tensor,
+        node_condition: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        scalar_aggregate = torch.zeros_like(nodes)
+        vector_aggregate = torch.zeros_like(vectors)
+        if source.numel():
+            source_projection = torch.einsum("evc,ec->ev", vectors[source], directions)
+            target_projection = torch.einsum("evc,ec->ev", vectors[target], directions)
+            response_norm = torch.linalg.vector_norm(edge_response, dim=-1, keepdim=True)
+            response_projection = (edge_response * directions).sum(dim=-1, keepdim=True)
+            features = torch.cat(
+                (
+                    nodes[source], nodes[target], source_projection, target_projection,
+                    radial, response_norm, response_projection,
+                ),
+                dim=-1,
+            )
+            scalar_message = self.scalar_message(features)
+            coefficients = self.vector_coefficients(features).reshape(source.numel(), 3, vectors.shape[1])
+            vector_message = (
+                coefficients[:, 0, :, None] * directions[:, None, :]
+                + coefficients[:, 1, :, None] * edge_response[:, None, :]
+                + torch.sigmoid(coefficients[:, 2, :, None]) * vectors[source]
+            )
+            scalar_aggregate.index_add_(0, target, scalar_message)
+            vector_aggregate.index_add_(0, target, vector_message)
+            degree = torch.bincount(target, minlength=nodes.shape[0]).clamp_min(1).to(nodes)
+            scalar_aggregate = scalar_aggregate / degree.unsqueeze(-1)
+            vector_aggregate = vector_aggregate / degree[:, None, None]
+        update = self.scalar_update(torch.cat((nodes, scalar_aggregate), dim=-1))
+        time_scale, time_shift = self.time_film(node_time).chunk(2, dim=-1)
+        condition_scale, condition_shift = self.condition_film(node_condition).chunk(2, dim=-1)
+        update = update * (1.0 + time_scale) + time_shift
+        update = update * (1.0 + condition_scale) + condition_shift
+        nodes = self.norm(nodes + update)
+        vector_scale = torch.sigmoid(
+            self.vector_gate(torch.cat((node_time, node_condition), dim=-1))
+        ).unsqueeze(-1)
+        vectors = vectors + vector_scale * vector_aggregate
+        return nodes, vectors
+
+
+@dataclass(frozen=True)
+class HybridDenoiserOutput:
+    clean_element_logits: torch.Tensor
+    coordinate_cartesian_score: torch.Tensor
+    coordinate_fractional_score: torch.Tensor
+    log_volume_score: torch.Tensor
+    log_shape_score: torch.Tensor
+    gaugeflow: HarmonicGaugeFlowOutput
+
+
+class HybridCrystalDenoiser(nn.Module):
+    """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
+
+    def __init__(
+        self,
+        *,
+        hidden_dim: int = 192,
+        vector_dim: int = 32,
+        layers: int = 4,
+        radial_dim: int = 16,
+        radial_cutoff: float = 8.0,
+        harmonic_grid: int = 240,
+    ) -> None:
+        super().__init__()
+        if layers < 1:
+            raise ValueError("production denoiser needs at least one message block")
+        self.element_embedding = nn.Embedding(119, hidden_dim)
+        self.time_embedding = FourierTimeEmbedding(hidden_dim)
+        self.conditioner = HarmonicGaugeFlowConditioner(
+            hidden_dim, grid_size=harmonic_grid, query_channels=2
+        )
+        self.radial = GaussianRadialBasis(radial_dim, radial_cutoff)
+        self.structural_query = nn.Sequential(
+            nn.Linear(3 * hidden_dim + radial_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 2),
+        )
+        self.blocks = nn.ModuleList(
+            [EquivariantDenoisingBlock(hidden_dim, vector_dim, radial_dim) for _ in range(layers)]
+        )
+        head_inputs = 3 * hidden_dim
+        self.element_head = nn.Sequential(
+            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118)
+        )
+        self.coordinate_vector_head = nn.Linear(vector_dim, 1, bias=False)
+        self.coordinate_time_gate = nn.Linear(hidden_dim, vector_dim)
+        self.coordinate_edge_head = nn.Sequential(
+            nn.Linear(4 * hidden_dim + radial_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
+        self.volume_head = nn.Sequential(
+            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
+        self.shape_head = nn.Sequential(
+            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6)
+        )
+
+    def forward(
+        self,
+        element_tokens: torch.Tensor,
+        frac_coords: torch.Tensor,
+        log_volume: torch.Tensor,
+        log_shape: torch.Tensor,
+        batch: torch.Tensor,
+        time: torch.Tensor,
+        tensor_condition: torch.Tensor,
+        condition_present: torch.Tensor,
+        shape_projector: torch.Tensor,
+    ) -> HybridDenoiserOutput:
+        """Denoise one hybrid state.
+
+        ``shape_projector`` is determined by the sampled space-group blueprint,
+        never by a paired target structure.  No target CIF, lattice, space
+        group, stabilizer, source ID, or endpoint token is accepted.
+        """
+        graphs = time.numel()
+        if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
+            raise ValueError("element state must be rank-one int64 tokens")
+        if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
+            raise ValueError("element state lies outside 118 elements plus MASK")
+        if frac_coords.shape != (element_tokens.numel(), 3) or batch.shape != element_tokens.shape:
+            raise ValueError("coordinate and batch shapes do not match element tokens")
+        if log_volume.shape != (graphs,) or log_shape.shape != (graphs, 6):
+            raise ValueError("lattice state must contain graphwise volume and six shape coordinates")
+        if tensor_condition.shape != (graphs, 18):
+            raise ValueError("tensor condition must have shape [graphs,18]")
+        if shape_projector.shape != (graphs, 6, 6):
+            raise ValueError("shape projector must have shape [graphs,6,6]")
+        lattice = LatticeVolumeShape(log_volume, log_shape).lattice()
+        edges = periodic_closest_image_edges(frac_coords, lattice, batch)
+        source, target = edges.source, edges.target
+        edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
+        node_time = self.time_embedding(time)[batch]
+        initial_nodes = self.element_embedding(element_tokens)
+        radial = self.radial(edges.distance)
+        edge_query_weights = (
+            self.structural_query(
+                torch.cat((initial_nodes[source], initial_nodes[target], node_time[source], radial), dim=-1)
+            )
+            if source.numel() else initial_nodes.new_empty((0, 2))
+        )
+        gaugeflow = self.conditioner(
+            tensor_condition, condition_present, edges.direction, edge_graph, edge_query_weights, time
+        )
+        node_condition = gaugeflow.graph_condition[batch]
+        nodes = initial_nodes + node_time + node_condition
+        vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_vector_head.in_features, 3))
+        for block in self.blocks:
+            nodes, vectors = block(
+                nodes, vectors, source, target, edges.direction, gaugeflow.edge_response,
+                radial, node_time, node_condition,
+            )
+        graph_nodes = graph_mean(nodes, batch, graphs)
+        graph_time = self.time_embedding(time)
+        graph_context = torch.cat((graph_nodes, graph_time, gaugeflow.graph_condition), dim=-1)
+        node_context = torch.cat((nodes, node_time, node_condition), dim=-1)
+        element_logits = self.element_head(node_context)
+        time_gated_vectors = vectors * torch.sigmoid(self.coordinate_time_gate(node_time)).unsqueeze(-1)
+        cartesian_score = self.coordinate_vector_head(time_gated_vectors.transpose(-1, -2)).squeeze(-1)
+        if source.numel():
+            edge_features = torch.cat(
+                (nodes[source], nodes[target], node_time[target], node_condition[target], radial), dim=-1
+            )
+            edge_score = self.coordinate_edge_head(edge_features) * edges.displacement
+            cartesian_score.index_add_(0, target, edge_score)
+        cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
+        # A score is a covector, not a displacement. With r=fL, the chain rule
+        # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
+        # instead use L^-1; mixing these two transformations is incorrect.)
+        fractional_score = torch.einsum(
+            "ni,nij->nj", cartesian_score, lattice[batch].transpose(-1, -2)
+        )
+        # Fractional zero mean is the translation-horizontal chart used by the
+        # coordinate probability path.
+        fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
+        volume_score = self.volume_head(graph_context).squeeze(-1)
+        raw_shape_score = self.shape_head(graph_context)
+        shape_score = torch.einsum("bij,bj->bi", shape_projector, raw_shape_score)
+        return HybridDenoiserOutput(
+            clean_element_logits=element_logits,
+            coordinate_cartesian_score=cartesian_score,
+            coordinate_fractional_score=fractional_score,
+            log_volume_score=volume_score,
+            log_shape_score=shape_score,
+            gaugeflow=gaugeflow,
+        )

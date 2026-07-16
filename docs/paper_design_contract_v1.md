@@ -1,0 +1,42 @@
+# GaugeFlow-Piezo production design contract v1
+
+The normative method source for the next production implementation is
+`E:/Downloads/GaugeFlow_PiezoGen_Revised.tex`, SHA-256
+`9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31`.
+The source was supplied on 2026-07-16. Historical Gate A--P5-C0 and Q0
+artifacts remain immutable and do not become evidence for this architecture.
+
+## Execution boundary
+
+The revised paper defines a new S0--S5 sequence. Only S0 implementation and
+mathematical qualification are authorized while this contract is introduced.
+No structure pretraining, tensor fine-tuning, learned tensor oracle, MLIP
+screening, relaxation, DFT, or DFPT is authorized by this document.
+
+## Production state spaces
+
+- Chemical tokens are `0..117 <-> Z=1..118`; token `118` is a distinct
+  absorbing mask and is never decoded as an element.
+- Periodic coordinates use a wrapped Gaussian density on the graphwise
+  translation quotient. A hard nearest-image log map is not the production
+  probability path.
+- Lattices are represented by log volume and a trace-free log-metric shape;
+  the shape is projected into the full-O(3) point-group-compatible subspace.
+- The tensor condition is a proper-SO(3) orbit. Improper operations enter only
+  the physical Reynolds compatibility router.
+- Harmonic GaugeFlow uses one graph-level relative-frame posterior, a
+  lossless six-probe response token, and the same aligned response field in
+  every denoising block.
+
+## Code ownership
+
+New production primitives live under `gaugeflow.production`. Historical
+continuous-logit/ODE modules remain readable solely for frozen evidence and
+are not imported by the production hybrid-diffusion stack.
+
+## S0 advancement rule
+
+S0 is complete only when every regression named in the paper's code contract
+passes in the pinned WSL CUDA environment, the model signature contains no
+target-only metadata, and no fixed periodic image cube is used by the
+production wrapped kernel.

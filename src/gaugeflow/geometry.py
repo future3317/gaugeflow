@@ -76,6 +76,23 @@ def _closest_integer_shift(delta: torch.Tensor, lattice: torch.Tensor) -> torch.
     return torch.tensor(best, dtype=delta.dtype, device=delta.device)
 
 
+def closest_image_displacement(
+    delta: torch.Tensor, lattice: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return the exact closest Cartesian displacement and integer image.
+
+    This public single-vector contract shares the same exact float64 CVP
+    solver as the edge builder and is used by production symmetry expansion
+    and duplicate checks.  It never falls back to a fixed image cube.
+    """
+    if delta.shape != (3,) or lattice.shape != (3, 3):
+        raise ValueError("delta and lattice must have shapes [3] and [3,3]")
+    if not torch.isfinite(delta).all() or not torch.isfinite(lattice).all():
+        raise ValueError("closest-image inputs must be finite")
+    shift = _closest_integer_shift(delta, lattice)
+    return (delta + shift) @ lattice, shift
+
+
 def periodic_closest_image_edges(
     frac_coords: torch.Tensor,
     lattice: torch.Tensor,

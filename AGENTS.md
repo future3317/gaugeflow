@@ -67,6 +67,25 @@ test it at small scale, and only then update scientific claims.
   categorical process; lattice diffusion; backbone; conditioner; baselines;
   gated experiments; paper; release artifacts.
 
+### Revised-paper production lock
+
+- The highest-level design source for new production code is
+  `GaugeFlow_PiezoGen_Revised.tex`, SHA-256
+  `9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31`.
+  Its code-facing contract is frozen in `docs/paper_design_contract_v1.md`.
+- New hybrid-diffusion code lives under `gaugeflow.production`. The historical
+  continuous-logit ODE and vNext Q0/Q1 analytic processes remain audit code;
+  they are not production fallbacks for the revised paper.
+- Execute revised-paper gates S0 through S5 in order. S0 is mathematical and
+  physical software qualification only. Until S0 passes, do not train S1 or
+  run any later stage. A passed S0 still does not authorize real tensor,
+  learned oracle, MLIP screening, relaxation, DFT, or DFPT.
+- The earlier Q1v2 authorization is preserved as historical protocol state but
+  is not an instruction to run that affine-ODE experiment after adoption of
+  the revised hybrid-diffusion design.
+- P1 review work remains paused by user instruction. Do not silently fold its
+  broader stabilizer likelihood or lattice-prior work into an unrelated gate.
+
 Execute the research program strictly in order:
 
 1. **Gate A -- conditioning works on a tiny real panel.** Use the frozen IDs,
