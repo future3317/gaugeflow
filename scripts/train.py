@@ -15,6 +15,7 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from gaugeflow.conditioning import apply_condition_dropout, randomize_tensor_orbit_representative
+from gaugeflow.checkpoints import canonical_json_hash, save_safe_checkpoint
 from gaugeflow.data import RESPONSE_NORM_BOUNDS, PiezoCrystalDataset, collate_crystals
 from gaugeflow.flow import RiemannianCrystalFlowMatcher
 from gaugeflow.model import GaugeFlowVectorField
@@ -275,14 +276,7 @@ def _save_checkpoint(
     else:
         path = args.checkpoint.parent / f"step_{step:04d}{args.checkpoint.suffix}"
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(
-        {
-            "model": model.state_dict(),
-            "config": vars(args),
-            "training_step": step,
-            "last_terms": {key: float(value.detach().cpu()) for key, value in terms.items()},
-            "isotypic_scales": scales,
-            "data_protocol": {
+    data_protocol = {
                 "split_manifest": str(args.split_manifest) if args.split_manifest else None,
                 "split": args.split,
                 "target_cache_dir": str(args.target_cache_dir) if args.target_cache_dir else None,
@@ -303,10 +297,19 @@ def _save_checkpoint(
                 "material_ids_file": str(args.material_ids_file) if args.material_ids_file else None,
                 "subset_strategy": args.subset_strategy,
                 "material_ids": [str(full_dataset.frame.iloc[index].material_id) for index in indices],
-            },
-            "format": "gaugeflow-standalone-v1",
-        },
+    }
+    data_protocol["material_ids_sha256"] = canonical_json_hash(data_protocol["material_ids"])
+    save_safe_checkpoint(
         path,
+        model_state=model.state_dict(),
+        isotypic_scales=scales,
+        training_step=step,
+        metadata={
+            "format": "gaugeflow-safe-checkpoint-v2",
+            "config": vars(args),
+            "last_terms": {key: float(value.detach().cpu()) for key, value in terms.items()},
+            "data_protocol": data_protocol,
+        },
     )
 
 

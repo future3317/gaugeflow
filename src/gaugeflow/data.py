@@ -16,6 +16,7 @@ from torch_geometric.data import Batch, Data
 
 from .tensor import isotypic_slices, piezo_from_irreps, piezo_to_irreps
 from .unit_cell import niggli_reduce_structure_with_transform
+from .vocabulary import atomic_numbers_to_tokens, validate_type_tokens
 
 
 RESPONSE_NORM_BOUNDS = (0.0, 0.05, 0.5, 1.0)
@@ -28,7 +29,7 @@ FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA = 3
 SUPPORTED_SYMMETRY_TARGET_CACHE_SCHEMAS = frozenset(
     (SYMMETRY_TARGET_CACHE_SCHEMA, FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA)
 )
-PREPROCESSED_CRYSTAL_CACHE_SCHEMA = 1
+PREPROCESSED_CRYSTAL_CACHE_SCHEMA = 2
 TENSOR_CONVENTION_VERSION = "gaugeflow-cartesian-ijk=ikj-engineering-shear-v1"
 
 
@@ -124,12 +125,9 @@ class PiezoCrystalDataset(Dataset):
         self._preprocessed_records: dict[str, dict[str, Any]] | None = None
         self.preprocessed_manifest: dict[str, Any] | None = None
         if self.preprocessed_cache is not None:
-            try:
-                payload: Any = torch.load(
-                    self.preprocessed_cache, map_location="cpu", weights_only=True
-                )
-            except TypeError:
-                payload = torch.load(self.preprocessed_cache, map_location="cpu")
+            payload: Any = torch.load(
+                self.preprocessed_cache, map_location="cpu", weights_only=True
+            )
             if not isinstance(payload, dict) or payload.get("schema") != PREPROCESSED_CRYSTAL_CACHE_SCHEMA:
                 raise ValueError(f"Unexpected preprocessed cache payload in {self.preprocessed_cache}")
             manifest = payload.get("manifest")
@@ -169,10 +167,7 @@ class PiezoCrystalDataset(Dataset):
             tensor = piezo_from_irreps(irreps)
         else:
             cache_file = _target_cache_file(self.target_cache_dir, str(row.material_id))
-            try:
-                payload: Any = torch.load(cache_file, map_location="cpu", weights_only=True)
-            except TypeError:  # PyTorch before weights_only was added.
-                payload = torch.load(cache_file, map_location="cpu")
+            payload: Any = torch.load(cache_file, map_location="cpu", weights_only=True)
             if not isinstance(payload, dict) or payload.get("schema") not in SUPPORTED_SYMMETRY_TARGET_CACHE_SCHEMAS:
                 raise ValueError(f"Unexpected TensorOrbit target-cache payload in {cache_file}")
             tensor = torch.as_tensor(payload.get("target"), dtype=torch.float32)
@@ -220,7 +215,7 @@ class PiezoCrystalDataset(Dataset):
         if self._preprocessed_records is not None:
             record = self._preprocessed_records[str(row.material_id)]
             return Data(
-                atom_types=torch.as_tensor(record["atom_types"], dtype=torch.long).clone(),
+                atom_types=validate_type_tokens(torch.as_tensor(record["atom_types"])).clone(),
                 frac_coords=torch.as_tensor(record["frac_coords"], dtype=torch.float32).clone(),
                 lattice=torch.as_tensor(record["lattice"], dtype=torch.float32).unsqueeze(0).clone(),
                 piezo_irreps=torch.as_tensor(record["piezo_irreps"], dtype=torch.float32).unsqueeze(0).clone(),
@@ -242,7 +237,7 @@ class PiezoCrystalDataset(Dataset):
                     response_stratum = bin_index
                     break
         return Data(
-            atom_types=torch.tensor(structure.atomic_numbers, dtype=torch.long),
+            atom_types=atomic_numbers_to_tokens(torch.tensor(structure.atomic_numbers, dtype=torch.long)),
             frac_coords=torch.tensor(structure.frac_coords, dtype=torch.float32),
             lattice=torch.tensor(structure.lattice.matrix, dtype=torch.float32).unsqueeze(0),
             piezo_irreps=irreps.unsqueeze(0),

@@ -3,6 +3,7 @@ from torch_geometric.data import Batch, Data
 
 from gaugeflow.manifold import lattice_to_log_vector, wrap01
 from gaugeflow.model import FourierIntervalEmbedding, QuotientRolloutFlowMap
+from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
 def test_interval_embedding_rejects_degenerate_intervals_and_flow_map_is_translation_invariant():
@@ -18,7 +19,7 @@ def test_interval_embedding_rejects_degenerate_intervals_and_flow_map_is_transla
         Data(atom_types=torch.tensor([5, 7, 14]), frac_coords=torch.tensor([[0.07, 0.11, 0.19], [0.34, 0.22, 0.31], [0.72, 0.48, 0.41]]), lattice=torch.eye(3).unsqueeze(0), num_nodes=3)
     ])
     model = QuotientRolloutFlowMap(hidden_dim=32, layers=2, coordinate_rbf_dim=8)
-    type_state = torch.nn.functional.one_hot(batch.atom_types, 119).float()
+    type_state = torch.nn.functional.one_hot(batch.atom_types, CHEMICAL_ELEMENT_COUNT).float()
     lattice_log = lattice_to_log_vector(batch.lattice)
     start, end = torch.tensor([0.2]), torch.tensor([0.7])
     original = model(type_state, batch.frac_coords, lattice_log, batch.batch, start, end)

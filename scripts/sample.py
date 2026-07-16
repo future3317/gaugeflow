@@ -8,6 +8,7 @@ from pathlib import Path
 
 import torch
 
+from gaugeflow.checkpoints import load_safe_checkpoint
 from gaugeflow.flow import RiemannianCrystalFlowMatcher
 from gaugeflow.model import GaugeFlowVectorField
 from gaugeflow.tensor import normalize_isotypic, piezo_to_irreps, piezo_voigt_to_cartesian
@@ -41,8 +42,8 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
-    payload = torch.load(args.checkpoint, map_location=args.device)
-    config = payload["config"]
+    payload, metadata = load_safe_checkpoint(args.checkpoint, map_location=args.device)
+    config = metadata["config"]
     model = GaugeFlowVectorField(
         config["hidden_dim"], config["layers"], config["orbit_frames"],
         conditioning_mode=config.get("conditioning_mode", "orbit_alignment"),
@@ -66,7 +67,16 @@ def main() -> None:
         model, batch, steps=args.steps, guidance_scale=args.guidance_scale
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"state": state, "target_irreps": target.cpu(), "format": "gaugeflow-standalone-v1"}, args.output)
+    torch.save(
+        {
+            "type_state": state.type_state.cpu(),
+            "frac_coords": state.frac_coords.cpu(),
+            "lattice_log": state.lattice_log.cpu(),
+            "target_irreps": target.cpu(),
+            "format": "gaugeflow-sample-tensors-v2",
+        },
+        args.output,
+    )
 
 
 if __name__ == "__main__":

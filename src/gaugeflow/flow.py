@@ -15,6 +15,7 @@ from .uncertainty import (
     cartesian_isotropic_gaussian_nll,
     scalar_gaussian_nll,
 )
+from .vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
 @dataclass
@@ -29,7 +30,7 @@ class RiemannianCrystalFlowMatcher:
 
     def __init__(
         self,
-        atom_types: int = 119,
+        atom_types: int = CHEMICAL_ELEMENT_COUNT,
         uncertainty_weight: float = 0.0,
         active_heads: tuple[str, ...] | list[str] = _HEADS,
         type_path: str = "euclidean_logits",
@@ -470,7 +471,7 @@ class EndpointBridgeCoordinateMatcher(RiemannianCrystalFlowMatcher):
     unstable ``1/(1-t)`` Euler factor.
     """
 
-    def __init__(self, atom_types: int = 119):
+    def __init__(self, atom_types: int = CHEMICAL_ELEMENT_COUNT):
         super().__init__(atom_types=atom_types, active_heads=("coord",))
 
     def endpoint_residual(self, state: CrystalFlowState, batch) -> torch.Tensor:

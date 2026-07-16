@@ -20,6 +20,7 @@ import torch.nn.functional as F
 
 from .flow import CrystalFlowState
 from .manifold import lattice_to_log_vector
+from .vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,11 @@ class AbsorbingDiscreteTypeFlowMatcher:
     continuous relaxation or an argmax decoder.
     """
 
-    def __init__(self, atom_types: int = 119, training_time_distribution: str = "uniform"):
+    def __init__(
+        self,
+        atom_types: int = CHEMICAL_ELEMENT_COUNT,
+        training_time_distribution: str = "uniform",
+    ):
         if atom_types < 2:
             raise ValueError("atom_types must contain at least two chemical elements")
         if training_time_distribution not in {"uniform", "beta_half_source"}:

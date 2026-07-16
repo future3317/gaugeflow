@@ -50,5 +50,6 @@ def test_piezojet_v2_cache_and_manifest_are_used(tmp_path):
     assert not torch.allclose(dataset.condition_irreps()[0], torch.full((18,), 3.0))
     record = dataset[0]
     assert record.material_id == "material-a"
+    assert record.atom_types.tolist() == [13]
     assert not hasattr(record, "stabilizer_rotations")
     assert not hasattr(record, "tensor_stabilizer_rotations")

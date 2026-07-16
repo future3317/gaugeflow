@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 from torch_geometric.data import Batch, Data
 
+from gaugeflow.checkpoints import load_safe_checkpoint, save_safe_checkpoint
 from gaugeflow.flow import RiemannianCrystalFlowMatcher
 from gaugeflow.model import GaugeFlowVectorField
 from gaugeflow.stabilizer import proper_unimodular_candidates
@@ -131,3 +132,27 @@ def test_atom_type_decode_never_emits_invalid_atomic_number():
     atomic_numbers = tokens_to_atomic_numbers(tokens)
     assert int(atomic_numbers.min()) >= 1
     assert int(atomic_numbers.max()) <= 118
+
+
+def test_safe_checkpoint_loading_contract(tmp_path):
+    model = torch.nn.Linear(3, 2)
+    path = tmp_path / "weights.pt"
+    sidecar = save_safe_checkpoint(
+        path,
+        model_state=model.state_dict(),
+        isotypic_scales=torch.ones(3),
+        training_step=17,
+        metadata={"config": {"hidden_dim": 8}, "source_hash": "abc"},
+    )
+    assert sidecar == tmp_path / "weights.pt.json"
+    payload, metadata = load_safe_checkpoint(path, map_location="cpu")
+    assert payload["training_step"] == 17
+    assert metadata["source_hash"] == "abc"
+    with path.open("ab") as handle:
+        handle.write(b"tamper")
+    try:
+        load_safe_checkpoint(path, map_location="cpu")
+    except ValueError as error:
+        assert "hash mismatch" in str(error)
+    else:
+        raise AssertionError("tampered checkpoint must be rejected before torch.load")

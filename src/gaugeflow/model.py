@@ -27,6 +27,7 @@ from .geometry import GaussianRadialBasis, periodic_closest_image_edges
 from .harmonic import HarmonicDoubleCosetConditionEncoder, OrbitInvariantConditionEncoder
 from torch_geometric.utils import scatter
 from .uncertainty import VelocityUncertainty, bounded_log_std
+from .vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
 def scatter_mean(value: torch.Tensor, index: torch.Tensor, dim_size: int) -> torch.Tensor:
@@ -668,7 +669,7 @@ class GaugeFlowVectorField(nn.Module):
         hidden_dim: int = 256,
         layers: int = 4,
         orbit_frames: int = 24,
-        atom_types: int = 119,
+        atom_types: int = CHEMICAL_ELEMENT_COUNT,
         vector_dim: int | None = None,
         conditioning_mode: str = "orbit_alignment",
         conditional_control: str = "original_injection",
@@ -1011,7 +1012,7 @@ class QuotientRolloutFlowMap(nn.Module):
         self,
         hidden_dim: int = 64,
         layers: int = 2,
-        atom_types: int = 119,
+        atom_types: int = CHEMICAL_ELEMENT_COUNT,
         vector_dim: int | None = None,
         coordinate_rbf_dim: int = 16,
         coordinate_rbf_cutoff: float = 8.0,

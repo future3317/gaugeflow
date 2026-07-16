@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.5.1+cu124
+torch-geometric==2.6.1
+e3nn==0.5.1
+pymatgen==2022.0.16
+pandas==2.2.0
+numpy==1.26.4
+scipy==1.10.1
+spglib==2.7.0
+monty==2025.3.3
+PyYAML==6.0.3
+pytest==8.0.0
+ruff==0.12.3
+mypy==1.16.1
