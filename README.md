@@ -13,7 +13,32 @@ runtime. The former local FlowMM working tree has been removed; the upstream
 baseline and the preserved local T2C patch set are documented under
 `../legacy_backups/flowmm_local_2026-07-14/`.
 
-## Current experimental status (2026-07-15)
+## Revised-paper production qualification (2026-07-16)
+
+S0.1 remains frozen as passed within its declared small-site mathematical and
+interface scope. The versioned no-training successor S0.2 also passed; its
+immutable evidence is under
+`reports/paper_s0_2_scalability_symmetry_chart_v1/` and its frozen protocol is
+`configs/paper_s0_2_scalability_symmetry_chart_v1.json`.
+
+S0.2 corrects the fractional/Cartesian lattice chart, projects both incoming
+and reverse-step lattice states, adds a translation-integral scalable wrapped
+quotient while keeping the exponential image sum only as an exact small-site
+oracle, and replaces edge-only harmonic queries with a tensor-condition-free
+angular geometry encoder. The audit covers all 230 space groups, expected
+piezoelectric Reynolds ranks, all-MASK/single-species/inversion query cases,
+full-denoiser translation and unimodular-basis equivariance, and finite-QMC
+objects at `K=240,960,3840`.
+
+The S0.2 evidence reports 33/33 targeted tests and 183/183 full-repository
+tests. For `M=2,3,4`, the largest exact-oracle log-density and relative-score
+errors are `7.11e-15` and `1.64e-15`; four `M=20` CUDA stress cases complete
+without a resource failure. This authorizes preparation of a separately
+versioned S1a unconditional reverse-sampler qualification only. S1a has not
+started, and S0.2 does not authorize real tensor, learned oracle, MLIP
+screening, relaxation, DFT, or DFPT.
+
+## Current experimental status (2026-07-16)
 
 The original four-method Gate A v1 is a frozen negative archive, not an
 active experiment. No full 4,000/499/499 training result is claimed. The

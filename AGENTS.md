@@ -87,7 +87,10 @@ test it at small scale, and only then update scientific claims.
   scalable translation-integral wrapped quotient, replaces degenerate
   edge-only harmonic queries with a condition-free angular geometry encoder,
   and audits all 230 space groups plus finite-QMC/full-denoiser equivariance.
-  Never edit the S0.1 status or use S0.2 to start real tensor or physical work.
+  S0.2 is now frozen as passed at
+  `reports/paper_s0_2_scalability_symmetry_chart_v1/`. It authorizes only a
+  separately versioned S1a preparation; S1a has not started. Never edit the
+  S0.1/S0.2 status or use S0.2 to start real tensor or physical work.
 - The earlier Q1v2 authorization is preserved as historical protocol state but
   is not an instruction to run that affine-ODE experiment after adoption of
   the revised hybrid-diffusion design.

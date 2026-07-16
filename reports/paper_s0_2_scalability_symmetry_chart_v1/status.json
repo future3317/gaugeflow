@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "gate": "S0.2",
+  "name": "paper_s0_2_scalability_and_symmetry_chart_v1",
+  "status": "passed",
+  "all_passed": true,
+  "checks": {
+    "targeted_tests": true,
+    "full_tests": true,
+    "ruff": true,
+    "mypy": true,
+    "all_230_space_groups": true,
+    "fractional_metric_invariance": true,
+    "fractional_group_closure": true,
+    "cartesian_group_closure": true,
+    "cartesian_orthogonality": true,
+    "reynolds_idempotence": true,
+    "piezoelectric_rank_rules": true,
+    "small_site_log_density": true,
+    "small_site_score": true,
+    "m20_resource_stress": true,
+    "finite_qmc_refinement": true,
+    "random_representative_refinement": true
+  },
+  "tested_commit": "e7aaf3da1d3ceda7915271a7f67f9139d9d708cc",
+  "evidence_commit": null,
+  "config_sha256": "42418bf7370adde30ab1af70f2e02d5b1def40d18189d56b87fc9b509cbf3eba",
+  "design_sha256": "9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31",
+  "historical_s0_1_unchanged": true,
+  "successor_authorization": {
+    "S1a_preparation": true,
+    "S1_started": false
+  },
+  "real_tensor_or_physical_validation_allowed": false
+}
