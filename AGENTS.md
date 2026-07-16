@@ -54,8 +54,14 @@ test it at small scale, and only then update scientific claims.
   makes every later command exit. Q10 (real v2, oracle, relaxation, DFT, DFPT)
   always requires a separate human unlock even if Q8/Q9 eventually pass.
 - Q0 is a no-training diagnostic and ends as `complete` or `blocked`, not a
-  scientific pass. Q1 requires Q0 `complete`. The historical P5-C0 checkpoint
-  was not saved; do not recreate it by retraining under the Q0 protocol.
+  scientific pass. The original Q1 protocol requires Q0 `complete`. The
+  historical P5-C0 checkpoint was not saved; do not recreate it by retraining
+  under the Q0 protocol.
+- The original Q0 is now immutably `blocked`. The versioned amendment in
+  `docs/vnext_protocol_amendment_q0_1.md` may authorize `q1_affine_flow_v2`
+  only through `execution_status=complete_partial_legacy` after every
+  pre-registered P0 release check passes. This never reclassifies Q0 as a pass
+  and never supplies a reenacted model as the missing historical checkpoint.
 - Commit the vNext sequence separately: evidence freeze; analytic affine/torus
   processes; variance/collision/Jacobian diagnostics; wrapped score; masked
   categorical process; lattice diffusion; backbone; conditioner; baselines;

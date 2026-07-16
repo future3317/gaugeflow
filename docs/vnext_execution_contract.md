@@ -23,6 +23,14 @@ compute checkpoint-independent diagnostics, but must report `blocked` if the
 learned-Jacobian and learned-solver diagnostics cannot be completed. It may not
 retrain or reconstruct weights from metrics.
 
+The original run did report `blocked` and remains immutable. A subsequent code
+review identified that permanently coupling the independent regular-affine Q1
+qualification to an unrecoverable artifact deadlocks the research program.
+The versioned amendment `vnext_protocol_amendment_q0_1.md` therefore adds a
+partial-legacy execution status with corrected diagnostic semantics and a
+separate P0 release checklist. Only the versioned Q1v2 protocol may consume
+that authorization; this paragraph does not edit or reinterpret original Q0.
+
 Equation (28) in the supplied Markdown contains a form-feed typo before
 `rac1N`; implementations use the unambiguous horizontal projection
 `s_i - (1/N) sum_j s_j`.
