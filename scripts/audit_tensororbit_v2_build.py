@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -14,39 +13,30 @@ from pymatgen.core import Structure
 
 from gaugeflow.data import (
     FULL_O3_SYMMETRY_TARGET_CACHE_SCHEMA,
-    RESPONSE_NORM_BOUNDS,
     SYMMETRY_TARGET_CACHE_SCHEMA,
     _target_cache_file,
+    response_stratum,
 )
+from gaugeflow.file_utils import sha256_file
 from gaugeflow.tensor import piezo_cartesian_to_voigt, piezo_voigt_to_cartesian, rotate_rank3
 
-
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def response_stratum(norm: float) -> int:
-    if norm <= 1e-12:
-        return 0
-    for index, upper in enumerate(RESPONSE_NORM_BOUNDS[1:], start=1):
-        if norm < upper:
-            return index
-    return len(RESPONSE_NORM_BOUNDS)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--build-dir", type=Path, default=Path("data/tensororbit_jarvis_v2"))
-    parser.add_argument("--split", type=Path, default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"))
+    parser.add_argument(
+        "--split",
+        type=Path,
+        default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"),
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("reports/tensororbit_jarvis_v2_activation_audit"))
-    parser.add_argument("--attestation", type=Path, default=Path("artifacts/tensororbit_jarvis_v2_raw_build_v1/attestation.json"))
+    parser.add_argument(
+        "--attestation",
+        type=Path,
+        default=Path("artifacts/tensororbit_jarvis_v2_raw_build_v1/attestation.json"),
+    )
     args = parser.parse_args()
     build_dir = ROOT / args.build_dir if not args.build_dir.is_absolute() else args.build_dir
     split_path = ROOT / args.split if not args.split.is_absolute() else args.split
@@ -124,7 +114,10 @@ def main() -> None:
         "split_counts": Counter(source["split"]),
         "formula_overlap": overlaps,
         "physical_zero_counts": Counter(row["split"] for row in rows if row["physical_zero"]),
-        "response_strata": {name: dict(Counter(row["response_stratum"] for row in rows if row["split"] == name)) for name in ("train", "val", "test")},
+        "response_strata": {
+            name: dict(Counter(row["response_stratum"] for row in rows if row["split"] == name))
+            for name in ("train", "val", "test")
+        },
         "rows_sha256": sha256_file(rows_path),
         "build_manifest_sha256": sha256_file(build_dir / "build_manifest.json"),
         "target_cache_schema": expected_schema,

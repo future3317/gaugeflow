@@ -14,13 +14,10 @@ from typing import Callable
 
 import torch
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(ROOT / "src"))
-
 from gaugeflow.production.cartesian_gauge_atlas import StratifiedCartesianGaugeAtlas
 from gaugeflow.tensor import piezo_from_irreps
 
+ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "configs" / "paper_s0_4_1_cartesian_atlas_runtime_v1.json"
 OUT = ROOT / "reports" / "paper_s0_4_1_cartesian_atlas_runtime_v1"
 PREDECESSOR = ROOT / "reports" / "paper_s0_4_cartesian_atlas_prior_v1"

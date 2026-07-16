@@ -3,8 +3,10 @@
 The normative method source for the next production implementation is
 `E:/Downloads/GaugeFlow_PiezoGen_Revised.tex`, SHA-256
 `9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31`.
-The source was supplied on 2026-07-16. Historical Gate A--P5-C0 and Q0
-artifacts remain immutable and do not become evidence for this architecture.
+The source was supplied on 2026-07-16. Superseded Gate A--P5-C0 and Q0
+artifacts do not become evidence for this architecture. Their final pre-cleanup
+state is recoverable from tag `archive/pre-production-cleanup-20260716`; the
+active tree keeps only a condensed research history.
 
 ## Execution boundary
 
@@ -24,15 +26,16 @@ screening, relaxation, DFT, or DFPT is authorized by this document.
   the shape is projected into the full-O(3) point-group-compatible subspace.
 - The tensor condition is a proper-SO(3) orbit. Improper operations enter only
   the physical Reynolds compatibility router.
-- Harmonic GaugeFlow uses one graph-level relative-frame posterior, a
-  lossless six-probe response token, and the same aligned response field in
-  every denoising block.
+- The production conditioner is a Stratified Cartesian Gauge Atlas with a
+  state-dependent finite prior, multiplicity correction, smooth stratum
+  blending and residual descriptor-frame marginalization. Harmonic code is an
+  archived diagnostic reference and is never a runtime fallback.
 
 ## Code ownership
 
-New production primitives live under `gaugeflow.production`. Historical
-continuous-logit/ODE modules remain readable solely for frozen evidence and
-are not imported by the production hybrid-diffusion stack.
+Production primitives live under `gaugeflow.production`. Superseded
+continuous-logit/ODE implementations were removed from the active tree after
+archival and must not be reintroduced as compatibility paths.
 
 ## S0 advancement rule
 

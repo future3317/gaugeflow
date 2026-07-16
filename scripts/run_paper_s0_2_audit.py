@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import math
 import os
@@ -17,6 +16,7 @@ from typing import Any
 
 import torch
 
+from gaugeflow.file_utils import sha256_file as _sha256
 from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
     GeometryHarmonicQueries,
     HarmonicGaugeFlowConditioner,
@@ -28,14 +28,6 @@ from gaugeflow.production.wrapped_coordinates import (
     ScalableWrappedQuotient,
 )
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, rotate_rank3
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def _run(repo: Path, arguments: list[str]) -> tuple[bool, str]:

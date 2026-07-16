@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import torch
 from e3nn.io import CartesianTensor
 
-
 PIEZO_IRREPS = CartesianTensor("ijk=ikj")
 VOIGT_ORDER = ("xx", "yy", "zz", "yz", "xz", "xy")
 # `CartesianTensor.from_cartesian/to_cartesian` constructs a full
@@ -88,7 +87,11 @@ def piezo_cartesian_to_voigt(value: torch.Tensor) -> torch.Tensor:
 def piezo_to_irreps(
     value: torch.Tensor, change_of_basis: torch.Tensor | None = None
 ) -> torch.Tensor:
-    basis = piezo_change_of_basis(dtype=value.dtype, device=value.device) if change_of_basis is None else change_of_basis.to(value)
+    basis = (
+        piezo_change_of_basis(dtype=value.dtype, device=value.device)
+        if change_of_basis is None
+        else change_of_basis.to(value)
+    )
     return value.flatten(-3) @ basis.flatten(1).transpose(0, 1)
 
 
@@ -97,7 +100,11 @@ def piezo_from_irreps(
 ) -> torch.Tensor:
     if value.shape[-1] != PIEZO_IRREPS.dim:
         raise ValueError(f"Expected {PIEZO_IRREPS.dim} irreps coordinates, got {value.shape[-1]}")
-    basis = piezo_change_of_basis(dtype=value.dtype, device=value.device) if change_of_basis is None else change_of_basis.to(value)
+    basis = (
+        piezo_change_of_basis(dtype=value.dtype, device=value.device)
+        if change_of_basis is None
+        else change_of_basis.to(value)
+    )
     return (value @ basis.flatten(1)).reshape(*value.shape[:-1], 3, 3, 3)
 
 

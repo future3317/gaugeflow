@@ -11,7 +11,6 @@ import torch
 
 from .tensor import piezo_voigt_to_cartesian, rotate_rank3
 
-
 CANONICAL_ENGINEERING_VOIGT_ORDER = ("xx", "yy", "zz", "yz", "xz", "xy")
 
 

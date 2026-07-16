@@ -76,7 +76,9 @@ class ParityAwareResponseBlock(nn.Module):
         pair_count = polar_edge_fields * (polar_edge_fields - 1) // 2
         triple_count = polar_edge_fields * (polar_edge_fields - 1) * (polar_edge_fields - 2) // 6
         self.even_message = nn.Sequential(
-            nn.Linear(3 * scalar_dim + pair_count + triple_count, scalar_dim), nn.SiLU(), nn.Linear(scalar_dim, scalar_dim)
+            nn.Linear(3 * scalar_dim + pair_count + triple_count, scalar_dim),
+            nn.SiLU(),
+            nn.Linear(scalar_dim, scalar_dim),
         )
         # A generic biased MLP on 0o inputs would violate reflection symmetry.
         # These gates depend only on 0e inputs and multiply explicitly 0o
@@ -97,7 +99,9 @@ class ParityAwareResponseBlock(nn.Module):
             nn.Linear(2 * scalar_dim + pair_count + triple_count, scalar_dim), nn.SiLU(),
             nn.Linear(scalar_dim, vector_dim * (pair_count + 1)),
         )
-        self.scalar_update = nn.Sequential(nn.Linear(scalar_dim * 2, scalar_dim), nn.SiLU(), nn.Linear(scalar_dim, scalar_dim))
+        self.scalar_update = nn.Sequential(
+            nn.Linear(scalar_dim * 2, scalar_dim), nn.SiLU(), nn.Linear(scalar_dim, scalar_dim)
+        )
 
     def forward(
         self,
@@ -122,14 +126,24 @@ class ParityAwareResponseBlock(nn.Module):
         # 0o x 0o is even; multiplying source/target odd channels is therefore
         # legal input to the even scalar update.
         even_input = torch.cat(
-            (scalar_even[source], scalar_even[target], scalar_odd[source] * scalar_odd[target], edge_even, edge_odd.square()),
+            (
+                scalar_even[source],
+                scalar_even[target],
+                scalar_odd[source] * scalar_odd[target],
+                edge_even,
+                edge_odd.square(),
+            ),
             dim=-1,
         )
         even_messages = self.even_message(even_input)
         odd_gate_input = torch.cat((scalar_even[source], scalar_even[target], edge_even, edge_odd.square()), dim=-1)
         odd_gates = self.odd_gates(odd_gate_input).reshape(-1, 3, self.scalar_dim)
         odd_basis = torch.stack(
-            (scalar_odd[source], scalar_odd[target], scalar_even[source] * scalar_odd[target] + self.odd_edge(edge_odd)),
+            (
+                scalar_odd[source],
+                scalar_odd[target],
+                scalar_even[source] * scalar_odd[target] + self.odd_edge(edge_odd),
+            ),
             dim=1,
         )
         odd_messages = (odd_gates * odd_basis).sum(dim=1)
@@ -148,12 +162,18 @@ class ParityAwareResponseBlock(nn.Module):
             polar_message = polar_message + polar_gates[:, index] * edge_polar_fields[:, index].unsqueeze(1)
         # 0o times a 1e feature is polar.  This is the parity-sensitive path
         # absent from the legacy scalar/polar implementation.
-        polar_message = polar_message + scalar_odd[source, : self.vector_dim].unsqueeze(-1) * edge_axial[:, 0].unsqueeze(1)
+        polar_message = (
+            polar_message
+            + scalar_odd[source, : self.vector_dim].unsqueeze(-1) * edge_axial[:, 0].unsqueeze(1)
+        )
         axial_message = axial_gates[:, -1] * axial[source]
         for index in range(edge_axial.shape[1]):
             axial_message = axial_message + axial_gates[:, index] * edge_axial[:, index].unsqueeze(1)
         # 0o times polar is axial.
-        axial_message = axial_message + scalar_odd[source, : self.vector_dim].unsqueeze(-1) * edge_polar_fields[:, 0].unsqueeze(1)
+        axial_message = (
+            axial_message
+            + scalar_odd[source, : self.vector_dim].unsqueeze(-1) * edge_polar_fields[:, 0].unsqueeze(1)
+        )
         polar_aggregate = polar.new_zeros(polar.shape)
         axial_aggregate = axial.new_zeros(axial.shape)
         polar_aggregate.index_add_(0, target, polar_message)

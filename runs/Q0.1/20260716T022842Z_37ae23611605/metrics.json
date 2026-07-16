@@ -1,9 +1,0 @@
-{
-  "source_count": 64,
-  "time_grid_count": 33,
-  "coupling_replay_passed": true,
-  "p0_release_checks_passed": true,
-  "historical_checkpoint_available": false,
-  "historical_learned_field_classified": false,
-  "scientific_pass_applicable": false
-}

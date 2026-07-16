@@ -9,7 +9,6 @@ separate GaugeFlow v2 target-cache builder converts it.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import pickle
 from datetime import datetime, timezone
@@ -18,16 +17,9 @@ from typing import Any
 
 from pymatgen.core import Lattice, Structure
 
+from gaugeflow.file_utils import sha256_file, sha256_text
 
 SOURCE_ORDER = ["xx", "yy", "zz", "xy", "yz", "xz"]
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def export_record(source: dict[str, Any]) -> dict[str, Any]:
@@ -104,7 +96,9 @@ def main() -> None:
         "retrieved_utc": args.retrieved_utc,
         "observed_utc": datetime.now(timezone.utc).isoformat(),
         "source_copy_status": (
-            "direct_download_timestamp_pinned" if args.retrieved_utc else "local_pinned_copy_direct_download_timestamp_unavailable"
+            "direct_download_timestamp_pinned"
+            if args.retrieved_utc
+            else "local_pinned_copy_direct_download_timestamp_unavailable"
         ),
         "license": "See the upstream YKQ98/GMTNet repository and JARVIS-DFT source terms.",
         "record_schema": "material_id,cif,piezo_voigt[3,6],voigt_order,engineering_shear,unit",
@@ -112,7 +106,7 @@ def main() -> None:
         "source_voigt_order": SOURCE_ORDER,
         "engineering_shear": True,
         "record_count": len(records),
-        "material_ids_sha256": hashlib.sha256("\n".join(ids).encode()).hexdigest(),
+        "material_ids_sha256": sha256_text("\n".join(ids)),
     }
     (output / "raw_release_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     if args.split is not None:

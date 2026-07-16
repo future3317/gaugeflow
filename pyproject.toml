@@ -24,13 +24,9 @@ target-version = "py310"
 line-length = 120
 extend-exclude = ["artifacts", "data", "outputs", "reports"]
 include = [
-  "src/gaugeflow/vnext/**/*.py",
-  "src/gaugeflow/production/**/*.py",
-  "scripts/freeze_vnext_legacy_evidence.py",
-  "scripts/run_paper_s0_2_audit.py",
-  "tests/test_vnext_*.py",
-  "tests/test_paper_s0_production.py",
-  "tests/test_paper_s0_2_scalability_symmetry.py",
+  "src/gaugeflow/**/*.py",
+  "scripts/*.py",
+  "tests/*.py",
 ]
 
 [tool.ruff.lint]
@@ -41,4 +37,4 @@ python_version = "3.10"
 ignore_missing_imports = true
 follow_imports = "skip"
 check_untyped_defs = true
-exclude = ["src/gaugeflow/(?!vnext/|production/).*\\.py$"]
+exclude = ["src/gaugeflow/(?!production/).*\\.py$"]

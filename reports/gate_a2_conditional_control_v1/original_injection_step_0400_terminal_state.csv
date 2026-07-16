@@ -1,4 +1,0 @@
-variant,state_head,terminal_pairwise_rms,peak_pairwise_rms,terminal_over_peak,finite,retained_at_90pct_peak,checkpoint_step
-original_injection,type_logit,0.07988765576322164,0.07988765576322164,1.0,True,True,400
-original_injection,fractional_coordinate,0.022748260259894387,0.022748260259894387,1.0,True,True,400
-original_injection,lattice_log,0.3282513760828546,0.3282513760828546,1.0,True,True,400

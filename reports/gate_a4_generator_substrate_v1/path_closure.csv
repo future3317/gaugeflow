@@ -1,9 +1,0 @@
-experiment,subspace,material_id,sampler_steps,type_continuous_endpoint_error,fractional_coordinate_endpoint_error,lattice_log_endpoint_error,decoded_atom_accuracy,decoded_endpoint_accuracy,analytic_path_closed
-analytic_true_velocity_production_sampler,type,JVASP-1180,16,1.2429646290001983e-07,0.0,0.0,1.0,1.0,True
-analytic_true_velocity_production_sampler,type,JVASP-22673,16,1.314105588789971e-07,0.0,0.0,1.0,1.0,True
-analytic_true_velocity_production_sampler,coordinate,JVASP-1180,16,0.0,1.8270387158736412e-07,0.0,1.0,1.0,True
-analytic_true_velocity_production_sampler,coordinate,JVASP-22673,16,0.0,1.820951922582026e-07,0.0,1.0,1.0,True
-analytic_true_velocity_production_sampler,lattice,JVASP-1180,16,0.0,0.0,1.3118101094278245e-07,1.0,1.0,True
-analytic_true_velocity_production_sampler,lattice,JVASP-22673,16,0.0,0.0,8.167367582245788e-08,1.0,1.0,True
-analytic_true_velocity_production_sampler,joint,JVASP-1180,16,1.3065108817045257e-07,2.01762674123529e-07,3.109121280431282e-07,1.0,1.0,True
-analytic_true_velocity_production_sampler,joint,JVASP-22673,16,1.25386975469155e-07,1.756821035314715e-07,2.2899679663623829e-07,1.0,1.0,True

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import torch
 
-
 CHEMICAL_ELEMENT_COUNT = 118
 """The supported periodic-table elements, indexed by dense tokens 0..117."""
 

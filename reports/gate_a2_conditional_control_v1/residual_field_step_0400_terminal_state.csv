@@ -1,4 +1,0 @@
-variant,state_head,terminal_pairwise_rms,peak_pairwise_rms,terminal_over_peak,finite,retained_at_90pct_peak,checkpoint_step
-residual_field,type_logit,0.05288665389109935,0.05288665389109935,1.0,True,True,400
-residual_field,fractional_coordinate,0.01680663096651967,0.01680663096651967,1.0,True,True,400
-residual_field,lattice_log,0.2799691778740713,0.2799691778740713,1.0,True,True,400

@@ -1,6 +1,0 @@
-metric,value
-source_count,64
-time_grid_count,33
-coupling_cost_reproduction_max_abs_error,1.7587910576821741e-06
-checkpoint_available,False
-status,blocked

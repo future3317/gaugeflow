@@ -44,7 +44,6 @@ from .tensor import (
     tensor_orbit_shape_magnitude,
 )
 
-
 _PIEZO_SLICES = (slice(0, 6), slice(6, 11), slice(11, 18))
 
 
@@ -269,7 +268,12 @@ def normalized_low_order_orbit_invariants(piezo_irreps: torch.Tensor) -> torch.T
     quadratic = raw[:, :5] / safe.square()
     pseudoscalar = raw[:, 5:7] / safe.pow(3)
     normalized = torch.cat(
-        (quadratic, pseudoscalar, decomposition.log_magnitude.unsqueeze(-1), decomposition.physical_zero.to(piezo_irreps).unsqueeze(-1)),
+        (
+            quadratic,
+            pseudoscalar,
+            decomposition.log_magnitude.unsqueeze(-1),
+            decomposition.physical_zero.to(piezo_irreps).unsqueeze(-1),
+        ),
         dim=-1,
     )
     return torch.where(decomposition.physical_zero.unsqueeze(-1), torch.cat(

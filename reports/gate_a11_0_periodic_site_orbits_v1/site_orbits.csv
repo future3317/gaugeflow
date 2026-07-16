@@ -1,7 +1,0 @@
-material_id,representation_symmetry,orbit_index,site_indices_zero_based,orbit_size,species_counts,is_species_mixed,deterministic_constant_label_ceiling
-JVASP-1180,proper_so3,0,"[0, 1, 2, 3]",4,"N:2, In:2",True,0.5
-JVASP-1180,full_o3_scalar,0,"[0, 1, 2, 3]",4,"N:2, In:2",True,0.5
-JVASP-22673,proper_so3,0,"[0, 3]",2,"B:1, N:1",True,0.5
-JVASP-22673,proper_so3,1,"[1, 2]",2,"B:1, N:1",True,0.5
-JVASP-22673,full_o3_scalar,0,"[0, 3]",2,"B:1, N:1",True,0.5
-JVASP-22673,full_o3_scalar,1,"[1, 2]",2,"B:1, N:1",True,0.5

@@ -11,13 +11,13 @@ from functools import lru_cache
 from itertools import product
 
 import torch
-from torch.profiler import record_function
 from pymatgen.core import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from torch.profiler import record_function
 from torch_geometric.utils import to_dense_batch
 
-from .tensor import rotate_rank3
 from .manifold import torus_logmap
+from .tensor import rotate_rank3
 
 
 @lru_cache(maxsize=1)

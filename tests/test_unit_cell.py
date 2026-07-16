@@ -1,7 +1,7 @@
 import numpy as np
+from pymatgen.core import Lattice, Structure
 
 from gaugeflow.unit_cell import niggli_reduce_structure
-from pymatgen.core import Lattice, Structure
 
 
 def test_niggli_reduction_tracks_fractional_coordinates_with_unimodular_basis():

@@ -17,7 +17,6 @@ from torch import nn
 
 from .tensor import piezo_to_irreps
 
-
 _CONDITION_IRREPS = o3.Irreps("2x1o + 1x2o + 1x3o")
 _GEOMETRY_IRREPS = CartesianTensor("ij=ji")
 

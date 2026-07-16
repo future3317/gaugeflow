@@ -1,5 +1,0 @@
-material_id,representation_symmetry,site_count,operation_count,site_orbit_count,mixed_species_orbit_count,deterministic_equivariant_fixed_cif_accuracy_ceiling,a11_g_decision
-JVASP-1180,proper_so3,4,4,1,1,0.5,stochastic_assignment_and_quotient_supervision_required
-JVASP-1180,full_o3_scalar,4,4,1,1,0.5,stochastic_assignment_and_quotient_supervision_required
-JVASP-22673,proper_so3,4,2,2,2,0.5,stochastic_assignment_and_quotient_supervision_required
-JVASP-22673,full_o3_scalar,4,2,2,2,0.5,stochastic_assignment_and_quotient_supervision_required

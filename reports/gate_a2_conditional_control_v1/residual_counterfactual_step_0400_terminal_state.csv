@@ -1,4 +1,0 @@
-variant,state_head,terminal_pairwise_rms,peak_pairwise_rms,terminal_over_peak,finite,retained_at_90pct_peak,checkpoint_step
-residual_counterfactual,type_logit,0.05602733365127018,0.05602733365127018,1.0,True,True,400
-residual_counterfactual,fractional_coordinate,0.018617990060842464,0.018617990060842464,1.0,True,True,400
-residual_counterfactual,lattice_log,0.32135145286364214,0.32135145286364214,1.0,True,True,400

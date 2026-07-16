@@ -1,18 +1,18 @@
 import hashlib
 
 import torch
+from pymatgen.core import Lattice, Structure
 
+from gaugeflow.manifold import torus_logmap
 from gaugeflow.stabilizer import (
     batched_soft_crystal_stabilizer_actions,
     crystal_point_group_operations,
     observed_tensor_stabilizer_rotations,
-    proper_unimodular_candidates,
     proper_stabilizer_rotations,
+    proper_unimodular_candidates,
     soft_crystal_stabilizer_actions,
 )
-from gaugeflow.manifold import torus_logmap
 from gaugeflow.tensor import rotate_rank3
-from pymatgen.core import Lattice, Structure
 
 
 def test_proper_stabilizer_excludes_improper_operations():

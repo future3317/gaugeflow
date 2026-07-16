@@ -10,7 +10,6 @@ an old cache.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,6 +24,7 @@ from gaugeflow.data import (
     SYMMETRY_TARGET_CACHE_SCHEMA,
     _target_cache_file,
 )
+from gaugeflow.file_utils import canonical_json_hash, sha256_file
 from gaugeflow.provenance import (
     canonicalize_engineering_piezo_voigt,
     reynolds_project_crystal_rank3,
@@ -32,20 +32,7 @@ from gaugeflow.provenance import (
 )
 from gaugeflow.stabilizer import crystal_point_group_operations, proper_stabilizer_rotations
 
-
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def canonical_hash(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 def load_raw_records(path: Path) -> list[dict[str, Any]]:
@@ -75,7 +62,11 @@ def main() -> None:
     parser.add_argument("--protocol", type=Path, default=Path("configs/tensororbit_jarvis_v2_raw_build_v1.json"))
     parser.add_argument("--raw-records", type=Path, required=True)
     parser.add_argument("--raw-release-manifest", type=Path, required=True)
-    parser.add_argument("--split", type=Path, default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"))
+    parser.add_argument(
+        "--split",
+        type=Path,
+        default=Path("artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json"),
+    )
     parser.add_argument("--exclusions", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, help="Override the protocol-declared output directory.")
     parser.add_argument(
@@ -88,10 +79,19 @@ def main() -> None:
         type=int,
         help="Build at most this many missing target files, then exit without writing an incomplete manifest/CSV.",
     )
-    parser.add_argument("--cache-only-start-index", type=int, help="Inclusive index in the fixed train/val/test target order.")
-    parser.add_argument("--cache-only-stop-index", type=int, help="Exclusive index in the fixed train/val/test target order.")
+    parser.add_argument(
+        "--cache-only-start-index",
+        type=int,
+        help="Inclusive index in the fixed train/val/test target order.",
+    )
+    parser.add_argument(
+        "--cache-only-stop-index",
+        type=int,
+        help="Exclusive index in the fixed train/val/test target order.",
+    )
     args = parser.parse_args()
-    protocol = json.loads((ROOT / args.protocol if not args.protocol.is_absolute() else args.protocol).read_text(encoding="utf-8"))
+    protocol_path = ROOT / args.protocol if not args.protocol.is_absolute() else args.protocol
+    protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     protocol_name = protocol.get("name")
     if protocol_name not in {
         "TensorOrbit-JARVIS-v2 raw acquisition and target-cache build v1",
@@ -123,7 +123,10 @@ def main() -> None:
     split = load_split(args.split)
     expected_ids = {material_id for values in split.values() for material_id in values}
     exclusions = json.loads(args.exclusions.read_text(encoding="utf-8"))
-    if not isinstance(exclusions, dict) or not all(isinstance(value, str) and value.strip() for value in exclusions.values()):
+    valid_exclusions = isinstance(exclusions, dict) and all(
+        isinstance(value, str) and value.strip() for value in exclusions.values()
+    )
+    if not valid_exclusions:
         raise ValueError("exclusions must map each excluded material ID to a nonempty reason")
     records = load_raw_records(args.raw_records)
     keyed: dict[str, dict[str, Any]] = {}
@@ -231,7 +234,7 @@ def main() -> None:
                     "source_engineering_shear": bool(record["engineering_shear"]),
                     "source_unit": record["unit"],
                     "canonical_voigt_order": json.dumps(["xx", "yy", "zz", "yz", "xz", "xy"]),
-                    "raw_record_sha256": canonical_hash(record),
+                    "raw_record_sha256": canonical_json_hash(record),
                 }
             )
             if args.cache_only_new_target_limit is not None and newly_built >= args.cache_only_new_target_limit:
@@ -270,14 +273,18 @@ def main() -> None:
         "excluded_record_count": len(exclusions),
         "exclusions_sha256": sha256_file(exclusions_path),
         "output_csv_sha256": source_files,
-        "target_cache_sha256": canonical_hash(target_index),
+        "target_cache_sha256": canonical_json_hash(target_index),
         "physical_zero_target_count": zero_count,
         "target_cache_schema": cache_schema,
         "crystal_compatibility_group": compatibility_scope,
         "tensor_orbit_group": "proper_so3_only",
         "tensor_convention": (
             "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> "
-            + ("full-O(3) crystal-point-group Reynolds projection" if compatibility_scope == "full_o3_crystal_point_group" else "legacy proper-SO(3) Reynolds projection")
+            + (
+                "full-O(3) crystal-point-group Reynolds projection"
+                if compatibility_scope == "full_o3_crystal_point_group"
+                else "legacy proper-SO(3) Reynolds projection"
+            )
         ),
     }
     (output_dir / "raw_release_manifest.json").write_text(json.dumps(release, indent=2) + "\n", encoding="utf-8")
@@ -286,7 +293,8 @@ def main() -> None:
     report = ROOT / configured_report if not configured_report.is_absolute() else configured_report
     report.write_text(
         "# TensorOrbit-JARVIS-v2 raw build\n\n"
-        f"Status: `{build_manifest['status']}`. This build does not qualify an external oracle or a GaugeFlow generator.\n\n"
+        f"Status: `{build_manifest['status']}`. This build does not qualify an external oracle "
+        "or a GaugeFlow generator.\n\n"
         f"- Split counts: `{build_manifest['split_counts']}`\n"
         f"- Explicit exclusions: `{build_manifest['excluded_record_count']}`\n"
         f"- Physical zero targets retained: `{zero_count}`\n"

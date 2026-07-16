@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import math
 from pathlib import Path
 from typing import Any
@@ -18,7 +18,6 @@ from .tensor import isotypic_slices, piezo_from_irreps, piezo_to_irreps
 from .unit_cell import niggli_reduce_structure_with_transform
 from .vocabulary import atomic_numbers_to_tokens, validate_type_tokens
 
-
 RESPONSE_NORM_BOUNDS = (0.0, 0.05, 0.5, 1.0)
 # Schema 2 is the immutable historical v1 cache contract.  Schema 3 records a
 # full-O(3) crystal-compatibility projection for the prospective v2 rebuild.
@@ -31,6 +30,16 @@ SUPPORTED_SYMMETRY_TARGET_CACHE_SCHEMAS = frozenset(
 )
 PREPROCESSED_CRYSTAL_CACHE_SCHEMA = 2
 TENSOR_CONVENTION_VERSION = "gaugeflow-cartesian-ijk=ikj-engineering-shear-v1"
+
+
+def response_stratum(norm: float) -> int:
+    """Map a response norm to the shared versioned magnitude stratum."""
+    if norm <= 1.0e-12:
+        return 0
+    for index, upper in enumerate(RESPONSE_NORM_BOUNDS[1:], start=1):
+        if norm < upper:
+            return index
+    return len(RESPONSE_NORM_BOUNDS)
 
 
 def load_piezo_frame(source: str | Path) -> pd.DataFrame:
@@ -122,7 +131,6 @@ class PiezoCrystalDataset(Dataset):
         self._condition_norm_cache: dict[int, float] = {}
         self.preprocessed_cache = Path(preprocessed_cache) if preprocessed_cache is not None else None
         self._preprocessed_records: dict[str, dict[str, Any]] | None = None
-        self.preprocessed_manifest: dict[str, Any] | None = None
         if self.preprocessed_cache is not None:
             payload: Any = torch.load(
                 self.preprocessed_cache, map_location="cpu", weights_only=True
@@ -140,7 +148,6 @@ class PiezoCrystalDataset(Dataset):
             if missing:
                 raise ValueError(f"Preprocessed cache is missing selected material IDs: {missing[:5]}")
             self._preprocessed_records = records
-            self.preprocessed_manifest = manifest
 
     def __len__(self) -> int:
         return len(self.frame)
@@ -194,11 +201,7 @@ class PiezoCrystalDataset(Dataset):
     def condition_bins(self) -> torch.Tensor:
         """TensorOrbit-JARVIS response-norm strata, with zero as an explicit class."""
         norms = torch.tensor([self._condition_for_index(index)[1] for index in range(len(self))])
-        bins = torch.full_like(norms, len(RESPONSE_NORM_BOUNDS), dtype=torch.long)
-        bins[norms <= 1e-12] = 0
-        for bin_index, upper in enumerate(RESPONSE_NORM_BOUNDS[1:], start=1):
-            bins[(norms > 1e-12) & (norms < upper) & (bins == len(RESPONSE_NORM_BOUNDS))] = bin_index
-        return bins
+        return torch.tensor([response_stratum(float(norm)) for norm in norms], dtype=torch.long)
 
     def condition_sampling_weights(self, power: float = 0.5) -> torch.Tensor:
         """Inverse-frequency weights over response strata; zero remains physical data."""
@@ -229,12 +232,7 @@ class PiezoCrystalDataset(Dataset):
         structure, niggli_transform = niggli_reduce_structure_with_transform(structure)
         irreps, _ = self._condition_for_index(index)
         response_norm = self._condition_norm_cache[index]
-        response_stratum = 0 if response_norm <= 1e-12 else len(RESPONSE_NORM_BOUNDS)
-        if response_norm > 1e-12:
-            for bin_index, upper in enumerate(RESPONSE_NORM_BOUNDS[1:], start=1):
-                if response_norm < upper:
-                    response_stratum = bin_index
-                    break
+        stratum = response_stratum(response_norm)
         return Data(
             atom_types=atomic_numbers_to_tokens(torch.tensor(structure.atomic_numbers, dtype=torch.long)),
             frac_coords=torch.tensor(structure.frac_coords, dtype=torch.float32),
@@ -242,7 +240,7 @@ class PiezoCrystalDataset(Dataset):
             piezo_irreps=irreps.unsqueeze(0),
             condition_present=torch.ones((1, 1), dtype=torch.bool),
             niggli_transform=torch.tensor(niggli_transform, dtype=torch.int64).unsqueeze(0),
-            response_stratum=torch.tensor([response_stratum], dtype=torch.long),
+            response_stratum=torch.tensor([stratum], dtype=torch.long),
             zero_response=torch.tensor([response_norm <= 1e-12], dtype=torch.bool),
             material_id=str(row.material_id),
             num_nodes=len(structure),

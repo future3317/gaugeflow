@@ -4,6 +4,7 @@ from gaugeflow.tensor import (
     PIEZO_IRREPS,
     fixed_lossless_response_probes,
     fixed_so3_frames,
+    maximum_response_field_error,
     piezo_cartesian_to_voigt,
     piezo_from_irreps,
     piezo_to_irreps,
@@ -11,7 +12,6 @@ from gaugeflow.tensor import (
     polarized_response,
     response_field,
     response_field_error,
-    maximum_response_field_error,
     rotate_rank3,
 )
 
@@ -56,7 +56,8 @@ def test_fixed_response_probes_recover_all_voigt_components():
 def test_rank_three_rotation_preserves_tensor_norm():
     tensor = piezo_voigt_to_cartesian(torch.randn(3, 6))
     rotation = fixed_so3_frames(4)[2]
-    assert torch.allclose(torch.linalg.vector_norm(rotate_rank3(tensor, rotation)), torch.linalg.vector_norm(tensor), atol=1e-5)
+    rotated_norm = torch.linalg.vector_norm(rotate_rank3(tensor, rotation))
+    assert torch.allclose(rotated_norm, torch.linalg.vector_norm(tensor), atol=1e-5)
 
 
 def test_cached_cartesian_irrep_basis_matches_e3nn_reference_and_gradients():

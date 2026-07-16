@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import subprocess
 from pathlib import Path
 from typing import Any
 
+from gaugeflow.file_utils import sha256_file
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,14 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 def _resolve(value: str) -> Path:
     path = Path(value)
     return path if path.is_absolute() else ROOT / path
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _git(*args: str) -> str | None:
@@ -64,9 +56,9 @@ def main() -> None:
     candidate_split = _resolve(parent["candidate_split"])
     audit_rows = _resolve(parent["source_audit_rows"])
     activation_manifest = _resolve(parent["activation_manifest"])
-    if _sha256(candidate_split) != parent["candidate_split_sha256"]:
+    if sha256_file(candidate_split) != parent["candidate_split_sha256"]:
         raise ValueError("v2 candidate split hash does not match the pre-registered protocol")
-    if _sha256(audit_rows) != parent["source_audit_rows_sha256"]:
+    if sha256_file(audit_rows) != parent["source_audit_rows_sha256"]:
         raise ValueError("Audit-row hash does not match the pre-registered protocol")
     activation = json.loads(activation_manifest.read_text(encoding="utf-8"))
     if activation.get("status") != "candidate_not_active_audit_complete":
@@ -83,9 +75,9 @@ def main() -> None:
     shared = {
         "schema": 1,
         "status": "prepared_not_started",
-        "protocol_sha256": _sha256(protocol_path),
+        "protocol_sha256": sha256_file(protocol_path),
         "candidate_split": str(candidate_split),
-        "candidate_split_sha256": _sha256(candidate_split),
+        "candidate_split_sha256": sha256_file(candidate_split),
         "split_counts": actual_counts,
         "source_csv_directory": str(_resolve(protocol["data"]["source_csv_directory"])),
         "target_cache_dir": str(_resolve(protocol["data"]["target_cache_dir"])),
@@ -108,15 +100,15 @@ def main() -> None:
         }
         path = output_dir / f"{oracle['id']}_training_manifest.json"
         path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-        oracle_manifests[oracle["id"]] = _sha256(path)
+        oracle_manifests[oracle["id"]] = sha256_file(path)
     status = {
         "schema": 1,
         "name": protocol["name"],
         "status": "prepared_commit_required_before_external_training",
-        "protocol_sha256": _sha256(protocol_path),
-        "activation_audit_manifest_sha256": _sha256(activation_manifest),
-        "candidate_split_sha256": _sha256(candidate_split),
-        "audit_rows_sha256": _sha256(audit_rows),
+        "protocol_sha256": sha256_file(protocol_path),
+        "activation_audit_manifest_sha256": sha256_file(activation_manifest),
+        "candidate_split_sha256": sha256_file(candidate_split),
+        "audit_rows_sha256": sha256_file(audit_rows),
         "oracle_training_manifests": oracle_manifests,
         "git_head_at_preparation": _git("rev-parse", "HEAD"),
         "working_tree_clean_at_preparation": (
