@@ -15,10 +15,10 @@ from gaugeflow.production.wrapped_coordinates import (
 
 def test_point_group_metric_chart_has_all_crystal_system_dimensions_and_hexagonal_invariance():
     representatives = {
-        1: 5,    # triclinic
-        3: 3,    # monoclinic
-        16: 2,   # orthorhombic
-        75: 1,   # tetragonal
+        1: 5,  # triclinic
+        3: 3,  # monoclinic
+        16: 2,  # orthorhombic
+        75: 1,  # tetragonal
         143: 1,  # trigonal
         168: 1,  # hexagonal
         195: 0,  # cubic
@@ -28,9 +28,7 @@ def test_point_group_metric_chart_has_all_crystal_system_dimensions_and_hexagona
     generator = torch.Generator().manual_seed(83)
     for number in (143, 168):
         chart = compatibility_record(number).metric_chart
-        coordinates = torch.randn(
-            chart.shape_dimension, generator=generator, dtype=torch.float64
-        )
+        coordinates = torch.randn(chart.shape_dimension, generator=generator, dtype=torch.float64)
         log_shape = coordinates @ chart.invariant_log_shape_basis.T
         metric = chart.metric(torch.tensor(math.log(80.0), dtype=torch.float64), log_shape)
         assert float(chart.invariance_residual(metric).max()) < 1e-8
@@ -38,8 +36,20 @@ def test_point_group_metric_chart_has_all_crystal_system_dimensions_and_hexagona
 
 def test_all_230_space_group_charts_close_and_have_correct_piezoelectric_ranks():
     zero_rank_point_groups = {
-        "-1", "2/m", "mmm", "4/m", "4/mmm", "-3", "-31m", "-3m1", "-3m",
-        "6/m", "6/mmm", "m-3", "432", "m-3m",
+        "-1",
+        "2/m",
+        "mmm",
+        "4/m",
+        "4/mmm",
+        "-3",
+        "-31m",
+        "-3m1",
+        "-3m",
+        "6/m",
+        "6/mmm",
+        "m-3",
+        "432",
+        "m-3m",
     }
     for number in range(1, 231):
         record = compatibility_record(number)
@@ -55,9 +65,7 @@ def test_all_230_space_group_charts_close_and_have_correct_piezoelectric_ranks()
         ).amin(dim=-1)
         assert float(fractional_closure.max()) < 1e-10
         assert float(cartesian_closure.max()) < 1e-9
-        assert torch.allclose(
-            torch.linalg.det(fractional).abs(), torch.ones(fractional.shape[0], dtype=torch.float64)
-        )
+        assert torch.allclose(torch.linalg.det(fractional).abs(), torch.ones(fractional.shape[0], dtype=torch.float64))
         assert torch.allclose(
             cartesian.transpose(-1, -2) @ cartesian,
             torch.eye(3, dtype=torch.float64).expand_as(cartesian),
@@ -77,9 +85,7 @@ def test_scalable_wrapped_quotient_matches_small_site_exact_oracle(sites: int, s
     generator = torch.Generator().manual_seed(90 + sites)
     current = torch.rand((sites, 3), generator=generator, dtype=torch.float64)
     clean = torch.rand((sites, 3), generator=generator, dtype=torch.float64)
-    lattice = torch.tensor(
-        [[2.2, 0.0, 0.0], [0.3, 2.5, 0.0], [0.2, 0.4, 2.8]], dtype=torch.float64
-    )
+    lattice = torch.tensor([[2.2, 0.0, 0.0], [0.3, 2.5, 0.0], [0.2, 0.4, 2.8]], dtype=torch.float64)
     exact = AdaptiveWrappedQuotient(
         absolute_tail_tolerance=1e-10,
         relative_tail_tolerance=1e-10,
@@ -122,9 +128,7 @@ def test_scalable_wrapped_quotient_handles_twenty_sites_and_triclinic_metrics():
 
 def _denoiser_input() -> tuple[torch.Tensor, ...]:
     tokens = torch.tensor([5, 6, 7, 8], dtype=torch.long)
-    fractional = torch.tensor(
-        [[0.05, 0.10, 0.15], [0.35, 0.25, 0.68], [0.15, 0.73, 0.45], [0.72, 0.55, 0.20]]
-    )
+    fractional = torch.tensor([[0.05, 0.10, 0.15], [0.35, 0.25, 0.68], [0.15, 0.73, 0.45], [0.72, 0.55, 0.20]])
     log_volume = torch.tensor([math.log(27.0)])
     log_shape = torch.tensor([[0.2, -0.1, 0.3, 0.07, -0.05, 0.04]])
     batch = torch.zeros(4, dtype=torch.long)
@@ -135,8 +139,16 @@ def _denoiser_input() -> tuple[torch.Tensor, ...]:
     projector = (torch.eye(6) - torch.outer(trace, trace) / 3.0).unsqueeze(0)
     chart = torch.eye(3).unsqueeze(0)
     return (
-        tokens, fractional, log_volume, log_shape, batch, time,
-        condition, present, projector, chart,
+        tokens,
+        fractional,
+        log_volume,
+        log_shape,
+        batch,
+        time,
+        condition,
+        present,
+        projector,
+        chart,
     )
 
 
@@ -154,8 +166,11 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     shifted_values[1] = shifted_values[1] + torch.tensor([0.31, -0.27, 1.19])
     shifted = model(*shifted_values)
     for name in (
-        "clean_element_logits", "coordinate_cartesian_score", "coordinate_fractional_score",
-        "clean_log_volume", "clean_log_shape",
+        "clean_element_logits",
+        "coordinate_cartesian_score",
+        "coordinate_fractional_score",
+        "clean_log_volume",
+        "clean_log_shape",
     ):
         assert torch.allclose(getattr(first, name), getattr(projected, name), atol=3e-6, rtol=3e-6)
         assert torch.allclose(getattr(projected, name), getattr(shifted, name), atol=3e-6, rtol=3e-6)
@@ -175,18 +190,12 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     transformed_values[9] = (values[9] @ basis.T).contiguous()
     transformed = model(*transformed_values)
     lattice_original = LatticeVolumeShape(values[2], values[3]).lattice(values[9])
-    lattice_transformed = LatticeVolumeShape(
-        transformed_values[2], transformed_values[3]
-    ).lattice(transformed_values[9])
-    rotation = (
-        torch.linalg.inv(lattice_original[0])
-        @ torch.linalg.inv(basis)
-        @ lattice_transformed[0]
+    lattice_transformed = LatticeVolumeShape(transformed_values[2], transformed_values[3]).lattice(
+        transformed_values[9]
     )
+    rotation = torch.linalg.inv(lattice_original[0]) @ torch.linalg.inv(basis) @ lattice_transformed[0]
     assert torch.allclose(rotation.T @ rotation, torch.eye(3), atol=2e-6, rtol=2e-6)
-    assert torch.allclose(
-        transformed.clean_element_logits, original.clean_element_logits, atol=2e-5, rtol=2e-5
-    )
+    assert torch.allclose(transformed.clean_element_logits, original.clean_element_logits, atol=2e-5, rtol=2e-5)
     assert torch.allclose(
         transformed.coordinate_cartesian_score,
         original.coordinate_cartesian_score @ rotation,
@@ -206,10 +215,7 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
 def test_reverse_step_projection_is_idempotent_for_translation_and_shape():
     values = _denoiser_input()
     first = project_hybrid_reverse_state(values[1], values[3], values[4], values[8])
-    second = project_hybrid_reverse_state(
-        first.fractional_coordinates, first.log_shape, values[4], values[8]
-    )
+    second = project_hybrid_reverse_state(first.fractional_coordinates, first.log_shape, values[4], values[8])
     assert torch.allclose(first.fractional_coordinates.mean(dim=0), torch.zeros(3), atol=1e-7)
     assert torch.allclose(first.fractional_coordinates, second.fractional_coordinates, atol=1e-7)
     assert torch.allclose(first.log_shape, second.log_shape, atol=1e-7)
-

@@ -26,9 +26,7 @@ def _trace_free_projector(dtype: torch.dtype = torch.float32) -> torch.Tensor:
 
 def _small_hybrid_input():
     tokens = torch.tensor([4, 6, 12, 15], dtype=torch.long)
-    frac = torch.tensor(
-        [[0.05, 0.10, 0.15], [0.35, 0.25, 0.70], [0.15, 0.75, 0.45], [0.72, 0.55, 0.20]]
-    )
+    frac = torch.tensor([[0.05, 0.10, 0.15], [0.35, 0.25, 0.70], [0.15, 0.75, 0.45], [0.72, 0.55, 0.20]])
     batch = torch.tensor([0, 0, 1, 1], dtype=torch.long)
     log_volume = torch.log(torch.tensor([64.0, 91.125]))
     log_shape = torch.zeros((2, 6))
@@ -58,21 +56,15 @@ def test_absorbing_reverse_kernel_is_normalized_and_copies_revealed_tokens():
     current = torch.tensor([3, process.mask_index, process.mask_index])
     logits = torch.randn((3, 118), generator=torch.Generator().manual_seed(8))
     batch = torch.tensor([0, 0, 0])
-    probability = process.reverse_probabilities(
-        current, logits, torch.tensor([0.8]), torch.tensor([0.4]), batch
-    )
+    probability = process.reverse_probabilities(current, logits, torch.tensor([0.8]), torch.tensor([0.4]), batch)
     assert torch.allclose(probability.sum(-1), torch.ones(3), atol=1e-6)
     assert probability[0, 3] == 1 and torch.count_nonzero(probability[0]) == 1
     assert torch.all(probability[1:, :118] >= 0)
 
 
 def test_wrapped_score_matches_autograd():
-    kernel = AdaptiveWrappedQuotient(
-        absolute_tail_tolerance=1e-12, relative_tail_tolerance=1e-10, max_images=100_000
-    )
-    current = torch.tensor(
-        [[0.13, 0.27, 0.41], [0.61, 0.52, 0.19]], dtype=torch.float64, requires_grad=True
-    )
+    kernel = AdaptiveWrappedQuotient(absolute_tail_tolerance=1e-12, relative_tail_tolerance=1e-10, max_images=100_000)
+    current = torch.tensor([[0.13, 0.27, 0.41], [0.61, 0.52, 0.19]], dtype=torch.float64, requires_grad=True)
     clean = torch.tensor([[0.07, 0.11, 0.37], [0.49, 0.66, 0.22]], dtype=torch.float64)
     lattice = torch.tensor([[3.0, 0.0, 0.0], [0.4, 3.7, 0.0], [0.2, 0.3, 4.1]], dtype=torch.float64)
     result = kernel.evaluate(current, clean, lattice, 0.45)
@@ -86,9 +78,7 @@ def test_single_site_translation_quotient_has_no_coordinate_degree_of_freedom():
     result = kernel.evaluate(current, torch.tensor([[0.8, 0.1, 0.2]]), torch.eye(3), 0.5)
     assert result.log_unnormalized_density == 0
     assert torch.equal(result.fractional_score, torch.zeros_like(current))
-    assert torch.equal(
-        torch.autograd.grad(result.log_unnormalized_density, current)[0], torch.zeros_like(current)
-    )
+    assert torch.equal(torch.autograd.grad(result.log_unnormalized_density, current)[0], torch.zeros_like(current))
 
 
 def test_wrapped_kernel_translation_invariance():
@@ -120,12 +110,8 @@ def test_wrapped_kernel_unimodular_basis_invariance():
 
 
 def test_adaptive_image_sum_tail_bound():
-    loose = AdaptiveWrappedQuotient(
-        absolute_tail_tolerance=1e-4, relative_tail_tolerance=1e-4, max_images=100_000
-    )
-    strict = AdaptiveWrappedQuotient(
-        absolute_tail_tolerance=1e-15, relative_tail_tolerance=1e-15, max_images=1_000_000
-    )
+    loose = AdaptiveWrappedQuotient(absolute_tail_tolerance=1e-4, relative_tail_tolerance=1e-4, max_images=100_000)
+    strict = AdaptiveWrappedQuotient(absolute_tail_tolerance=1e-15, relative_tail_tolerance=1e-15, max_images=1_000_000)
     current = torch.tensor([[0.11, 0.21, 0.31], [0.66, 0.47, 0.82]], dtype=torch.float64)
     clean = torch.tensor([[0.03, 0.17, 0.29], [0.58, 0.53, 0.71]], dtype=torch.float64)
     lattice = 2.5 * torch.eye(3, dtype=torch.float64)
@@ -138,14 +124,10 @@ def test_adaptive_image_sum_tail_bound():
 
 
 def test_lattice_volume_shape_roundtrip_and_symmetry_projection():
-    lattice = torch.tensor(
-        [[[3.0, 0.0, 0.0], [0.2, 4.0, 0.0], [0.1, 0.3, 5.0]]], dtype=torch.float64
-    )
+    lattice = torch.tensor([[[3.0, 0.0, 0.0], [0.2, 4.0, 0.0], [0.1, 0.3, 5.0]]], dtype=torch.float64)
     chart = torch.eye(3, dtype=torch.float64).unsqueeze(0)
     state = LatticeVolumeShape.from_lattice(lattice, chart)
-    assert torch.allclose(
-        state.metric(chart), lattice @ lattice.transpose(-1, -2), atol=2e-12, rtol=2e-12
-    )
+    assert torch.allclose(state.metric(chart), lattice @ lattice.transpose(-1, -2), atol=2e-12, rtol=2e-12)
     record = compatibility_record(75)
     basis = SymmetryShapeBasis.from_operations(record.operations)
     assert basis.dimension == 1
@@ -192,9 +174,7 @@ def test_response_field_is_lossless():
     u = torch.randn((3, 3), dtype=torch.float64)
     v = torch.randn((3, 3), dtype=torch.float64)
     bilinear = torch.einsum("bijk,bj,bk->bi", tensor, u, v)
-    polarized = 0.5 * (
-        response_field(tensor, u + v) - response_field(tensor, u) - response_field(tensor, v)
-    )
+    polarized = 0.5 * (response_field(tensor, u + v) - response_field(tensor, u) - response_field(tensor, v))
     assert torch.allclose(bilinear, polarized, atol=2e-12, rtol=2e-12)
 
 
@@ -237,21 +217,26 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
         selected = first.coordinate_fractional_score[batch == graph]
         assert torch.allclose(selected.mean(dim=0), torch.zeros(3), atol=2e-6)
     lattice = LatticeVolumeShape(values[2], values[3]).lattice(values[8])
-    expected_fractional = torch.einsum(
-        "ni,nij->nj", first.coordinate_cartesian_score, lattice[batch].transpose(-1, -2)
+    expected_fractional = torch.einsum("ni,nij->nj", first.coordinate_cartesian_score, lattice[batch].transpose(-1, -2))
+    expected_fractional = (
+        expected_fractional - torch.stack([expected_fractional[batch == graph].mean(0) for graph in range(2)])[batch]
     )
-    expected_fractional = expected_fractional - torch.stack(
-        [expected_fractional[batch == graph].mean(0) for graph in range(2)]
-    )[batch]
     assert torch.allclose(first.coordinate_fractional_score, expected_fractional, atol=2e-6)
 
 
 def test_no_target_metadata_in_model_signature():
     parameters = set(inspect.signature(HybridCrystalDenoiser.forward).parameters)
     forbidden = {
-        "material_id", "niggli_transform", "response_stratum", "zero_response",
-        "target_cif", "target_lattice", "target_space_group", "target_stabilizer",
-        "source_id", "endpoint_id", "target_metadata",
+        "material_id",
+        "niggli_transform",
+        "response_stratum",
+        "zero_response",
+        "target_cif",
+        "target_lattice",
+        "target_space_group",
+        "target_stabilizer",
+        "source_id",
+        "endpoint_id",
+        "target_metadata",
     }
     assert parameters.isdisjoint(forbidden)
-

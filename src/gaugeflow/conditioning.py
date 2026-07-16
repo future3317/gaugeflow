@@ -25,9 +25,7 @@ def low_order_orbit_invariants(piezo_irreps: torch.Tensor) -> torch.Tensor:
         ),
         dim=-1,
     )
-    coupling = o3.FullTensorProduct("1x2o", "1x3o").to(
-        device=piezo_irreps.device, dtype=piezo_irreps.dtype
-    )
+    coupling = o3.FullTensorProduct("1x2o", "1x3o").to(device=piezo_irreps.device, dtype=piezo_irreps.dtype)
     axial = coupling(second.flatten(1), third.flatten(1))[:, :3]
     pseudoscalars = torch.einsum("bmi,bi->bm", first, axial)
     magnitude = piezo_irreps.square().sum(dim=-1, keepdim=True).sqrt()

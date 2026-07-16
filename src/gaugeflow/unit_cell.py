@@ -34,9 +34,7 @@ def transform_row_lattice_basis(
     return transformed_lattice, transformed_fractional
 
 
-def niggli_reduce_structure_with_transform(
-    structure: Structure, *, atol: float = 1e-5
-) -> tuple[Structure, np.ndarray]:
+def niggli_reduce_structure_with_transform(structure: Structure, *, atol: float = 1e-5) -> tuple[Structure, np.ndarray]:
     """Return a Niggli-reduced equivalent structure with tracked coordinates.
 
     If row-vector lattice bases obey ``L_reduced = B @ L_original``, fractional
@@ -64,4 +62,3 @@ def niggli_reduce_structure_with_transform(
         site_properties=structure.site_properties,
     )
     return reduced_structure, integer_change.astype(np.int64)
-
