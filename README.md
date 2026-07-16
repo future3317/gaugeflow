@@ -6,11 +6,11 @@ uses a **Stratified Cartesian Gauge Atlas with residual descriptor-frame
 marginalization**. It does not use the retired continuous-logit flow as a
 fallback.
 
-The project is currently at mathematical/interface qualification. The
-Cartesian conditioner and hybrid-state primitives are implemented and tested;
-an end-to-end production trainer and reverse sampler are not yet qualified.
-Consequently, the repository does not claim successful tensor-conditioned
-generation or target-separated sample distributions.
+The project now has a tensor-free production trainer and joint reverse sampler.
+Their bounded S1a-I0 software closure passed on CUDA, while the real-data S1a
+generator qualification has not started. Consequently, the repository does
+not claim successful tensor-conditioned generation or target-separated sample
+distributions.
 
 ## Current status
 
@@ -22,11 +22,11 @@ generation or target-separated sample distributions.
 | Cartesian STF geometry queries | Implemented and unit tested |
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
-| Symmetry compatibility router | Implemented as a primitive; a complete blueprint sampler is still absent |
+| Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
-| Production trainer, EMA and checkpoints | Not implemented |
-| Qualified reverse sampler | Not implemented |
-| Tensor-free S1a training | Not started |
+| Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
+| Joint reverse sampler | Implemented; S1a-I0 closure passed |
+| Tensor-free real-data S1a training | Not started |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
 The formal no-training evidence is versioned as follows:
@@ -37,6 +37,10 @@ The formal no-training evidence is versioned as follows:
   checks but failed its frozen CUDA latency limit (`41.89 ms > 20 ms`).
 - S0.4.1: the same 4,032-candidate prior qualified at `14.62 ms/forward` and
   `15.19 MB` on an RTX 4060 Ti. This does not reclassify S0.4-v1 or start S1a.
+- S1a-I0 v1--v1.2: frozen failed trainer/sampler closure attempts that exposed
+  the raw lattice-score instability.
+- S1a-I0 v1.3: clean-lattice production closure passed; scientific real-data
+  S1a remains unrun.
 
 ## Active model definition
 
@@ -58,6 +62,12 @@ The revised model is assembled from:
 7. `SpaceGroupCompatibilityRouter` and symmetry expansion primitives for the
    future blueprint-to-structure interface.
 
+The tensor-free objective uses clean-token prediction for the categorical
+state, a wrapped quotient score for coordinates, and clean-state prediction
+for lattice log volume/log shape. Clean lattice prediction avoids the
+high-noise `1/alpha(t)` inversion that failed the frozen S1a-I0 v1--v1.2
+closures; it is not a clipping or Cholesky-jitter fallback.
+
 The atlas defines a state-dependent finite discrete measure rather than a Haar
 quadrature approximation. Generic states use 4,032 weighted candidates. Axial
 and descriptor-isotropic strata use multiplicity-corrected residual rules and a
@@ -77,7 +87,7 @@ src/gaugeflow/parity.py     SO(3)/O(3) parity rules
 src/gaugeflow/stabilizer.py proper/full point-group utilities
 src/gaugeflow/data.py       TensorOrbit crystal dataset loader
 src/gaugeflow/direct_irrep.py complete direct-CG baseline
-scripts/                    current data and S0 audit entry points only
+scripts/                    production train/sample, current data and audit entry points
 configs/                    current S0 and TensorOrbit-v2 protocols
 reports/paper_s0_*/         formal paper-facing S0 evidence
 reports/tensororbit_*/      current data activation evidence
@@ -96,7 +106,7 @@ Their exact source and reports remain available at Git tag
 Use WSL 2, Ubuntu-22.04, and the existing `flowmm-t2c` micromamba environment:
 
 ```bash
-cd /mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit
+cd /mnt/e/CODE/T2C-Flow/gaugeflow
 export PYTHONPATH="$PWD/src"
 PY=/home/future04/micromamba/envs/flowmm-t2c/bin/python
 
@@ -165,8 +175,21 @@ $PY scripts/audit_tensororbit_v2_build.py --help
 $PY scripts/prepare_v2_oracle_qualification.py --help
 ```
 
-These commands prepare or audit data. They do not authorize GaugeFlow training,
-oracle promotion, relaxation, DFT or DFPT.
+Run the tensor-free trainer and sampler only with a versioned S1a protocol:
+
+```bash
+$PY scripts/train_production.py --csv /path/to/train.csv \
+  --split-manifest /path/to/splits.json --split train \
+  --output outputs/s1a_tensor_free
+
+$PY scripts/sample_production.py \
+  --checkpoint outputs/s1a_tensor_free/checkpoint_step_00100000.pt \
+  --output outputs/s1a_samples --num-samples 100
+```
+
+These entry points never enable a tensor condition or read a target space
+group. They use a training-split node-count prior and a P1 blueprint. They do
+not authorize oracle promotion, relaxation, DFT or DFPT.
 
 ## Development rules
 
@@ -175,8 +198,8 @@ oracle promotion, relaxation, DFT or DFPT.
 - Keep a physical zero tensor distinct from a missing condition.
 - Use SO(3) for the polar rank-three tensor orbit and O(3) only for crystal
   compatibility diagnostics where parity is explicit.
-- A new trainer must first qualify tensor-free reverse generation before
-  enabling the Cartesian conditioner.
+- The trainer must pass real-data tensor-free S1a before enabling the Cartesian
+  conditioner.
 - Any atlas simplification must be a new versioned method. The failed 24-frame
   approximation cannot be reused.
 - Matched conditioner comparisons must share the same backbone, data, budget,
@@ -184,9 +207,7 @@ oracle promotion, relaxation, DFT or DFPT.
 
 ## Next implementation milestone
 
-The next code milestone is a production-only tensor-free trainer and reverse
-sampler for categorical, wrapped-coordinate and lattice states. It must expose
-checkpoint/EMA/optimizer recovery and decoded crystal metrics. Only after that
-S1a substrate passes should the project test whether the Cartesian atlas adds
-causal target separation relative to invariant-only, direct-CG and fixed-node
-Cartesian baselines.
+The next milestone is the versioned real-data S1a run with decoded crystal
+validity, uniqueness, novelty, composition, lattice and checkpoint-recovery
+metrics. Only after that substrate passes should the project implement the full
+space-group/Wyckoff blueprint sampler or compare tensor conditioners.

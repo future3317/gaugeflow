@@ -10,10 +10,10 @@ active tree keeps only a condensed research history.
 
 ## Execution boundary
 
-The revised paper defines a new S0--S5 sequence. Only S0 implementation and
-mathematical qualification are authorized while this contract is introduced.
-No structure pretraining, tensor fine-tuning, learned tensor oracle, MLIP
-screening, relaxation, DFT, or DFPT is authorized by this document.
+The revised paper defines a new S0--S5 sequence. S0 mathematical qualification
+and the tensor-free S1a implementation closure are authorized. No tensor
+fine-tuning, learned tensor oracle, MLIP screening, relaxation, DFT, or DFPT is
+authorized by this document.
 
 ## Production state spaces
 
@@ -36,6 +36,15 @@ screening, relaxation, DFT, or DFPT is authorized by this document.
 Production primitives live under `gaugeflow.production`. Superseded
 continuous-logit/ODE implementations were removed from the active tree after
 archival and must not be reintroduced as compatibility paths.
+
+## S1a implementation amendment
+
+The tensor-free production path uses absorbing categorical elements, a wrapped
+translation-quotient coordinate score, and cosine-VP clean log-volume/log-shape
+prediction. The clean lattice parameterization was introduced only after the
+frozen v1--v1.2 high-noise raw-score rollouts failed. S1a-I0 v1.3 passed a
+bounded single-panel CUDA software closure; it is not a real-data generation
+claim and does not authorize tensor conditioning.
 
 ## S0 advancement rule
 

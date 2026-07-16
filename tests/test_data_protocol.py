@@ -53,3 +53,21 @@ def test_piezojet_v2_cache_and_manifest_are_used(tmp_path):
     assert record.atom_types.tolist() == [13]
     assert not hasattr(record, "stabilizer_rotations")
     assert not hasattr(record, "tensor_stabilizer_rotations")
+
+
+def test_structure_only_dataset_does_not_require_or_emit_tensor_condition(tmp_path):
+    structure = Structure(Lattice.cubic(4.0), ["Si", "O"], [[0.0, 0.0, 0.0], [0.25, 0.25, 0.25]])
+    pd.DataFrame(
+        {"material_id": ["structure-only"], "cif": [structure.to(fmt="cif")]}
+    ).to_csv(tmp_path / "structures.csv", index=False)
+    dataset = PiezoCrystalDataset(tmp_path / "structures.csv", condition_column=None)
+    record = dataset[0]
+    assert torch.equal(record.piezo_irreps, torch.zeros((1, 18)))
+    assert not bool(record.condition_present.item())
+    assert record.response_stratum.item() == -1
+    try:
+        dataset.condition_irreps()
+    except RuntimeError as error:
+        assert "disabled" in str(error)
+    else:
+        raise AssertionError("structure-only data must not expose tensor conditions")

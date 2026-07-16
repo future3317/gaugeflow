@@ -123,8 +123,8 @@ class HybridDenoiserOutput:
     clean_element_logits: torch.Tensor
     coordinate_cartesian_score: torch.Tensor
     coordinate_fractional_score: torch.Tensor
-    log_volume_score: torch.Tensor
-    log_shape_score: torch.Tensor
+    clean_log_volume: torch.Tensor
+    clean_log_shape: torch.Tensor
     gauge_atlas: CartesianGaugeAtlasOutput
 
 
@@ -221,9 +221,16 @@ class HybridCrystalDenoiser(nn.Module):
             batch,
             graphs,
         )
-        gauge_atlas = self.gauge_atlas(
-            tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
-        )
+        if bool(condition_present.any()):
+            gauge_atlas = self.gauge_atlas(
+                tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
+            )
+        else:
+            gauge_atlas = self.gauge_atlas.null_output(
+                graph_count=graphs,
+                edge_count=edges.direction.shape[0],
+                reference=tensor_condition,
+            )
         node_condition = gauge_atlas.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition
         vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_vector_head.in_features, 3))
@@ -260,14 +267,14 @@ class HybridCrystalDenoiser(nn.Module):
         # Fractional zero mean is the translation-horizontal chart used by the
         # coordinate probability path.
         fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
-        volume_score = self.volume_head(graph_context).squeeze(-1)
-        raw_shape_score = self.shape_head(graph_context)
-        shape_score = torch.einsum("bij,bj->bi", shape_projector, raw_shape_score)
+        clean_log_volume = self.volume_head(graph_context).squeeze(-1)
+        raw_clean_log_shape = self.shape_head(graph_context)
+        clean_log_shape = torch.einsum("bij,bj->bi", shape_projector, raw_clean_log_shape)
         return HybridDenoiserOutput(
             clean_element_logits=element_logits,
             coordinate_cartesian_score=cartesian_score,
             coordinate_fractional_score=fractional_score,
-            log_volume_score=volume_score,
-            log_shape_score=shape_score,
+            clean_log_volume=clean_log_volume,
+            clean_log_shape=clean_log_shape,
             gauge_atlas=gauge_atlas,
         )

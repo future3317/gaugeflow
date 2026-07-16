@@ -7,6 +7,15 @@ import math
 import torch
 
 
+def standard_normal(
+    shape: torch.Size | tuple[int, ...],
+    reference: torch.Tensor,
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Sample standard normal noise matching a state tensor's dtype/device."""
+    return torch.randn(shape, dtype=reference.dtype, device=reference.device, generator=generator)
+
+
 class CosineNoiseSchedule:
     """Variance-preserving cosine schedule with clean time zero.
 
@@ -39,3 +48,49 @@ class CosineNoiseSchedule:
         alpha = self.alpha(time)
         sigma = self.sigma(time).clamp_min(self.minimum_sigma)
         return alpha.square() / sigma.square()
+
+    def posterior_variance(
+        self,
+        time_from: torch.Tensor,
+        time_to: torch.Tensor,
+    ) -> torch.Tensor:
+        """DDPM posterior variance for one reverse VP transition.
+
+        ``time_from`` is the noisier endpoint and ``time_to`` the cleaner one.
+        The expression is evaluated from the cumulative cosine survival rather
+        than a singular continuous-time beta near ``t=1``.
+        """
+        self._validate(time_from)
+        self._validate(time_to)
+        if time_from.shape != time_to.shape or bool((time_to > time_from).any()):
+            raise ValueError("reverse VP endpoints must have equal shape and time_to <= time_from")
+        survival_from = self.alpha(time_from).square()
+        survival_to = self.alpha(time_to).square()
+        step_noise = (1.0 - survival_from / survival_to.clamp_min(self.minimum_sigma**2)).clamp(0.0, 1.0)
+        return step_noise * (1.0 - survival_to) / (1.0 - survival_from).clamp_min(self.minimum_sigma**2)
+
+
+class LinearWrappedVarianceSchedule:
+    """Brownian variance for the wrapped coordinate quotient.
+
+    A linear variance gives a constant Cartesian diffusion rate.  At terminal
+    time the sampler starts from the exact uniform torus prior; ``sigma_max``
+    controls training corruption and the reverse drift scale, not that prior.
+    """
+
+    def __init__(self, *, sigma_max: float = 4.0) -> None:
+        if sigma_max <= 0.0 or not math.isfinite(sigma_max):
+            raise ValueError("sigma_max must be finite and positive")
+        self.sigma_max = float(sigma_max)
+
+    def variance(self, time: torch.Tensor) -> torch.Tensor:
+        CosineNoiseSchedule._validate(time)
+        return self.sigma_max**2 * time
+
+    def sigma(self, time: torch.Tensor) -> torch.Tensor:
+        return self.variance(time).sqrt()
+
+    def increment(self, time_from: torch.Tensor, time_to: torch.Tensor) -> torch.Tensor:
+        if time_from.shape != time_to.shape or bool((time_to > time_from).any()):
+            raise ValueError("reverse wrapped endpoints must have equal shape and time_to <= time_from")
+        return self.variance(time_from) - self.variance(time_to)

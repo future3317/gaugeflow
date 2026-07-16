@@ -687,3 +687,39 @@ class StratifiedCartesianGaugeAtlas(nn.Module):
             raw_candidate_count=raw_counts,
             residual_kind=residual_kind,
         )
+
+    def null_output(
+        self,
+        *,
+        graph_count: int,
+        edge_count: int,
+        reference: torch.Tensor,
+    ) -> CartesianGaugeAtlasOutput:
+        """Return the learned null-condition token without enumerating frames.
+
+        Missing conditioning is a separate model state from a physically zero
+        tensor.  Tensor-free pretraining therefore bypasses the Cartesian
+        candidate measure completely; a present zero tensor still goes through
+        :meth:`forward` and retains its invariant/present semantics.
+        """
+        if graph_count < 1 or edge_count < 0:
+            raise ValueError("null atlas output requires positive graphs and nonnegative edges")
+        dtype = reference.dtype
+        device = reference.device
+        probability_dtype = torch.float64 if dtype == torch.float64 else torch.float32
+        zeros = torch.zeros((graph_count,), dtype=probability_dtype, device=device)
+        return CartesianGaugeAtlasOutput(
+            graph_condition=self.null_condition.to(reference).unsqueeze(0).expand(graph_count, -1),
+            edge_response=reference.new_zeros((edge_count, 3)),
+            posterior=torch.ones((graph_count, 1), dtype=probability_dtype, device=device),
+            candidate_prior=torch.ones((graph_count, 1), dtype=probability_dtype, device=device),
+            candidate_mask=torch.ones((graph_count, 1), dtype=torch.bool, device=device),
+            aligned_tensor=reference.new_zeros((graph_count, 3, 3, 3)),
+            gate=zeros,
+            entropy=zeros,
+            effective_frame_count=torch.zeros((graph_count,), dtype=torch.long, device=device),
+            raw_candidate_count=torch.zeros((graph_count,), dtype=torch.long, device=device),
+            residual_kind=torch.full(
+                (graph_count,), self.ISOTROPIC, dtype=torch.long, device=device
+            ),
+        )

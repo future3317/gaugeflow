@@ -292,8 +292,8 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
         assert hasattr(block, "time_film") and hasattr(block, "condition_film")
     assert not torch.allclose(first.clean_element_logits, second.clean_element_logits)
     assert not torch.allclose(first.coordinate_fractional_score, second.coordinate_fractional_score)
-    assert not torch.allclose(first.log_volume_score, second.log_volume_score)
-    assert not torch.allclose(first.log_shape_score, second.log_shape_score)
+    assert not torch.allclose(first.clean_log_volume, second.clean_log_volume)
+    assert not torch.allclose(first.clean_log_shape, second.clean_log_shape)
     batch = values[4]
     for graph in range(2):
         selected = first.coordinate_fractional_score[batch == graph]

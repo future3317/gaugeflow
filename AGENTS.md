@@ -32,7 +32,7 @@ NVIDIA GeForce RTX 4060 Ti
 From WSL:
 
 ```bash
-cd /mnt/e/CODE/T2C-Flow/gaugeflow_perf_audit
+cd /mnt/e/CODE/T2C-Flow/gaugeflow
 export PYTHONPATH="$PWD/src"
 PY=/home/future04/micromamba/envs/flowmm-t2c/bin/python
 $PY -m pytest -q
@@ -63,12 +63,14 @@ its code/data/report surface.
 - S0.3-v1 (24 frames) failed and is frozen.
 - S0.4-v1 (weighted 4,032-candidate prior) failed only its frozen latency gate.
 - S0.4.1 preserved the prior and passed runtime qualification.
-- No production trainer or qualified reverse sampler exists yet.
-- S1a training, tensor fine-tuning, oracle promotion, relaxation, DFT and DFPT
-  have not started.
+- The tensor-free production trainer, EMA/checkpoint recovery and joint reverse
+  sampler passed the bounded S1a-I0 implementation closure in v1.3.
+- Real-data S1a training, the full space-group/Wyckoff blueprint sampler,
+  tensor fine-tuning, oracle promotion, relaxation, DFT and DFPT have not
+  started.
 
-S0.4.1 does not authorize tensor work. The next milestone is tensor-free
-production reverse-generation qualification.
+S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
+versioned real-data tensor-free S1a qualification.
 
 ## Physics and leakage rules
 

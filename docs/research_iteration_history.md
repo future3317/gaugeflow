@@ -149,7 +149,14 @@ top-20 tables are retired; the qualified S0.4.1 metrics are retained.
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
-runtime. It does not yet contain a qualified end-to-end production trainer or
-reverse sampler, and it does not claim tensor-conditioned sample separation.
-No real tensor fine-tuning, learned oracle, relaxation, DFT, or DFPT is
-authorized merely by cleaning the repository.
+runtime. S1a-I0 v1/v1.1 showed that a raw cosine-VP lattice score can produce a
+numerically unstable high-noise clean-state inversion; v1.2 ruled out a simple
+training-budget explanation. The v1.3 clean log-volume/log-shape
+parameterization passed the bounded CUDA trainer/reverse-sampler closure with a
+fixed-loss ratio of 0.0811, zero sampling failures, and zero terminal masks.
+
+This is software-path evidence only. Real-data S1a and decoded generation
+quality have not been run, the production blueprint remains P1 rather than a
+full space-group/Wyckoff sampler, and the project does not claim
+tensor-conditioned sample separation. No tensor fine-tuning, learned oracle,
+relaxation, DFT, or DFPT is authorized by the implementation closure.

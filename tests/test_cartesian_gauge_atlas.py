@@ -368,8 +368,8 @@ def test_full_denoiser_has_no_finite_jump_at_generic_axial_candidate_switch():
     compared = (
         (left.clean_element_logits, right.clean_element_logits),
         (left.coordinate_fractional_score, right.coordinate_fractional_score),
-        (left.log_volume_score, right.log_volume_score),
-        (left.log_shape_score, right.log_shape_score),
+        (left.clean_log_volume, right.clean_log_volume),
+        (left.clean_log_shape, right.clean_log_shape),
         (left.gauge_atlas.graph_condition, right.gauge_atlas.graph_condition),
     )
     for first, second in compared:

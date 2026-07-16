@@ -108,7 +108,7 @@ class PiezoCrystalDataset(Dataset):
         self,
         csv_path: str | Path,
         *,
-        condition_column: str = "piezo_irreps_raw",
+        condition_column: str | None = "piezo_irreps_raw",
         split_manifest: str | Path | None = None,
         split: str | None = None,
         target_cache_dir: str | Path | None = None,
@@ -121,9 +121,10 @@ class PiezoCrystalDataset(Dataset):
         self.frame = load_piezo_frame(self.path)
         if split is not None:
             self.frame = _select_manifest_split(self.frame, self.manifest_path, split)
-        if target_cache_dir is None and condition_column not in self.frame:
+        if target_cache_dir is None and condition_column is not None and condition_column not in self.frame:
             raise ValueError(f"{self.path} does not contain {condition_column}")
         self.condition_column = condition_column
+        self.condition_enabled = condition_column is not None or target_cache_dir is not None
         self.target_cache_dir = Path(target_cache_dir) if target_cache_dir is not None else None
         if self.target_cache_dir is not None and not self.target_cache_dir.is_dir():
             raise FileNotFoundError(self.target_cache_dir)
@@ -153,6 +154,8 @@ class PiezoCrystalDataset(Dataset):
         return len(self.frame)
 
     def _condition_for_index(self, index: int) -> tuple[torch.Tensor, float]:
+        if not self.condition_enabled:
+            raise RuntimeError("tensor conditions are disabled for this structure-only dataset")
         cached = self._condition_irreps_cache.get(index)
         if cached is not None:
             return cached, self._condition_norm_cache[index]
@@ -190,6 +193,8 @@ class PiezoCrystalDataset(Dataset):
 
     def condition_irreps(self) -> torch.Tensor:
         """All selected conditions, using projected cache targets when present."""
+        if not self.condition_enabled:
+            raise RuntimeError("tensor conditions are disabled for this structure-only dataset")
         return torch.stack([self._condition_for_index(index)[0] for index in range(len(self))])
 
     def isotypic_scales(self) -> torch.Tensor:
@@ -216,32 +221,49 @@ class PiezoCrystalDataset(Dataset):
         row = self.frame.iloc[index]
         if self._preprocessed_records is not None:
             record = self._preprocessed_records[str(row.material_id)]
+            if self.condition_enabled:
+                condition = torch.as_tensor(record["piezo_irreps"], dtype=torch.float32)
+                present = torch.ones((1, 1), dtype=torch.bool)
+                stratum = int(record["response_stratum"])
+                zero_response = bool(record["zero_response"])
+            else:
+                condition = torch.zeros((18,), dtype=torch.float32)
+                present = torch.zeros((1, 1), dtype=torch.bool)
+                stratum = -1
+                zero_response = False
             return Data(
                 atom_types=validate_type_tokens(torch.as_tensor(record["atom_types"])).clone(),
                 frac_coords=torch.as_tensor(record["frac_coords"], dtype=torch.float32).clone(),
                 lattice=torch.as_tensor(record["lattice"], dtype=torch.float32).unsqueeze(0).clone(),
-                piezo_irreps=torch.as_tensor(record["piezo_irreps"], dtype=torch.float32).unsqueeze(0).clone(),
-                condition_present=torch.ones((1, 1), dtype=torch.bool),
+                piezo_irreps=condition.unsqueeze(0).clone(),
+                condition_present=present,
                 niggli_transform=torch.as_tensor(record["niggli_transform"], dtype=torch.int64).unsqueeze(0).clone(),
-                response_stratum=torch.tensor([int(record["response_stratum"])], dtype=torch.long),
-                zero_response=torch.tensor([bool(record["zero_response"])], dtype=torch.bool),
+                response_stratum=torch.tensor([stratum], dtype=torch.long),
+                zero_response=torch.tensor([zero_response], dtype=torch.bool),
                 material_id=str(row.material_id),
                 num_nodes=int(torch.as_tensor(record["atom_types"]).numel()),
             )
         structure = Structure.from_str(row.cif, fmt="cif")
         structure, niggli_transform = niggli_reduce_structure_with_transform(structure)
-        irreps, _ = self._condition_for_index(index)
-        response_norm = self._condition_norm_cache[index]
-        stratum = response_stratum(response_norm)
+        if self.condition_enabled:
+            irreps, response_norm = self._condition_for_index(index)
+            condition_present = torch.ones((1, 1), dtype=torch.bool)
+            stratum = response_stratum(response_norm)
+            zero_response = response_norm <= 1e-12
+        else:
+            irreps = torch.zeros((18,), dtype=torch.float32)
+            condition_present = torch.zeros((1, 1), dtype=torch.bool)
+            stratum = -1
+            zero_response = False
         return Data(
             atom_types=atomic_numbers_to_tokens(torch.tensor(structure.atomic_numbers, dtype=torch.long)),
             frac_coords=torch.tensor(structure.frac_coords, dtype=torch.float32),
             lattice=torch.tensor(structure.lattice.matrix, dtype=torch.float32).unsqueeze(0),
             piezo_irreps=irreps.unsqueeze(0),
-            condition_present=torch.ones((1, 1), dtype=torch.bool),
+            condition_present=condition_present,
             niggli_transform=torch.tensor(niggli_transform, dtype=torch.int64).unsqueeze(0),
             response_stratum=torch.tensor([stratum], dtype=torch.long),
-            zero_response=torch.tensor([response_norm <= 1e-12], dtype=torch.bool),
+            zero_response=torch.tensor([zero_response], dtype=torch.bool),
             material_id=str(row.material_id),
             num_nodes=len(structure),
         )

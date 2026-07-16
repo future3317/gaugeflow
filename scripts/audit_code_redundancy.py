@@ -13,6 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE_ENTRYPOINTS = (
+    ROOT / "scripts" / "run_s1a_i0_production_closure.py",
+    ROOT / "scripts" / "sample_production.py",
+    ROOT / "scripts" / "train_production.py",
     ROOT / "scripts" / "run_paper_s0_2_audit.py",
     ROOT / "scripts" / "run_paper_s0_3_cartesian_atlas_audit.py",
     ROOT / "scripts" / "run_paper_s0_4_cartesian_atlas_prior_v1.py",

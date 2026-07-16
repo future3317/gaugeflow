@@ -1,0 +1,11 @@
+{
+  "protocol": "s1a_tensor_free_production_v1",
+  "subgate": "S1a-I0-production-closure",
+  "decision": "failed_implementation_closure",
+  "failure_stage": "ema_reverse_sampler",
+  "time_grid": "uniform_time",
+  "training_steps_completed": 300,
+  "error": "The early high-noise VP reverse update amplified an insufficiently calibrated log-shape score; the reconstructed metric lost numerical positive-definiteness before Cholesky.",
+  "scientific_s1a_status": "not_run",
+  "historical_result_modified": false
+}

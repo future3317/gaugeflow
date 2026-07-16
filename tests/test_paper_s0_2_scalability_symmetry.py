@@ -223,7 +223,7 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     shifted = model(*shifted_values)
     for name in (
         "clean_element_logits", "coordinate_cartesian_score", "coordinate_fractional_score",
-        "log_volume_score", "log_shape_score",
+        "clean_log_volume", "clean_log_shape",
     ):
         assert torch.allclose(getattr(first, name), getattr(projected, name), atol=3e-6, rtol=3e-6)
         assert torch.allclose(getattr(projected, name), getattr(shifted, name), atol=3e-6, rtol=3e-6)
@@ -267,8 +267,8 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
         atol=4e-5,
         rtol=4e-5,
     )
-    assert torch.allclose(transformed.log_volume_score, original.log_volume_score, atol=2e-5)
-    assert torch.allclose(transformed.log_shape_score, original.log_shape_score, atol=2e-5)
+    assert torch.allclose(transformed.clean_log_volume, original.clean_log_volume, atol=2e-5)
+    assert torch.allclose(transformed.clean_log_shape, original.clean_log_shape, atol=2e-5)
 
 
 def test_reverse_step_projection_is_idempotent_for_translation_and_shape():

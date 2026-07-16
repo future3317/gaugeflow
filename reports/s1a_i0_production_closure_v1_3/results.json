@@ -1,0 +1,23 @@
+{
+  "decision": "passed_implementation_closure",
+  "device": "NVIDIA GeForce RTX 4060 Ti",
+  "elapsed_seconds": 15.05936358000001,
+  "final_fixed_loss": 1.540639042854309,
+  "final_gradient_norm": 14.221693992614746,
+  "final_head_losses": {
+    "coordinate": 2.1960511207580566,
+    "element": 1.6104426383972168,
+    "shape": 6.430665962398052e-05,
+    "volume": 0.0009101403993554413
+  },
+  "fixed_loss_ratio": 0.08106959814402942,
+  "initial_fixed_loss": 19.00390625,
+  "protocol": "s1a_tensor_free_production_v1_3",
+  "sampling_failure_reason": null,
+  "sampling_failures": 0,
+  "scientific_s1a_status": "not_run",
+  "steps": 300,
+  "subgate": "S1a-I0-production-closure",
+  "terminal_masks": 0,
+  "torch": "2.5.1+cu124"
+}

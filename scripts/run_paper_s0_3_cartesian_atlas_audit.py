@@ -188,8 +188,8 @@ def denoiser_metrics() -> dict[str, float]:
             "clean_element_logits",
             "coordinate_cartesian_score",
             "coordinate_fractional_score",
-            "log_volume_score",
-            "log_shape_score",
+            "clean_log_volume",
+            "clean_log_shape",
         )
     )
     basis = torch.tensor([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
