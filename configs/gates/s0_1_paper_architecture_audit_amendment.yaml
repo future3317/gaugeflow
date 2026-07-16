@@ -1,0 +1,26 @@
+schema: 1
+gate: S0.1
+name: paper_architecture_mathematical_qualification_v1_1
+design_sha256: 9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31
+amends_audit_definition_only: configs/gates/s0_paper_architecture_v1.yaml
+frozen_failed_attempt: reports/paper_s0_mathematical_qualification_v1/status.json
+reason: >-
+  The first S0 audit concatenated s0_audit.py with runtime source and therefore
+  detected its own forbidden-pattern literals. S0.1 excludes only the audit
+  implementation from runtime source scanning. Production code, tests,
+  thresholds, design hash, and advancement rules are unchanged.
+requires_failed_attempt:
+  targeted_tests: true
+  full_tests: true
+  ruff: true
+  mypy: true
+  no_target_metadata_signature: true
+  no_legacy_probability_path_import: false
+  no_fixed_image_cube: false
+runtime_scan_scope:
+  include: src/gaugeflow/production/*.py
+  exclude_only: src/gaugeflow/production/s0_audit.py
+advancement_rule:
+  all_original_s0_checks: true
+  successor_if_passed: S1
+prohibited: [threshold_change, production_code_change_for_audit, S1_if_failed, real_tensor, MLIP, relaxation, DFT, DFPT]

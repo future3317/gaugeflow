@@ -118,9 +118,12 @@ def run_audit(
 
     parameters = set(inspect.signature(HybridCrystalDenoiser.forward).parameters)
     checks["no_target_metadata_signature"] = parameters.isdisjoint(FORBIDDEN_SIGNATURE_FIELDS)
-    production_source = "\n".join(
-        path.read_text(encoding="utf-8") for path in sorted((repo / "src/gaugeflow/production").glob("*.py"))
-    )
+    runtime_paths = [
+        path
+        for path in sorted((repo / "src/gaugeflow/production").glob("*.py"))
+        if path.name != "s0_audit.py"
+    ]
+    production_source = "\n".join(path.read_text(encoding="utf-8") for path in runtime_paths)
     checks["no_legacy_probability_path_import"] = all(
         forbidden not in production_source
         for forbidden in ("from gaugeflow.flow import", "from gaugeflow.discrete import", "torus_logmap")
@@ -131,8 +134,8 @@ def run_audit(
     timestamp = datetime.now(timezone.utc).isoformat()
     status = {
         "schema": 1,
-        "gate": "S0",
-        "name": "paper_architecture_mathematical_qualification_v1",
+        "gate": "S0.1",
+        "name": "paper_architecture_mathematical_qualification_v1_1",
         "status": "passed" if all_passed else "failed",
         "all_passed": all_passed,
         "checks": checks,
@@ -141,6 +144,7 @@ def run_audit(
         "clean_worktree_attestation": clean_attestation,
         "timestamp_utc": timestamp,
         "successor_authorization": {"S1": all_passed},
+        "supersedes_audit_definition_only": "paper_s0_mathematical_qualification_v1",
         "real_tensor_or_physical_validation_allowed": False,
     }
     (output / "status.json").write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
@@ -155,7 +159,7 @@ def run_audit(
     (output / "environment.json").write_text(json.dumps(environment, indent=2) + "\n", encoding="utf-8")
     rows = "\n".join(f"| {name} | {value} |" for name, value in checks.items())
     report = (
-        "# Revised-paper S0 qualification\n\n"
+        "# Revised-paper S0.1 qualification\n\n"
         f"Status: **{'passed' if all_passed else 'failed'}**. Design SHA-256: `{DESIGN_SHA256}`.\n\n"
         "This gate qualifies mathematical and software contracts only. It does not establish crystal-generation "
         "quality and does not authorize real tensor, MLIP screening, relaxation, DFT, or DFPT.\n\n"
@@ -181,7 +185,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("reports/paper_s0_mathematical_qualification_v1"),
+        default=Path("reports/paper_s0_mathematical_qualification_v1_1"),
     )
     parser.add_argument("--git-commit", required=True)
     parser.add_argument("--clean-attestation", required=True)
