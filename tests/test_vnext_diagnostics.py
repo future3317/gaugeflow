@@ -14,7 +14,7 @@ from gaugeflow.vnext.diagnostics import (
     rk4_integrate,
     variational_flow_jacobian,
 )
-from gaugeflow.vnext.experiments import GateBlockedError, require_gate_status
+from gaugeflow.vnext.experiments import GateBlockedError, require_gate_authorization, require_gate_status
 from gaugeflow.vnext.experiments.q0_c0_audit import _git_commit_from_metadata
 
 
@@ -128,3 +128,22 @@ def test_worktree_git_commit_resolves_loose_common_reference(tmp_path):
     expected = "a" * 40
     reference.write_text(expected + "\n", encoding="utf-8")
     assert _git_commit_from_metadata(tmp_path) == expected
+
+
+def test_q0_partial_legacy_authorizes_q1(tmp_path):
+    status = tmp_path / "status.json"
+    status.write_text(
+        json.dumps(
+            {
+                "gate": "Q0.1",
+                "execution_status": "complete_partial_legacy",
+                "scientific_verdict": "legacy_learned_field_unclassified",
+                "successor_authorization": {"Q1v2": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+    payload = require_gate_authorization(status, gate="Q0.1", successor="Q1v2")
+    assert payload["successor_authorization"] == {"Q1v2": True}
+    with pytest.raises(GateBlockedError, match="Q2"):
+        require_gate_authorization(status, gate="Q0.1", successor="Q2")

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import torch
 from torch_geometric.data import Batch, Data
 
@@ -9,6 +11,7 @@ from gaugeflow.checkpoints import load_safe_checkpoint, save_safe_checkpoint
 from gaugeflow.flow import RiemannianCrystalFlowMatcher
 from gaugeflow.model import GaugeFlowVectorField
 from gaugeflow.stabilizer import proper_unimodular_candidates
+from gaugeflow.vnext.experiments.p0_release_audit import _verify_run_manifest
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT, tokens_to_atomic_numbers
 
 
@@ -156,3 +159,9 @@ def test_safe_checkpoint_loading_contract(tmp_path):
         assert "hash mismatch" in str(error)
     else:
         raise AssertionError("tampered checkpoint must be rejected before torch.load")
+
+
+def test_run_manifest_reproduces_all_published_csv_hashes():
+    root = Path(__file__).resolve().parents[1]
+    run = root / "runs" / "Q0" / "20260715T182701Z_7af3ca57bff6"
+    assert _verify_run_manifest(run)
