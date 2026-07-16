@@ -49,13 +49,36 @@ def _run(repo: Path, arguments: list[str]) -> tuple[bool, str]:
     return completed.returncode == 0, completed.stdout
 
 
-def _git(repo: Path, *arguments: str) -> str:
-    return subprocess.check_output(["git", *arguments], cwd=repo, text=True).strip()
+def _worktree_head(repo: Path) -> str:
+    """Read HEAD even when a Windows-created worktree is audited from WSL."""
+    git_pointer = (repo / ".git").read_text(encoding="utf-8").strip()
+    if not git_pointer.startswith("gitdir: "):
+        raise RuntimeError("S0 audit expects an explicit Git worktree pointer")
+    raw = git_pointer.removeprefix("gitdir: ")
+    if len(raw) >= 3 and raw[1:3] == ":/":
+        git_directory = Path(f"/mnt/{raw[0].lower()}/{raw[3:]}")
+    else:
+        git_directory = Path(raw)
+        if not git_directory.is_absolute():
+            git_directory = repo / git_directory
+    head = (git_directory / "HEAD").read_text(encoding="utf-8").strip()
+    if head.startswith("ref: "):
+        raise RuntimeError("symbolic worktree HEAD is not supported by this immutable audit")
+    return head
 
 
-def run_audit(repo: Path, design_source: Path, output: Path) -> None:
-    if _git(repo, "status", "--short"):
-        raise RuntimeError("S0 release audit requires a clean working tree")
+def run_audit(
+    repo: Path,
+    design_source: Path,
+    output: Path,
+    *,
+    git_commit: str,
+    clean_attestation: str,
+) -> None:
+    if clean_attestation != "host_git_status_clean":
+        raise RuntimeError("S0 audit requires a host-Git clean-worktree attestation")
+    if git_commit != _worktree_head(repo):
+        raise RuntimeError("supplied host Git commit does not match the worktree HEAD")
     if not design_source.is_file() or _sha256(design_source).lower() != DESIGN_SHA256:
         raise RuntimeError("revised-paper source is missing or its SHA-256 changed")
     if output.exists():
@@ -85,7 +108,7 @@ def run_audit(repo: Path, design_source: Path, output: Path) -> None:
     )
     checks["no_fixed_image_cube"] = "product((-2, -1, 0, 1, 2)" not in production_source
     all_passed = all(checks.values())
-    commit = _git(repo, "rev-parse", "HEAD")
+    commit = git_commit
     timestamp = datetime.now(timezone.utc).isoformat()
     status = {
         "schema": 1,
@@ -96,6 +119,7 @@ def run_audit(repo: Path, design_source: Path, output: Path) -> None:
         "checks": checks,
         "design_sha256": DESIGN_SHA256,
         "git_commit": commit,
+        "clean_worktree_attestation": clean_attestation,
         "timestamp_utc": timestamp,
         "successor_authorization": {"S1": all_passed},
         "real_tensor_or_physical_validation_allowed": False,
@@ -140,10 +164,18 @@ def main() -> None:
         type=Path,
         default=Path("reports/paper_s0_mathematical_qualification_v1"),
     )
+    parser.add_argument("--git-commit", required=True)
+    parser.add_argument("--clean-attestation", required=True)
     arguments = parser.parse_args()
     repo = arguments.repo.resolve()
     output = arguments.output if arguments.output.is_absolute() else repo / arguments.output
-    run_audit(repo, arguments.design_source, output)
+    run_audit(
+        repo,
+        arguments.design_source,
+        output,
+        git_commit=arguments.git_commit,
+        clean_attestation=arguments.clean_attestation,
+    )
 
 
 if __name__ == "__main__":
