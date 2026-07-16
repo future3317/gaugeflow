@@ -1,15 +1,8 @@
-import inspect
 import math
 
 import pytest
 import torch
 
-from gaugeflow.geometry import GaussianRadialBasis
-from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
-    ConditionFreeGeometryQueryEncoder,
-    GeometryHarmonicQueries,
-    HarmonicGaugeFlowConditioner,
-)
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.space_group_router import compatibility_record
@@ -18,35 +11,6 @@ from gaugeflow.production.wrapped_coordinates import (
     AdaptiveWrappedQuotient,
     ScalableWrappedQuotient,
 )
-
-
-def _complete_geometry(
-    positions: torch.Tensor,
-    *,
-    hidden_dim: int = 16,
-    radial_dim: int = 5,
-) -> tuple[torch.Tensor, ...]:
-    sites = positions.shape[0]
-    source = torch.tensor(
-        [left for left in range(sites) for right in range(sites) if left != right]
-    )
-    target = torch.tensor(
-        [right for left in range(sites) for right in range(sites) if left != right]
-    )
-    displacement = positions[target] - positions[source]
-    distance = torch.linalg.vector_norm(displacement, dim=-1)
-    direction = displacement / distance.unsqueeze(-1)
-    radial = GaussianRadialBasis(radial_dim, 8.0)(distance)
-    token = torch.randn((1, hidden_dim), generator=torch.Generator().manual_seed(81))
-    initial_nodes = token.expand(sites, -1).clone()
-    node_time = torch.zeros_like(initial_nodes)
-    batch = torch.zeros(sites, dtype=torch.long)
-    return initial_nodes, node_time, source, target, direction, radial, batch
-
-
-def _query_encoder() -> ConditionFreeGeometryQueryEncoder:
-    torch.manual_seed(82)
-    return ConditionFreeGeometryQueryEncoder(16, 5, query_channels=2, layers=3).eval()
 
 
 def test_point_group_metric_chart_has_all_crystal_system_dimensions_and_hexagonal_invariance():
@@ -156,38 +120,6 @@ def test_scalable_wrapped_quotient_handles_twenty_sites_and_triclinic_metrics():
             assert result.qmc_samples <= 128**3
 
 
-def test_all_mask_noncentrosymmetric_geometry_has_allowed_queries():
-    positions = torch.tensor(
-        [[0.0, 0.0, 0.0], [1.0, 0.2, 0.1], [0.1, 1.3, 0.4], [0.3, 0.2, 1.7]]
-    )
-    queries = _query_encoder()(*_complete_geometry(positions), graph_count=1)
-    assert torch.linalg.vector_norm(queries.first) > 1e-5
-    assert torch.linalg.vector_norm(queries.third) > 1e-5
-
-
-def test_single_species_chiral_geometry_retains_l3_query():
-    positions = torch.tensor(
-        [[0.0, 0.0, 0.0], [1.2, 0.1, 0.0], [0.2, 1.1, 0.3], [0.35, 0.25, 1.4]]
-    )
-    queries = _query_encoder()(*_complete_geometry(positions), graph_count=1)
-    assert torch.linalg.vector_norm(queries.third) > 1e-5
-
-
-def test_inversion_symmetric_geometry_has_zero_odd_query():
-    positions = torch.tensor(
-        [[1.0, 0.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 1.0, 0.0],
-         [0.0, -1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, -1.0]]
-    )
-    queries = _query_encoder()(*_complete_geometry(positions), graph_count=1)
-    assert torch.linalg.vector_norm(queries.first) < 2e-7
-    assert torch.linalg.vector_norm(queries.third) < 2e-7
-
-
-def test_query_uses_no_tensor_condition():
-    parameters = set(inspect.signature(ConditionFreeGeometryQueryEncoder.forward).parameters)
-    assert parameters.isdisjoint({"tensor", "tensor_condition", "condition", "piezo_irreps"})
-
-
 def _denoiser_input() -> tuple[torch.Tensor, ...]:
     tokens = torch.tensor([5, 6, 7, 8], dtype=torch.long)
     fractional = torch.tensor(
@@ -281,38 +213,3 @@ def test_reverse_step_projection_is_idempotent_for_translation_and_shape():
     assert torch.allclose(first.fractional_coordinates, second.fractional_coordinates, atol=1e-7)
     assert torch.allclose(first.log_shape, second.log_shape, atol=1e-7)
 
-
-def _finite_qmc_object(grid_size: int) -> tuple[torch.Tensor, ...]:
-    torch.manual_seed(107)
-    conditioner = HarmonicGaugeFlowConditioner(24, grid_size=grid_size, query_channels=2).double()
-    condition = torch.randn((1, 18), dtype=torch.float64)
-    first = torch.randn((1, 2, 3), dtype=torch.float64, requires_grad=True)
-    second = torch.randn((1, 2, 5), dtype=torch.float64, requires_grad=True)
-    third = torch.randn((1, 2, 7), dtype=torch.float64, requires_grad=True)
-    queries = GeometryHarmonicQueries(first, second, third)
-    directions = torch.nn.functional.normalize(torch.randn((6, 3), dtype=torch.float64), dim=-1)
-    edge_graph = torch.zeros(6, dtype=torch.long)
-    output = conditioner(
-        condition, torch.ones((1, 1), dtype=torch.bool), directions, edge_graph,
-        queries, torch.tensor([0.2], dtype=torch.float64),
-    )
-    gradient = torch.autograd.grad(output.graph_condition.square().sum(), (first, second, third))
-    posterior_rotation_moment = torch.einsum(
-        "bf,fij->bij", output.posterior, conditioner.rotations
-    )
-    return (
-        output.aligned_irreps.detach(),
-        posterior_rotation_moment.detach(),
-        output.graph_condition.detach(),
-        torch.cat([value.flatten() for value in gradient]).detach(),
-    )
-
-
-def test_finite_qmc_model_objects_converge_under_nested_refinement():
-    coarse = _finite_qmc_object(240)
-    medium = _finite_qmc_object(960)
-    fine = _finite_qmc_object(3840)
-    for coarse_value, medium_value, fine_value in zip(coarse, medium, fine):
-        coarse_error = torch.linalg.vector_norm(coarse_value - fine_value)
-        medium_error = torch.linalg.vector_norm(medium_value - fine_value)
-        assert medium_error < coarse_error

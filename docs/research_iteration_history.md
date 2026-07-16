@@ -9,8 +9,10 @@ data pointers remain recoverable from the annotated Git tag
 `0dbcfbabd997b3e32a18ed391e28adb1fe4f3ffc`.
 
 The active repository intentionally keeps only the revised hybrid-production
-surface, its S0 qualifications, and the current TensorOrbit-JARVIS-v2 data
-protocol. Historical files must not be copied back as runtime fallbacks.
+surface and the current TensorOrbit-JARVIS-v2 data protocol. The later
+S0/S1a-I0 executable evidence, harmonic reference and per-run reports are
+recoverable from `archive/pre-runtime-cleanup-20260717`. Historical files must
+not be copied back as runtime fallbacks.
 
 ## Data generations
 
@@ -127,24 +129,26 @@ retired. The archive tag is the sole reproduction path.
 
 ## Harmonic and Cartesian conditioner iterations
 
-Harmonic/Hopf code is kept only under `gaugeflow.production.archive_harmonic`
-where needed for the paper's diagnostic reference; it is never a runtime
-fallback. The 24-frame-only Cartesian atlas (S0.3-v1) failed and remains frozen
+Harmonic/Hopf code is retained only in the archive tag as a paper diagnostic;
+it is not part of the installed package. The 24-frame-only Cartesian atlas
+(S0.3-v1) failed and remains frozen
 as a paper result. The weighted 24x7x24 Cartesian prior (S0.4-v1) passed its
 scientific/numerical checks but failed the frozen 20 ms latency limit at
 41.89 ms. S0.4.1 preserved the same 4,032-candidate prior and qualified the
 runtime at 14.62 ms in the official report (13.09 ms in a later no-write smoke).
 
-S0.3, S0.4, S0.4.1, and the current production Cartesian atlas remain in the
-active repository because the manuscript directly relies on them.
+Only the current production Cartesian atlas remains active. The S0.3, S0.4 and
+S0.4.1 runners/configs/reports are represented by this history, the manuscript
+tables and the archive tag.
 
 ## Retired performance artifacts
 
 Early profiler and cProfile traces occupied roughly 905 MB. They established
 that per-forward candidate deduplication and Python-side frame work dominated
 the atlas path. The actionable result was implemented as cached cubature and a
-proof-gated unique generic fast path. Raw traces, `.prof` files, and pre/post
-top-20 tables are retired; the qualified S0.4.1 metrics are retained.
+proof-gated unique generic fast path. Raw traces, `.prof` files, pre/post top-20
+tables and standalone S0.4.1 report files are retired; the qualified metrics
+remain in the manuscript and this history.
 
 ## Current scientific boundary
 

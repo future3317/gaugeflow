@@ -25,6 +25,10 @@ def _rotation(seed: int) -> torch.Tensor:
     return left
 
 
+def _rotate_candidates(tensor: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
+    return rotate_rank3(tensor.expand((rotations.shape[0], 3, 3, 3)), rotations)
+
+
 def _geometry(positions: torch.Tensor) -> tuple[torch.Tensor, ...]:
     sites = positions.shape[0]
     source = torch.tensor([left for left in range(sites) for right in range(sites) if left != right])
@@ -121,8 +125,10 @@ def test_atlas_is_representative_covariant_without_a_grid():
     matching = torch.linalg.matrix_norm(
         expected_candidates[:, None] - transformed_candidates[None], dim=(-2, -1)
     ).argmin(dim=-1)
-    original_rotated = atlas._rotate_rank_three(piezo_from_irreps(condition)[0], original_candidates)
-    transformed_rotated = atlas._rotate_rank_three(piezo_from_irreps(rotated_condition)[0], transformed_candidates)
+    original_rotated = _rotate_candidates(piezo_from_irreps(condition)[0], original_candidates)
+    transformed_rotated = _rotate_candidates(
+        piezo_from_irreps(rotated_condition)[0], transformed_candidates
+    )
     expected_rotated = rotate_rank3(piezo_from_irreps(condition).expand_as(original_rotated), original_candidates)
     assert torch.allclose(original_rotated, expected_rotated, atol=3e-5, rtol=3e-5)
     assert torch.allclose(
@@ -203,7 +209,7 @@ def test_candidate_measure_deduplication_is_order_and_duplicate_expansion_invari
     query = torch.randn((2, 3, 3, 3), dtype=torch.float64)
 
     def pooled(candidate_measure):
-        rotated = atlas._rotate_rank_three(tensor, candidate_measure.rotations)
+        rotated = _rotate_candidates(tensor, candidate_measure.rotations)
         score = torch.einsum("fabc,qabc,q->f", rotated, query, atlas.score_channel.to(query))
         posterior = torch.softmax(score + candidate_measure.prior.log(), dim=0)
         return torch.einsum("f,fijk->ijk", posterior, rotated)
@@ -275,7 +281,7 @@ def test_soft_stratum_partition_is_continuous_and_has_finite_gradient():
     def pooled(gap: torch.Tensor) -> torch.Tensor:
         covariance = torch.diag(torch.stack((gap.new_zeros(()), gap, gap.new_ones(()))))
         measure = atlas._candidate_measure(atlas._frame_data(covariance, directional=True), condition)
-        rotated = atlas._rotate_rank_three(tensor, measure.rotations)
+        rotated = _rotate_candidates(tensor, measure.rotations)
         score = torch.einsum("fabc,qabc,q->f", rotated, query, atlas.score_channel.to(query))
         posterior = torch.softmax(score + measure.prior.log(), dim=0)
         return torch.einsum("f,fijk->ijk", posterior, rotated)

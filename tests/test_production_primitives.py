@@ -1,20 +1,12 @@
 import inspect
-from pathlib import Path
 
 import torch
 
-from gaugeflow.checkpoints import load_safe_checkpoint, save_safe_checkpoint
 from gaugeflow.manifold import vector_to_symmetric
-from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
-    GeometryHarmonicQueries,
-    HarmonicGaugeFlowConditioner,
-    nested_hopf_so3_grid,
-    weighted_geometric_harmonic_queries,
-    weighted_harmonic_alignment_scores,
-)
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
+from gaugeflow.production.so3_quadrature import nested_hopf_so3_grid
 from gaugeflow.production.space_group_router import (
     TerminalGroupCompatibilityRouter,
     compatibility_record,
@@ -206,41 +198,6 @@ def test_response_field_is_lossless():
     assert torch.allclose(bilinear, polarized, atol=2e-12, rtol=2e-12)
 
 
-def test_continuous_harmonic_score_covariance():
-    torch.manual_seed(13)
-    condition = torch.randn((1, 18), dtype=torch.float64)
-    directions = torch.nn.functional.normalize(torch.randn((8, 3), dtype=torch.float64), dim=-1)
-    edge_graph = torch.zeros(8, dtype=torch.long)
-    query_weights = torch.randn((8, 2), dtype=torch.float64)
-    rotations = nested_hopf_so3_grid(31, dtype=torch.float64)
-    g, h = rotations[7], rotations[17]
-    transformed_condition = piezo_to_irreps(rotate_rank3(piezo_from_irreps(condition), h))
-    weights = dict(
-        coupling_l1=torch.tensor([[0.6, -0.4], [0.2, 0.7]], dtype=torch.float64),
-        coupling_l2=torch.tensor([[0.3], [-0.1]], dtype=torch.float64),
-        coupling_l3=torch.tensor([[-0.8], [0.4]], dtype=torch.float64),
-    )
-    left = weighted_harmonic_alignment_scores(
-        transformed_condition, directions @ g.T, edge_graph, query_weights, rotations, **weights
-    )
-    right = weighted_harmonic_alignment_scores(
-        condition, directions, edge_graph, query_weights,
-        g.T.unsqueeze(0) @ rotations @ h.unsqueeze(0), **weights
-    )
-    assert torch.allclose(left, right, atol=4e-5, rtol=4e-5)
-
-
-def test_state_weighted_queries_do_not_artificially_cancel_polar_odd_degrees():
-    directions = torch.tensor([[1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]])
-    edge_graph = torch.zeros(2, dtype=torch.long)
-    asymmetric_weights = torch.tensor([[1.0, 0.2], [0.1, -0.4]])
-    first, _, third = weighted_geometric_harmonic_queries(
-        directions, edge_graph, asymmetric_weights, graph_count=1
-    )
-    assert torch.linalg.vector_norm(first) > 0
-    assert torch.linalg.vector_norm(third) > 0
-
-
 def test_full_o3_router_operations_form_a_group_and_keep_improper_compatibility():
     record = compatibility_record(99)
     determinants = torch.linalg.det(record.operations)
@@ -250,25 +207,6 @@ def test_full_o3_router_operations_form_a_group_and_keep_improper_compatibility(
             residual = torch.linalg.matrix_norm(left @ right - record.operations, dim=(-2, -1))
             assert float(residual.min()) < 2e-10
     assert compatibility_record(2).compatible_rank == 0
-
-
-def test_double_coset_stabilizer_identity_and_physical_zero_is_not_cfg_null():
-    conditioner = HarmonicGaugeFlowConditioner(hidden_dim=24, grid_size=32).eval()
-    condition = torch.zeros((2, 18))
-    directions = torch.nn.functional.normalize(torch.randn((6, 3)), dim=-1)
-    edge_graph = torch.tensor([0, 0, 0, 1, 1, 1])
-    queries = GeometryHarmonicQueries(
-        first=torch.randn((2, 2, 3)),
-        second=torch.randn((2, 2, 5)),
-        third=torch.randn((2, 2, 7)),
-    )
-    output = conditioner(
-        condition, torch.tensor([[True], [False]]), directions, edge_graph,
-        queries, torch.tensor([0.4, 0.4])
-    )
-    assert torch.allclose(output.posterior, torch.full_like(output.posterior, 1.0 / 32), atol=1e-6)
-    assert not torch.allclose(output.graph_condition[0], output.graph_condition[1])
-    assert torch.equal(output.edge_response, torch.zeros_like(output.edge_response))
 
 
 def test_finite_grid_error_decreases_with_k():
@@ -317,20 +255,3 @@ def test_no_target_metadata_in_model_signature():
     }
     assert parameters.isdisjoint(forbidden)
 
-
-def test_checkpoint_manifest_hashes(tmp_path: Path):
-    model = HybridCrystalDenoiser(
-        hidden_dim=16, vector_dim=4, layers=1, radial_dim=4, atlas_residual_circle_samples=8
-    )
-    path = tmp_path / "s0_weights.pt"
-    sidecar = save_safe_checkpoint(
-        path,
-        model_state=model.state_dict(),
-        isotypic_scales=torch.ones(3),
-        training_step=0,
-        metadata={"design_sha256": "9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31"},
-    )
-    payload, metadata = load_safe_checkpoint(path, map_location="cpu")
-    assert payload["training_step"] == 0
-    assert metadata["design_sha256"].startswith("9ad4ed")
-    assert sidecar.is_file()

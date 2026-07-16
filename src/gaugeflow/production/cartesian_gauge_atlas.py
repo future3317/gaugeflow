@@ -551,10 +551,6 @@ class StratifiedCartesianGaugeAtlas(nn.Module):
             return self._deduplicate_measure(rotations, raw_prior)
 
     @staticmethod
-    def _rotate_rank_three(tensor: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
-        return torch.einsum("kab,kcd,kef,bdf->kace", rotations, rotations, rotations, tensor)
-
-    @staticmethod
     def _rotate_rank_three_batch(tensors: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
         """Rotate a grouped batch of tensors by its grouped atlas candidates."""
         return torch.einsum("gfia,gfjb,gfkc,gabc->gfijk", rotations, rotations, rotations, tensors)

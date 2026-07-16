@@ -13,7 +13,8 @@ old checkpoint or exploratory runner.
 - Historical Gate A--A11, P5-D0/C0, substrate-v2 and vNext Q0/Q1 code was
   retired at tag `archive/pre-production-cleanup-20260716`. Never copy it back
   as a runtime fallback.
-- Archived harmonic code may be used only for the paper's diagnostic reference.
+- Harmonic/Hopf diagnostic code and frozen audit runners live only in Git tag
+  `archive/pre-runtime-cleanup-20260717`; do not restore them to the package.
 - Keep GaugeFlow and PiezoJet separate. GaugeFlow may consume versioned data and
   oracle artifacts, but must not import PiezoJet modules.
 - Do not restore FlowMM as a runtime dependency.
@@ -50,7 +51,8 @@ Keep:
 - rank-three tensor, parity, geometry, symmetry and data primitives;
 - the complete direct-CG baseline;
 - current TensorOrbit-JARVIS-v2 protocols and attestations;
-- formal S0.1--S0.4.1 evidence referenced by the manuscript.
+- current TensorOrbit-JARVIS-v2 reports and protocols referenced by future
+  data/oracle work.
 
 Do not accumulate exploratory runners, checkpoint sweeps, profiler traces or
 per-Gate reports in the active tree. Summarize a superseded research cycle in
@@ -108,7 +110,7 @@ versioned real-data tensor-free S1a qualification.
   parity handling.
 - Descriptor-frame ambiguity groups are not automatically physical
   stabilizers.
-- Do not infer “isotropic tensor” from a single degenerate quadratic covariant.
+- Do not infer an isotropic tensor from a single degenerate quadratic covariant.
 - The Cartesian atlas is a state-dependent finite prior, not a claimed Haar
   quadrature approximation.
 
@@ -123,7 +125,8 @@ versioned real-data tensor-free S1a qualification.
   paths retain multiplicity-corrected deduplication.
 - Avoid adding a new method until a small versioned diagnostic identifies the
   failure mechanism it addresses.
-- Do not modify a completed protocol or report in place. Create a successor.
+- Completed exploratory protocols belong in Git history and the condensed
+  iteration document, not as executable compatibility paths in the active tree.
 
 ## Required validation for changes
 
@@ -137,8 +140,9 @@ $PY scripts/audit_code_redundancy.py
 ```
 
 Atlas/runtime changes also require a no-write CUDA smoke confirming candidate
-counts, finite outputs, reference equivalence, latency and peak memory. Never
-overwrite S0.3/S0.4/S0.4.1 evidence.
+counts, finite outputs, reference equivalence, latency and peak memory. The
+frozen S0.3/S0.4/S0.4.1 artifacts must be read from the archive tag, not copied
+back into the active tree.
 
 ## Future conditioner comparison
 

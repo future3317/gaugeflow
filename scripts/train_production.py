@@ -135,7 +135,7 @@ def main() -> None:
         batch_data = batch_data.to(device)
         graph_count = int(batch_data.num_graphs)
         counts = torch.bincount(batch_data.batch, minlength=graph_count)
-        blueprint = ParentBlueprintBatch.from_p1_counts(
+        blueprint = ParentBlueprintBatch.from_node_counts(
             counts, dtype=batch_data.frac_coords.dtype, device=device
         )
         output, gradient_norm = trainer.train_step(

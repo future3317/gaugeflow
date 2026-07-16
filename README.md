@@ -30,7 +30,7 @@ distributions.
 | Tensor-free real-data S1a training | Not started |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
-The formal no-training evidence is versioned as follows:
+The condensed no-training evidence is:
 
 - S0.1/S0.2: mathematical, symmetry-chart and software-interface checks passed.
 - S0.3-v1: the 24-frame-only atlas failed and is frozen. It must not be restored.
@@ -109,6 +109,8 @@ denoising after a parent geometry exists; discrete parent/path decisions use
 orbit invariants and child-compatibility residuals.
 
 See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_breaking_v1.md).
+The original Chinese design/data note is retained as
+[`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
 These interfaces do not authorize hierarchical training. Real-data S1a must
 still qualify the parent generator first, followed by H0--H6 in order.
 
@@ -122,8 +124,7 @@ src/gaugeflow/stabilizer.py proper/full point-group utilities
 src/gaugeflow/data.py       TensorOrbit crystal dataset loader
 src/gaugeflow/direct_irrep.py complete direct-CG baseline
 scripts/                    production train/sample, current data and audit entry points
-configs/                    current S0 and TensorOrbit-v2 protocols
-reports/paper_s0_*/         formal paper-facing S0 evidence
+configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
@@ -168,21 +169,16 @@ $PY -m mypy src/gaugeflow/production
 $PY scripts/audit_code_redundancy.py
 ```
 
-The redundancy audit checks the production modules and current S0 entry points
+The redundancy audit checks the production modules and current train, sample,
+and data entry points
 for duplicate normalized bodies, unreachable branches, unused private
 definitions, stored-but-unread attributes, constant branches and unused CLI
 arguments.
 
-Official S0 reports are immutable. Their runners refuse to overwrite an
-existing result directory. Inspect the committed evidence instead of silently
-rerunning a protocol with changed code:
-
-```text
-reports/paper_s0_2_scalability_symmetry_chart_v1/
-reports/paper_s0_3_cartesian_atlas_v1/
-reports/paper_s0_4_cartesian_atlas_prior_v1/
-reports/paper_s0_4_1_cartesian_atlas_runtime_v1/
-```
+Superseded S0 runners, harmonic/Hopf reference code, intermediate configs and
+per-run reports are intentionally absent. Their exact state is recoverable from
+Git tag `archive/pre-runtime-cleanup-20260717`; the manuscript and
+`docs/research_iteration_history.md` retain the scientific conclusions.
 
 ## TensorOrbit-JARVIS-v2
 
@@ -228,7 +224,7 @@ not authorize oracle promotion, relaxation, DFT or DFPT.
 ## Development rules
 
 - Do not reintroduce the old continuous-logit `flow.py`/`model.py` implementation.
-- Do not make archived harmonic code a runtime fallback.
+- Do not restore archived harmonic code or audit runners as runtime fallbacks.
 - Keep a physical zero tensor distinct from a missing condition.
 - Use SO(3) for the polar rank-three tensor orbit and O(3) only for crystal
   compatibility diagnostics where parity is explicit.

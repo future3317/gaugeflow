@@ -65,7 +65,7 @@ class ParentBlueprintBatch:
     fractional_to_cartesian: torch.Tensor
 
     @classmethod
-    def from_p1_counts(
+    def from_node_counts(
         cls,
         node_counts: torch.Tensor,
         *,
@@ -75,7 +75,7 @@ class ParentBlueprintBatch:
         selected_device = torch.device(device) if device is not None else node_counts.device
         counts = node_counts.to(device=selected_device, dtype=torch.long)
         if counts.ndim != 1 or counts.numel() < 1 or bool((counts < 1).any()):
-            raise ValueError("P1 parent node counts must be a nonempty positive vector")
+            raise ValueError("parent node counts must be a nonempty positive vector")
         graphs = counts.numel()
         graph_ids = torch.arange(graphs, device=selected_device)
         batch = torch.repeat_interleave(graph_ids, counts)

@@ -61,7 +61,7 @@ def main() -> None:
     failures = 0
     for index in range(args.num_samples):
         node_count = node_prior.sample(1, generator=count_generator, device=device)
-        blueprint = ParentBlueprintBatch.from_p1_counts(node_count, device=device)
+        blueprint = ParentBlueprintBatch.from_node_counts(node_count, device=device)
         try:
             generated = sampler.sample(
                 blueprint,

@@ -50,8 +50,8 @@ H5 and H6 remain strictly ordered.
   the physical Reynolds compatibility router.
 - The production conditioner is a Stratified Cartesian Gauge Atlas with a
   state-dependent finite prior, multiplicity correction, smooth stratum
-  blending and residual descriptor-frame marginalization. Harmonic code is an
-  archived diagnostic reference and is never a runtime fallback.
+  blending and residual descriptor-frame marginalization. Harmonic code is
+  available only in the frozen Git archive and is never a runtime fallback.
 
 ## Code ownership
 
@@ -75,25 +75,12 @@ passes in the pinned WSL CUDA environment, the model signature contains no
 target-only metadata, and no fixed periodic image cube is used by the
 production wrapped kernel.
 
-## Versioned S0.2 amendment
+## Historical S0 qualification
 
-S0.1 qualifies the first production implementation only within its declared
-small-site mathematical and interface scope. Before S1, the versioned
-`paper_s0_2_scalability_and_symmetry_chart_v1` audit must additionally qualify:
-
-- a `PointGroupMetricChart` that keeps crystallographic fractional operations
-  `U`, Cartesian operations `Q`, and the chart `C` distinct, reconstructing
-  `G_raw = C^T exp(A) C` before determinant and volume normalization;
-- projection of the input log-shape and every future reverse-process state,
-  not only projection of the lattice score head;
-- a scalable translation-integral wrapped quotient while retaining the
-  exponential small-site image sum only as an exact oracle;
-- a tensor-condition-free geometry encoder with angular local moments and
-  polar `l=1,2,3` tensor-product queries;
-- all 230 space-group charts, Reynolds ranks, full-denoiser translation/basis
-  equivariance, and finite-QMC convergence at `K=240,960,3840`.
-
-The frozen numerical thresholds and resource cases are in
-`configs/paper_s0_2_scalability_symmetry_chart_v1.json`. S0.2 is a no-training
-gate and does not authorize real tensor, oracle, MLIP screening, relaxation,
-DFT, or DFPT. The historical S0.1 evidence must not be edited.
+S0.1--S0.4.1 qualified the mathematical interfaces, scalable wrapped quotient,
+space-group metric charts and current 4,032-candidate Cartesian prior. Their
+frozen runners, harmonic reference and per-run reports were removed from the
+active package after the conclusions were recorded in the manuscript and
+`docs/research_iteration_history.md`. Exact reproduction uses Git tag
+`archive/pre-runtime-cleanup-20260717`; those files must not be restored as
+production dependencies.

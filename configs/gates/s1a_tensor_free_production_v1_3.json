@@ -1,6 +1,6 @@
 {
   "protocol": "s1a_tensor_free_production_v1_3",
-  "supersedes": "s1a_tensor_free_production_v1_2",
+  "historical_lineage": "v1-v1.2 are summarized in docs/research_iteration_history.md and archived in Git",
   "rationale": "Replace the numerically ill-conditioned raw VP lattice-score head with direct clean log-volume/log-shape prediction; retain the exact finite-step VP posterior, wrapped coordinate score, categorical path, architecture capacity and frozen thresholds.",
   "status": "implementation_qualification_only",
   "tensor_condition_enabled": false,

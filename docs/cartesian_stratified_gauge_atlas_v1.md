@@ -4,10 +4,10 @@ Status: **S0.4-v1 remains `failed_no_advance`; S0.4.1 runtime successor passed; 
 
 This version replaces the active production denoiser's finite-Hopf harmonic
 conditioner with `gaugeflow.production.cartesian_gauge_atlas`.  It does not
-alter frozen S0.1--S0.2 reports: their Hopf/harmonic implementation now lives
-under `gaugeflow.production.archive_harmonic` and is importable only by the
-historical audit/tests.  There is no runtime switch or fallback from the atlas
-to the archived conditioner.
+alter the frozen S0.1--S0.2 conclusions. Their Hopf/harmonic implementation and
+historical audit/tests now live only at Git tag
+`archive/pre-runtime-cleanup-20260717`. There is no runtime switch or fallback
+from the atlas to the archived conditioner.
 
 ## Cartesian query algebra
 

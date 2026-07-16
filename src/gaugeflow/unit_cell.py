@@ -65,7 +65,3 @@ def niggli_reduce_structure_with_transform(
     )
     return reduced_structure, integer_change.astype(np.int64)
 
-
-def niggli_reduce_structure(structure: Structure, *, atol: float = 1e-5) -> Structure:
-    """Backward-compatible structure-only Niggli reduction."""
-    return niggli_reduce_structure_with_transform(structure, atol=atol)[0]
