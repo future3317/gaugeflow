@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "protocol": "h0_data_activation_v1",
+  "generated_at": "2026-07-17T02:38:36+08:00",
+  "repository": {
+    "remote": "https://github.com/future3317/gaugeflow.git",
+    "branch": "main",
+    "verified_source_commit": "e656cae49ada57def4287307a42848f6e9644709",
+    "working_tree_before_manifest": "clean"
+  },
+  "decision": {
+    "h0_passed": false,
+    "status": "H0_not_passed_stop_before_H1",
+    "next_gate_authorized": false,
+    "prohibited_until_h0_passes": [
+      "H1a",
+      "H1b",
+      "H2-H6",
+      "real tensor conditioning",
+      "oracle promotion",
+      "relaxation",
+      "DFT",
+      "DFPT"
+    ]
+  },
+  "environment": {
+    "platform": "WSL 2 Ubuntu-22.04",
+    "python_executable": "/home/future04/micromamba/envs/flowmm-t2c/bin/python",
+    "python": "3.10.0",
+    "torch": "2.5.1+cu124",
+    "torch_cuda": "12.4",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 4060 Ti",
+    "pyarrow": "22.0.0",
+    "pytest": "8.0.0",
+    "ruff": "0.12.3",
+    "mypy": "1.16.1",
+    "spglib": "2.7.0",
+    "pymatgen": "2022.0.16",
+    "torch_geometric": "2.6.1",
+    "e3nn": "0.5.1",
+    "environment_lock": "requirements-lock-wsl-cu124.txt",
+    "environment_lock_sha256": "498dc5b1d542e32c797e8141356dfe2f32fda0c99685a2b4a034e43f45de68f4",
+    "pyproject_sha256": "b2ac5621950ca645c76c8adc80c9e641b049003c82abc86b4f0803a6486759f7"
+  },
+  "validation": {
+    "pytest_collect": {
+      "command": "/home/future04/micromamba/envs/flowmm-t2c/bin/python -m pytest --collect-only -q",
+      "collected": 83,
+      "exit_code": 0
+    },
+    "pytest": {
+      "command": "/home/future04/micromamba/envs/flowmm-t2c/bin/python -m pytest -q -ra",
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "warnings": 59,
+      "exit_code": 0
+    },
+    "cuda_only": {
+      "designated_cases": 1,
+      "passed": 1,
+      "skipped": 0,
+      "cases": [
+        "tests/test_production_symmetry_and_scalability.py::test_scalable_wrapped_quotient_handles_twenty_sites_and_triclinic_metrics"
+      ]
+    },
+    "ruff": {
+      "command": "/home/future04/micromamba/envs/flowmm-t2c/bin/python -m ruff check",
+      "result": "All checks passed",
+      "exit_code": 0
+    },
+    "mypy": {
+      "command": "/home/future04/micromamba/envs/flowmm-t2c/bin/python -m mypy src/gaugeflow/production",
+      "source_files": 19,
+      "issues": 0,
+      "exit_code": 0
+    },
+    "redundancy_audit": {
+      "command": "/home/future04/micromamba/envs/flowmm-t2c/bin/python scripts/audit_code_redundancy.py",
+      "definition_count": 246,
+      "duplicate_normalized_bodies": 0,
+      "constant_boolean_branches": 0,
+      "lexically_unreachable_statements": 0,
+      "stored_but_unread_self_attributes": 0,
+      "unreferenced_private_definitions": 0,
+      "unused_cli_arguments": 0,
+      "exit_code": 0
+    }
+  },
+  "data_evidence": {
+    "data_root": "/mnt/e/DATA/T2C-Flow",
+    "data_center_manifest_sha256": "bc9e8aa5eeccec7f8952ce4028061103b518af537c151acd865b51c6c89e36a7",
+    "activation_manifest": {
+      "path": "reports/h0_data_activation_v1/activation_manifest.json",
+      "sha256": "c19927d4dba6a59d2ea10938c3e5120d3e6ddd4b1b7c2724270f6ef68b3b5574"
+    },
+    "alex_source_profile": {
+      "path": "reports/h0_data_activation_v1/alex_mp20_source_profile.json",
+      "sha256": "d5cd023cbb359a7b6d0f028761562a6be255833eb684f94ec42b400edebfd735",
+      "rows": 675204,
+      "source_structure_validity_passed": true,
+      "upstream_split_formula_disjoint": false
+    }
+  },
+  "blocking_components": {
+    "H0-A": "Formula/prototype-disjoint child split is not frozen.",
+    "H0-B": "PhononDB translational-zero-mode, degenerate-subspace, and NAC attestations are incomplete.",
+    "H0-C": "No frozen and hashed MatPES-PBE teacher checkpoint is qualified.",
+    "H0-D": "No versioned OPD physical path-class catalogue and measure is qualified.",
+    "H0-E": "No 1,000-5,000 structure parent-decomposition pilot is qualified."
+  },
+  "scope_note": "This manifest verifies the software and H0 evidence state at the referenced source commit. It is not evidence that the empirical hierarchy, real-data generator, tensor conditioner, oracle, relaxation, DFT, or DFPT has qualified."
+}
