@@ -1,0 +1,63 @@
+........................................................................ [ 35%]
+........................................................................ [ 71%]
+.........................................................                [100%]
+=============================== warnings summary ===============================
+../../../../../home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/monty/json.py:23
+  /home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/monty/json.py:23: DeprecationWarning: 
+  Pyarrow will become a required dependency of pandas in the next major release of pandas (pandas 3.0),
+  (to allow more performant data types, such as the Arrow string type, and better interoperability with other libraries)
+  but was not found to be installed on your system.
+  If this would cause problems for you,
+  please provide us feedback at https://github.com/pandas-dev/pandas/issues/54466
+          
+    import pandas as pd
+
+../../../../../home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/torch/jit/_check.py:178: 23 warnings
+tests/test_direct_irrep_complete.py: 8 warnings
+tests/test_flow.py: 7 warnings
+tests/test_harmonic_conditioning.py: 7 warnings
+tests/test_paper_s0_2_scalability_symmetry.py: 6 warnings
+tests/test_paper_s0_production.py: 3 warnings
+tests/test_tensor.py: 10 warnings
+tests/test_vnext_p0_release.py: 10 warnings
+  /home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/torch/jit/_check.py:178: UserWarning: The TorchScript type system doesn't support instance-level annotations on empty non-base types in `__init__`. Instead, either 1) use a type annotation in the class body, or 2) wrap the type in `torch.jit.Attribute`.
+    warnings.warn(
+
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_stabilizer.py::test_proper_stabilizer_excludes_improper_operations
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+  /home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/spglib/spg.py:438: DeprecationWarning: Set OLD_ERROR_HANDLING to false and catch the errors directly.
+    _set_no_error(_throw)
+
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_stabilizer.py::test_proper_stabilizer_excludes_improper_operations
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+  /home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/spglib/spg.py:354: DeprecationWarning: Set OLD_ERROR_HANDLING to false and catch the errors directly.
+    _set_no_error()
+
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_bcc_sites_share_one_orbit_despite_different_species
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_unlabeled_asymmetric_sites_remain_distinguishable_and_species_are_not_inputs
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_periodic_orbits.py::test_proper_and_full_partitions_are_reported_with_identity_permutations
+tests/test_stabilizer.py::test_proper_stabilizer_excludes_improper_operations
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+tests/test_stabilizer.py::test_full_crystal_point_group_retains_improper_operations_for_compatibility_only
+  /home/future04/micromamba/envs/flowmm-t2c/lib/python3.10/site-packages/spglib/spg.py:376: DeprecationWarning: Use get_magnetic_symmetry() for cell with magnetic moments.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+201 passed, 102 warnings in 67.30s (0:01:07)

@@ -13,8 +13,8 @@ from torch import nn
 from gaugeflow.harmonic import normalized_low_order_orbit_invariants
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, rotate_rank3
 
-from .harmonic_gaugeflow import nested_hopf_so3_grid
 from .lattice_volume_shape import PointGroupMetricChart
+from .so3_quadrature import nested_hopf_so3_grid
 
 
 @dataclass(frozen=True)
@@ -157,7 +157,6 @@ class SpaceGroupCompatibilityRouter(nn.Module):
             raise ValueError("router requires unique represented space groups")
         if any(value < 1 or value > 230 for value in selected):
             raise ValueError("space-group number lies outside 1..230")
-        self.space_groups = selected
         self.records = tuple(compatibility_record(value) for value in selected)
         self.hard_zero_rank = hard_zero_rank
         self.prior = nn.Sequential(

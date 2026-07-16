@@ -38,6 +38,45 @@ versioned S1a unconditional reverse-sampler qualification only. S1a has not
 started, and S0.2 does not authorize real tensor, learned oracle, MLIP
 screening, relaxation, DFT, or DFPT.
 
+### Cartesian stratified gauge atlas (S0.4-v1 frozen failed; S0.4.1 runtime passed; no training)
+
+The active `HybridCrystalDenoiser` now uses
+`production.cartesian_gauge_atlas.StratifiedCartesianGaugeAtlas`. Its geometry
+queries are explicit Cartesian STF tensors through rank three. Its 24 proper
+signed-permutation frames are atlas centres; a two-sided seven-node chart
+cubature gives 4,032 generic candidates. Axial eigenspace degeneracies retain
+that base measure and expand a state-dependent SO(2) residual rule. Compact
+smoothstep weights blend generic, axial, and descriptor-isotropic charts.
+Physical-zero conditions use only the orbit-invariant token; a nonzero
+rank-three tensor with isotropic quadratic descriptor retains a fixed
+Cartesian cubature path. Duplicate rotations are aggregated with explicit
+prior mass, so tuple multiplicity cannot silently bias the posterior. This is
+an implemented operator, not a generation or tensor-control result. The old finite-Hopf implementation is isolated under
+`production/archive_harmonic/` solely to reproduce frozen S0.1--S0.2 evidence;
+the active denoiser has no harmonic fallback. See
+`docs/cartesian_stratified_gauge_atlas_v1.md`. The frozen S0.3 comparison and
+the prepared replacement-prior S0.4 protocol are recorded under
+`configs/paper_s0_3_cartesian_atlas_v1.json` and
+`configs/paper_s0_4_cartesian_atlas_prior_v1.json`, respectively. Exploratory
+pre-audit measurements remain distinct from the official result. The 2026-07-16
+S0.4-v1 run passed every scientific-correctness, covariance, boundary,
+refinement, FP32/BF16, and memory check, but failed the frozen RTX 4060 Ti
+latency limit (`41.89 ms > 20 ms`). Its decision is therefore
+`failed_no_advance`, and it does not authorize training. See
+`reports/paper_s0_4_cartesian_atlas_prior_v1/official_summary.md`.
+
+The separately versioned performance-only successor S0.4.1 preserves the same
+weighted 4,032-candidate prior and all scientific semantics. It caches the
+state-independent base cubature and avoids `torch.unique` only on chart
+interiors where two-sided rotation is bijective and all 4,032 candidates are
+already proven unique; axial and mixed strata retain multiplicity-corrected
+deduplication. Its official RTX 4060 Ti latency is `14.62 ms/forward`, peak
+memory is `15.19 MB`, and its aligned/posterior/prior differences from the
+original deduplicated measure are `2.17e-15`, `4.80e-16`, and `0`. S0.4-v1
+remains unchanged. S0.4.1 authorizes only preparation of a separately versioned
+S1a production trainer/reverse-sampler qualification; S1a has not started.
+See `reports/paper_s0_4_1_cartesian_atlas_runtime_v1/official_summary.md`.
+
 ## Current experimental status (2026-07-16)
 
 The original four-method Gate A v1 is a frozen negative archive, not an

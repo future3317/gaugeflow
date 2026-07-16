@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.profiler import record_function
 
-from .manifold import log_vector_to_lattice, torus_logmap
+from .manifold import log_vector_to_lattice
 from .stabilizer import (
     batched_soft_crystal_stabilizer_actions,
     proper_unimodular_candidates,
@@ -690,7 +690,6 @@ class GaugeFlowVectorField(nn.Module):
             raise ValueError("composition_max_atoms must be positive when set")
         if composition_atom_types is not None and not 1 <= composition_atom_types <= atom_types:
             raise ValueError("composition_atom_types must lie in [1, atom_types]")
-        self.atom_types = atom_types
         self.conditional_control = conditional_control
         self.residual_g_min = residual_g_min
         self.coordinate_rbf_dim = coordinate_rbf_dim
@@ -1022,7 +1021,6 @@ class QuotientRolloutFlowMap(nn.Module):
         super().__init__()
         if layers < 1 or coordinate_rbf_dim < 2 or coordinate_rbf_cutoff <= 0:
             raise ValueError("flow-map backbone requires positive depth and metric RBF settings")
-        self.atom_types = atom_types
         self.type_input = nn.Linear(atom_types, hidden_dim)
         self.interval_time = FourierIntervalEmbedding(hidden_dim, fourier_frequencies, time_epsilon)
         self.coordinate_rbf = GaussianRadialBasis(coordinate_rbf_dim, coordinate_rbf_cutoff)

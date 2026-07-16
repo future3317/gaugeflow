@@ -1,4 +1,9 @@
-"""Train standalone GaugeFlow on paired CIF/tensor CSV data."""
+"""Reproduce the archived continuous-flow GaugeFlow prototype.
+
+This is not the revised-paper hybrid-diffusion training entry point. It is
+kept only for frozen historical protocols and fails closed unless the caller
+explicitly acknowledges that boundary.
+"""
 
 from __future__ import annotations
 
@@ -78,6 +83,15 @@ def select_material_id_indices(dataset: PiezoCrystalDataset, path: Path) -> list
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--acknowledge-legacy-prototype",
+        action="store_true",
+        help=(
+            "Required explicit acknowledgement that this script trains the archived "
+            "GaugeFlowVectorField/RiemannianCrystalFlowMatcher prototype, not the "
+            "revised-paper production hybrid diffusion."
+        ),
+    )
     parser.add_argument("--train-csv", type=Path, required=True,
                         help="A paired CSV, or the original FlowMM piezo CSV directory")
     parser.add_argument("--split-manifest", type=Path,
@@ -140,6 +154,12 @@ def main() -> None:
                         help="Randomize the tensor orbit representative for the direct-irrep control during training")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
+    if not args.acknowledge_legacy_prototype:
+        parser.error(
+            "scripts/train.py is an archived legacy-prototype entry point and cannot "
+            "start revised-paper S1a training. Pass --acknowledge-legacy-prototype only "
+            "when reproducing a frozen historical protocol."
+        )
     if args.max_examples is not None and args.material_ids_file is not None:
         parser.error("--max-examples and --material-ids-file are mutually exclusive")
     if not 0.0 <= args.residual_g_min <= 1.0:

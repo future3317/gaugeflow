@@ -4,9 +4,9 @@ This package is intentionally separate from the archived continuous-logit ODE
 prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
+from .cartesian_gauge_atlas import CartesianSTFGeometryQueryEncoder, StratifiedCartesianGaugeAtlas
 from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser
-from .harmonic_gaugeflow import ConditionFreeGeometryQueryEncoder, HarmonicGaugeFlowConditioner
 from .lattice_volume_shape import (
     LatticeVolumeShape,
     PointGroupMetricChart,
@@ -22,13 +22,13 @@ __all__ = [
     "AbsorbingMaskDiffusion",
     "AdaptiveWrappedQuotient",
     "CosineNoiseSchedule",
-    "ConditionFreeGeometryQueryEncoder",
-    "HarmonicGaugeFlowConditioner",
+    "CartesianSTFGeometryQueryEncoder",
     "HybridCrystalDenoiser",
     "LatticeVolumeShape",
     "PointGroupMetricChart",
     "ScalableWrappedQuotient",
     "SpaceGroupCompatibilityRouter",
+    "StratifiedCartesianGaugeAtlas",
     "SymmetryShapeBasis",
     "project_lattice_state",
     "project_hybrid_reverse_state",

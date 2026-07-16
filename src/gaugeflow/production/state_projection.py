@@ -16,6 +16,13 @@ class ProjectedContinuousState:
     log_shape: torch.Tensor
 
 
+def graph_mean(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> torch.Tensor:
+    """Return one mean per graph for a node-leading tensor."""
+    if value.shape[:1] != batch.shape:
+        raise ValueError("batch must provide one graph index per node")
+    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="mean")
+
+
 def project_translation_state(
     fractional_coordinates: torch.Tensor,
     batch: torch.Tensor,
@@ -26,9 +33,7 @@ def project_translation_state(
         raise ValueError("fractional coordinates must have shape [sites,3]")
     if batch.shape != fractional_coordinates.shape[:1]:
         raise ValueError("batch must provide one graph index per site")
-    mean = scatter(
-        fractional_coordinates, batch, dim=0, dim_size=graph_count, reduce="mean"
-    )
+    mean = graph_mean(fractional_coordinates, batch, graph_count)
     return fractional_coordinates - mean[batch]
 
 

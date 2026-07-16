@@ -384,6 +384,29 @@ orbit-tensor-error distributions. See `README.md` and
   That theorem does not make a finite QMC node set a group: left/right shift
   residuals must be reported rather than hidden or treated as exact posterior
   covariance.
+- The active post-S0.2 conditioner is
+  `StratifiedCartesianGaugeAtlas`: explicit Cartesian STF geometry moments, a
+  24-centre proper signed-permutation moving-frame atlas, a two-sided
+  seven-node chart cubature (4,032 generic candidates), and state-dependent
+  SO(2) residual marginalization on axial strata. Call the covariance-derived
+  symmetry a `descriptor-frame ambiguity group`, not a physical stabilizer.
+  Smooth partition-of-unity weights must be retained across generic, axial,
+  and descriptor-isotropic charts. Physical-zero conditions are
+  invariant-only; a nonzero rank-three descriptor must not lose all alignment
+  merely because one quadratic covariance is isotropic. Raw candidate tuples
+  define a weighted discrete measure and numerically duplicate rotations must
+  be aggregated before posterior normalization. The finite-Hopf harmonic implementation is isolated in
+  `production/archive_harmonic` only for frozen S0.1--S0.2 reproduction; it is
+  not an active runtime fallback. S0.3 remains a frozen failed Hopf-reproduction
+  audit. The official S0.4-v1 replacement-prior/operator run is frozen as
+  `failed_no_advance`: all scientific/numerical checks passed, but the
+  pre-registered RTX 4060 Ti latency limit failed (`41.89 ms > 20 ms`). Do not
+  rerun or overwrite S0.4-v1 or relax its threshold. The separately versioned
+  S0.4.1 performance-only successor passed with `14.62 ms/forward`, `15.19 MB`
+  peak memory, and measure-equivalence errors at or below `2.17e-15`; it does
+  not reclassify S0.4-v1. S0.4.1 authorizes preparation of a versioned S1a
+  production trainer/reverse-sampler qualification only. S1a has not started;
+  tensor training and S2/physical work remain locked.
 - The production A11-Q0 tiny-panel likelihood remains exact enumeration. The
   new count-partition dynamic program is a tested scalable primitive for a
   future protocol; it must not silently replace Q0/Q1 evidence or evade the

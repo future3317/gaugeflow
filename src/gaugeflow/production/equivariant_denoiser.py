@@ -7,20 +7,16 @@ from dataclasses import dataclass
 
 import torch
 from torch import nn
-from torch_geometric.utils import scatter
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_closest_image_edges
 
-from .harmonic_gaugeflow import (
-    ConditionFreeGeometryQueryEncoder,
-    HarmonicGaugeFlowConditioner,
-    HarmonicGaugeFlowOutput,
+from .cartesian_gauge_atlas import (
+    CartesianGaugeAtlasOutput,
+    CartesianSTFGeometryQueryEncoder,
+    StratifiedCartesianGaugeAtlas,
 )
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
-
-
-def graph_mean(value: torch.Tensor, batch: torch.Tensor, graphs: int) -> torch.Tensor:
-    return scatter(value, batch, dim=0, dim_size=graphs, reduce="mean")
+from .state_projection import graph_mean
 
 
 class FourierTimeEmbedding(nn.Module):
@@ -86,8 +82,13 @@ class EquivariantDenoisingBlock(nn.Module):
             response_projection = (edge_response * directions).sum(dim=-1, keepdim=True)
             features = torch.cat(
                 (
-                    nodes[source], nodes[target], source_projection, target_projection,
-                    radial, response_norm, response_projection,
+                    nodes[source],
+                    nodes[target],
+                    source_projection,
+                    target_projection,
+                    radial,
+                    response_norm,
+                    response_projection,
                 ),
                 dim=-1,
             )
@@ -98,8 +99,11 @@ class EquivariantDenoisingBlock(nn.Module):
                 + coefficients[:, 1, :, None] * edge_response[:, None, :]
                 + torch.sigmoid(coefficients[:, 2, :, None]) * vectors[source]
             )
-            scalar_aggregate.index_add_(0, target, scalar_message)
-            vector_aggregate.index_add_(0, target, vector_message)
+            # Keep graph reductions in the FP32 residual-state dtype under
+            # BF16 autocast; index_add_ requires an exact dtype match and FP32
+            # accumulation is numerically preferable for neighbor sums.
+            scalar_aggregate.index_add_(0, target, scalar_message.to(scalar_aggregate.dtype))
+            vector_aggregate.index_add_(0, target, vector_message.to(vector_aggregate.dtype))
             degree = torch.bincount(target, minlength=nodes.shape[0]).clamp_min(1).to(nodes)
             scalar_aggregate = scalar_aggregate / degree.unsqueeze(-1)
             vector_aggregate = vector_aggregate / degree[:, None, None]
@@ -109,9 +113,7 @@ class EquivariantDenoisingBlock(nn.Module):
         update = update * (1.0 + time_scale) + time_shift
         update = update * (1.0 + condition_scale) + condition_shift
         nodes = self.norm(nodes + update)
-        vector_scale = torch.sigmoid(
-            self.vector_gate(torch.cat((node_time, node_condition), dim=-1))
-        ).unsqueeze(-1)
+        vector_scale = torch.sigmoid(self.vector_gate(torch.cat((node_time, node_condition), dim=-1))).unsqueeze(-1)
         vectors = vectors + vector_scale * vector_aggregate
         return nodes, vectors
 
@@ -123,7 +125,7 @@ class HybridDenoiserOutput:
     coordinate_fractional_score: torch.Tensor
     log_volume_score: torch.Tensor
     log_shape_score: torch.Tensor
-    gaugeflow: HarmonicGaugeFlowOutput
+    gauge_atlas: CartesianGaugeAtlasOutput
 
 
 class HybridCrystalDenoiser(nn.Module):
@@ -137,38 +139,32 @@ class HybridCrystalDenoiser(nn.Module):
         layers: int = 4,
         radial_dim: int = 16,
         radial_cutoff: float = 8.0,
-        harmonic_grid: int = 240,
+        atlas_residual_circle_samples: int = 8,
     ) -> None:
         super().__init__()
         if layers < 1:
             raise ValueError("production denoiser needs at least one message block")
         self.element_embedding = nn.Embedding(119, hidden_dim)
         self.time_embedding = FourierTimeEmbedding(hidden_dim)
-        self.conditioner = HarmonicGaugeFlowConditioner(
-            hidden_dim, grid_size=harmonic_grid, query_channels=2
+        self.gauge_atlas = StratifiedCartesianGaugeAtlas(
+            hidden_dim, residual_circle_samples=atlas_residual_circle_samples
         )
         self.radial = GaussianRadialBasis(radial_dim, radial_cutoff)
-        self.geometry_query_encoder = ConditionFreeGeometryQueryEncoder(
+        self.geometry_query_encoder = CartesianSTFGeometryQueryEncoder(
             hidden_dim, radial_dim, query_channels=2, layers=3
         )
         self.blocks = nn.ModuleList(
             [EquivariantDenoisingBlock(hidden_dim, vector_dim, radial_dim) for _ in range(layers)]
         )
         head_inputs = 3 * hidden_dim
-        self.element_head = nn.Sequential(
-            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118)
-        )
+        self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
         self.coordinate_vector_head = nn.Linear(vector_dim, 1, bias=False)
         self.coordinate_time_gate = nn.Linear(hidden_dim, vector_dim)
         self.coordinate_edge_head = nn.Sequential(
             nn.Linear(4 * hidden_dim + radial_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
         )
-        self.volume_head = nn.Sequential(
-            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
-        )
-        self.shape_head = nn.Sequential(
-            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6)
-        )
+        self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
+        self.shape_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 6))
 
     def forward(
         self,
@@ -225,20 +221,27 @@ class HybridCrystalDenoiser(nn.Module):
             batch,
             graphs,
         )
-        gaugeflow = self.conditioner(
+        gauge_atlas = self.gauge_atlas(
             tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
         )
-        node_condition = gaugeflow.graph_condition[batch]
+        node_condition = gauge_atlas.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition
         vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_vector_head.in_features, 3))
         for block in self.blocks:
             nodes, vectors = block(
-                nodes, vectors, source, target, edges.direction, gaugeflow.edge_response,
-                radial, node_time, node_condition,
+                nodes,
+                vectors,
+                source,
+                target,
+                edges.direction,
+                gauge_atlas.edge_response,
+                radial,
+                node_time,
+                node_condition,
             )
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_time = self.time_embedding(time)
-        graph_context = torch.cat((graph_nodes, graph_time, gaugeflow.graph_condition), dim=-1)
+        graph_context = torch.cat((graph_nodes, graph_time, gauge_atlas.graph_condition), dim=-1)
         node_context = torch.cat((nodes, node_time, node_condition), dim=-1)
         element_logits = self.element_head(node_context)
         time_gated_vectors = vectors * torch.sigmoid(self.coordinate_time_gate(node_time)).unsqueeze(-1)
@@ -253,9 +256,7 @@ class HybridCrystalDenoiser(nn.Module):
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
         # instead use L^-1; mixing these two transformations is incorrect.)
-        fractional_score = torch.einsum(
-            "ni,nij->nj", cartesian_score, lattice[batch].transpose(-1, -2)
-        )
+        fractional_score = torch.einsum("ni,nij->nj", cartesian_score, lattice[batch].transpose(-1, -2))
         # Fractional zero mean is the translation-horizontal chart used by the
         # coordinate probability path.
         fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
@@ -268,5 +269,5 @@ class HybridCrystalDenoiser(nn.Module):
             coordinate_fractional_score=fractional_score,
             log_volume_score=volume_score,
             log_shape_score=shape_score,
-            gaugeflow=gaugeflow,
+            gauge_atlas=gauge_atlas,
         )

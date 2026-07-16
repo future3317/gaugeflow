@@ -154,7 +154,6 @@ class GaussianRadialBasis(torch.nn.Module):
         super().__init__()
         if count < 2 or cutoff <= 0:
             raise ValueError("RBF count must be at least two and cutoff positive")
-        self.count = int(count)
         self.cutoff = float(cutoff)
         self.register_buffer("centers", torch.linspace(0.0, cutoff, count))
         self.width = float(cutoff / (count - 1))

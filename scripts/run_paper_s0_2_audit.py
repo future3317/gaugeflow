@@ -17,7 +17,7 @@ from typing import Any
 
 import torch
 
-from gaugeflow.production.harmonic_gaugeflow import (
+from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
     GeometryHarmonicQueries,
     HarmonicGaugeFlowConditioner,
 )

@@ -51,7 +51,6 @@ class _GeometryMessageBlock(nn.Module):
         use_vector_invariants: bool,
     ):
         super().__init__()
-        self.hidden_dim = hidden_dim
         self.vector_channels = vector_channels
         self.use_rbf = use_rbf
         self.use_vector_invariants = use_vector_invariants
@@ -131,7 +130,6 @@ class GeometryAwareSiteScorer(nn.Module):
             or (endpoint_classes is not None and endpoint_classes < 1)
         ):
             raise ValueError("hidden_dim, layers, vector_channels, optional endpoint_classes and score_bound must be positive")
-        self.hidden_dim = hidden_dim
         self.endpoint_classes = endpoint_classes
         self.score_bound = float(score_bound)
         self.use_vector_invariants = use_vector_invariants

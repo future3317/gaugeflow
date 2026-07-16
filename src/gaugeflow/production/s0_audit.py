@@ -18,6 +18,14 @@ from .equivariant_denoiser import HybridCrystalDenoiser
 
 DESIGN_SHA256 = "9ad4ed018600a62b5f663255a1e0a4d59abcdc26303e523a4f151bdfaf07dd31"
 FORBIDDEN_SIGNATURE_FIELDS = {
+    # Dataset bookkeeping and audit labels may remain on the PyG batch, but
+    # they are never production-model inputs. Naming them here makes that
+    # quarantine executable instead of relying on a future trainer to
+    # remember which fields are target-derived.
+    "material_id",
+    "niggli_transform",
+    "response_stratum",
+    "zero_response",
     "target_cif",
     "target_lattice",
     "target_space_group",

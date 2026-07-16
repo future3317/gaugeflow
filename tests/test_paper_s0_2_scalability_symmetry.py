@@ -5,12 +5,12 @@ import pytest
 import torch
 
 from gaugeflow.geometry import GaussianRadialBasis
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
-from gaugeflow.production.harmonic_gaugeflow import (
+from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
     ConditionFreeGeometryQueryEncoder,
     GeometryHarmonicQueries,
     HarmonicGaugeFlowConditioner,
 )
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.space_group_router import compatibility_record
 from gaugeflow.production.state_projection import project_hybrid_reverse_state
@@ -211,7 +211,7 @@ def _denoiser_input() -> tuple[torch.Tensor, ...]:
 def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     torch.manual_seed(101)
     model = HybridCrystalDenoiser(
-        hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, harmonic_grid=16
+        hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, atlas_residual_circle_samples=8
     ).eval()
     values = _denoiser_input()
     projected_shape = torch.einsum("bij,bj->bi", values[8], values[3])
@@ -232,7 +232,7 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
 def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     torch.manual_seed(102)
     model = HybridCrystalDenoiser(
-        hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, harmonic_grid=16
+        hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, atlas_residual_circle_samples=8
     ).eval()
     values = list(_denoiser_input())
     values[3] = torch.zeros_like(values[3])

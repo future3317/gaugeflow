@@ -114,7 +114,6 @@ class PiezoCrystalDataset(Dataset):
             self.frame = _select_manifest_split(self.frame, self.manifest_path, split)
         if target_cache_dir is None and condition_column not in self.frame:
             raise ValueError(f"{self.path} does not contain {condition_column}")
-        self.split = split
         self.condition_column = condition_column
         self.target_cache_dir = Path(target_cache_dir) if target_cache_dir is not None else None
         if self.target_cache_dir is not None and not self.target_cache_dir.is_dir():

@@ -1,4 +1,9 @@
-"""Sample standalone GaugeFlow from a tensor orbit; no target lattice is accepted."""
+"""Sample the archived continuous-flow GaugeFlow prototype.
+
+This is not the revised-paper hybrid reverse sampler. It is retained only for
+frozen historical reproduction and fails closed without an explicit
+acknowledgement.
+"""
 
 from __future__ import annotations
 
@@ -33,6 +38,15 @@ def load_target(path: Path, scales: torch.Tensor) -> torch.Tensor:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--acknowledge-legacy-prototype",
+        action="store_true",
+        help=(
+            "Required explicit acknowledgement that this script samples the archived "
+            "GaugeFlowVectorField/RiemannianCrystalFlowMatcher prototype, not the "
+            "revised-paper production hybrid diffusion."
+        ),
+    )
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--target", type=Path, required=True)
     parser.add_argument("--num-samples", type=int, required=True)
@@ -42,6 +56,13 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
+    if not args.acknowledge_legacy_prototype:
+        parser.error(
+            "scripts/sample.py is an archived legacy-prototype entry point and cannot "
+            "serve as the revised-paper reverse sampler. Pass "
+            "--acknowledge-legacy-prototype only when reproducing a frozen historical "
+            "protocol."
+        )
     payload, metadata = load_safe_checkpoint(args.checkpoint, map_location=args.device)
     config = metadata["config"]
     model = GaugeFlowVectorField(

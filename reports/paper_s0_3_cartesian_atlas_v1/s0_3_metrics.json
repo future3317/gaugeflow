@@ -1,0 +1,42 @@
+{
+  "protocol": "paper_s0_3_cartesian_atlas_v1",
+  "scope": "no-training Cartesian-atlas software and numerical qualification",
+  "cpu_float64": {
+    "representative_tensor_error": 1.354438438495678e-08,
+    "representative_token_error": 0.00038421471654600717,
+    "generic_frame_count": 4032,
+    "zero_frame_count": 0,
+    "zero_gate": 0.0,
+    "axial_frame_count": 192,
+    "axial_kind": 1
+  },
+  "shared_score_k3840_reference": {
+    "panel_size": 4,
+    "generic_frame_count": 4032,
+    "aligned_relative_error_mean": 0.07760319303675989,
+    "aligned_relative_error_max": 0.1545890882013213,
+    "response_relative_error_mean": 0.05663830660017542,
+    "response_relative_error_max": 0.09472403100307114
+  },
+  "denoiser": {
+    "translation_max_error": 1.043081283569336e-06,
+    "unimodular_max_error": 8.344650268554688e-07
+  },
+  "cuda_float32": {
+    "representative_tensor_error": 1.652753240932725e-07,
+    "representative_token_error": 0.00010649597243173048,
+    "generic_frame_count": 4032,
+    "zero_frame_count": 0,
+    "zero_gate": 0.0,
+    "axial_frame_count": 192,
+    "axial_kind": 1
+  },
+  "cuda_benchmark": {
+    "status": "NVIDIA GeForce RTX 4060 Ti",
+    "atlas_ms_per_forward": 7.544378390000048,
+    "atlas_peak_memory_mb": 14.919921875,
+    "archived_hopf_k3840_ms_per_forward": 59.04977590000016,
+    "archived_hopf_k3840_peak_memory_mb": 13.6943359375,
+    "finite": true
+  }
+}

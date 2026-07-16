@@ -1,0 +1,48 @@
+{
+  "protocol_id": "paper_s0_4_1_cartesian_atlas_runtime_v1",
+  "decision": "passed_runtime_qualification",
+  "checks": {
+    "predecessor_immutable": true,
+    "generic_raw_candidates": true,
+    "generic_unique_candidates": true,
+    "reference_unique_candidates": true,
+    "reference_aligned": true,
+    "reference_posterior": true,
+    "reference_prior": true,
+    "cuda_latency": true,
+    "cuda_memory": true,
+    "finite": true,
+    "pytest": true,
+    "ruff": true,
+    "mypy": true
+  },
+  "equivalence": {
+    "raw_candidates": 4032,
+    "reference_unique_candidates": 4032,
+    "optimized_unique_candidates": 4032,
+    "aligned_relative_error": 2.167932221237244e-15,
+    "sorted_posterior_l1_error": 4.799606486917268e-16,
+    "prior_l1_error": 0.0
+  },
+  "candidate_profile": {
+    "status": "NVIDIA GeForce RTX 4060 Ti",
+    "reference_raw_plus_dedup_ms": 1.7592507999999896,
+    "optimized_candidate_measure_ms": 0.9876792400000056
+  },
+  "cuda_benchmark": {
+    "status": "NVIDIA GeForce RTX 4060 Ti",
+    "atlas_ms_per_forward": 14.616251180000006,
+    "atlas_peak_memory_mb": 15.1865234375,
+    "archived_hopf_k3840_ms_per_forward": 73.82622359999971,
+    "archived_hopf_k3840_peak_memory_mb": 14.01318359375,
+    "finite": true
+  },
+  "predecessor_report_tree_sha256": "571b1151887049edb79ad5504663dab1ebef4d6873166bfe96dac799a8ef4100",
+  "runtime": {
+    "python": "/home/future04/micromamba/envs/flowmm-t2c/bin/python",
+    "torch": "2.5.1+cu124",
+    "cuda": "12.4",
+    "cuda_available": true,
+    "device": "NVIDIA GeForce RTX 4060 Ti"
+  }
+}

@@ -24,8 +24,6 @@ from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Lattice, Structure
 
 from gaugeflow.assignment import (
-    automorphism_orbit_targets,
-    exact_assignment_distribution,
     exact_assignment_distribution_permutation_log_probability_error,
     exact_assignment_quotient_nll,
     residual_automorphism_permutations,

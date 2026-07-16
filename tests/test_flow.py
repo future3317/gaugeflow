@@ -3,7 +3,7 @@ import copy
 import torch
 
 from gaugeflow.conditioning import apply_condition_dropout, randomize_tensor_orbit_representative
-from gaugeflow.flow import CrystalFlowState, RiemannianCrystalFlowMatcher
+from gaugeflow.flow import RiemannianCrystalFlowMatcher
 from gaugeflow.coupling import translation_aligned_torus_rms
 from gaugeflow.manifold import torus_logmap
 from gaugeflow.model import (

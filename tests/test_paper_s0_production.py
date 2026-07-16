@@ -5,15 +5,15 @@ import torch
 
 from gaugeflow.checkpoints import load_safe_checkpoint, save_safe_checkpoint
 from gaugeflow.manifold import vector_to_symmetric
-from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
-from gaugeflow.production.harmonic_gaugeflow import (
+from gaugeflow.production.archive_harmonic.harmonic_gaugeflow import (
     GeometryHarmonicQueries,
     HarmonicGaugeFlowConditioner,
     nested_hopf_so3_grid,
     weighted_geometric_harmonic_queries,
     weighted_harmonic_alignment_scores,
 )
+from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.space_group_router import (
     SpaceGroupCompatibilityRouter,
@@ -283,7 +283,7 @@ def test_finite_grid_error_decreases_with_k():
 def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_mean():
     torch.manual_seed(14)
     model = HybridCrystalDenoiser(
-        hidden_dim=32, vector_dim=8, layers=2, radial_dim=6, harmonic_grid=12
+        hidden_dim=32, vector_dim=8, layers=2, radial_dim=6, atlas_residual_circle_samples=8
     ).eval()
     values = _small_hybrid_input()
     first = model(*values[:5], torch.tensor([0.2, 0.2]), *values[5:])
@@ -311,6 +311,7 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
 def test_no_target_metadata_in_model_signature():
     parameters = set(inspect.signature(HybridCrystalDenoiser.forward).parameters)
     forbidden = {
+        "material_id", "niggli_transform", "response_stratum", "zero_response",
         "target_cif", "target_lattice", "target_space_group", "target_stabilizer",
         "source_id", "endpoint_id", "target_metadata",
     }
@@ -319,7 +320,7 @@ def test_no_target_metadata_in_model_signature():
 
 def test_checkpoint_manifest_hashes(tmp_path: Path):
     model = HybridCrystalDenoiser(
-        hidden_dim=16, vector_dim=4, layers=1, radial_dim=4, harmonic_grid=8
+        hidden_dim=16, vector_dim=4, layers=1, radial_dim=4, atlas_residual_circle_samples=8
     )
     path = tmp_path / "s0_weights.pt"
     sidecar = save_safe_checkpoint(

@@ -1,0 +1,41 @@
+{
+  "status": "exploratory_implementation_diagnostics_not_official_s0_4",
+  "candidate_measure": {
+    "generic_raw_count": 4032,
+    "generic_unique_count": 4032,
+    "one_sided_axial_raw_count": 32256,
+    "one_sided_axial_unique_count": 8064,
+    "worst_two_sided_axial_raw_count": 258048,
+    "worst_two_sided_axial_unique_count": 16128,
+    "enumeration_order_posterior_difference_fp64": 0.0,
+    "enumeration_order_aligned_difference_fp64": 0.0,
+    "duplicate_expansion_posterior_difference_fp64": 0.0,
+    "duplicate_expansion_aligned_difference_fp64": 0.0
+  },
+  "soft_strata": {
+    "maximum_panel_normalized_jump": 0.026086762314162678,
+    "maximum_infinitesimal_normalized_jump": 9.698426533980966e-06,
+    "all_backward_gradients_finite": true
+  },
+  "axial_refinement": {
+    "circle_samples": [8, 16, 32, 64],
+    "unique_candidate_counts": [8064, 16128, 32256, 64512],
+    "successive_normalized_differences": [
+      0.03596496966445884,
+      0.005285223303377605,
+      3.9071613676857365e-06
+    ],
+    "successive_differences_monotone": true
+  },
+  "synthetic_coverage": {
+    "fixed_panel_size": 8,
+    "maximum_nearest_candidate_geodesic_rad": 0.24777715418795396,
+    "mean_posterior_mode_geodesic_rad": 0.17629991453391342,
+    "nearest_candidate_is_posterior_mode_rate": 0.625
+  },
+  "archived_reference_prior_displacement": {
+    "tensor": 0.077603,
+    "response": 0.056638,
+    "role": "diagnostic_only_not_acceptance_error"
+  }
+}
