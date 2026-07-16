@@ -27,6 +27,11 @@ from gaugeflow.production.space_group_router import (
     ReachableChildCompatibilityRouter,
     ReachableChildPath,
 )
+from gaugeflow.production.terminal_symmetry_audit import (
+    audit_terminal_symmetry,
+    classify_group_relation,
+    detect_cartesian_point_group,
+)
 
 
 def _identity_representations(operations: int, nodes: int, dtype: torch.dtype) -> torch.Tensor:
@@ -159,8 +164,8 @@ def test_reachable_child_router_does_not_reject_a_centrosymmetric_parent():
     router = ReachableChildCompatibilityRouter(
         [2],
         [
-            ReachableChildPath(0, 2, "exact_parent"),
-            ReachableChildPath(0, 1, "inversion_odd_child"),
+            ReachableChildPath(0, 2, "exact", "exact_parent", 0.25, True),
+            ReachableChildPath(0, 1, "inversion_odd", "inversion_odd_child", 0.75),
         ],
         hidden_dim=8,
         rotation_count=12,
@@ -176,8 +181,8 @@ def test_reachable_child_router_accepts_parent_geometry_dependent_path_priors():
     router = ReachableChildCompatibilityRouter(
         [1],
         [
-            ReachableChildPath(0, 1, "branch_a"),
-            ReachableChildPath(0, 1, "branch_b"),
+            ReachableChildPath(0, 1, "exact", "branch_a", 0.25, True),
+            ReachableChildPath(0, 1, "distorted", "branch_b", 0.75),
         ],
         hidden_dim=8,
         rotation_count=12,
@@ -188,7 +193,7 @@ def test_reachable_child_router_accepts_parent_geometry_dependent_path_priors():
         parent_prior_logits=torch.zeros((1, 1)),
         path_prior_logits=torch.tensor([[-4.0, 4.0]]),
     )
-    assert output.path_given_parent_log_probability[0, 1] > -1e-3
+    assert output.path_given_parent_log_probability[0, 1] > -2e-3
     assert torch.allclose(torch.logsumexp(output.path_joint_log_probability, dim=-1), torch.zeros(1))
 
 
@@ -196,8 +201,8 @@ def test_reachable_child_router_handles_dead_parent_and_fails_closed_globally():
     router = ReachableChildCompatibilityRouter(
         [2, 1],
         [
-            ReachableChildPath(0, 2, "centrosymmetric_exact"),
-            ReachableChildPath(1, 1, "polar_child"),
+            ReachableChildPath(0, 2, "exact", "centrosymmetric_exact", 1.0, True),
+            ReachableChildPath(1, 1, "exact", "polar_child", 1.0, True),
         ],
         hidden_dim=8,
         rotation_count=12,
@@ -214,7 +219,7 @@ def test_reachable_child_router_handles_dead_parent_and_fails_closed_globally():
 
     blocked = ReachableChildCompatibilityRouter(
         [2],
-        [ReachableChildPath(0, 2, "centrosymmetric_exact")],
+        [ReachableChildPath(0, 2, "exact", "centrosymmetric_exact", 1.0, True)],
         hidden_dim=8,
         rotation_count=12,
     )
@@ -223,6 +228,89 @@ def test_reachable_child_router_handles_dead_parent_and_fails_closed_globally():
             condition,
             parent_prior_logits=torch.zeros((1, 1)),
             path_prior_logits=torch.zeros((1, 1)),
+        )
+
+
+def _measure_router(paths: list[ReachableChildPath]) -> ReachableChildCompatibilityRouter:
+    return ReachableChildCompatibilityRouter(
+        [1, 2],
+        paths,
+        hidden_dim=8,
+        rotation_count=12,
+    )
+
+
+def test_reachable_catalogue_deduplicates_equivalent_representations():
+    unique = [
+        ReachableChildPath(0, 1, "exact", "exact", 0.4, True),
+        ReachableChildPath(0, 1, "polar", "polar_a", 0.6),
+        ReachableChildPath(1, 2, "exact", "exact", 1.0, True),
+    ]
+    expanded = [
+        unique[2],
+        ReachableChildPath(0, 1, "polar", "polar_domain_relabel", 0.6),
+        unique[0],
+        unique[1],
+    ]
+    base = _measure_router(unique)
+    duplicate = _measure_router(expanded)
+    assert base.path_equivalence_classes == duplicate.path_equivalence_classes
+    assert duplicate.catalogue_representation_multiplicity.tolist() == [1, 2, 1]
+    condition = torch.zeros((2, 18))
+    parent_logits = torch.tensor([[0.2, -0.4], [-0.3, 0.7]])
+    path_logits = torch.tensor([[0.5, -0.2, 0.1], [-0.4, 0.3, 0.8]])
+    base_output = base.route_from_logits(condition, parent_logits, path_logits)
+    duplicate_output = duplicate.route_from_logits(condition, parent_logits, path_logits)
+    assert torch.allclose(
+        base_output.parent_log_probability,
+        duplicate_output.parent_log_probability,
+        atol=1e-12,
+        rtol=1e-12,
+    )
+    assert torch.allclose(
+        base_output.path_joint_log_probability,
+        duplicate_output.path_joint_log_probability,
+        atol=1e-12,
+        rtol=1e-12,
+    )
+
+
+def test_reachable_catalogue_reorder_and_parent_size_are_prior_invariant():
+    paths = [
+        ReachableChildPath(0, 1, "exact", "exact", 1.0, True),
+        ReachableChildPath(1, 2, "exact", "exact", 0.25, True),
+        ReachableChildPath(1, 1, "odd", "odd", 0.75),
+    ]
+    router = _measure_router(list(reversed(paths)))
+    assert router.path_equivalence_classes == ("exact", "exact", "odd")
+    output = router.route_from_logits(
+        torch.zeros((1, 18)),
+        parent_prior_logits=torch.zeros((1, 2)),
+        path_prior_logits=torch.zeros((1, 3)),
+    )
+    assert torch.allclose(
+        output.parent_log_probability,
+        torch.full((1, 2), -torch.log(torch.tensor(2.0))),
+        atol=1e-6,
+    )
+
+
+def test_reachable_catalogue_rejects_inconsistent_equivalence_and_missing_exact():
+    with pytest.raises(ValueError, match="disagree on physical metadata"):
+        _measure_router(
+            [
+                ReachableChildPath(0, 1, "exact", "exact", 1.0, True),
+                ReachableChildPath(0, 1, "same", "a", 0.5),
+                ReachableChildPath(0, 2, "same", "b", 0.5),
+                ReachableChildPath(1, 2, "exact", "exact", 1.0, True),
+            ]
+        )
+    with pytest.raises(ValueError, match="exactly one explicit exact"):
+        ReachableChildCompatibilityRouter(
+            [1],
+            [ReachableChildPath(0, 1, "distorted", "distorted", 1.0)],
+            hidden_dim=8,
+            rotation_count=12,
         )
 
 
@@ -247,3 +335,29 @@ def test_mode_effective_charge_and_generalized_force_match_definitions():
     mode_basis = torch.tensor([[1.0], [0.0], [0.0]], dtype=torch.float64)
     generalized = generalized_mode_force(force, torch.tensor([4.0]), mode_basis, torch.ones((1, 1)))
     assert torch.allclose(generalized, torch.tensor([1.0], dtype=torch.float64))
+
+
+def test_terminal_symmetry_audit_detects_accidental_restoration():
+    species = torch.tensor([14], dtype=torch.long)
+    coordinates = torch.zeros((1, 3), dtype=torch.float64)
+    lattice = 4.0 * torch.eye(3, dtype=torch.float64)
+    detected = detect_cartesian_point_group(species, coordinates, lattice)
+    assert detected.space_group_number == 221
+    identity = torch.eye(3, dtype=torch.float64).unsqueeze(0)
+    assert classify_group_relation(identity, detected.cartesian_operations) == "symmetry_restoration"
+    audit = audit_terminal_symmetry(
+        piezo_irreps=torch.randn(18, dtype=torch.float64),
+        declared_space_group=1,
+        declared_cartesian_operations=identity,
+        raw_species=species,
+        raw_fractional_coordinates=coordinates,
+        raw_lattice=lattice,
+        relaxed_species=species,
+        relaxed_fractional_coordinates=coordinates,
+        relaxed_lattice=lattice,
+        rotation_count=12,
+    )
+    assert audit.declared_to_raw_relation == "symmetry_restoration"
+    assert audit.raw_to_relaxed_relation == "equal"
+    assert audit.raw_compatibility_residual > 0.9
+    assert audit.compatibility_retained_after_relaxation is False

@@ -1,0 +1,114 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "GaugeFlow H0 数据激活审计",
+    "description": "层级 parent–distortion–child 体系进入训练前的数据资格状态。",
+    "generatedAt": "2026-07-17T03:00:00+08:00",
+    "sources": [
+      {
+        "id": "alex_profile",
+        "label": "Alex-MP-20 source profile",
+        "path": "reports/h0_data_activation_v1/alex_mp20_source_profile.json"
+      },
+      {
+        "id": "h0_manifest",
+        "label": "GaugeFlow H0 activation manifest",
+        "path": "reports/h0_data_activation_v1/activation_manifest.json"
+      }
+    ],
+    "charts": [
+      {
+        "id": "formula_overlap_chart",
+        "title": "Upstream Alex-MP-20 reduced-formula overlap",
+        "description": "All three upstream split pairs contain shared reduced-formula groups, so the split cannot be reused for GaugeFlow evaluation.",
+        "type": "bar",
+        "dataset": "formula_overlap",
+        "encodings": {
+          "x": {"field": "split_pair", "type": "nominal", "title": "Split pair"},
+          "y": {"field": "reduced_formula_groups", "type": "quantitative", "title": "Shared reduced-formula groups"}
+        },
+        "source": {
+          "id": "alex_profile",
+          "label": "Alex-MP-20 source profile",
+          "path": "reports/h0_data_activation_v1/alex_mp20_source_profile.json",
+          "query": {
+            "description": "Chart materialization from the reviewed full-scan JSON profile.",
+            "engine": "DuckDB-compatible SQL",
+            "language": "sql",
+            "sql": "SELECT * FROM (VALUES ('train-val', 15621, 0, 675204), ('train-test', 15524, 0, 675204), ('val-test', 4278, 0, 675204)) AS t(split_pair, reduced_formula_groups, material_id_overlap, total_rows)",
+            "tables_used": ["reports/h0_data_activation_v1/alex_mp20_source_profile.json"],
+            "filters": ["all 675,204 rows", "no sampling"],
+            "metric_definitions": ["Reduced-formula overlap is the size of the intersection of reduced atomic-number count signatures between two upstream splits."]
+          }
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "gate_status_table",
+        "title": "H0 component status",
+        "dataset": "gate_status",
+        "columns": [
+          {"field": "component", "label": "Component", "type": "text"},
+          {"field": "status", "label": "Status", "type": "text"},
+          {"field": "evidence", "label": "Current evidence", "type": "text"}
+        ],
+        "defaultSort": {"field": "component", "direction": "asc"},
+        "source": {
+          "id": "h0_manifest",
+          "label": "GaugeFlow H0 activation manifest",
+          "path": "reports/h0_data_activation_v1/activation_manifest.json",
+          "query": {
+            "description": "Table materialization from the reviewed H0 component decisions.",
+            "engine": "DuckDB-compatible SQL",
+            "language": "sql",
+            "sql": "SELECT * FROM (VALUES ('H0-A', 'blocked_split_not_frozen', 'Source hashes and 675,204-row validity profile pass.'), ('H0-B', 'partial_missing_attestations', '10,034/10,034 force-constant caches; three attestations open.'), ('H0-C', 'blocked_teacher_missing', 'MatPES-PBE files present; no frozen checkpoint.'), ('H0-D', 'blocked_catalogue_missing', 'No versioned OPD physical-class catalogue.'), ('H0-E', 'blocked_pilot_missing', 'No 1,000-5,000 structure decomposition pilot.')) AS t(component, status, evidence)",
+            "tables_used": ["reports/h0_data_activation_v1/activation_manifest.json"],
+            "filters": ["H0-A through H0-E"],
+            "metric_definitions": ["H0 passes only if every H0-A through H0-E component is qualified."]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {"id": "title", "type": "markdown", "body": "# GaugeFlow H0 数据激活审计"},
+      {"id": "summary", "type": "markdown", "body": "## 技术结论\n\n**H0 未通过，必须停在 H1 之前。** Alex-MP-20 本体结构有效，但上游 split 存在显著 formula leakage；PhononDB force constants 已完整派生但还缺三类正式 attestation；MatPES teacher、OPD 物理路径测度和 parent decomposition pilot 尚未资格化。"},
+      {"id": "finding", "type": "markdown", "body": "## Alex 数据有效，但上游 split 不可用于评估\n\n675,204 条记录在原子范围、坐标/晶格形状、有限值和正体积检查上全部通过，material ID 也无跨 split 重复。然而 train–val、train–test、val–test 分别共享 15,621、15,524 和 4,278 个 reduced-formula groups，因此必须先按 child 结构重建 formula/prototype-disjoint split。"},
+      {"id": "formula_chart_block", "type": "chart", "chartId": "formula_overlap_chart"},
+      {"id": "scope", "type": "markdown", "body": "## 范围、数据粒度与判定定义\n\n粒度是一行一个 child crystal。H0-A 资格要求新的 child split；后续 parent candidates、alternate cells、OPD paths、mode scans 和跨源 joins 必须继承该 split。数据存在或哈希匹配不等于模型训练已获授权。"},
+      {"id": "gate_table_block", "type": "table", "tableId": "gate_status_table"},
+      {"id": "method", "type": "markdown", "body": "## 方法与稳健性检查\n\n数据文件按路径、字节数和冻结 manifest 中的 SHA-256 核对；Alex 内容使用 PyArrow 22 全量分批扫描。PyArrow 19 的 `Repetition level histogram size mismatch` 被定位为读取由 Arrow 22 写出的 Parquet 时的版本不兼容，并通过锁定 PyArrow 22 修复，未改写源文件。"},
+      {"id": "limits", "type": "markdown", "body": "## 未确定性与边界\n\n本轮没有构建 prototype clusters、没有派生新 split、没有训练、没有 relaxation、DFT、DFPT 或 tensor conditioning。PhononDB 仍缺 translational-zero-mode、degenerate-subspace numerical stability 和 non-analytic-correction attestations。"},
+      {"id": "next", "type": "markdown", "body": "## 建议的下一步\n\n1. 冻结 Alex formula/prototype child split。\n2. 完成 PhononDB 三项 attestation。\n3. 资格化冻结的 MatPES-PBE teacher 与架构不同的 disagreement teacher。\n4. 建立去重的 OPD physical path-class measure。\n5. 仅在上述完成后运行 1,000–5,000 个结构的 parent decomposition pilot。"},
+      {"id": "questions", "type": "markdown", "body": "## 后续问题\n\nprototype cluster 的定义和 StructureMatcher 近重复合并规则需要在 split 构建前预注册；NAC 缺失应作为明确的 source capability flag，而不是默认当作零。"}
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "partial",
+    "generatedAt": "2026-07-17T03:00:00+08:00",
+    "datasets": {
+      "formula_overlap": [
+        {"split_pair": "train–val", "reduced_formula_groups": 15621, "material_id_overlap": 0, "total_rows": 675204},
+        {"split_pair": "train–test", "reduced_formula_groups": 15524, "material_id_overlap": 0, "total_rows": 675204},
+        {"split_pair": "val–test", "reduced_formula_groups": 4278, "material_id_overlap": 0, "total_rows": 675204}
+      ],
+      "gate_status": [
+        {"component": "H0-A", "status": "blocked_split_not_frozen", "evidence": "Source hashes and 675,204-row validity profile pass."},
+        {"component": "H0-B", "status": "partial_missing_attestations", "evidence": "10,034/10,034 force-constant caches; three attestations open."},
+        {"component": "H0-C", "status": "blocked_teacher_missing", "evidence": "MatPES-PBE files present; no frozen checkpoint."},
+        {"component": "H0-D", "status": "blocked_catalogue_missing", "evidence": "No versioned OPD physical-class catalogue."},
+        {"component": "H0-E", "status": "blocked_pilot_missing", "evidence": "No 1,000–5,000 structure decomposition pilot."}
+      ]
+    },
+    "accessIssues": [
+      {"id": "h0_missing_artifacts", "title": "H0 required artifacts are incomplete", "description": "Split, teacher, catalogue, pilot, and three PhononDB attestations are required before H1."}
+    ]
+  },
+  "sources": [
+    {"id": "alex_profile", "label": "Alex-MP-20 source profile", "path": "reports/h0_data_activation_v1/alex_mp20_source_profile.json"},
+    {"id": "h0_manifest", "label": "GaugeFlow H0 activation manifest", "path": "reports/h0_data_activation_v1/activation_manifest.json"}
+  ]
+}

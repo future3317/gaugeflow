@@ -7,8 +7,9 @@ marginalization**. It does not use the retired continuous-logit flow as a
 fallback.
 
 The project now has a tensor-free production trainer and joint reverse sampler.
-Their bounded S1a-I0 software closure passed on CUDA, while the real-data S1a
-generator qualification has not started. Consequently, the repository does
+Their bounded S1a-I0 software closure passed on CUDA. The first H0 data
+activation audit did not pass, so real-data H1a/H1b training has not started.
+Consequently, the repository does
 not claim successful tensor-conditioned generation or target-separated sample
 distributions.
 
@@ -27,7 +28,8 @@ distributions.
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| Tensor-free real-data S1a training | Not started |
+| H0 data activation | Frozen as `H0_not_passed_stop_before_H1` |
+| Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
 The condensed no-training evidence is:
@@ -101,8 +103,9 @@ before continuous amplitude diffusion, child-group intersection, mass-weighted
 mode reconstruction and a fail-closed 0.10 Angstrom residual RMS budget. The
 exact branch is `d = empty`, so there is no duplicate legacy generator.
 
-Tensor compatibility is evaluated on reachable child groups and marginalized
-over paths. It is not a hard parent-space-group filter: a centrosymmetric
+Tensor compatibility is evaluated on deduplicated physical reachable-child
+path classes with an explicit base-measure mass. Catalogue tuple multiplicity
+and ordering cannot change the prior. It is not a hard parent-space-group filter: a centrosymmetric
 parent remains available when an inversion-odd distortion reaches a compatible
 polar child. The full Cartesian atlas is reserved for mode/strain/residual
 denoising after a parent geometry exists; discrete parent/path decisions use
@@ -111,8 +114,9 @@ orbit invariants and child-compatibility residuals.
 See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_breaking_v1.md).
 The original Chinese design/data note is retained as
 [`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
-These interfaces do not authorize hierarchical training. Real-data S1a must
-still qualify the parent generator first, followed by H0--H6 in order.
+These interfaces do not authorize hierarchical training. The first formal H0
+activation audit is frozen as `H0_not_passed_stop_before_H1`; H1a/H1b and all
+later gates remain unauthorized.
 
 ## Repository layout
 
@@ -126,6 +130,7 @@ src/gaugeflow/direct_irrep.py complete direct-CG baseline
 scripts/                    production train/sample, current data and audit entry points
 configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
+reports/h0_data_activation_v1/ current hierarchical data-activation evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```
@@ -203,9 +208,13 @@ Data build/audit entry points are:
 $PY scripts/build_tensororbit_v2_raw.py --help
 $PY scripts/audit_tensororbit_v2_build.py --help
 $PY scripts/prepare_v2_oracle_qualification.py --help
+$PY scripts/audit_alex_mp20_source.py --help
+$PY scripts/audit_h0_activation.py --help
 ```
 
-Run the tensor-free trainer and sampler only with a versioned S1a protocol:
+The trainer and sampler below are implementation entry points, not current
+authorization to run H1. After H0 passes, run them only under a versioned H1a
+protocol:
 
 ```bash
 $PY scripts/train_production.py --csv /path/to/train.csv \
@@ -228,8 +237,8 @@ not authorize oracle promotion, relaxation, DFT or DFPT.
 - Keep a physical zero tensor distinct from a missing condition.
 - Use SO(3) for the polar rank-three tensor orbit and O(3) only for crystal
   compatibility diagnostics where parity is explicit.
-- The trainer must pass real-data tensor-free S1a before enabling the Cartesian
-  conditioner.
+- H0 must pass before H1a starts. H1 requires both the P1 real-data H1a
+  generator and the full 230-space-group/Wyckoff H1b generator to pass.
 - Any atlas simplification must be a new versioned method. The failed 24-frame
   approximation cannot be reused.
 - Matched conditioner comparisons must share the same backbone, data, budget,
@@ -237,8 +246,10 @@ not authorize oracle promotion, relaxation, DFT or DFPT.
 
 ## Next implementation milestone
 
-The next milestone remains the versioned real-data S1a parent-generator run
-with decoded crystal validity, uniqueness, novelty, composition, lattice and
-checkpoint-recovery metrics. Only after it passes may the project activate the
-mode catalogue and parent--child training sequence. Tensor conditioning remains
-the final H6 step, after tensor-free hierarchical generation qualifies.
+The next milestone is completion of H0, not training. Alex-MP-20 contains
+675,204 structurally valid rows, but its upstream split has 15,621 train--val,
+15,524 train--test and 4,278 val--test reduced-formula overlaps. GaugeFlow must
+freeze a formula/prototype-disjoint child split first. H0 also requires the
+remaining PhononDB derivation attestations, a frozen MatPES-PBE teacher, a
+deduplicated OPD physical path measure and the bounded parent-decomposition
+pilot. Only then may H1a and H1b start. Tensor conditioning remains H6.

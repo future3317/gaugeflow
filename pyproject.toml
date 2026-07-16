@@ -7,7 +7,14 @@ name = "gaugeflow"
 version = "0.1.0"
 description = "Stabilizer-aware response-field flow for tensor-orbit conditioned crystal generation"
 requires-python = ">=3.10"
-dependencies = ["torch>=2.5", "torch-geometric>=2.5", "e3nn>=0.5", "pymatgen>=2023.8", "pandas>=2.0"]
+dependencies = [
+  "torch>=2.5",
+  "torch-geometric>=2.5",
+  "e3nn>=0.5",
+  "pymatgen>=2023.8",
+  "pandas>=2.0",
+  "pyarrow>=22.0.0",
+]
 
 [project.optional-dependencies]
 dev = ["mypy==1.16.1", "ruff==0.12.3", "pytest>=8"]

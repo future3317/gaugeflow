@@ -7,6 +7,7 @@ reaches a non-centrosymmetric child compatible with the requested response.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -199,14 +200,31 @@ class TerminalGroupCompatibilityRouter(nn.Module):
 
 @dataclass(frozen=True)
 class ReachableChildPath:
-    """One discrete parent-to-child branch used before continuous generation."""
+    """One representation of a physical parent-to-child path class.
+
+    ``equivalence_class`` identifies paths related by parent normalizers,
+    k-star relabeling, OPD basis gauges, unimodular supercell basis changes, or
+    domain relabeling.  Such representations are deduplicated before a prior is
+    built.  ``class_prior_mass`` is the physical base-measure mass of the
+    *class*, not a multiplicity attached to one catalogue tuple.
+    """
 
     parent_index: int
     child_space_group: int
+    equivalence_class: str
     label: str
+    class_prior_mass: float
+    exact_branch: bool = False
 
     def __post_init__(self) -> None:
-        if self.parent_index < 0 or not 1 <= self.child_space_group <= 230 or not self.label:
+        if (
+            self.parent_index < 0
+            or not 1 <= self.child_space_group <= 230
+            or not self.equivalence_class
+            or not self.label
+            or not math.isfinite(self.class_prior_mass)
+            or self.class_prior_mass <= 0.0
+        ):
             raise ValueError("reachable child path metadata is invalid")
 
 
@@ -216,6 +234,61 @@ class ReachableChildRouting:
     path_given_parent_log_probability: torch.Tensor
     path_compatibility_residual: torch.Tensor
     path_joint_log_probability: torch.Tensor
+
+
+def _canonicalize_reachable_paths(
+    parent_space_groups: tuple[int, ...],
+    paths: tuple[ReachableChildPath, ...],
+) -> tuple[tuple[ReachableChildPath, ...], tuple[int, ...]]:
+    """Deduplicate catalogue representations into physical path classes.
+
+    Duplicate representations must agree on their terminal group, physical
+    class mass, and exact-branch status.  The result is sorted by parent and
+    equivalence key, so input enumeration order cannot affect model columns.
+    """
+    grouped: dict[tuple[int, str], list[ReachableChildPath]] = {}
+    for path in paths:
+        grouped.setdefault((path.parent_index, path.equivalence_class), []).append(path)
+
+    canonical: list[ReachableChildPath] = []
+    multiplicity: list[int] = []
+    for key in sorted(grouped):
+        representations = grouped[key]
+        reference = representations[0]
+        if any(
+            path.child_space_group != reference.child_space_group
+            or path.exact_branch != reference.exact_branch
+            or not math.isclose(
+                path.class_prior_mass,
+                reference.class_prior_mass,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            for path in representations[1:]
+        ):
+            raise ValueError(
+                "equivalent reachable-path representations disagree on physical metadata"
+            )
+        canonical.append(
+            ReachableChildPath(
+                parent_index=reference.parent_index,
+                child_space_group=reference.child_space_group,
+                equivalence_class=reference.equivalence_class,
+                label=min(path.label for path in representations),
+                class_prior_mass=reference.class_prior_mass,
+                exact_branch=reference.exact_branch,
+            )
+        )
+        multiplicity.append(len(representations))
+
+    for parent_index, parent_space_group in enumerate(parent_space_groups):
+        selected = [path for path in canonical if path.parent_index == parent_index]
+        exact = [path for path in selected if path.exact_branch]
+        if len(exact) != 1:
+            raise ValueError("every parent requires exactly one explicit exact path class")
+        if exact[0].child_space_group != parent_space_group:
+            raise ValueError("an exact path must terminate in its parent space group")
+    return tuple(canonical), tuple(multiplicity)
 
 
 class ReachableChildCompatibilityRouter(nn.Module):
@@ -242,16 +315,20 @@ class ReachableChildCompatibilityRouter(nn.Module):
     ) -> None:
         super().__init__()
         parents = tuple(int(value) for value in parent_space_groups)
-        selected_paths = tuple(paths)
+        catalogue_paths = tuple(paths)
         if not parents or len(set(parents)) != len(parents) or any(value < 1 or value > 230 for value in parents):
             raise ValueError("reachable router requires unique parent groups in 1..230")
-        if not selected_paths or any(path.parent_index >= len(parents) for path in selected_paths):
+        if not catalogue_paths or any(path.parent_index >= len(parents) for path in catalogue_paths):
             raise ValueError("every reachable path must reference a represented parent")
-        if set(path.parent_index for path in selected_paths) != set(range(len(parents))):
+        if set(path.parent_index for path in catalogue_paths) != set(range(len(parents))):
             raise ValueError("every represented parent needs at least one reachable child path")
-        if len(set((path.parent_index, path.label) for path in selected_paths)) != len(selected_paths):
-            raise ValueError("path labels must be unique within each parent")
+        selected_paths, representation_multiplicity = _canonicalize_reachable_paths(
+            parents, catalogue_paths
+        )
         self.parent_space_groups = parents
+        self._path_equivalence_classes = tuple(
+            path.equivalence_class for path in selected_paths
+        )
         self.child_records = tuple(compatibility_record(path.child_space_group) for path in selected_paths)
         self.hard_zero_rank = hard_zero_rank
         self.parent_prior = nn.Sequential(
@@ -267,9 +344,25 @@ class ReachableChildCompatibilityRouter(nn.Module):
             torch.tensor([path.parent_index for path in selected_paths], dtype=torch.long),
         )
         self.register_buffer(
+            "path_log_base_measure",
+            torch.tensor(
+                [math.log(path.class_prior_mass) for path in selected_paths],
+                dtype=torch.float64,
+            ),
+        )
+        self.register_buffer(
+            "catalogue_representation_multiplicity",
+            torch.tensor(representation_multiplicity, dtype=torch.long),
+        )
+        self.register_buffer(
             "child_compatible_rank",
             torch.tensor([record.compatible_rank for record in self.child_records], dtype=torch.long),
         )
+
+    @property
+    def path_equivalence_classes(self) -> tuple[str, ...]:
+        """Canonical physical class keys in model-column order."""
+        return self._path_equivalence_classes
 
     def compatibility(self, piezo_irreps: torch.Tensor) -> torch.Tensor:
         values = [
@@ -314,7 +407,7 @@ class ReachableChildCompatibilityRouter(nn.Module):
         if parent_prior_logits.shape != (batch, parent_count):
             raise ValueError("parent prior logits do not match the represented parents")
         if path_prior_logits.shape != (batch, path_count):
-            raise ValueError("path prior logits do not match the reachable catalogue")
+            raise ValueError("path prior logits do not match the deduplicated physical path classes")
         parent_log_prior = self._normalize_finite_logits(
             parent_prior_logits, name="parent prior logits"
         )
@@ -327,12 +420,13 @@ class ReachableChildCompatibilityRouter(nn.Module):
 
         if bool(torch.isnan(path_prior_logits).any()) or bool(torch.isposinf(path_prior_logits).any()):
             raise ValueError("path prior logits contain NaN or positive infinity")
+        measured_path_logits = path_prior_logits + self.path_log_base_measure.to(path_prior_logits)
         conditional_path = torch.full_like(path_prior_logits, -torch.inf)
         compatible_path = torch.full_like(path_prior_logits, -torch.inf)
         parent_evidence = torch.full_like(parent_log_prior, -torch.inf)
         for parent in range(len(self.parent_space_groups)):
             selected = self.path_parent_index == parent
-            selected_logits = path_prior_logits[:, selected]
+            selected_logits = measured_path_logits[:, selected]
             path_normalizer = torch.logsumexp(selected_logits, dim=-1, keepdim=True)
             available = torch.isfinite(path_normalizer.squeeze(-1))
             if bool(available.any()):

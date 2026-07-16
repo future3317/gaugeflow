@@ -1,0 +1,78 @@
+{
+  "cross_split_overlap": {
+    "train--test": {
+      "material_ids": 0,
+      "reduced_formula_groups": 15524
+    },
+    "train--val": {
+      "material_ids": 0,
+      "reduced_formula_groups": 15621
+    },
+    "val--test": {
+      "material_ids": 0,
+      "reduced_formula_groups": 4278
+    }
+  },
+  "dataset": "Alex-MP-20",
+  "decision": "source_valid_but_rebuild_child_split",
+  "gaugeflow_split_reuse_authorized": false,
+  "grain": "one child crystal structure per row",
+  "profiles": {
+    "test": {
+      "bad_atom_range": 0,
+      "bad_cell_shape": 0,
+      "bad_position_shape": 0,
+      "duplicate_material_ids": 0,
+      "maximum_atoms": 20,
+      "metadata_rows": 67521,
+      "minimum_atoms": 1,
+      "nonfinite": 0,
+      "nonpositive_volume": 0,
+      "null_space_group": 0,
+      "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+      "parquet_format_version": "2.6",
+      "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/test.parquet",
+      "reduced_formula_groups": 64293,
+      "rows": 67521,
+      "unique_material_ids": 67521
+    },
+    "train": {
+      "bad_atom_range": 0,
+      "bad_cell_shape": 0,
+      "bad_position_shape": 0,
+      "duplicate_material_ids": 0,
+      "maximum_atoms": 20,
+      "metadata_rows": 540162,
+      "minimum_atoms": 1,
+      "nonfinite": 0,
+      "nonpositive_volume": 0,
+      "null_space_group": 0,
+      "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+      "parquet_format_version": "2.6",
+      "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/train.parquet",
+      "reduced_formula_groups": 442743,
+      "rows": 540162,
+      "unique_material_ids": 540162
+    },
+    "val": {
+      "bad_atom_range": 0,
+      "bad_cell_shape": 0,
+      "bad_position_shape": 0,
+      "duplicate_material_ids": 0,
+      "maximum_atoms": 20,
+      "metadata_rows": 67521,
+      "minimum_atoms": 1,
+      "nonfinite": 0,
+      "nonpositive_volume": 0,
+      "null_space_group": 0,
+      "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+      "parquet_format_version": "2.6",
+      "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/val.parquet",
+      "reduced_formula_groups": 64395,
+      "rows": 67521,
+      "unique_material_ids": 67521
+    }
+  },
+  "source_structure_validity_passed": true,
+  "upstream_split_formula_disjoint": false
+}

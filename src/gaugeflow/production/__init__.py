@@ -39,6 +39,12 @@ from .space_group_router import (
     TerminalGroupCompatibilityRouter,
 )
 from .state_projection import project_hybrid_reverse_state, project_translation_state
+from .terminal_symmetry_audit import (
+    DetectedPointGroup,
+    TerminalSymmetryAudit,
+    audit_terminal_symmetry,
+    detect_cartesian_point_group,
+)
 from .training import ExponentialMovingAverage, ProductionTrainer, ProductionTrainingConfig
 from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotient
 
@@ -49,6 +55,7 @@ __all__ = [
     "ChildReconstructor",
     "CosineNoiseSchedule",
     "DistortionBlueprint",
+    "DetectedPointGroup",
     "EmpiricalNodeCountPrior",
     "ExponentialMovingAverage",
     "GeneratedHybridBatch",
@@ -75,6 +82,9 @@ __all__ = [
     "TensorFreeHybridDiffusion",
     "TensorFreeReverseSampler",
     "TerminalGroupCompatibilityRouter",
+    "TerminalSymmetryAudit",
+    "audit_terminal_symmetry",
+    "detect_cartesian_point_group",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
     "project_hybrid_reverse_state",

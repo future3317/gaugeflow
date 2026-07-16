@@ -27,10 +27,11 @@
     "pes": "MatPES-PBE-2025.2_frozen_teacher_mode_scans",
     "tensor": "TensorOrbit-JARVIS-v2_after_prior_gates"
   },
-  "mandatory_order": ["H0", "H1", "H2", "H3", "H4", "H5", "H6"],
+  "mandatory_order": ["H0", "H1a", "H1b", "H2", "H3", "H4", "H5", "H6"],
   "gate_state": {
-    "H0": "partial_source_activation_only",
-    "H1": "blocked_on_real_data_s1a",
+    "H0": "failed_no_advance_split_teacher_catalogue_and_pilot_not_qualified",
+    "H1a": "not_authorized",
+    "H1b": "not_authorized",
     "H2": "not_started",
     "H3": "not_started",
     "H4": "not_started",

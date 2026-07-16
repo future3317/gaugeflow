@@ -70,9 +70,13 @@ its code/data/report surface.
 - Real-data S1a training, the full space-group/Wyckoff blueprint sampler,
   tensor fine-tuning, oracle promotion, relaxation, DFT and DFPT have not
   started.
-- The parent--distortion--child mathematical/code contracts are implemented,
-  but H0--H6 data/catalogue/training qualification has not started. The P1
-  tensor-free substrate is now named `ParentBlueprintBatch`.
+- The parent--distortion--child mathematical/code contracts are implemented.
+  `h0_data_activation_v1` has now run and is frozen as
+  `H0_not_passed_stop_before_H1`: source files are present, but the Alex child
+  split, remaining PhononDB derivation attestations, frozen MatPES teacher, OPD
+  physical path measure and parent-decomposition pilot are not all qualified.
+  H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
+  `ParentBlueprintBatch`.
 
 S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
 versioned real-data tensor-free S1a qualification.
@@ -93,10 +97,10 @@ versioned real-data tensor-free S1a qualification.
 - Use the Cartesian atlas only after a concrete parent geometry exists, for
   mode/strain/residual conditioning. Parent/path categorical decisions use
   orbit invariants and reachable-child compatibility.
-- H0 data qualification, real-data S1a/H1, H2 mode supervision, H3
+- H0 data qualification, real-data H1a, full-blueprint H1b, H2 mode supervision, H3
   reconstruction, H4 PES supervision, H5 tensor-free hierarchy and H6 tensor
-  conditioning are strictly ordered. A later stage may not run after an earlier
-  failure.
+  conditioning are strictly ordered. H1 passes only after H1a and H1b pass. A
+  later stage may not run after an earlier failure.
 
 ## Physics and leakage rules
 
