@@ -68,9 +68,33 @@ its code/data/report surface.
 - Real-data S1a training, the full space-group/Wyckoff blueprint sampler,
   tensor fine-tuning, oracle promotion, relaxation, DFT and DFPT have not
   started.
+- The parent--distortion--child mathematical/code contracts are implemented,
+  but H0--H6 data/catalogue/training qualification has not started. The P1
+  tensor-free substrate is now named `ParentBlueprintBatch`.
 
 S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
 versioned real-data tensor-free S1a qualification.
+
+## Hierarchical symmetry-breaking rules
+
+- Treat the sampled exact space group as a parent group, not automatically the
+  final child group.
+- Never hard-reject a parent using piezoelectric compatibility. Marginalize
+  compatibility over versioned reachable child paths and apply the Reynolds
+  residual to the terminal child group.
+- The v1 distortion domain is ordered, stoichiometric and commensurate with
+  `det(B) <= 4`, at most two active OPD branches and a registered bounded
+  residual. Do not smuggle defects, disorder, partial occupancy or large
+  supercells through the residual head.
+- Sample an OPD/isotropy branch before diffusing its reduced continuous
+  amplitude. Do not allow noisy irrep coordinates to change the child subgroup.
+- Use the Cartesian atlas only after a concrete parent geometry exists, for
+  mode/strain/residual conditioning. Parent/path categorical decisions use
+  orbit invariants and reachable-child compatibility.
+- H0 data qualification, real-data S1a/H1, H2 mode supervision, H3
+  reconstruction, H4 PES supervision, H5 tensor-free hierarchy and H6 tensor
+  conditioning are strictly ordered. A later stage may not run after an earlier
+  failure.
 
 ## Physics and leakage rules
 

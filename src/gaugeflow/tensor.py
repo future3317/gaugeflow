@@ -26,6 +26,17 @@ class TensorOrbitShapeMagnitude:
     physical_zero: torch.Tensor
 
 
+def piezo_irrep_blocks(value: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Split ``2x1o + 1x2o + 1x3o`` into multiplicity/irrep blocks."""
+    if value.ndim != 2 or value.shape[-1] != PIEZO_IRREPS.dim:
+        raise ValueError("piezo irreps must have shape [batch,18]")
+    return (
+        value[:, :6].reshape(-1, 2, 3),
+        value[:, 6:11].reshape(-1, 1, 5),
+        value[:, 11:18].reshape(-1, 1, 7),
+    )
+
+
 def tensor_orbit_shape_magnitude(
     piezo_irreps: torch.Tensor, *, near_zero_tolerance: float = 0.0
 ) -> TensorOrbitShapeMagnitude:

@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 from pymatgen.core import Lattice, Structure
 
-from gaugeflow.production.blueprint import P1BlueprintBatch
+from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.checkpointing import (
     load_production_checkpoint,
     read_production_checkpoint_metadata,
@@ -61,7 +61,7 @@ def main() -> None:
     failures = 0
     for index in range(args.num_samples):
         node_count = node_prior.sample(1, generator=count_generator, device=device)
-        blueprint = P1BlueprintBatch.from_counts(node_count, device=device)
+        blueprint = ParentBlueprintBatch.from_p1_counts(node_count, device=device)
         try:
             generated = sampler.sample(
                 blueprint,

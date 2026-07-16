@@ -1,4 +1,9 @@
-"""Full-O(3) piezoelectric compatibility for the symmetry blueprint."""
+"""Full-O(3) compatibility for terminal groups and reachable child paths.
+
+Compatibility is never applied as a hard filter to a parent space group.  A
+centrosymmetric parent may be valid when a sampled inversion-odd distortion
+reaches a non-centrosymmetric child compatible with the requested response.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +15,7 @@ import torch
 from pymatgen.symmetry.groups import SpaceGroup
 from torch import nn
 
-from gaugeflow.harmonic import normalized_low_order_orbit_invariants
+from gaugeflow.conditioning import normalized_low_order_orbit_invariants
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, rotate_rank3
 
 from .lattice_volume_shape import PointGroupMetricChart
@@ -140,8 +145,8 @@ def orbit_compatibility_residual(
     return torch.where(denominator.squeeze(-1) <= epsilon, torch.zeros_like(residual), residual)
 
 
-class SpaceGroupCompatibilityRouter(nn.Module):
-    """Learned invariant prior multiplied by a full-O(3) Reynolds factor."""
+class TerminalGroupCompatibilityRouter(nn.Module):
+    """Invariant prior times the Reynolds factor for a *terminal* space group."""
 
     def __init__(
         self,
@@ -190,3 +195,181 @@ class SpaceGroupCompatibilityRouter(nn.Module):
             incompatible = (self.compatible_rank == 0).unsqueeze(0) & ~physical_zero.unsqueeze(-1)
             logits = logits.masked_fill(incompatible, -torch.inf)
         return logits, residual
+
+
+@dataclass(frozen=True)
+class ReachableChildPath:
+    """One discrete parent-to-child branch used before continuous generation."""
+
+    parent_index: int
+    child_space_group: int
+    label: str
+
+    def __post_init__(self) -> None:
+        if self.parent_index < 0 or not 1 <= self.child_space_group <= 230 or not self.label:
+            raise ValueError("reachable child path metadata is invalid")
+
+
+@dataclass(frozen=True)
+class ReachableChildRouting:
+    parent_log_probability: torch.Tensor
+    path_given_parent_log_probability: torch.Tensor
+    path_compatibility_residual: torch.Tensor
+    path_joint_log_probability: torch.Tensor
+
+
+class ReachableChildCompatibilityRouter(nn.Module):
+    """Marginalize tensor compatibility over reachable child branches.
+
+    The module implements
+
+    ``p(Gp|[e]) proportional p0(Gp|c_inv) sum_d p0(d|Gp)
+    exp(-beta_d r_H(d)([e])^2)``.
+
+    The path catalogue must include the exact branch explicitly when it is
+    allowed.  Therefore a rank-zero parent is not rejected merely because its
+    exact branch is incompatible; another reachable child can carry the mass.
+    """
+
+    def __init__(
+        self,
+        parent_space_groups: tuple[int, ...] | list[int],
+        paths: tuple[ReachableChildPath, ...] | list[ReachableChildPath],
+        *,
+        hidden_dim: int = 128,
+        rotation_count: int = 240,
+        hard_zero_rank: bool = True,
+    ) -> None:
+        super().__init__()
+        parents = tuple(int(value) for value in parent_space_groups)
+        selected_paths = tuple(paths)
+        if not parents or len(set(parents)) != len(parents) or any(value < 1 or value > 230 for value in parents):
+            raise ValueError("reachable router requires unique parent groups in 1..230")
+        if not selected_paths or any(path.parent_index >= len(parents) for path in selected_paths):
+            raise ValueError("every reachable path must reference a represented parent")
+        if set(path.parent_index for path in selected_paths) != set(range(len(parents))):
+            raise ValueError("every represented parent needs at least one reachable child path")
+        if len(set((path.parent_index, path.label) for path in selected_paths)) != len(selected_paths):
+            raise ValueError("path labels must be unique within each parent")
+        self.parent_space_groups = parents
+        self.child_records = tuple(compatibility_record(path.child_space_group) for path in selected_paths)
+        self.hard_zero_rank = hard_zero_rank
+        self.parent_prior = nn.Sequential(
+            nn.Linear(9, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, len(parents))
+        )
+        self.path_prior = nn.Sequential(
+            nn.Linear(9, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, len(selected_paths))
+        )
+        self.log_beta = nn.Parameter(torch.zeros(len(selected_paths)))
+        self.register_buffer("rotations", nested_hopf_so3_grid(rotation_count, dtype=torch.float64))
+        self.register_buffer(
+            "path_parent_index",
+            torch.tensor([path.parent_index for path in selected_paths], dtype=torch.long),
+        )
+        self.register_buffer(
+            "child_compatible_rank",
+            torch.tensor([record.compatible_rank for record in self.child_records], dtype=torch.long),
+        )
+
+    def compatibility(self, piezo_irreps: torch.Tensor) -> torch.Tensor:
+        values = [
+            orbit_compatibility_residual(
+                piezo_irreps,
+                record.operations.to(piezo_irreps),
+                self.rotations.to(piezo_irreps),
+            )
+            for record in self.child_records
+        ]
+        return torch.stack(values, dim=-1)
+
+    @staticmethod
+    def _normalize_finite_logits(logits: torch.Tensor, *, name: str) -> torch.Tensor:
+        """Normalize logits while allowing explicit ``-inf`` catalogue masks."""
+        if bool(torch.isnan(logits).any()) or bool(torch.isposinf(logits).any()):
+            raise ValueError(f"{name} contains NaN or positive infinity")
+        normalizer = torch.logsumexp(logits, dim=-1, keepdim=True)
+        if bool(torch.isneginf(normalizer).any()):
+            raise ValueError(f"{name} masks every available choice")
+        return logits - normalizer
+
+    def route_from_logits(
+        self,
+        piezo_irreps: torch.Tensor,
+        parent_prior_logits: torch.Tensor,
+        path_prior_logits: torch.Tensor,
+    ) -> ReachableChildRouting:
+        """Combine externally predicted structural priors with orbit compatibility.
+
+        ``parent_prior_logits`` may come from invariant composition/size context,
+        while ``path_prior_logits`` may additionally read the sampled parent
+        geometry.  This is the production interface for
+        ``p_0(G_p|c_inv)`` and ``p_0(d|x_p)``; tensor compatibility remains a
+        separate, auditable multiplicative factor.
+        """
+        if piezo_irreps.ndim != 2 or piezo_irreps.shape[-1] != 18:
+            raise ValueError("piezo irreps must have shape [batch,18]")
+        batch = piezo_irreps.shape[0]
+        parent_count = len(self.parent_space_groups)
+        path_count = self.path_parent_index.numel()
+        if parent_prior_logits.shape != (batch, parent_count):
+            raise ValueError("parent prior logits do not match the represented parents")
+        if path_prior_logits.shape != (batch, path_count):
+            raise ValueError("path prior logits do not match the reachable catalogue")
+        parent_log_prior = self._normalize_finite_logits(
+            parent_prior_logits, name="parent prior logits"
+        )
+        residual = self.compatibility(piezo_irreps)
+        compatibility = -torch.nn.functional.softplus(self.log_beta).to(residual) * residual.square()
+        physical_zero = torch.linalg.vector_norm(piezo_irreps, dim=-1) <= 1e-12
+        if self.hard_zero_rank:
+            incompatible = (self.child_compatible_rank == 0).unsqueeze(0) & ~physical_zero.unsqueeze(-1)
+            compatibility = compatibility.masked_fill(incompatible, -torch.inf)
+
+        if bool(torch.isnan(path_prior_logits).any()) or bool(torch.isposinf(path_prior_logits).any()):
+            raise ValueError("path prior logits contain NaN or positive infinity")
+        conditional_path = torch.full_like(path_prior_logits, -torch.inf)
+        compatible_path = torch.full_like(path_prior_logits, -torch.inf)
+        parent_evidence = torch.full_like(parent_log_prior, -torch.inf)
+        for parent in range(len(self.parent_space_groups)):
+            selected = self.path_parent_index == parent
+            selected_logits = path_prior_logits[:, selected]
+            path_normalizer = torch.logsumexp(selected_logits, dim=-1, keepdim=True)
+            available = torch.isfinite(path_normalizer.squeeze(-1))
+            if bool(available.any()):
+                normalized = selected_logits[available] - path_normalizer[available]
+                conditional_path[available.unsqueeze(-1) & selected.unsqueeze(0)] = normalized.reshape(-1)
+            compatible_path[:, selected] = conditional_path[:, selected] + compatibility[:, selected]
+            parent_evidence[:, parent] = torch.logsumexp(compatible_path[:, selected], dim=-1)
+
+        unnormalized_parent = parent_log_prior + parent_evidence
+        parent_normalizer = torch.logsumexp(unnormalized_parent, dim=-1, keepdim=True)
+        if bool(torch.isneginf(parent_normalizer).any()):
+            failed = torch.nonzero(torch.isneginf(parent_normalizer.squeeze(-1))).flatten().tolist()
+            raise ValueError(
+                "no tensor-compatible reachable child path for batch rows "
+                f"{failed}"
+            )
+        parent_log_probability = unnormalized_parent - parent_normalizer
+        path_given_parent = torch.full_like(compatible_path, -torch.inf)
+        for parent in range(len(self.parent_space_groups)):
+            selected = self.path_parent_index == parent
+            normalizer = torch.logsumexp(compatible_path[:, selected], dim=-1, keepdim=True)
+            available = torch.isfinite(normalizer.squeeze(-1))
+            if bool(available.any()):
+                normalized = compatible_path[available][:, selected] - normalizer[available]
+                path_given_parent[available.unsqueeze(-1) & selected.unsqueeze(0)] = normalized.reshape(-1)
+        joint = parent_log_probability[:, self.path_parent_index] + path_given_parent
+        return ReachableChildRouting(
+            parent_log_probability=parent_log_probability,
+            path_given_parent_log_probability=path_given_parent,
+            path_compatibility_residual=residual,
+            path_joint_log_probability=joint,
+        )
+
+    def forward(self, piezo_irreps: torch.Tensor) -> ReachableChildRouting:
+        invariants = normalized_low_order_orbit_invariants(piezo_irreps)
+        return self.route_from_logits(
+            piezo_irreps,
+            self.parent_prior(invariants),
+            self.path_prior(invariants),
+        )

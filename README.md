@@ -23,6 +23,7 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
+| Parent--distortion--child hierarchy | Mathematical/code contracts implemented; no mode catalogue, parent-pair corpus, or hierarchical training is qualified |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
@@ -59,8 +60,11 @@ The revised model is assembled from:
 4. `CartesianSTFGeometryQueryEncoder` for condition-free angular geometry;
 5. `StratifiedCartesianGaugeAtlas` for rank-three tensor-orbit conditioning;
 6. `HybridCrystalDenoiser` for the shared equivariant backbone;
-7. `SpaceGroupCompatibilityRouter` and symmetry expansion primitives for the
-   future blueprint-to-structure interface.
+7. `TerminalGroupCompatibilityRouter` for terminal-group diagnostics and
+   `ReachableChildCompatibilityRouter` for parent-to-child path marginalization;
+8. `ParentBlueprint`, `DistortionBlueprint`, `ModeCatalog` and
+   `ChildReconstructor` for the versioned low-index commensurate
+   parent--distortion--child extension.
 
 The tensor-free objective uses clean-token prediction for the categorical
 state, a wrapped quotient score for coordinates, and clean-state prediction
@@ -78,10 +82,40 @@ isotropic.
 The complete direct-CG baseline remains in `gaugeflow.direct_irrep`. It is a
 future matched baseline, not the production conditioner.
 
+## Symmetry breaking without discarding the exact parent generator
+
+The exact space-group blueprint is now interpreted as a **parent** prior, not a
+claim that the final child must retain that space group. The versioned
+hierarchical design factors generation into an ordered parent followed by a
+sampled low-index commensurate distortion:
+
+```text
+ParentBlueprint + parent hybrid diffusion
+  -> DistortionBlueprint(B, k, irrep, OPD, active)
+  -> ModeDiffusionState(amplitudes, invariant strain, bounded residual)
+  -> ChildReconstructor
+```
+
+The v1 code enforces `det(B) <= 4`, at most two active modes, OPD selection
+before continuous amplitude diffusion, child-group intersection, mass-weighted
+mode reconstruction and a fail-closed 0.10 Angstrom residual RMS budget. The
+exact branch is `d = empty`, so there is no duplicate legacy generator.
+
+Tensor compatibility is evaluated on reachable child groups and marginalized
+over paths. It is not a hard parent-space-group filter: a centrosymmetric
+parent remains available when an inversion-odd distortion reaches a compatible
+polar child. The full Cartesian atlas is reserved for mode/strain/residual
+denoising after a parent geometry exists; discrete parent/path decisions use
+orbit invariants and child-compatibility residuals.
+
+See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_breaking_v1.md).
+These interfaces do not authorize hierarchical training. Real-data S1a must
+still qualify the parent generator first, followed by H0--H6 in order.
+
 ## Repository layout
 
 ```text
-src/gaugeflow/production/   revised hybrid model primitives
+src/gaugeflow/production/   revised hybrid and hierarchical model primitives
 src/gaugeflow/tensor.py     rank-three tensor conversions and response probes
 src/gaugeflow/parity.py     SO(3)/O(3) parity rules
 src/gaugeflow/stabilizer.py proper/full point-group utilities
@@ -207,7 +241,8 @@ not authorize oracle promotion, relaxation, DFT or DFPT.
 
 ## Next implementation milestone
 
-The next milestone is the versioned real-data S1a run with decoded crystal
-validity, uniqueness, novelty, composition, lattice and checkpoint-recovery
-metrics. Only after that substrate passes should the project implement the full
-space-group/Wyckoff blueprint sampler or compare tensor conditioners.
+The next milestone remains the versioned real-data S1a parent-generator run
+with decoded crystal validity, uniqueness, novelty, composition, lattice and
+checkpoint-recovery metrics. Only after it passes may the project activate the
+mode catalogue and parent--child training sequence. Tensor conditioning remains
+the final H6 step, after tensor-free hierarchical generation qualifies.

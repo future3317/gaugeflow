@@ -15,6 +15,28 @@ and the tensor-free S1a implementation closure are authorized. No tensor
 fine-tuning, learned tensor oracle, MLIP screening, relaxation, DFT, or DFPT is
 authorized by this document.
 
+## Versioned parent--distortion--child amendment
+
+An exact symmetry blueprint is a parent prior, not a completeness claim for the
+final piezoelectric phase. The active code now includes versioned contracts for
+low-index commensurate symmetry breaking:
+
+- `ParentBlueprint` and P1 `ParentBlueprintBatch`;
+- HNF `DistortionBlueprint` with `det(B) <= 4` and at most two active modes;
+- finite OPD branches selected before reduced continuous amplitudes;
+- child group `G_parent^B` intersected with active OPD stabilizers;
+- mass-weighted mode displacement, child-invariant strain and a fail-closed
+  0.10 Angstrom projected residual;
+- reachable-child compatibility marginalization, never a hard tensor router on
+  the parent group;
+- gauge-safe phonon subspace, mode-effective-charge and generalized-mode-force
+  targets.
+
+These are mathematical/software interfaces only. They do not authorize a mode
+catalogue build, parent-pair training, PES-teacher use, hierarchical generation,
+tensor conditioning, relaxation, DFT or DFPT. H0, real-data S1a/H1, H2, H3, H4,
+H5 and H6 remain strictly ordered.
+
 ## Production state spaces
 
 - Chemical tokens are `0..117 <-> Z=1..118`; token `118` is a distinct

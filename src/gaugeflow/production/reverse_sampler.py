@@ -8,7 +8,7 @@ import torch
 
 from gaugeflow.manifold import wrap01
 
-from .blueprint import P1BlueprintBatch
+from .blueprint import ParentBlueprintBatch
 from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape
@@ -90,7 +90,7 @@ class TensorFreeReverseSampler:
 
     def sample(
         self,
-        blueprint: P1BlueprintBatch,
+        blueprint: ParentBlueprintBatch,
         *,
         steps: int = 100,
         generator: torch.Generator | None = None,

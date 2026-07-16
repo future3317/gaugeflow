@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from gaugeflow.data import PiezoCrystalDataset, collate_crystals
-from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, P1BlueprintBatch
+from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import (
     load_production_checkpoint,
     read_production_checkpoint_metadata,
@@ -135,7 +135,9 @@ def main() -> None:
         batch_data = batch_data.to(device)
         graph_count = int(batch_data.num_graphs)
         counts = torch.bincount(batch_data.batch, minlength=graph_count)
-        blueprint = P1BlueprintBatch.from_counts(counts, dtype=batch_data.frac_coords.dtype, device=device)
+        blueprint = ParentBlueprintBatch.from_p1_counts(
+            counts, dtype=batch_data.frac_coords.dtype, device=device
+        )
         output, gradient_norm = trainer.train_step(
             batch_data.atom_types,
             batch_data.frac_coords,

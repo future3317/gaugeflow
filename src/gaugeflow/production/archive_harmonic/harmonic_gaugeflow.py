@@ -10,12 +10,14 @@ from e3nn import o3
 from torch import nn
 from torch_geometric.utils import scatter
 
-from gaugeflow.harmonic import (
-    OrbitInvariantConditionEncoder,
+from gaugeflow.conditioning import OrbitInvariantConditionEncoder
+from gaugeflow.harmonic import rotate_piezo_irreps_on_grid
+from gaugeflow.tensor import (
+    fixed_lossless_response_probes,
+    piezo_from_irreps,
     piezo_irrep_blocks,
-    rotate_piezo_irreps_on_grid,
+    response_field,
 )
-from gaugeflow.tensor import fixed_lossless_response_probes, piezo_from_irreps, response_field
 
 from ..schedules import CosineNoiseSchedule
 from ..so3_quadrature import nested_hopf_so3_grid

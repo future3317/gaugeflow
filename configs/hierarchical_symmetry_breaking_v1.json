@@ -1,0 +1,49 @@
+{
+  "protocol": "hierarchical_symmetry_breaking_v1",
+  "status": "implementation_only_no_training",
+  "scientific_scope": "ordered stoichiometric periodic inorganic crystals with low-index commensurate symmetry breaking",
+  "parent_generator": {
+    "state": ["absorbing_element_tokens", "wrapped_translation_quotient", "log_volume_trace_free_log_metric"],
+    "qualification_required": "real_data_s1a",
+    "tensor_condition": false
+  },
+  "distortion_blueprint": {
+    "maximum_supercell_index": 4,
+    "maximum_active_modes": 2,
+    "sample_order_parameter_direction_before_continuous_amplitude": true,
+    "child_group_rule": "supercell_compatible_parent_group_intersect_active_opd_stabilizers",
+    "residual_rms_limit_angstrom": 0.1
+  },
+  "conditioning": {
+    "parent_and_path_discrete_decisions": "orbit_invariants_and_reachable_child_compatibility_only",
+    "cartesian_atlas_entry_point": "after_parent_geometry_for_mode_strain_residual_denoising",
+    "hard_parent_space_group_tensor_filter": false,
+    "physical_zero_distinct_from_null": true
+  },
+  "data_domains": {
+    "structure": "Alex-MP-20",
+    "parent_child_paths": "offline_Alex-MP-20_decomposition_not_yet_built",
+    "mode": ["JARVIS-DFPT", "PhononDB-derived"],
+    "pes": "MatPES-PBE-2025.2_frozen_teacher_mode_scans",
+    "tensor": "TensorOrbit-JARVIS-v2_after_prior_gates"
+  },
+  "mandatory_order": ["H0", "H1", "H2", "H3", "H4", "H5", "H6"],
+  "gate_state": {
+    "H0": "partial_source_activation_only",
+    "H1": "blocked_on_real_data_s1a",
+    "H2": "not_started",
+    "H3": "not_started",
+    "H4": "not_started",
+    "H5": "not_started",
+    "H6": "not_authorized"
+  },
+  "excluded_v1": [
+    "partial_occupancy",
+    "substitutional_disorder",
+    "vacancies",
+    "charged_defects",
+    "incommensurate_phases",
+    "supercell_index_greater_than_4",
+    "finite_temperature_ensembles"
+  ]
+}

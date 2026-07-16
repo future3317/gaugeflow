@@ -4,7 +4,17 @@ This package is intentionally separate from the archived continuous-logit ODE
 prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
-from .blueprint import EmpiricalNodeCountPrior, P1BlueprintBatch
+from .blueprint import (
+    DistortionBlueprint,
+    EmpiricalNodeCountPrior,
+    ModeCatalog,
+    ModeCatalogEntry,
+    ModeDiffusionState,
+    OPDBranch,
+    ParentBlueprint,
+    ParentBlueprintBatch,
+    SelectedMode,
+)
 from .cartesian_gauge_atlas import CartesianSTFGeometryQueryEncoder, StratifiedCartesianGaugeAtlas
 from .categorical_mask import AbsorbingMaskDiffusion
 from .checkpointing import (
@@ -12,6 +22,7 @@ from .checkpointing import (
     read_production_checkpoint_metadata,
     save_production_checkpoint,
 )
+from .child_reconstruction import ChildReconstructor, HierarchicalSample, ParentCrystal
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
@@ -22,7 +33,11 @@ from .lattice_volume_shape import (
 )
 from .reverse_sampler import GeneratedHybridBatch, SamplingFailure, TensorFreeReverseSampler
 from .schedules import CosineNoiseSchedule
-from .space_group_router import SpaceGroupCompatibilityRouter
+from .space_group_router import (
+    ReachableChildCompatibilityRouter,
+    ReachableChildPath,
+    TerminalGroupCompatibilityRouter,
+)
 from .state_projection import project_hybrid_reverse_state, project_translation_state
 from .training import ExponentialMovingAverage, ProductionTrainer, ProductionTrainingConfig
 from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotient
@@ -31,23 +46,35 @@ __all__ = [
     "AbsorbingMaskDiffusion",
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
+    "ChildReconstructor",
     "CosineNoiseSchedule",
+    "DistortionBlueprint",
     "EmpiricalNodeCountPrior",
     "ExponentialMovingAverage",
     "GeneratedHybridBatch",
     "HybridCrystalDenoiser",
+    "HierarchicalSample",
     "LatticeVolumeShape",
-    "P1BlueprintBatch",
+    "ModeCatalog",
+    "ModeCatalogEntry",
+    "ModeDiffusionState",
+    "OPDBranch",
+    "ParentBlueprint",
+    "ParentBlueprintBatch",
+    "ParentCrystal",
     "PointGroupMetricChart",
     "ProductionTrainer",
     "ProductionTrainingConfig",
     "SamplingFailure",
     "ScalableWrappedQuotient",
-    "SpaceGroupCompatibilityRouter",
+    "ReachableChildCompatibilityRouter",
+    "ReachableChildPath",
+    "SelectedMode",
     "StratifiedCartesianGaugeAtlas",
     "SymmetryShapeBasis",
     "TensorFreeHybridDiffusion",
     "TensorFreeReverseSampler",
+    "TerminalGroupCompatibilityRouter",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
     "project_hybrid_reverse_state",

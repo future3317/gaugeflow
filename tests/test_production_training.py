@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 
-from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, P1BlueprintBatch
+from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import load_production_checkpoint, save_production_checkpoint
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
@@ -12,7 +12,7 @@ from gaugeflow.production.training import ProductionTrainer, ProductionTrainingC
 
 def _small_clean_batch():
     counts = torch.tensor([2, 3])
-    blueprint = P1BlueprintBatch.from_counts(counts)
+    blueprint = ParentBlueprintBatch.from_p1_counts(counts)
     elements = torch.tensor([4, 6, 12, 15, 6], dtype=torch.long)
     coordinates = torch.tensor(
         [
@@ -97,7 +97,7 @@ def test_production_trainer_updates_ema_and_all_heads():
 def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     torch.manual_seed(104)
     model = _small_model()
-    blueprint = P1BlueprintBatch.from_counts(torch.tensor([2, 3]))
+    blueprint = ParentBlueprintBatch.from_p1_counts(torch.tensor([2, 3]))
     sampler = TensorFreeReverseSampler(model, coordinate_sigma_max=2.0, maximum_time=0.8)
     generated = sampler.sample(
         blueprint,

@@ -16,7 +16,7 @@ from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.space_group_router import (
-    SpaceGroupCompatibilityRouter,
+    TerminalGroupCompatibilityRouter,
     compatibility_record,
     orbit_compatibility_residual,
 )
@@ -188,7 +188,7 @@ def test_router_is_tensor_representative_invariant():
     # Cartesian/e3nn basis conversion contributes about 1e-8 in float64;
     # the residual itself is otherwise identical under the right-shifted rule.
     assert torch.allclose(left, right, atol=2e-8, rtol=2e-8)
-    router = SpaceGroupCompatibilityRouter([1, 2], hidden_dim=16, rotation_count=12)
+    router = TerminalGroupCompatibilityRouter([1, 2], hidden_dim=16, rotation_count=12)
     nonzero_logits, _ = router(condition.float())
     zero_logits, zero_residual = router(torch.zeros_like(condition.float()))
     assert torch.isneginf(nonzero_logits[:, 1]).all()

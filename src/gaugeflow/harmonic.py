@@ -36,15 +36,17 @@ from e3nn import o3
 from torch import nn
 from torch_geometric.utils import scatter
 
+from .conditioning import (
+    OrbitInvariantConditionEncoder,
+    low_order_orbit_invariants,
+)
 from .tensor import (
     PIEZO_IRREPS,
     piezo_from_irreps,
+    piezo_irrep_blocks,
     piezo_to_irreps,
     rotate_rank3,
-    tensor_orbit_shape_magnitude,
 )
-
-_PIEZO_SLICES = (slice(0, 6), slice(6, 11), slice(11, 18))
 
 
 def deterministic_so3_grid(
@@ -88,27 +90,6 @@ def deterministic_so3_grid(
     ).reshape(count, 3, 3)
     rotation[0] = torch.eye(3, dtype=dtype, device=rotation.device)
     return rotation
-
-
-def piezo_irrep_blocks(value: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Split ``2x1o + 1x2o + 1x3o`` into ``[B,mul,2l+1]`` blocks."""
-    if value.ndim != 2 or value.shape[-1] != PIEZO_IRREPS.dim:
-        raise ValueError("piezo irreps must have shape [batch, 18]")
-    return (
-        value[:, _PIEZO_SLICES[0]].reshape(-1, 2, 3),
-        value[:, _PIEZO_SLICES[1]].reshape(-1, 1, 5),
-        value[:, _PIEZO_SLICES[2]].reshape(-1, 1, 7),
-    )
-
-
-def join_piezo_irrep_blocks(blocks: tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
-    """Inverse of :func:`piezo_irrep_blocks`."""
-    first, second, third = blocks
-    if first.ndim < 3 or second.ndim < 3 or third.ndim < 3:
-        raise ValueError("all irrep blocks need batch, multiplicity, and irrep axes")
-    if first.shape[-2:] != (2, 3) or second.shape[-2:] != (1, 5) or third.shape[-2:] != (1, 7):
-        raise ValueError("unexpected piezo irrep block shapes")
-    return torch.cat((first.flatten(-2), second.flatten(-2), third.flatten(-2)), dim=-1)
 
 
 def rotate_piezo_irreps_on_grid(piezo_irreps: torch.Tensor, rotations: torch.Tensor) -> torch.Tensor:
@@ -222,78 +203,6 @@ def finite_grid_shift_residual(
         shifted[:, None] - rotations[None], ord="fro", dim=(-2, -1)
     )
     return pairwise.amin(dim=-1)
-
-
-def low_order_orbit_invariants(piezo_irreps: torch.Tensor) -> torch.Tensor:
-    """Return low-order SO(3) invariants plus a parity-odd pseudoscalar.
-
-    This is intentionally a compact discriminator, not a claim to be a full
-    integrity basis for rank-three piezoelectric tensors.  The final two
-    entries are ``0o`` pseudoscalars obtained by coupling ``l=2`` and ``l=3``
-    to an axial ``l=1`` vector and pairing it with each polar ``l=1`` copy.
-    They are invariant under proper rotations and flip under reflection.
-    """
-    first, second, third = piezo_irrep_blocks(piezo_irreps)
-    first_gram = torch.einsum("bmi,bni->bmn", first, first)
-    quadratic = torch.cat(
-        (first_gram[:, 0, 0:1], first_gram[:, 1, 1:2], first_gram[:, 0, 1:2],
-         second.square().sum(dim=(-1, -2), keepdim=False).unsqueeze(-1),
-         third.square().sum(dim=(-1, -2), keepdim=False).unsqueeze(-1)),
-        dim=-1,
-    )
-    # FullTensorProduct has fixed Clebsch--Gordan coefficients, unlike a
-    # learned fully-connected tensor product.  ``2o x 3o`` decomposes as
-    # ``1e + 2e + ... + 5e``, so its first three coordinates are the unique
-    # axial l=1 coupling used below.
-    coupling = o3.FullTensorProduct("1x2o", "1x3o").to(device=piezo_irreps.device, dtype=piezo_irreps.dtype)
-    axial = coupling(second.flatten(1), third.flatten(1))[:, :3]
-    pseudoscalars = torch.einsum("bmi,bi->bm", first, axial)
-    magnitude = piezo_irreps.square().sum(dim=-1, keepdim=True).sqrt()
-    return torch.cat((quadratic, pseudoscalars, torch.log1p(magnitude)), dim=-1)
-
-
-def normalized_low_order_orbit_invariants(piezo_irreps: torch.Tensor) -> torch.Tensor:
-    """Low-order shape invariants, log magnitude, and an explicit zero class.
-
-    Quadratic invariants scale as ``||e||^2`` and pseudoscalars as ``||e||^3``.
-    Dividing those powers out for nonzero inputs prevents tensor amplitude from
-    dominating the early orbit descriptor.  Exact/declared physical zeros use
-    a finite all-zero shape descriptor plus a distinct flag; they are never
-    mapped to the classifier-free null condition.
-    """
-    raw = low_order_orbit_invariants(piezo_irreps)
-    decomposition = tensor_orbit_shape_magnitude(piezo_irreps)
-    magnitude = torch.linalg.vector_norm(piezo_irreps, dim=-1, keepdim=True)
-    safe = magnitude.clamp_min(torch.finfo(piezo_irreps.dtype).tiny)
-    quadratic = raw[:, :5] / safe.square()
-    pseudoscalar = raw[:, 5:7] / safe.pow(3)
-    normalized = torch.cat(
-        (
-            quadratic,
-            pseudoscalar,
-            decomposition.log_magnitude.unsqueeze(-1),
-            decomposition.physical_zero.to(piezo_irreps).unsqueeze(-1),
-        ),
-        dim=-1,
-    )
-    return torch.where(decomposition.physical_zero.unsqueeze(-1), torch.cat(
-        (torch.zeros_like(normalized[:, :7]), normalized[:, 7:]), dim=-1
-    ), normalized)
-
-
-class OrbitInvariantConditionEncoder(nn.Module):
-    """A low-order, proper-SO(3)-invariant early condition channel."""
-
-    feature_dim = 9
-
-    def __init__(self, hidden_dim: int) -> None:
-        super().__init__()
-        self.network = nn.Sequential(
-            nn.Linear(self.feature_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
-        )
-
-    def forward(self, piezo_irreps: torch.Tensor) -> torch.Tensor:
-        return self.network(normalized_low_order_orbit_invariants(piezo_irreps))
 
 
 class HarmonicRelativeAlignment(nn.Module):

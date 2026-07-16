@@ -8,7 +8,7 @@ from typing import Any
 import torch
 from torch import nn
 
-from .blueprint import P1BlueprintBatch
+from .blueprint import ParentBlueprintBatch
 from .hybrid_diffusion import HybridLossOutput, TensorFreeHybridDiffusion
 
 
@@ -95,7 +95,7 @@ class ProductionTrainer:
         clean_fractional_coordinates: torch.Tensor,
         clean_lattice: torch.Tensor,
         batch: torch.Tensor,
-        blueprint: P1BlueprintBatch,
+        blueprint: ParentBlueprintBatch,
         *,
         generator: torch.Generator | None = None,
     ) -> tuple[HybridLossOutput, float]:

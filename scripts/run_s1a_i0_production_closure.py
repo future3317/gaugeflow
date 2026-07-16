@@ -9,7 +9,7 @@ from pathlib import Path
 
 import torch
 
-from gaugeflow.production.blueprint import P1BlueprintBatch
+from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
@@ -34,7 +34,7 @@ def fixed_panel(device: torch.device) -> tuple[torch.Tensor, ...]:
     lattice = torch.tensor(
         [[[3.2, 0.0, 0.0], [0.2, 3.8, 0.0], [0.1, 0.3, 4.2]]], device=device
     )
-    blueprint = P1BlueprintBatch.from_counts(torch.tensor([4], device=device), device=device)
+    blueprint = ParentBlueprintBatch.from_p1_counts(torch.tensor([4], device=device), device=device)
     return elements, coordinates, lattice, blueprint.batch, blueprint
 
 
