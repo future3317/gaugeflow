@@ -63,7 +63,26 @@ def _worktree_head(repo: Path) -> str:
             git_directory = repo / git_directory
     head = (git_directory / "HEAD").read_text(encoding="utf-8").strip()
     if head.startswith("ref: "):
-        raise RuntimeError("symbolic worktree HEAD is not supported by this immutable audit")
+        reference = head.removeprefix("ref: ")
+        common_pointer = git_directory / "commondir"
+        common_directory = (
+            (git_directory / common_pointer.read_text(encoding="utf-8").strip()).resolve()
+            if common_pointer.is_file()
+            else git_directory
+        )
+        loose_reference = common_directory / reference
+        if loose_reference.is_file():
+            head = loose_reference.read_text(encoding="utf-8").strip()
+        else:
+            packed = common_directory / "packed-refs"
+            matches = [
+                line.split(" ", 1)[0]
+                for line in packed.read_text(encoding="utf-8").splitlines()
+                if line.endswith(f" {reference}")
+            ] if packed.is_file() else []
+            if len(matches) != 1:
+                raise RuntimeError("could not resolve symbolic worktree HEAD")
+            head = matches[0]
     return head
 
 
