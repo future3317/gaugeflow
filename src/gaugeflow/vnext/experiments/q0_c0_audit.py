@@ -26,7 +26,7 @@ from gaugeflow.vnext.diagnostics import (
     analytic_endpoint_jacobians,
     audit_representation_collisions,
     euler_integrate,
-    knn_conditional_variance,
+    knn_local_target_dispersion,
     rk4_integrate,
     variational_flow_jacobian,
 )
@@ -202,11 +202,12 @@ def _conditional_rows(
             "production_input": _input_representation(state, lattice, 16, 8.0),
         }
         for name, representation in representations.items():
-            collision = audit_representation_collisions(
+            collision, _ = audit_representation_collisions(
                 representation,
                 target,
+                exact_absolute_tolerance=1.0e-10,
                 near_quantile=float(settings["near_collision_quantile"]),
-                target_ratio_min=float(settings["near_collision_target_ratio_min"]),
+                alias_target_distance_min=0.10,
                 distance_floor=float(settings["local_lipschitz_distance_floor"]),
             )
             collision_rows.append(
@@ -220,15 +221,15 @@ def _conditional_rows(
                 }
             )
             for neighbors in settings["knn_neighbors"]:
-                estimate = knn_conditional_variance(representation, target, neighbors=int(neighbors))
+                estimate = knn_local_target_dispersion(representation, target, neighbors=int(neighbors))
                 variance_rows.append(
                     {
                         "time": float(time),
                         "representation": name,
                         "neighbors": int(neighbors),
-                        "trace_variance": float(estimate.trace_variance),
+                        "trace_variance": float(estimate.trace_dispersion),
                         "target_trace_variance": float(estimate.target_trace_variance),
-                        "normalized_trace_variance": float(estimate.normalized_trace_variance),
+                        "normalized_trace_variance": float(estimate.normalized_trace_dispersion),
                     }
                 )
     return variance_rows, collision_rows
@@ -346,6 +347,11 @@ def _write_manifest(directory: Path) -> None:
 
 
 def run(config_path: Path, *, device: torch.device) -> Path:
+    raise RuntimeError("original Q0 is frozen at commit 42a34c5; use the versioned Q0.1 protocol")
+
+
+def _frozen_run_implementation(config_path: Path, *, device: torch.device) -> Path:
+    """Historical implementation retained only for commit-level provenance."""
     config_bytes = config_path.read_bytes()
     config = yaml.safe_load(config_bytes)
     if config.get("gate") != "Q0" or config.get("status") != "pre_registered":

@@ -8,7 +8,8 @@ from gaugeflow.vnext.diagnostics import (
     analytic_endpoint_jacobians,
     audit_representation_collisions,
     euler_integrate,
-    knn_conditional_variance,
+    exact_equivalence_risk,
+    knn_local_target_dispersion,
     reduced_vector_jacobian,
     rk4_integrate,
     variational_flow_jacobian,
@@ -17,29 +18,49 @@ from gaugeflow.vnext.experiments import GateBlockedError, require_gate_status
 from gaugeflow.vnext.experiments.q0_c0_audit import _git_commit_from_metadata
 
 
-def test_knn_conditional_variance_detects_collapsed_representation():
+def test_knn_dispersion_is_not_reported_as_conditional_variance():
     target = torch.tensor([[0.0], [0.0], [2.0], [2.0]], dtype=torch.float64)
     separated = torch.tensor([[0.0], [0.01], [1.0], [1.01]], dtype=torch.float64)
     collapsed = torch.zeros_like(separated)
-    separated_result = knn_conditional_variance(separated, target, neighbors=1)
-    collapsed_result = knn_conditional_variance(collapsed, target, neighbors=3)
-    assert separated_result.trace_variance == 0.0
-    assert torch.allclose(collapsed_result.normalized_trace_variance, torch.tensor(1.0, dtype=torch.float64))
+    separated_result = knn_local_target_dispersion(separated, target, neighbors=1)
+    collapsed_result = knn_local_target_dispersion(collapsed, target, neighbors=3)
+    assert separated_result.trace_dispersion == 0.0
+    assert torch.allclose(collapsed_result.normalized_trace_dispersion, torch.tensor(1.0, dtype=torch.float64))
+
+
+def test_exact_full_state_conditional_variance_is_zero_before_endpoint():
+    representation = torch.tensor([[0.0], [0.3], [0.8], [1.4]], dtype=torch.float64)
+    target = torch.tensor([[2.0], [-1.0], [4.0], [0.5]], dtype=torch.float64)
+    risk = exact_equivalence_risk(representation, target, absolute_tolerance=1.0e-12)
+    assert risk.exact_collision_count == 0
+    assert risk.trace_risk == 0.0
+
+
+def test_endpoint_alias_variance_equals_global_target_variance():
+    representation = torch.zeros((4, 2), dtype=torch.float64)
+    target = torch.tensor([[0.0], [1.0], [3.0], [8.0]], dtype=torch.float64)
+    risk = exact_equivalence_risk(representation, target, absolute_tolerance=1.0e-12)
+    assert risk.exact_collision_count == 6
+    assert torch.allclose(risk.trace_risk, risk.target_trace_variance)
+    assert torch.allclose(risk.normalized_trace_risk, torch.ones((), dtype=torch.float64))
 
 
 def test_representation_collision_uses_dimensionless_target_jump():
     representation = torch.tensor([[0.0], [0.0], [1.0]], dtype=torch.float64)
     target = torch.tensor([[0.0], [4.0], [4.1]], dtype=torch.float64)
-    audit = audit_representation_collisions(
+    audit, witnesses = audit_representation_collisions(
         representation,
         target,
+        exact_absolute_tolerance=1.0e-12,
         near_quantile=0.34,
-        target_ratio_min=10.0,
+        alias_target_distance_min=1.0,
         distance_floor=1.0e-8,
     )
     assert audit.near_pair_count >= 1
-    assert audit.collision_count >= 1
-    assert audit.max_target_lipschitz_ratio > 1.0e6
+    assert audit.exact_collision_count == 1
+    assert audit.alias_collision_count >= 1
+    assert audit.max_local_target_ratio > 1.0e6
+    assert witnesses[0].exact_representation_collision
 
 
 def test_reduced_and_analytic_jacobians_match_exact_linear_flow():
