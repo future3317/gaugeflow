@@ -1,0 +1,8 @@
+metric,value
+source_count,64
+time_grid_count,33
+coupling_replay_passed,True
+p0_release_checks_passed,True
+historical_checkpoint_available,False
+historical_learned_field_classified,False
+scientific_pass_applicable,False
