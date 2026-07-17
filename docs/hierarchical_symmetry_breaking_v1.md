@@ -50,6 +50,28 @@ not introduce a second legacy runtime.
 - reachable-child compatibility marginalization. Tensor compatibility is no
   longer a hard filter on the parent group.
 
+The parent carrier is explicitly species-free. Ordered chemistry is a separate
+integer occupational field (a=(a_1,\ldots,a_N)) over the complete element
+vocabulary. If the parent action permutes sites by \(\pi_g\), its exact
+occupational stabilizer is
+
+\[
+H_{\rm occ}(a)=\{g\in G_p^B: a_{\pi_g(i)}=a_i\ \text{for every }i\}.
+\]
+
+The realized child symmetry is therefore
+
+\[
+H(d,a)=G_p^B\cap H_{\rm occ}(a)\cap
+\bigcap_{l:z_l=1}H_{l,c_l}.
+\]
+
+This is the key H0-E-v4 correction. Parent projection no longer requires the
+higher-symmetry geometry to preserve the terminal species labeling, while the
+final child still has an exact full-vocabulary coloring and a certified
+subgroup. The implementation neither introduces partial occupancy nor copies
+species from a paired target.
+
 The production tensor-free trainer still runs only the parent P1 branch. That
 is intentional: these primitives do not authorize training. H0 must pass
 before H1a starts, and the parent generator is qualified only after both the
@@ -165,7 +187,9 @@ High-confidence data conclusions:
    passed H0-A through H0-D-v2 and H0-E-v4 O1-v1. The exhaustive clean census
    reaches `359/1023=0.350929`, so H0-v4 now passes without rewriting the
    historical H0-E-v1 failure.
-2. **H1a:** qualify the P1 real-data tensor-free hybrid generator.
+2. **H1a:** qualify the P1 real-data tensor-free hybrid generator. Its packed
+   data-plane protocol is frozen but not run; the project is currently paused
+   before cache construction and training.
 3. **H1b:** qualify the complete 230-space-group/Wyckoff parent blueprint
    generator. H1 passes only after both H1a and H1b pass.
 4. **H2:** qualify source-calibrated mode sign/magnitude, degenerate subspaces

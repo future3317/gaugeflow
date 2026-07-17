@@ -1,256 +1,95 @@
 # GaugeFlow
 
-GaugeFlow is a research implementation of tensor-orbit-conditioned crystal
-generation. The active code follows the revised hybrid-diffusion design and
-uses a **Stratified Cartesian Gauge Atlas with residual descriptor-frame
-marginalization**. It does not use the retired continuous-logit flow as a
-fallback.
+GaugeFlow 是面向压电晶体的 tensor-orbit-conditioned 生成模型。当前唯一
+production 路径位于 `gaugeflow.production`：元素使用 absorbing categorical
+diffusion，分数坐标使用周期平移商上的 wrapped diffusion，晶格使用
+log-volume / trace-free log-metric 表示，三阶极性张量条件使用 Stratified
+Cartesian Gauge Atlas。项目没有旧 continuous-logit flow、harmonic conditioner
+或 FlowMM runtime fallback。
 
-The project now has a tensor-free production trainer and joint reverse sampler.
-Their bounded S1a-I0 software closure passed on CUDA. The historical first H0
-audit remains failed, while the versioned H0-v4 repair is now independently
-qualified. Real-data H1a has not started and requires its own frozen protocol;
-H1b and all later Gates remain prohibited. Consequently, the repository does
-not claim successful tensor-conditioned generation or target-separated sample
-distributions.
+## 当前正式状态
 
-## Current status
-
-| Component | Status |
+| 部分 | 当前结论 |
 |---|---|
-| Categorical absorbing-mask process | Implemented and unit tested |
-| Wrapped periodic coordinate quotient | Implemented and unit tested |
-| Volume/shape lattice chart | Implemented and unit tested |
-| Cartesian STF geometry queries | Implemented and unit tested |
-| Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
-| Equivariant hybrid denoiser | Implemented as a model primitive |
-| Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | H0-D-v2 and H0-E-v4 O1-v1 qualified; H0-E-v1/v2/v3 remain frozen failed history |
-| TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
-| Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
-| Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | Versioned H0-v4 qualified; historical H0-v1/H0-D-v1/H0-E-v1 remain frozen failed |
-| Tensor-free real-data H1a | Authorized only as the next separately frozen Gate; not started |
-| Full-blueprint H1b | Prohibited until H1a qualifies |
-| Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
+| 数学与软件接口 | 已通过：混合状态空间、周期商、晶格 chart、群作用和 Cartesian atlas runtime |
+| Trainer / reverse sampler | CUDA 软件闭环已通过；这不是生成质量结论 |
+| 数据与群论分解 H0 | 已通过：结构 split、声子/PES 接口、finite-affine/OPD catalogue、真实 occupational occurrence |
+| 真实数据 H1a | 尚未开始；P1 packed-cache 协议已定义但 cache 尚未构建 |
+| 完整 parent blueprint 与 H2--H6 | 尚未开始 |
+| Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
-The condensed no-training evidence is:
+项目现已暂停在 H1a 数据入口之前。恢复时唯一允许的下一步是构建并独立审计
+P1 packed structure cache，然后另行固定真实训练设置。
 
-- S0.1/S0.2: mathematical, symmetry-chart and software-interface checks passed.
-- S0.3-v1: the 24-frame-only atlas failed and is frozen. It must not be restored.
-- S0.4-v1: the weighted `24 x 7 x 24 = 4,032` Cartesian prior passed scientific
-  checks but failed its frozen CUDA latency limit (`41.89 ms > 20 ms`).
-- S0.4.1: the same 4,032-candidate prior qualified at `14.62 ms/forward` and
-  `15.19 MB` on an RTX 4060 Ti. This does not reclassify S0.4-v1 or start S1a.
-- S1a-I0 v1--v1.2: frozen failed trainer/sampler closure attempts that exposed
-  the raw lattice-score instability.
-- S1a-I0 v1.3: clean-lattice production closure passed; scientific real-data
-  S1a remains unrun.
+## 当前方法
 
-## Active model definition
-
-The intended generated state is
+完整层级表示为：
 
 ```text
-(masked element tokens, wrapped fractional coordinates, lattice volume/shape)
+species-free parent carrier
+  -> low-index supercell
+  -> exact integer occupation
+  -> OPD displacement / invariant strain / bounded residual
+  -> ordered child crystal
 ```
 
-The revised model is assembled from:
-
-1. `AbsorbingMaskDiffusion` for discrete atom types;
-2. `AdaptiveWrappedQuotient` or `ScalableWrappedQuotient` for periodic
-   fractional coordinates;
-3. `PointGroupMetricChart` and `LatticeVolumeShape` for the lattice;
-4. `CartesianSTFGeometryQueryEncoder` for condition-free angular geometry;
-5. `StratifiedCartesianGaugeAtlas` for rank-three tensor-orbit conditioning;
-6. `HybridCrystalDenoiser` for the shared equivariant backbone;
-7. `TerminalGroupCompatibilityRouter` for terminal-group diagnostics and
-   `ReachableChildCompatibilityRouter` for parent-to-child path marginalization;
-8. `ParentBlueprint`, `DistortionBlueprint`, `ModeCatalog` and
-   `ChildReconstructor` for the versioned low-index commensurate
-   parent--distortion--child extension.
-
-The tensor-free objective uses clean-token prediction for the categorical
-state, a wrapped quotient score for coordinates, and clean-state prediction
-for lattice log volume/log shape. Clean lattice prediction avoids the
-high-noise `1/alpha(t)` inversion that failed the frozen S1a-I0 v1--v1.2
-closures; it is not a clipping or Cholesky-jitter fallback.
-
-The atlas defines a state-dependent finite discrete measure rather than a Haar
-quadrature approximation. Generic states use 4,032 weighted candidates. Axial
-and descriptor-isotropic strata use multiplicity-corrected residual rules and a
-smooth partition of unity. Physical zero tensors bypass directional alignment;
-a nonzero tensor is never discarded merely because one quadratic descriptor is
-isotropic.
-
-The complete direct-CG baseline remains in `gaugeflow.direct_irrep`. It is a
-future matched baseline, not the production conditioner.
-
-## Symmetry breaking without discarding the exact parent generator
-
-The exact space-group blueprint is now interpreted as a **parent** prior, not a
-claim that the final child must retain that space group. The versioned
-hierarchical design factors generation into an ordered parent followed by a
-sampled low-index commensurate distortion:
+parent space group 是生成先验，不是终态硬约束。若 parent action 在展开节点上的
+置换为 `pi_g`，完整整数元素着色为 `a`，则 occupational stabilizer 为
 
 ```text
-ParentBlueprint + parent hybrid diffusion
-  -> DistortionBlueprint(B, k, irrep, OPD, active)
-  -> ModeDiffusionState(amplitudes, invariant strain, bounded residual)
-  -> ChildReconstructor
+H_occ(a) = {g : a[pi_g(i)] = a[i] for every i}
 ```
 
-The v1 code enforces `det(B) <= 4`, at most two active modes, OPD selection
-before continuous amplitude diffusion, child-group intersection, mass-weighted
-mode reconstruction and a fail-closed 0.10 Angstrom residual RMS budget. The
-exact branch is `d = empty`, so there is no duplicate legacy generator.
-
-Tensor compatibility is evaluated on deduplicated physical reachable-child
-path classes with an explicit base-measure mass. Catalogue tuple multiplicity
-and ordering cannot change the prior. It is not a hard parent-space-group filter: a centrosymmetric
-parent remains available when an inversion-odd distortion reaches a compatible
-polar child. The full Cartesian atlas is reserved for mode/strain/residual
-denoising after a parent geometry exists; discrete parent/path decisions use
-orbit invariants and child-compatibility residuals.
-
-See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_breaking_v1.md).
-The original Chinese design/data note is retained as
-[`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
-These interfaces do not authorize hierarchical training. The first formal H0
-activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v4
-repair has qualified H0-A, H0-B and H0-C without overwriting v1--v3. The
-algorithmic H0-D-v2 affine catalogue and the held-out H0-E-v4 O1 census have
-also qualified. H0-E-v1 remains frozen failed at `0.12207 < 0.15`; the clean
-v4 census reaches `359/1023 = 0.350929`. This qualifies H0-v4 but authorizes
-only a separately frozen H1a. H1b and all later Gates remain unauthorized.
-
-H0-D-v2 covers all 230 parent space groups and 6,188 parent-quotiented HNFs
-with `det(B) <= 4`. It stores complete finite affine quotients, 53,441
-physical-real irreps and 75,416 abstract OPD classes. The offline builder uses
-compact permutation-plus-`3 x 3` displacement actions, generator-complete
-homomorphism checks, vectorized fixed-space intersections and packed
-stabilizers. These are mathematically equivalent representations, not an
-approximate catalogue. The independent audit and exact artifact hashes are in
-[`reports/h0_d_opd_physical_path_catalogue_v2/`](reports/h0_d_opd_physical_path_catalogue_v2/).
-
-H0-E evaluates concrete occurrence in the direct sum of the compact atomic
-displacement action and the six-dimensional Kelvin action on symmetric Hencky
-strain. Of 125 qualified nontrivial paths, 113 require a strain component. All
-125 candidates reconstructed and met the scientific quality thresholds, but
-only 125 of 1,024 pilot rows exposed a candidate; the frozen coverage gate
-therefore failed. The independently audited negative result and exact hashes
-are in [`reports/h0_e_parent_decomposition_pilot_v1/`](reports/h0_e_parent_decomposition_pilot_v1/).
-
-The frozen v1 builder/auditor are reproducible from commit
-`f6f0262bfe9bbd983213467b20e66bce5fcb8485`; they are not compatibility paths
-in the active tree. Two bounded
-candidate-source diagnostics have already been rejected: finite metric-only
-parent projection added `0/64` candidates, and a wider spglib tolerance ladder
-found only one independently valid candidate among 64 previously uncovered
-rows. The next valid successor therefore needs an offline maximal
-group--subgroup embedding and Wyckoff-splitting compiler with joint site/Kelvin
-projection, not a looser tolerance or a metric-only surrogate.
-
-The active algebra keeps only exact equivalent accelerations: compact node
-permutations plus `3 x 3` Cartesian rotations instead of dense `3N x 3N`
-matrices, the orthonormal six-coordinate Kelvin representation of symmetric
-Hencky strain, shared-QR batched periodic CVP, cached element masses, and
-allocation-free compact Reynolds reductions. External spglib/pymatgen
-certification remains explicit because replacing it by a learned or metric-only
-shortcut would change the physical acceptance set.
-
-H0-E-v2 E0 now supplies the missing maximal group--subgroup/Wyckoff source
-without putting PyXtal in generation runtime. Its source-hashed offline
-compiler aggregates 3,744 maximal t/k records into 2,843 unique rational
-affine embeddings and 2,845 normalized relation variants. All 230 settings and
-every edge pass an independent spglib/Seitz audit to float64 machine precision;
-901 duplicate source rows cannot modify candidate enumeration or measure. E0
-permits only a bounded parent-occurrence E1 pilot. It does not repair or
-reclassify H0-E-v1, qualify H0-E, or authorize H1a. See
-[`reports/h0_e_maximal_embedding_catalogue_v2/`](reports/h0_e_maximal_embedding_catalogue_v2/).
-
-The versioned E1a maximal-translationengleiche occurrence protocol is now
-frozen failed. On 64 fixed v1 no-candidate rows, setting-exact primitive
-projection found `0/64` new candidate materials versus the preregistered
-minimum `3/64`; an independent reverse-order rebuild reproduced all rows and
-the negative decision. Of 430 evaluated t edges, 236 are well beyond the
-triangle-safe orbit-defect bound, 191 cannot form a full species-permutation
-group action, and three nonqualifying embeddings belong to one high-strain
-material. E1b and H1a remain prohibited. See
-[`reports/h0_e_maximal_t_parent_occurrence_e1a_v1/`](reports/h0_e_maximal_t_parent_occurrence_e1a_v1/).
-
-The separately versioned H0-E-v3 K0 pilot tested the cell-changing mechanism
-that E1a did not contain. It generated the exact finite translation quotient
-`Z^3 / B Z^3` for all 578 index-2--4 maximal-k edges and recovered all
-synthetic positive controls, but found `0/64` real candidates. Of the real
-edges, 265 have composition/site counts incompatible with the cell index, 108
-fail the complete species-permutation group law, and the remaining 205 have
-orbit defects of at least `1.22584 Angstrom`, far above the frozen `0.4`
-prefilter. An independent reverse-order audit reproduced the negative result.
-H0-E-v3 is stopped; H1a remains unauthorized. See
-[`reports/h0_e_v3_maximal_k_occurrence_k0_v1/`](reports/h0_e_v3_maximal_k_occurrence_k0_v1/).
-
-H0-E-v4 O0-v2 has now qualified the missing occupational-order mechanism.
-After removing one task-incompatible material at the versioned data boundary,
-the unchanged 0.2-Angstrom/0.15-Hencky domain yielded 10 candidate materials
-and 13 occurrences across 962 maximal-t/k edges. Every occurrence has an exact
-coloring stabilizer whose order equals the observed child operation order; an
-independent reverse-order rebuild reproduced all rows and numerics. The parent
-is now a species-free geometry carrier and production reconstruction accepts a
-separate full-vocabulary integer coloring, rather than copying parent species.
-O0-v2 is only a mechanism-panel qualification: H0-E/H0 remain unqualified and
-H1a is still prohibited until a separately frozen held-out O1 passes. See
-[`reports/h0_e_v4_occupational_order_o0_v2/`](reports/h0_e_v4_occupational_order_o0_v2/).
-
-The O1-v1 protocol and result are now frozen. It is a full census of all
-835 clean v1 zero-candidate rows that are disjoint from the O0 source panel,
-not another mechanism-locating sample. Together with the 125 v1-positive and
-63 clean O0 rows, these form an exact disjoint partition of the 1,023-material
-clean universe. O1 found 224 additional materials and 454 unique material--path
-pairs, raising aggregate coverage to `359/1023 = 0.350929`; all exact geometry,
-coloring, path-canonicalization and independent reverse-order audit checks
-passed. H0-v4 is qualified. H1a is the only permitted next Gate and has not
-started. See
-[`reports/h0_e_v4_occupational_order_o1_v1/`](reports/h0_e_v4_occupational_order_o1_v1/).
-
-The first H1a data-plane subprotocol is frozen but not run. It packs all
-675,204 H0-A-qualified Alex structures without filtering, preserves the exact
-formula/prototype/component split, and replaces arbitrary primitive-cell bases
-only by a certified Niggli `GL(3,Z)` change. The transform and all IDs remain
-audit metadata rather than model inputs. Passing this cache check would permit
-freezing the real-data training protocol; it would not itself qualify H1a.
-
-## Repository layout
+终态子群由 supercell、chemical ordering 和 displacement/strain modes 共同决定：
 
 ```text
-src/gaugeflow/production/   revised hybrid and hierarchical model primitives
-src/gaugeflow/tensor.py     rank-three tensor conversions and response probes
-src/gaugeflow/parity.py     SO(3)/O(3) parity rules
-src/gaugeflow/stabilizer.py proper/full point-group utilities
-src/gaugeflow/data.py       TensorOrbit crystal dataset loader
-src/gaugeflow/direct_irrep.py complete direct-CG baseline
-src/gaugeflow/catalogue/    offline exact affine-quotient/OPD compiler
-scripts/                    production train/sample, current data and audit entry points
-configs/                    current generation and TensorOrbit-v2 protocols
-reports/tensororbit_*/      current data activation evidence
-reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
-reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
-reports/h0_e_maximal_t_parent_occurrence_e1a_v1/ frozen failed E1a evidence
-reports/h0_e_v3_maximal_k_occurrence_k0_v1/ frozen failed K0 evidence
-reports/h0_e_v4_occupational_order_o0_v2/ qualified mechanism-only O0 evidence
-docs/                       current design and condensed iteration history
-tests/                      active production, physics and data regressions
+H(d,a) = G_parent^B ∩ H_occ(a) ∩ intersection_l H_(l,c_l)
 ```
 
-Historical Gate A--A11, P5-D0/C0, substrate-v2 and vNext Q0/Q1 files were
-retired after their lessons were consolidated in
-[`docs/research_iteration_history.md`](docs/research_iteration_history.md).
-Their exact source and reports remain available at Git tag
-`archive/pre-production-cleanup-20260716`.
+这修正了“高对称 parent 必须保持终态 species labels”的错误假设。当前真实数据
+审计表明，该表示在干净、ordered、stoichiometric、`det(B)<=4` 的作用域内覆盖
+`359/1023 = 0.350929` 的材料，并可由独立反序 auditor 完整重建。该结果说明表示
+和数据足以进入学习阶段，不说明模型已经学会选择 parent、occupation 或 mode。
 
-## Required environment
+详细方法、数据和阶段结论见：
 
-Use WSL 2, Ubuntu-22.04, and the existing `flowmm-t2c` micromamba environment:
+- [当前项目状态（中文）](docs/current_project_status_zh.md)
+- [层级对称性破缺设计](docs/hierarchical_symmetry_breaking_v1.md)
+- [Cartesian Gauge Atlas](docs/cartesian_stratified_gauge_atlas_v1.md)
+- [研究迭代总结](docs/research_iteration_history.md)
+
+## 当前数据
+
+大型数据仅存放在 `E:/DATA/T2C-Flow`，不复制进代码仓库。
+
+- Alex-MP-20：675,204 条结构；当前 child-first split 为
+  `540,164 / 67,520 / 67,520`，跨 split 的 formula、exact prototype、
+  matcher envelope 和 connected component overlap 均为零。
+- PhononDB：10,034 个 compact Hessian/force-constant records；按需计算
+  dynamical matrix，不保存 dense q-grid。
+- MatPES-PBE：已资格化的 TensorNet 与 QET 仅作为未来离线监督，不做 reverse guidance。
+- TensorOrbit-JARVIS-v2：保留给后续 tensor/oracle Gate；当前训练不读取它。
+
+数据问题采用版本化入口清洗：保留 raw source，不修改历史结果，不给模型添加坏数据
+fallback。`alex<agm004639609>` 只从未来 parent-occurrence / blueprint 数据入口剔除；
+它的 child structure 对 P1 结构训练仍有效，因此不会从 Alex 结构池删除。
+
+## H1a packed cache
+
+当前代码包含 fail-closed 的 `PackedAlexP1Dataset` reader，但正式 cache 尚不存在。
+reader 只接受 `qualified=true` 且文件哈希匹配的 manifest，默认仅返回：
+
+```text
+atom_types, frac_coords, lattice, num_nodes
+```
+
+material ID、source row、split、formula、prototype、space group 和 Niggli transform
+只能出现在离线 audit index，不能进入 denoiser。cache 构建只允许认证的 Niggli
+`GL(3,Z)` basis change，无 unreduced fallback。
+
+## 环境
+
+所有报告测试和未来训练使用 WSL 2 Ubuntu-22.04：
 
 ```bash
 cd /mnt/e/CODE/T2C-Flow/gaugeflow
@@ -260,19 +99,10 @@ PY=/home/future04/micromamba/envs/flowmm-t2c/bin/python
 $PY -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
-The qualified machine reports torch `2.5.1+cu124`, CUDA 12.4, and an NVIDIA
-GeForce RTX 4060 Ti. The Windows Anaconda environment is CPU-only and must not
-be used for reported experiments.
+资格机器为 PyTorch `2.5.1+cu124`、CUDA 12.4、RTX 4060 Ti 16 GB。Windows
+CPU-only torch 不用于报告结果。
 
-Install/update the editable package if needed:
-
-```bash
-$PY -m pip install -e '.[dev,catalogue]'
-```
-
-## Validation
-
-Run the active suite:
+## 验证
 
 ```bash
 $PY -m pytest -q
@@ -281,85 +111,12 @@ $PY -m mypy src/gaugeflow/production
 $PY scripts/audit_code_redundancy.py
 ```
 
-The redundancy audit checks the production modules and current train, sample,
-and data entry points
-for duplicate normalized bodies, unreachable branches, unused private
-definitions, stored-but-unread attributes, constant branches and unused CLI
-arguments.
+## 仓库原则
 
-Superseded S0 runners, harmonic/Hopf reference code, intermediate configs and
-per-run reports are intentionally absent. Their exact state is recoverable from
-Git tag `archive/pre-runtime-cleanup-20260717`; the manuscript and
-`docs/research_iteration_history.md` retain the scientific conclusions.
-
-## TensorOrbit-JARVIS-v2
-
-The current data path is source-verified TensorOrbit-JARVIS-v2. Relevant
-artifacts include:
-
-```text
-data/tensororbit_jarvis_v2/
-data/tensororbit_jarvis_v2_full_o3_v2/
-artifacts/tensororbit_jarvis_formula_grouped_candidate_v2/splits.json
-artifacts/tensororbit_jarvis_v2_raw_build_v1/attestation.json
-artifacts/tensororbit_jarvis_v2_full_o3_v2/attestation.json
-```
-
-Future validation/test and external tensor-oracle qualification must use a
-versioned v2 protocol. The retired v1 preprocessed cache is intentionally absent
-from the active tree.
-
-Data build/audit entry points are:
-
-```bash
-$PY scripts/build_tensororbit_v2_raw.py --help
-$PY scripts/audit_tensororbit_v2_build.py --help
-$PY scripts/prepare_v2_oracle_qualification.py --help
-$PY scripts/audit_alex_mp20_source.py --help
-$PY scripts/audit_h0_activation.py --help
-```
-
-The trainer and sampler below are implementation entry points, not current
-authorization to run H1. After H0 passes, run them only under a versioned H1a
-protocol:
-
-```bash
-$PY scripts/train_production.py --csv /path/to/train.csv \
-  --split-manifest /path/to/splits.json --split train \
-  --output outputs/s1a_tensor_free
-
-$PY scripts/sample_production.py \
-  --checkpoint outputs/s1a_tensor_free/checkpoint_step_00100000.pt \
-  --output outputs/s1a_samples --num-samples 100
-```
-
-These entry points never enable a tensor condition or read a target space
-group. They use a training-split node-count prior and a P1 blueprint. They do
-not authorize oracle promotion, relaxation, DFT or DFPT.
-
-## Development rules
-
-- Do not reintroduce the old continuous-logit `flow.py`/`model.py` implementation.
-- Do not restore archived harmonic code or audit runners as runtime fallbacks.
-- Keep a physical zero tensor distinct from a missing condition.
-- Use SO(3) for the polar rank-three tensor orbit and O(3) only for crystal
-  compatibility diagnostics where parity is explicit.
-- H0 must pass before H1a starts. H1 requires both the P1 real-data H1a
-  generator and the full 230-space-group/Wyckoff H1b generator to pass.
-- Any atlas simplification must be a new versioned method. The failed 24-frame
-  approximation cannot be reused.
-- Matched conditioner comparisons must share the same backbone, data, budget,
-  seeds and sample noise.
-
-## Next implementation milestone
-
-The next milestone is completion of H0, not training. H0-A now freezes all
-675,204 Alex-MP-20 rows into a child-first 540,164/67,520/67,520 split with
-zero formula, exact-prototype, matcher-envelope or connected-component overlap.
-The exhaustive cross-split StructureMatcher candidate universe is empty. H0-B
-now qualifies the full 10,034-material Hessian algebra and a frozen 1,024-row
-long-tail/stratified mode audit. H0-C qualifies frozen TensorNet and QET
-MatPES-PBE-2025.2 teachers on the same deterministic 512/32 audit panel, with
-strictly offline-only use. H0 still requires a deduplicated OPD physical path
-measure and the bounded parent-decomposition pilot. Only then may H1a and H1b
-start. Tensor conditioning remains H6.
+- 当前代码就是唯一 runtime；不保留旧模型兼容分支。
+- 当前处理数据由 manifest/hash 确认；raw source 保留在外部数据目录。
+- 历史失败和旧 runner 只在 Git tag 与 `docs/research_iteration_history.md` 中复现。
+- 不把 target CIF、target lattice、material ID、target space group、stabilizer 或
+  species mapping 输入 denoiser。
+- polar rank-three tensor orbit 使用 `SO(3)`；晶体兼容性才使用显式 parity 的 `O(3)`。
+- H1a 通过前不启动完整 blueprint、tensor、oracle 或物理验证。
