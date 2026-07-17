@@ -123,6 +123,15 @@ class PackedAlexP1Dataset(Dataset[Data]):
             for value in (self.fractional_coordinates, self.lattice)
         ):
             raise ValueError("packed Alex cache contains nonfinite values")
+        if bool(
+            (
+                (self.fractional_coordinates < 0.0)
+                | (self.fractional_coordinates >= 1.0)
+            ).any()
+        ):
+            raise ValueError("packed Alex coordinates are not canonical in [0,1)")
+        if bool((torch.linalg.det(self.lattice) <= 0.0).any()):
+            raise ValueError("packed Alex cache contains a nonpositive lattice volume")
 
     @property
     def node_counts(self) -> torch.Tensor:
