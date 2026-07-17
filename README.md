@@ -138,6 +138,24 @@ only 125 of 1,024 pilot rows exposed a candidate; the frozen coverage gate
 therefore failed. The independently audited negative result and exact hashes
 are in [`reports/h0_e_parent_decomposition_pilot_v1/`](reports/h0_e_parent_decomposition_pilot_v1/).
 
+The frozen v1 builder/auditor are reproducible from commit
+`f6f0262bfe9bbd983213467b20e66bce5fcb8485`; they are not compatibility paths
+in the active tree. H0-E-v2 has not been preregistered or run. Two bounded
+candidate-source diagnostics have already been rejected: finite metric-only
+parent projection added `0/64` candidates, and a wider spglib tolerance ladder
+found only one independently valid candidate among 64 previously uncovered
+rows. The next valid successor therefore needs an offline maximal
+group--subgroup embedding and Wyckoff-splitting compiler with joint site/Kelvin
+projection, not a looser tolerance or a metric-only surrogate.
+
+The active algebra keeps only exact equivalent accelerations: compact node
+permutations plus `3 x 3` Cartesian rotations instead of dense `3N x 3N`
+matrices, the orthonormal six-coordinate Kelvin representation of symmetric
+Hencky strain, shared-QR batched periodic CVP, cached element masses, and
+allocation-free compact Reynolds reductions. External spglib/pymatgen
+certification remains explicit because replacing it by a learned or metric-only
+shortcut would change the physical acceptance set.
+
 ## Repository layout
 
 ```text

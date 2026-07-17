@@ -150,6 +150,74 @@ proof-gated unique generic fast path. Raw traces, `.prof` files, pre/post top-20
 tables and standalone S0.4.1 report files are retired; the qualified metrics
 remain in the manuscript and this history.
 
+## H0-E parent-occurrence follow-up
+
+H0-E-v1 remains frozen failed at `125/1024 = 0.12207` against its preregistered
+`0.15` candidate-coverage threshold. A post-freeze semantic audit found that
+the implementation had named the final reconstruction error as a residual
+bound. These are different quantities:
+
+\[
+d_{\rm rec}=d_{\rm PBC}(x_{\rm child},\hat x_{\rm child}),\qquad
+r_{\rm RMS}=\sqrt{N^{-1}\sum_i\|r_i\|^2}.
+\]
+
+The active compiler now records and checks both. Rebuilding the 125 discovered
+candidates in memory gave median/p95/max true residual RMS
+`0.001546/0.04078/0.08516` Angstrom, so every v1 candidate still qualifies;
+the historical failure remains coverage-only.
+
+Two no-write successor diagnostics tested whether the missing coverage was a
+cheap parent-construction artifact. The first projected only the conventional
+Gram matrix onto finite volume-preserving monoclinic, orthorhombic,
+tetragonal, cubic, hexagonal and rhombohedral strata. It recovered the
+synthetic pure-strain example but added `0/64` candidates on a fixed,
+crystal-system-balanced panel of v1 no-candidate rows. The second jointly
+enumerated lattice rotations and species-preserving site permutations, closed
+each finite affine extension, and used a batched universal-cover Reynolds
+projection. It also added `0/64`; the bounded extra actions found on the panel
+did not survive tight parent certification. Extending the spglib proposal
+ladder to `0.9` Angstrom found three candidates, but only one satisfied the
+unchanged OPD/residual contract.
+
+Consequently metric-only projection, blind tolerance extension and the
+experimental affine-extension search were removed from the active code. They
+must not become runtime fallbacks. A correct complete successor needs an
+explicit maximal group--subgroup/Wyckoff-splitting catalogue followed by a
+joint site-and-strain projection. This is the same crystallographic object
+used by PSEUDO, AMPLIMODES and ISODISPLACE, not a lattice-only approximation:
+
+- Kroumova et al., *PSEUDO: a program for a pseudosymmetry search*, J. Appl.
+  Cryst. 34 (2001), [doi:10.1107/S0021889801011852](https://doi.org/10.1107/S0021889801011852).
+- Orobengoa et al., *AMPLIMODES: symmetry-mode analysis on the Bilbao
+  Crystallographic Server*, J. Appl. Cryst. 42 (2009),
+  [doi:10.1107/S0021889809028064](https://doi.org/10.1107/S0021889809028064).
+- Campbell et al., *ISODISPLACE: a web-based tool for exploring structural
+  distortions*, J. Appl. Cryst. 39 (2006),
+  [doi:10.1107/S0021889806014075](https://doi.org/10.1107/S0021889806014075).
+
+The representation policy is unchanged: site actions are stored as a node
+permutation plus a Cartesian `3x3` rotation; homogeneous strain is the exact
+six-coordinate Kelvin image of symmetric Hencky strain; periodic closest
+vectors share one QR factorization; OPD projectors and component orbits are
+cached. These are mathematical equivalences and measured accelerations. No
+dense `3N x 3N` action, exhaustive per-material PyXtal search, or approximate
+metric-only parent is retained.
+
+The post-audit implementation also applies the Reynolds operator by linear
+reductions of the compact component orbits instead of allocating a complete
+residual orbit for every one/two-mode subset. A fixed synthetic WSL float64
+microbenchmark (`|G|=384`, `N=128`, two components, 128 reductions) measured
+`1.51x` lower wall time and `1.88x` lower traced peak allocation, with maximum
+absolute difference `3.1e-16`. Element masses are cached and the parent-cell
+inverse is reused across terminal certifications. These changes do not alter
+the candidate set or acceptance equations.
+
+The frozen H0-E-v1 runners were removed from the active tree after commit
+`f6f0262bfe9bbd983213467b20e66bce5fcb8485`; that commit remains the exact v1
+reproduction surface. No incomplete v2 runner is retained before its
+group--subgroup/Wyckoff compiler and protocol are frozen.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

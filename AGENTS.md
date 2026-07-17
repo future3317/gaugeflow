@@ -86,6 +86,11 @@ its code/data/report surface.
   125 discovered candidates qualified, but candidate coverage was
   `125/1024 = 0.12207 < 0.15`; the independently audited gate is frozen failed.
   The overall decision remains `H0-E-v1_failed_stop_before_H1`.
+  Its active-tree runners were retired after commit
+  `f6f0262bfe9bbd983213467b20e66bce5fcb8485`; use that commit to reproduce
+  the frozen v1 artifact. H0-E-v2 is not yet frozen or authorized. A successor
+  must add a complete group--subgroup/Wyckoff-splitting parent compiler rather
+  than relabel the old spglib tolerance ladder.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
@@ -144,6 +149,11 @@ unauthorized.
   compact permutation-plus-3x3 displacement actions, generator-complete
   homomorphism checks and packed stabilizers. Do not replace it with dense
   `3N x 3N` actions or full subgroup enumeration in the production builder.
+- Parent-occurrence acceleration must preserve the independently certified
+  HNF, site mapping, periodic quotient and OPD contracts. Metric-only parent
+  projection and blind symmetry-tolerance expansion are rejected candidate
+  sources: both failed the frozen real-material diagnostic and must not return
+  as runtime fallbacks.
 - Avoid adding a new method until a small versioned diagnostic identifies the
   failure mechanism it addresses.
 - Completed exploratory protocols belong in Git history and the condensed

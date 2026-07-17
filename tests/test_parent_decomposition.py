@@ -4,6 +4,10 @@ import numpy as np
 import torch
 
 from gaugeflow.catalogue.parent_decomposition import (
+    ComponentResult,
+    ParentCandidate,
+    StandardCrystal,
+    _compact_reynolds_residual,
     balanced_selection,
     decompose_parent_candidate,
     find_parent_candidates,
@@ -13,7 +17,6 @@ from gaugeflow.geometry import (
     closest_image_displacement,
     closest_image_displacements_numpy,
 )
-from scripts.build_h0_e_parent_decomposition_pilot import _records_table
 
 MATCHER = {
     "ltol": 0.2,
@@ -49,21 +52,6 @@ def test_balanced_selection_preserves_split_quota_and_is_deterministic():
     assert {value["gaugeflow_split"] for value in left} == {"train", "val", "test"}
 
 
-def test_sparse_builder_records_use_the_union_of_all_result_fields():
-    table = _records_table(
-        [
-            {"material_id": "first", "qualified_nontrivial": False},
-            {
-                "material_id": "second",
-                "qualified_nontrivial": True,
-                "active_sectors_json": '["strain"]',
-            },
-        ]
-    )
-    assert "active_sectors_json" in table.schema.names
-    assert table.column("active_sectors_json").to_pylist() == [None, '["strain"]']
-
-
 def test_translation_quotient_removes_global_shift_without_erasing_distortion():
     lattice = np.diag([2.0, 1.0, 1.0])
     parent = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
@@ -92,6 +80,40 @@ def test_batched_numpy_cvp_matches_exact_single_vector_solver_for_skew_cell():
         single_shifts.append(shift.numpy())
     assert np.allclose(batched, np.stack(singles), atol=1e-12, rtol=0.0)
     assert np.array_equal(shifts, np.stack(single_shifts))
+
+
+def test_compact_reynolds_residual_matches_materialized_orbit_formula():
+    rng = np.random.default_rng(20260717)
+    transformed = rng.normal(size=(8, 5, 3))
+    first = rng.normal(size=(8, 5, 3))
+    second = rng.normal(size=(8, 5, 3))
+    masses = rng.uniform(1.0, 100.0, size=5)
+    selected = (0, 2, 5, 7)
+    components = tuple(
+        ComponentResult(
+            sector="displacement",
+            irrep_key=key,
+            dimension=1,
+            multiplicity=1,
+            energy=1.0,
+            branch_key="branch",
+            stabilizer_size=len(selected),
+            stabilizer=selected,
+            values=np.zeros((5, 3)),
+        )
+        for key in ("first", "second")
+    )
+    materialized = transformed - first - second
+    expected = materialized[np.asarray(selected)].mean(axis=0)
+    expected -= (masses[:, None] * expected).sum(axis=0) / masses.sum()
+    actual = _compact_reynolds_residual(
+        transformed,
+        {"first": first, "second": second},
+        components,
+        selected,
+        masses,
+    )
+    assert np.allclose(actual, expected, atol=1e-14, rtol=1e-14)
 
 
 def test_known_doubled_cell_finds_and_decomposes_nontrivial_parent():
@@ -123,6 +145,7 @@ def test_known_doubled_cell_finds_and_decomposes_nontrivial_parent():
     assert result.supercell_index in (1, 2)
     assert result.occurrence_integral
     assert result.periodic_rms_angstrom <= 0.1
+    assert result.residual_rms_angstrom <= 0.1
     assert 1 <= len(result.active_components) <= 2
 
 
@@ -151,5 +174,58 @@ def test_homogeneous_metric_distortion_is_identified_as_a_strain_opd():
         matcher_settings=MATCHER,
     )
     assert result.periodic_rms_angstrom == 0.0
+    assert result.residual_rms_angstrom == 0.0
     assert result.terminal_space_group_agrees
     assert [value.sector for value in result.active_components] == ["strain"]
+
+
+def test_residual_bound_is_not_satisfied_by_exact_reconstruction_error():
+    lattice = np.diag([5.0, 6.0, 7.0])
+    parent_fractional = np.array([[0.13, 0.17, 0.21], [0.39, 0.44, 0.51]])
+    child_fractional = np.array([[0.15, 0.17, 0.21], [0.37, 0.44, 0.51]])
+    species = np.array([6, 8], dtype=np.int64)
+    identity = np.eye(3, dtype=np.int64)[None, :, :]
+    translations = np.zeros((1, 3), dtype=np.float64)
+    parent = StandardCrystal(
+        lattice,
+        parent_fractional,
+        species,
+        1,
+        identity,
+        translations,
+    )
+    child = StandardCrystal(
+        lattice,
+        child_fractional,
+        species,
+        1,
+        identity,
+        translations,
+    )
+    candidate = ParentCandidate(
+        parent=parent,
+        child=child,
+        supercell_hnf=np.eye(3, dtype=np.int64),
+        expanded_parent_fractional=parent_fractional,
+        child_fractional_aligned=child_fractional,
+        child_lattice_aligned=lattice,
+        expanded_species=species,
+        construction="unit_test",
+        source_max_displacement_angstrom=0.1,
+        source_hencky_norm=0.0,
+        symprec=0.001,
+    )
+    result = decompose_parent_candidate(
+        candidate,
+        residual_rms_limit=0.01,
+        stabilizer_rms_tolerance=0.001,
+        stabilizer_metric_tolerance=0.001,
+        displacement_energy_floor=1e12,
+        strain_energy_floor=1e12,
+        terminal_symprec=0.001,
+        angle_tolerance=5.0,
+        matcher_settings=MATCHER,
+    )
+    assert result.periodic_rms_angstrom <= 1e-12
+    assert result.residual_rms_angstrom > 0.09
+    assert not result.structure_matcher_agrees

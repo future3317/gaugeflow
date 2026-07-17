@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+from functools import lru_cache
 from hashlib import sha256
 from itertools import combinations
 from math import prod
@@ -54,6 +55,9 @@ class ParentCandidate:
     child_fractional_aligned: FloatArray
     child_lattice_aligned: FloatArray
     expanded_species: IntArray
+    construction: str
+    source_max_displacement_angstrom: float
+    source_hencky_norm: float
     symprec: float
 
 
@@ -76,8 +80,12 @@ class DecompositionResult:
     child_space_group: int
     supercell_hnf: IntArray
     supercell_index: int
+    parent_construction: str
+    source_max_displacement_angstrom: float
+    source_hencky_norm: float
     symprec: float
     periodic_rms_angstrom: float
+    residual_rms_angstrom: float
     top2_energy_fraction: float
     terminal_space_group: int
     terminal_space_group_agrees: bool
@@ -207,6 +215,118 @@ def _expanded_parent(
     return fractional % 1.0, species
 
 
+def _candidate_from_parent(
+    child: StandardCrystal,
+    parent: StandardCrystal,
+    *,
+    matcher_settings: dict[str, float | bool],
+    construction: str,
+    symprec: float,
+) -> ParentCandidate | None:
+    """Certify one proposed parent with exact composition, HNF and site mapping."""
+    from hsnf import row_style_hermite_normal_form
+    from pymatgen.core import Lattice, Structure
+
+    if not (
+        len(parent.rotations) > len(child.rotations)
+        or parent.species.size < child.species.size
+    ):
+        return None
+    composition_index = _composition_index(child.species, parent.species)
+    if composition_index is None:
+        return None
+    child_structure = _as_structure(child)
+    try:
+        transformation = _matcher(
+            matcher_settings, attempt_supercell=True
+        ).get_transformation(child_structure, _as_structure(parent))
+    except (ValueError, TypeError):
+        return None
+    if transformation is None:
+        return None
+    supercell = np.rint(np.asarray(transformation[0], dtype=np.float64)).astype(
+        np.int64
+    )
+    if not np.allclose(transformation[0], supercell, atol=1e-8, rtol=0.0):
+        return None
+    hnf, _ = row_style_hermite_normal_form(supercell)
+    hnf = np.asarray(hnf, dtype=np.int64)
+    determinant = int(round(np.linalg.det(hnf)))
+    if determinant != composition_index or not 1 <= determinant <= 4:
+        return None
+    try:
+        primitive_group = PrimitiveSpaceGroup.from_operations(
+            parent.rotations, parent.translations
+        )
+        quotient = AffineQuotient.build(primitive_group, hnf)
+    except (ValueError, RuntimeError):
+        return None
+    expanded_fractional, expanded_species = _expanded_parent(parent, quotient)
+    expanded_structure = Structure(
+        Lattice(hnf @ parent.lattice),
+        expanded_species.tolist(),
+        expanded_fractional,
+        coords_are_cartesian=False,
+        to_unit_cell=True,
+    )
+    try:
+        aligned_child = _matcher(
+            matcher_settings, attempt_supercell=False
+        ).get_s2_like_s1(expanded_structure, child_structure)
+    except (ValueError, TypeError):
+        return None
+    if aligned_child is None or len(aligned_child) != len(expanded_structure):
+        return None
+    aligned_species = np.asarray(
+        [int(site.specie.Z) for site in aligned_child], dtype=np.int64
+    )
+    if not np.array_equal(aligned_species, expanded_species):
+        return None
+    parent_supercell_lattice = hnf @ parent.lattice
+    aligned_fractional = np.asarray(aligned_child.frac_coords, dtype=np.float64) % 1.0
+    mapped_displacement = translation_quotient_displacement(
+        expanded_fractional,
+        aligned_fractional,
+        parent_supercell_lattice,
+        _atomic_masses(expanded_species),
+    )
+    source_max_displacement = float(
+        np.linalg.norm(mapped_displacement, axis=1).max(initial=0.0)
+    )
+    source_hencky_norm = float(
+        np.linalg.norm(
+            _logarithmic_strain(
+                parent_supercell_lattice,
+                np.asarray(aligned_child.lattice.matrix, dtype=np.float64),
+            )
+        )
+    )
+    return ParentCandidate(
+        parent=parent,
+        child=child,
+        supercell_hnf=hnf,
+        expanded_parent_fractional=expanded_fractional,
+        child_fractional_aligned=aligned_fractional,
+        child_lattice_aligned=np.asarray(
+            aligned_child.lattice.matrix, dtype=np.float64
+        ),
+        expanded_species=expanded_species,
+        construction=construction,
+        source_max_displacement_angstrom=source_max_displacement,
+        source_hencky_norm=source_hencky_norm,
+        symprec=float(symprec),
+    )
+
+
+def _candidate_key(candidate: ParentCandidate) -> tuple[object, ...]:
+    return (
+        candidate.parent.space_group,
+        tuple(int(value) for value in candidate.supercell_hnf.ravel()),
+        tuple(int(value) for value in candidate.parent.species),
+        tuple(np.round(candidate.parent.fractional, 7).ravel()),
+    )
+
+
 def find_parent_candidates(
     lattice: FloatArray,
     fractional: FloatArray,
@@ -218,8 +338,6 @@ def find_parent_candidates(
     matcher_settings: dict[str, float | bool],
 ) -> tuple[StandardCrystal, tuple[ParentCandidate, ...]]:
     """Find idealized higher-symmetry parents without a tensor condition."""
-    from hsnf import row_style_hermite_normal_form
-
     child = standardize_crystal(
         lattice,
         fractional,
@@ -228,9 +346,6 @@ def find_parent_candidates(
         angle_tolerance=angle_tolerance,
         no_idealize=True,
     )
-    child_structure = _as_structure(child)
-    supercell_matcher = _matcher(matcher_settings, attempt_supercell=True)
-    equal_matcher = _matcher(matcher_settings, attempt_supercell=False)
     candidates: dict[tuple[object, ...], ParentCandidate] = {}
     for symprec in symprec_ladder:
         try:
@@ -244,84 +359,16 @@ def find_parent_candidates(
             )
         except ValueError:
             continue
-        if not (
-            len(parent.rotations) > len(child.rotations)
-            or parent.species.size < child.species.size
-        ):
-            continue
-        composition_index = _composition_index(child.species, parent.species)
-        if composition_index is None:
-            continue
-        parent_structure = _as_structure(parent)
-        try:
-            transformation = supercell_matcher.get_transformation(
-                child_structure, parent_structure
-            )
-        except (ValueError, TypeError):
-            continue
-        if transformation is None:
-            continue
-        supercell = np.rint(np.asarray(transformation[0], dtype=np.float64)).astype(
-            np.int64
-        )
-        if not np.allclose(transformation[0], supercell, atol=1e-8, rtol=0.0):
-            continue
-        hnf, _ = row_style_hermite_normal_form(supercell)
-        hnf = np.asarray(hnf, dtype=np.int64)
-        determinant = int(round(np.linalg.det(hnf)))
-        if determinant != composition_index or not 1 <= determinant <= 4:
-            continue
-        try:
-            primitive_group = PrimitiveSpaceGroup.from_operations(
-                parent.rotations, parent.translations
-            )
-            quotient = AffineQuotient.build(primitive_group, hnf)
-        except (ValueError, RuntimeError):
-            continue
-        expanded_fractional, expanded_species = _expanded_parent(parent, quotient)
-        from pymatgen.core import Lattice, Structure
-
-        expanded_structure = Structure(
-            Lattice(hnf @ parent.lattice),
-            expanded_species.tolist(),
-            expanded_fractional,
-            coords_are_cartesian=False,
-            to_unit_cell=True,
-        )
-        try:
-            aligned_child = equal_matcher.get_s2_like_s1(
-                expanded_structure, child_structure
-            )
-        except (ValueError, TypeError):
-            continue
-        if aligned_child is None or len(aligned_child) != len(expanded_structure):
-            continue
-        aligned_species = np.asarray(
-            [int(site.specie.Z) for site in aligned_child], dtype=np.int64
-        )
-        if not np.array_equal(aligned_species, expanded_species):
-            continue
-        key = (
-            parent.space_group,
-            tuple(int(value) for value in hnf.ravel()),
-            tuple(int(value) for value in parent.species),
-            tuple(np.round(parent.fractional, 7).ravel()),
-        )
-        candidate = ParentCandidate(
-            parent=parent,
-            child=child,
-            supercell_hnf=hnf,
-            expanded_parent_fractional=expanded_fractional,
-            child_fractional_aligned=np.asarray(
-                aligned_child.frac_coords, dtype=np.float64
-            )
-            % 1.0,
-            child_lattice_aligned=np.asarray(
-                aligned_child.lattice.matrix, dtype=np.float64
-            ),
-            expanded_species=expanded_species,
+        candidate = _candidate_from_parent(
+            child,
+            parent,
+            matcher_settings=matcher_settings,
+            construction="spglib_tolerance_ladder",
             symprec=float(symprec),
         )
+        if candidate is None:
+            continue
+        key = _candidate_key(candidate)
         previous = candidates.get(key)
         if previous is None or candidate.symprec < previous.symprec:
             candidates[key] = candidate
@@ -337,12 +384,20 @@ def find_parent_candidates(
     )
 
 
-def _atomic_masses(species: IntArray) -> FloatArray:
+@lru_cache(maxsize=118)
+def _atomic_mass(atomic_number: int) -> float:
+    """Return one immutable periodic-table mass without repeated Element parsing."""
     from pymatgen.core import Element
 
-    return np.asarray(
-        [float(Element.from_Z(int(number)).atomic_mass) for number in species],
+    return float(Element.from_Z(atomic_number).atomic_mass)
+
+
+def _atomic_masses(species: IntArray) -> FloatArray:
+    """Return masses in node order using the exact cached element lookup."""
+    return np.fromiter(
+        (_atomic_mass(int(number)) for number in species),
         dtype=np.float64,
+        count=int(species.size),
     )
 
 
@@ -514,6 +569,8 @@ def _metric_invariant(
 def _terminal_evaluation(
     candidate: ParentCandidate,
     parent_lattice: FloatArray,
+    parent_lattice_inverse: FloatArray,
+    masses: FloatArray,
     predicted: FloatArray,
     *,
     terminal_symprec: float,
@@ -525,17 +582,17 @@ def _terminal_evaluation(
 
     difference_parent = translation_quotient_displacement(
         candidate.expanded_parent_fractional
-        + predicted @ np.linalg.inv(parent_lattice),
+        + predicted @ parent_lattice_inverse,
         candidate.child_fractional_aligned,
         parent_lattice,
-        _atomic_masses(candidate.expanded_species),
+        masses,
     )
-    difference_fractional = difference_parent @ np.linalg.inv(parent_lattice)
+    difference_fractional = difference_parent @ parent_lattice_inverse
     difference_child = difference_fractional @ candidate.child_lattice_aligned
     periodic_rms = float(np.sqrt(np.mean(np.sum(difference_child**2, axis=1))))
     predicted_fractional = (
         candidate.expanded_parent_fractional
-        + predicted @ np.linalg.inv(parent_lattice)
+        + predicted @ parent_lattice_inverse
     ) % 1.0
     terminal_dataset = spglib.get_symmetry_dataset(
         (
@@ -574,6 +631,36 @@ def _terminal_evaluation(
     )
 
 
+def _compact_reynolds_residual(
+    transformed: FloatArray,
+    displacement_orbits: dict[str, FloatArray],
+    subset: tuple[ComponentResult, ...],
+    selected: tuple[int, ...],
+    masses: FloatArray,
+) -> FloatArray:
+    """Project the unmodelled displacement without a dense representation.
+
+    Linearity of the Reynolds operator gives
+
+    ``mean_g (g.d - sum_j g.d_j) = mean_g(g.d) - sum_j mean_g(g.d_j)``.
+
+    Evaluating those reductions directly is mathematically identical to
+    copying a full ``[|G|, N, 3]`` residual orbit for every one/two-mode
+    subset, but avoids that repeated allocation.
+    """
+    indices = np.asarray(selected, dtype=np.int64)
+    residual = transformed[indices].mean(axis=0)
+    selected_orbits = [
+        displacement_orbits[value.irrep_key][indices]
+        for value in subset
+        if value.sector == "displacement"
+    ]
+    if selected_orbits:
+        residual -= np.stack(selected_orbits, axis=0).mean(axis=1).sum(axis=0)
+    residual -= (masses[:, None] * residual).sum(axis=0) / masses.sum()
+    return residual
+
+
 def decompose_parent_candidate(
     candidate: ParentCandidate,
     *,
@@ -609,6 +696,7 @@ def decompose_parent_candidate(
     )):
         raise RuntimeError("candidate node order does not match compact displacement action")
     parent_lattice = candidate.supercell_hnf @ candidate.parent.lattice
+    parent_lattice_inverse = np.linalg.inv(parent_lattice)
     masses = _atomic_masses(candidate.expanded_species)
     displacement = translation_quotient_displacement(
         candidate.expanded_parent_fractional,
@@ -747,6 +835,7 @@ def decompose_parent_candidate(
             bool,
             bool,
             float,
+            float,
         ]
     ] = []
     for count in (1, 2):
@@ -767,19 +856,23 @@ def decompose_parent_candidate(
                 value.values for value in subset if value.sector == "displacement"
             ]
             mode = sum(displacement_modes, start=np.zeros_like(displacement))
-            residual_orbit = transformed.copy()
-            for value in subset:
-                if value.sector == "displacement":
-                    residual_orbit -= displacement_orbits[value.irrep_key]
-            residual = residual_orbit[
-                np.asarray(declared, dtype=np.int64)
-            ].mean(axis=0)
-            residual -= (masses[:, None] * residual).sum(axis=0) / masses.sum()
+            residual = _compact_reynolds_residual(
+                transformed,
+                displacement_orbits,
+                subset,
+                declared,
+                masses,
+            )
+            residual_rms = float(
+                np.sqrt(np.mean(np.sum(residual * residual, axis=1)))
+            )
             predicted = mode + residual
             periodic_rms, terminal_group, terminal_agrees, structure_agrees = (
                 _terminal_evaluation(
                     candidate,
                     parent_lattice,
+                    parent_lattice_inverse,
+                    masses,
                     predicted,
                     terminal_symprec=terminal_symprec,
                     angle_tolerance=angle_tolerance,
@@ -802,8 +895,10 @@ def decompose_parent_candidate(
                 f"{value.sector}:{value.irrep_key}:{value.branch_key}" for value in subset
             )
             ordering: tuple[float | int | str, ...] = (
+                0 if residual_rms <= residual_rms_limit else 1,
                 periodic_rms,
                 0 if terminal_agrees else 1,
+                residual_rms,
                 -explained,
                 count,
                 deterministic,
@@ -818,6 +913,7 @@ def decompose_parent_candidate(
                     terminal_agrees,
                     structure_agrees,
                     explained,
+                    residual_rms,
                 )
             )
 
@@ -831,16 +927,22 @@ def decompose_parent_candidate(
             terminal_agrees,
             structure_agrees,
             top_fraction,
+            residual_rms,
         ) = min(evaluated, key=lambda value: value[0])
         opd_complete = all(value.branch_key is not None for value in active)
     else:
         active = ()
         declared_stabilizer = tuple(range(action.group.order))
+        residual = transformed.mean(axis=0)
+        residual -= (masses[:, None] * residual).sum(axis=0) / masses.sum()
+        residual_rms = float(np.sqrt(np.mean(np.sum(residual * residual, axis=1))))
         periodic_rms, terminal_space_group, terminal_agrees, structure_agrees = (
             _terminal_evaluation(
                 candidate,
                 parent_lattice,
-                np.zeros_like(displacement),
+                parent_lattice_inverse,
+                masses,
+                residual,
                 terminal_symprec=terminal_symprec,
                 angle_tolerance=angle_tolerance,
                 matcher_settings=matcher_settings,
@@ -857,15 +959,19 @@ def decompose_parent_candidate(
         f"|branches={','.join(str(value.branch_key) for value in active)}"
         f"|H={canonical_stabilizer_key(action.group, declared_stabilizer)}"
     )
-    if periodic_rms > residual_rms_limit + 1e-12:
+    if residual_rms > residual_rms_limit + 1e-12:
         structure_agrees = False
     return DecompositionResult(
         parent_space_group=candidate.parent.space_group,
         child_space_group=candidate.child.space_group,
         supercell_hnf=candidate.supercell_hnf,
         supercell_index=int(round(np.linalg.det(candidate.supercell_hnf))),
+        parent_construction=candidate.construction,
+        source_max_displacement_angstrom=candidate.source_max_displacement_angstrom,
+        source_hencky_norm=candidate.source_hencky_norm,
         symprec=candidate.symprec,
         periodic_rms_angstrom=periodic_rms,
+        residual_rms_angstrom=residual_rms,
         top2_energy_fraction=top_fraction,
         terminal_space_group=terminal_space_group,
         terminal_space_group_agrees=bool(terminal_agrees),
