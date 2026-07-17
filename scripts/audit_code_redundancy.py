@@ -29,10 +29,6 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h0_d_opd_catalogue_v2.py",
     ROOT / "scripts" / "build_h0_e_maximal_embedding_catalogue_v2.py",
     ROOT / "scripts" / "audit_h0_e_maximal_embedding_catalogue_v2.py",
-    ROOT / "scripts" / "run_h0_e_maximal_t_parent_occurrence_e1a_v1.py",
-    ROOT / "scripts" / "audit_h0_e_maximal_t_parent_occurrence_e1a_v1.py",
-    ROOT / "scripts" / "run_h0_e_v3_maximal_k_occurrence_k0_v1.py",
-    ROOT / "scripts" / "audit_h0_e_v3_maximal_k_occurrence_k0_v1.py",
 )
 
 
