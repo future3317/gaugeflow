@@ -39,3 +39,28 @@ def test_parent_path_quarantine_does_not_rewrite_frozen_e1a_or_child_data():
     assert entry["action"] == "exclude_all_matching_parent_embeddings"
     assert entry["evidence"]["source_hencky_norm"] > entry["evidence"]["frozen_hencky_limit"]
     assert len(entry["evidence"]["space_group_symprec_panel_angstrom"]) == 7
+
+
+def test_h0_e_v3_k0_is_a_new_frozen_cell_changing_mechanism_gate():
+    config = json.loads(
+        Path("configs/gates/h0_e_v3_maximal_k_occurrence_k0_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert config["status_before_run"] == "frozen_not_run"
+    assert config["selection"]["ordered_material_ids_sha256"] == (
+        "d3a9cb27338e1ec822f8194173b8d85d1b80ff5a1d8377e750b93b380dd615bf"
+    )
+    assert config["setting_and_search"]["expected_candidate_edges"] == 578
+    assert config["thresholds"]["new_candidate_materials_min"] == 3
+    assert config["thresholds"]["source_max_displacement_angstrom"] == 0.2
+    assert config["thresholds"]["source_hencky_norm_max"] == 0.15
+    assert "distance(x,Fix(G)) >= distance(x,Fix(M))" in config["rationale"][
+        "multistep_t_dominance"
+    ]
+    assert config["rationale"]["not_e1b"].startswith(
+        "this protocol is a separately frozen H0-E-v3 successor"
+    )
+    assert config["advancement_rule"].startswith(
+        "K0 success permits only a separately frozen H0-E-v3 occurrence protocol"
+    )
