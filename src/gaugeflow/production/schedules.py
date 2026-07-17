@@ -70,15 +70,16 @@ class CosineNoiseSchedule:
         return step_noise * (1.0 - survival_to) / (1.0 - survival_from).clamp_min(self.minimum_sigma**2)
 
 
-class LinearWrappedVarianceSchedule:
-    """Brownian variance for the wrapped coordinate quotient.
+class FractionalTorusVarianceSchedule:
+    """Cell-independent Brownian variance on the fractional torus.
 
-    A linear variance gives a constant Cartesian diffusion rate.  At terminal
-    time the sampler starts from the exact uniform torus prior; ``sigma_max``
-    controls training corruption and the reverse drift scale, not that prior.
+    This path is a genuine product Markov process with the independently
+    diffused lattice chart. ``sigma_max`` is dimensionless; at one, the first
+    non-zero Fourier mode has residual ``exp(-2*pi^2)``, so the finite terminal
+    wrapped Gaussian is numerically matched to the uniform torus prior.
     """
 
-    def __init__(self, *, sigma_max: float = 4.0) -> None:
+    def __init__(self, *, sigma_max: float = 1.0) -> None:
         if sigma_max <= 0.0 or not math.isfinite(sigma_max):
             raise ValueError("sigma_max must be finite and positive")
         self.sigma_max = float(sigma_max)

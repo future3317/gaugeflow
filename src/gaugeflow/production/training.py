@@ -18,17 +18,22 @@ class ProductionTrainingConfig:
     weight_decay: float = 1.0e-6
     gradient_clip_norm: float = 1.0
     ema_decay: float = 0.999
-    coordinate_sigma_max: float = 4.0
+    coordinate_fractional_sigma_max: float = 1.0
     minimum_time: float = 1.0e-3
     maximum_time: float = 0.999
+    precision: str = "bf16"
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
             raise ValueError("optimizer rates must be nonnegative with positive learning rate")
         if self.gradient_clip_norm <= 0.0 or not 0.0 < self.ema_decay < 1.0:
             raise ValueError("gradient clipping and EMA decay are invalid")
+        if self.coordinate_fractional_sigma_max <= 0.0:
+            raise ValueError("fractional torus sigma must be positive")
         if not 0.0 < self.minimum_time < self.maximum_time < 1.0:
             raise ValueError("training time interval is invalid")
+        if self.precision not in {"fp32", "bf16"}:
+            raise ValueError("training precision must be fp32 or bf16")
 
 
 class ExponentialMovingAverage:
@@ -101,15 +106,21 @@ class ProductionTrainer:
     ) -> tuple[HybridLossOutput, float]:
         self.diffusion.train()
         self.optimizer.zero_grad(set_to_none=True)
-        output = self.diffusion(
-            clean_elements,
-            clean_fractional_coordinates,
-            clean_lattice,
-            batch,
-            blueprint.shape_projector,
-            blueprint.fractional_to_cartesian,
-            generator=generator,
-        )
+        use_bf16 = self.config.precision == "bf16" and clean_lattice.device.type == "cuda"
+        with torch.autocast(
+            device_type=clean_lattice.device.type,
+            dtype=torch.bfloat16,
+            enabled=use_bf16,
+        ):
+            output = self.diffusion(
+                clean_elements,
+                clean_fractional_coordinates,
+                clean_lattice,
+                batch,
+                blueprint.shape_projector,
+                blueprint.fractional_to_cartesian,
+                generator=generator,
+            )
         if not torch.isfinite(output.loss):
             raise FloatingPointError("hybrid training loss is non-finite")
         output.loss.backward()

@@ -23,6 +23,13 @@ def graph_mean(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> to
     return scatter(value, batch, dim=0, dim_size=graph_count, reduce="mean")
 
 
+def graph_sum(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> torch.Tensor:
+    """Return one sum per graph for a node-leading tensor."""
+    if value.shape[:1] != batch.shape:
+        raise ValueError("batch must provide one graph index per node")
+    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="sum")
+
+
 def project_translation_state(
     fractional_coordinates: torch.Tensor,
     batch: torch.Tensor,

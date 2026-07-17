@@ -11,8 +11,9 @@ from gaugeflow.manifold import wrap01
 from .blueprint import ParentBlueprintBatch
 from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser
+from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape
-from .schedules import CosineNoiseSchedule, LinearWrappedVarianceSchedule, standard_normal
+from .schedules import CosineNoiseSchedule, FractionalTorusVarianceSchedule, standard_normal
 from .state_projection import project_hybrid_reverse_state, project_translation_state
 
 
@@ -47,17 +48,21 @@ class TensorFreeReverseSampler:
     def __init__(
         self,
         denoiser: HybridCrystalDenoiser,
+        lattice_standardizer: P1LatticeStandardizer,
         *,
-        coordinate_sigma_max: float = 4.0,
+        coordinate_fractional_sigma_max: float = 1.0,
         maximum_time: float = 0.999,
         guardrails: LatticeGuardrails | None = None,
     ) -> None:
         if not 0.0 < maximum_time < 1.0:
             raise ValueError("maximum reverse time must lie in (0,1)")
         self.denoiser = denoiser
+        self.lattice_standardizer = lattice_standardizer
         self.categorical = AbsorbingMaskDiffusion()
         self.vp_schedule = CosineNoiseSchedule()
-        self.coordinate_schedule = LinearWrappedVarianceSchedule(sigma_max=coordinate_sigma_max)
+        self.coordinate_schedule = FractionalTorusVarianceSchedule(
+            sigma_max=coordinate_fractional_sigma_max
+        )
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
 
@@ -108,9 +113,17 @@ class TensorFreeReverseSampler:
         )
         coordinates = torch.rand((nodes, 3), dtype=dtype, device=device, generator=generator)
         coordinates = project_translation_state(coordinates, blueprint.batch, graphs)
-        log_volume = torch.randn((graphs,), dtype=dtype, device=device, generator=generator)
-        raw_shape = torch.randn((graphs, 6), dtype=dtype, device=device, generator=generator)
-        log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, raw_shape)
+        volume_latent = torch.randn(
+            (graphs,), dtype=dtype, device=device, generator=generator
+        )
+        shape_latent = torch.randn(
+            (graphs, 5), dtype=dtype, device=device, generator=generator
+        )
+        log_volume = self.lattice_standardizer.decode_volume(
+            volume_latent, blueprint.node_counts
+        )
+        log_shape = self.lattice_standardizer.decode_shape(shape_latent)
+        log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, log_shape)
         condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
         condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
         if time_grid == "uniform_time":
@@ -164,45 +177,48 @@ class TensorFreeReverseSampler:
                         probabilities, 1, replacement=True, generator=generator
                     ).squeeze(-1)
 
-                    lattice_state = LatticeVolumeShape(log_volume, log_shape)
-                    lattice = lattice_state.lattice(blueprint.fractional_to_cartesian)
-                    metric = lattice @ lattice.transpose(-1, -2)
-                    inverse_metric = torch.linalg.inv(metric)
                     variance_from = self.coordinate_schedule.variance(time_from)
                     variance_to = self.coordinate_schedule.variance(time_to)
                     variance_drop = variance_from - variance_to
-                    coordinate_drift = variance_drop[blueprint.batch].unsqueeze(-1) * torch.einsum(
-                        "ni,nij->nj",
-                        prediction.coordinate_fractional_score,
-                        inverse_metric[blueprint.batch],
+                    coordinate_drift = (
+                        variance_drop[blueprint.batch].unsqueeze(-1)
+                        * prediction.coordinate_fractional_score
                     )
                     next_coordinates = coordinates + coordinate_drift
                     if stochastic and float(scalar_to) > 0.0:
                         bridge_variance = (
                             variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
                         )
-                        cartesian_noise = standard_normal(coordinates.shape, coordinates, generator)
-                        fractional_noise = torch.einsum(
-                            "ni,nij->nj", cartesian_noise, torch.linalg.inv(lattice)[blueprint.batch]
+                        fractional_noise = standard_normal(
+                            coordinates.shape, coordinates, generator
+                        )
+                        fractional_noise = project_translation_state(
+                            fractional_noise, blueprint.batch, graphs
                         )
                         bridge_scale = bridge_variance[blueprint.batch].sqrt().unsqueeze(-1)
                         next_coordinates = next_coordinates + bridge_scale * fractional_noise
 
-                    next_volume = self._vp_reverse_step(
-                        log_volume,
-                        prediction.clean_log_volume,
+                    next_volume_latent = self._vp_reverse_step(
+                        volume_latent,
+                        prediction.clean_volume_latent,
                         time_from,
                         time_to,
                         generator=generator,
                         stochastic=stochastic,
                     )
-                    next_shape = self._vp_reverse_step(
-                        log_shape,
-                        prediction.clean_log_shape,
+                    next_shape_latent = self._vp_reverse_step(
+                        shape_latent,
+                        prediction.clean_shape_latent,
                         time_from.unsqueeze(-1),
                         time_to.unsqueeze(-1),
                         generator=generator,
                         stochastic=stochastic,
+                    )
+                    next_volume = self.lattice_standardizer.decode_volume(
+                        next_volume_latent, blueprint.node_counts
+                    )
+                    next_shape = self.lattice_standardizer.decode_shape(
+                        next_shape_latent
                     )
                     projected = project_hybrid_reverse_state(
                         next_coordinates,
@@ -216,6 +232,8 @@ class TensorFreeReverseSampler:
                     coordinates = projected.fractional_coordinates
                     log_volume = next_volume
                     log_shape = projected.log_shape
+                    volume_latent = next_volume_latent
+                    shape_latent = self.lattice_standardizer.encode_shape(log_shape)
                     masked_counts.append((tokens == self.categorical.mask_index).sum())
         except (RuntimeError, ValueError) as error:
             trajectory_error = error

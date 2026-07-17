@@ -1,0 +1,34 @@
+{
+  "protocol": "h1a_generator_substrate_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "required_cache_protocol": "h1a_p1_structure_cache_v1",
+  "scope": "H1a tensor-free substrate only; no training and no H1b-H6 work",
+  "seed": 6111,
+  "periodic_graph": {
+    "cutoff_angstrom": 8.0,
+    "sample_rows": 4096,
+    "required_strata": [1, 2, 3, 20],
+    "acceptance": {
+      "n1_nonempty_fraction": 1.0,
+      "outside_cutoff_edges": 0,
+      "bruteforce_reference_mismatch": 0
+    }
+  },
+  "terminal_coordinate_prior": {
+    "sigma_max_angstrom": 4.0,
+    "mixing_residual_threshold": 1e-5,
+    "acceptance_fraction": 1.0,
+    "maximum_reciprocal_search_shell": 8
+  },
+  "joint_path_toy": {
+    "samples": 4096,
+    "seed": 6112,
+    "oracle_clean_metric_endpoint_rms_max": 1e-7
+  },
+  "gradient_audit": {
+    "sample_graphs": 16,
+    "seed": 6113,
+    "rule": "report each head norm and pairwise cosine before any loss reweighting"
+  },
+  "advancement_rule": "Any representation, terminal-prior or exact-toy failure must be repaired before bounded H1a training. This audit does not qualify H1a."
+}

@@ -9,7 +9,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
-from torch_geometric.data import Data
+from torch_geometric.data import Batch, Data
 
 from gaugeflow.file_utils import sha256_file
 from gaugeflow.vocabulary import validate_type_tokens
@@ -158,3 +158,12 @@ class PackedAlexP1Dataset(Dataset[Data]):
         if self._material_ids is not None:
             data.material_id = self._material_ids[index]
         return data
+
+
+def collate_packed_alex(records: list[Data]) -> Batch:
+    """Collate model-only packed records without audit metadata."""
+    if not records:
+        raise ValueError("cannot collate an empty packed Alex batch")
+    if any(hasattr(record, "material_id") for record in records):
+        raise ValueError("training batches must not contain material IDs")
+    return Batch.from_data_list(records)

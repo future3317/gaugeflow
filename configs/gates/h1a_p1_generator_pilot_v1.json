@@ -1,0 +1,52 @@
+{
+  "protocol": "h1a_p1_generator_pilot_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "bounded real-data H1a P1 learning qualification; not full H1a and no H1b-H6",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_qualified": true,
+    "periodic_graph": "complete 8A periodic radius multigraph with nonzero self images",
+    "coordinate_path": "cell-independent fractional-torus Brownian product path",
+    "lattice_path": "train-standardized log-volume residual and five-dimensional whitened log shape",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0
+  },
+  "training": {
+    "seeds": [5201, 5202, 5203],
+    "steps": 1000,
+    "batch_size": 16,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16 learned layers with FP32 probability and geometry kernels",
+    "coordinate_fractional_sigma_max": 1.0,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1000]
+  },
+  "fixed_evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 7201,
+    "samples_per_seed": 32,
+    "sampling_seed": 7202,
+    "sampler_steps": 50,
+    "time_grid": "uniform_log_alpha"
+  },
+  "acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.9,
+    "three_seed_final_validation_total_over_initial_max": 1.0,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0
+  },
+  "decision_rule": "Failure stops at H1a and is attributed by head and sampler diagnostics. Passing permits a separately frozen longer H1a P1 experiment only; it does not authorize H1b, tensor conditioning, oracle, relaxation, DFT or DFPT."
+}

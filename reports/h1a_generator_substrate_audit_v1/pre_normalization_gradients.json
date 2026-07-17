@@ -1,0 +1,26 @@
+{
+  "graphs": 16,
+  "losses": {
+    "coordinate": 2.9553170204162598,
+    "element": 4.8155198097229,
+    "shape": 0.3319941759109497,
+    "volume": 27.39745330810547
+  },
+  "protocol": "h1a_generator_substrate_audit_v1",
+  "seed": 6113,
+  "shared_gradient_cosines": {
+    "coordinate__shape": -0.004010155810049421,
+    "coordinate__volume": 0.02386859405100417,
+    "element__coordinate": -0.019997337174131758,
+    "element__shape": 0.04805450281137922,
+    "element__volume": 0.04906257985070184,
+    "volume__shape": -0.00698556558901756
+  },
+  "shared_gradient_norms": {
+    "coordinate": 16.548584477996467,
+    "element": 0.6016443523628878,
+    "shape": 0.4851616239001323,
+    "volume": 15.325471515524981
+  },
+  "stage": "after_multigraph_and_fractional_path_before_lattice_normalization"
+}

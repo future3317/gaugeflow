@@ -1,9 +1,9 @@
-"""Periodic metric geometry primitives for the versioned discrete substrate.
+"""Exact periodic metric geometry for the production crystal graph.
 
-The historical vector field used unit edge directions only.  That discards the
-metric information needed to distinguish sites in a fixed periodic geometry.
-These utilities retain the closest-image displacement, its length and the
-integer image shift under GaugeFlow's row-lattice convention ``r = f @ L``.
+The denoiser uses a radius *multigraph*: every periodic image inside the
+physical cutoff is retained, including non-zero self images. Closest-image
+queries remain available for crystallographic certification, but are not a
+fallback graph representation.
 """
 
 from __future__ import annotations
@@ -12,11 +12,12 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
+from torch_cluster import radius
 
 
 @dataclass(frozen=True)
 class PeriodicEdges:
-    """Closest-image directed inter-site edges and their physical geometry."""
+    """Directed periodic image edges and their physical geometry."""
 
     source: torch.Tensor
     target: torch.Tensor
@@ -134,21 +135,27 @@ def closest_image_displacement(
     return (delta + shift) @ lattice, shift
 
 
-def periodic_closest_image_edges(
+def periodic_radius_multigraph(
     frac_coords: torch.Tensor,
     lattice: torch.Tensor,
     batch: torch.Tensor,
+    *,
+    cutoff: float,
 ) -> PeriodicEdges:
-    """Build exact directed closest-image edges inside each graph.
+    """Build the complete directed periodic radius multigraph on-device.
 
-    ``frac_coords`` are row fractional coordinates and ``lattice[g]`` has real
-    basis vectors as rows.  For the directed edge ``i -> j`` we use
-    ``(f_j - f_i + s) @ L`` with the globally minimum-norm integer image
-    ``s``. A float64 QR sphere decoder uses a Babai upper bound and exact
-    branch-and-bound in the three-dimensional triangular system. This remains
-    rigorous for ill-conditioned triclinic cells where a fixed shell or a
-    loose singular-value bounding box is not practical.
+    For a directed edge ``i -> j`` this returns every integer image ``n`` with
+    ``||(f_j-f_i+n)L|| < cutoff``. After wrapping coordinates to one cell, the
+    reciprocal-column bound
+
+    ``|n_k| <= ceil(cutoff * ||L^{-1}_{:,k}|| + 1)``
+
+    is complete by Cauchy--Schwarz. Candidate construction and filtering are
+    vectorized PyTorch/torch-cluster operations; no edge is sent through a CPU
+    closest-vector solver.
     """
+    if cutoff <= 0.0:
+        raise ValueError("periodic graph cutoff must be positive")
     if frac_coords.ndim != 2 or frac_coords.shape[-1] != 3:
         raise ValueError("frac_coords must have shape [nodes, 3]")
     if lattice.ndim != 3 or lattice.shape[-2:] != (3, 3):
@@ -160,30 +167,97 @@ def periodic_closest_image_edges(
     if not torch.isfinite(frac_coords).all() or not torch.isfinite(lattice).all():
         raise ValueError("periodic geometry must be finite")
 
-    node_count = frac_coords.shape[0]
-    same_graph = batch[:, None] == batch[None, :]
-    keep = same_graph & ~torch.eye(node_count, dtype=torch.bool, device=batch.device)
-    source, target = torch.nonzero(keep, as_tuple=True)
-    if source.numel() == 0:
+    graphs = lattice.shape[0]
+    if frac_coords.shape[0] == 0:
         empty_long = batch.new_empty((0,), dtype=torch.long)
         empty_vec = frac_coords.new_empty((0, 3))
-        return PeriodicEdges(empty_long, empty_long, empty_vec, empty_vec, frac_coords.new_empty((0,)), empty_vec)
+        return PeriodicEdges(
+            empty_long,
+            empty_long,
+            empty_vec,
+            empty_vec,
+            frac_coords.new_empty((0,)),
+            empty_long.new_empty((0, 3)),
+        )
+    if graphs < 1 or not torch.equal(batch, torch.sort(batch).values):
+        raise ValueError("periodic graph requires nonempty graph-contiguous batches")
+    counts = torch.bincount(batch, minlength=graphs)
+    if bool((counts < 1).any()):
+        raise ValueError("every lattice graph must contain at least one node")
 
-    relative = frac_coords[target] - frac_coords[source]
-    edge_lattices = lattice[batch[source]]
-    displacements = []
-    image_shifts = []
-    for edge in range(source.numel()):
-        delta = relative[edge]
-        edge_lattice = edge_lattices[edge]
-        selected_shift = _closest_integer_shift(delta, edge_lattice)
-        displacements.append((delta + selected_shift) @ edge_lattice)
-        image_shifts.append(selected_shift)
-    displacement = torch.stack(displacements)
-    selected_shifts = torch.stack(image_shifts)
+    wrapped = torch.remainder(frac_coords, 1.0)
+    reciprocal_column_norm = torch.linalg.vector_norm(torch.linalg.inv(lattice), dim=1)
+    bounds = torch.ceil(cutoff * reciprocal_column_norm + 1.0).to(torch.long)
+    maximum = bounds.amax(dim=0).detach().cpu().tolist()
+    axes = [
+        torch.arange(-int(value), int(value) + 1, device=batch.device)
+        for value in maximum
+    ]
+    shift_grid = torch.cartesian_prod(*axes)
+    valid_shift = (shift_grid.abs().unsqueeze(0) <= bounds.unsqueeze(1)).all(dim=-1)
+    shift_graph, shift_column = torch.nonzero(valid_shift, as_tuple=True)
+    shifts = shift_grid[shift_column]
+
+    offsets = torch.cat((counts.new_zeros(1), counts.cumsum(0)))
+    repeated_counts = counts[shift_graph]
+    shift_row = torch.repeat_interleave(
+        torch.arange(shifts.shape[0], device=batch.device), repeated_counts
+    )
+    repeated_starts = torch.repeat_interleave(
+        torch.cat((repeated_counts.new_zeros(1), repeated_counts.cumsum(0)[:-1])),
+        repeated_counts,
+    )
+    local_node = torch.arange(shift_row.numel(), device=batch.device) - repeated_starts
+    candidate_graph = shift_graph[shift_row]
+    candidate_atom = offsets[candidate_graph] + local_node
+    candidate_shift = shifts[shift_row]
+
+    candidate_fractional = wrapped[candidate_atom] + candidate_shift.to(wrapped)
+    candidate_cartesian = torch.einsum(
+        "ni,nij->nj", candidate_fractional, lattice[candidate_graph]
+    )
+    central_cartesian = torch.einsum("ni,nij->nj", wrapped, lattice[batch])
+    maximum_neighbors = int((counts * valid_shift.sum(dim=1)).amax().detach().cpu())
+    target, candidate = radius(
+        candidate_cartesian,
+        central_cartesian,
+        cutoff,
+        batch_x=candidate_graph,
+        batch_y=batch,
+        max_num_neighbors=maximum_neighbors,
+    )
+    source = candidate_atom[candidate]
+    selected_shifts = -candidate_shift[candidate]
+    nontrivial = (source != target) | (selected_shifts != 0).any(dim=-1)
+    source = source[nontrivial]
+    target = target[nontrivial]
+    selected_shifts = selected_shifts[nontrivial]
+    relative = wrapped[target] - wrapped[source] + selected_shifts.to(wrapped)
+    displacement = torch.einsum("ni,nij->nj", relative, lattice[batch[target]])
     distance = torch.linalg.vector_norm(displacement, dim=-1)
+    inside = distance < cutoff
+    source = source[inside]
+    target = target[inside]
+    selected_shifts = selected_shifts[inside]
+    displacement = displacement[inside]
+    distance = distance[inside]
     if bool((distance <= 1e-10).any()):
-        raise ValueError("distinct periodic sites have a zero closest-image displacement")
+        raise ValueError("periodic graph contains coincident sites")
+    # torch-cluster does not promise an enumeration order. Canonical ordering
+    # makes reductions reproducible and prevents equivalent wrapped/chart
+    # representatives from accumulating the same messages in different FP32
+    # orders.
+    keys = torch.cat(
+        (target.unsqueeze(-1), source.unsqueeze(-1), selected_shifts), dim=-1
+    )
+    order = torch.arange(source.numel(), device=source.device)
+    for column in range(keys.shape[1] - 1, -1, -1):
+        order = order[torch.argsort(keys[order, column], stable=True)]
+    source = source[order]
+    target = target[order]
+    selected_shifts = selected_shifts[order]
+    displacement = displacement[order]
+    distance = distance[order]
     direction = displacement / distance.unsqueeze(-1)
     return PeriodicEdges(source, target, displacement, direction, distance, selected_shifts)
 
@@ -199,11 +273,15 @@ class GaussianRadialBasis(torch.nn.Module):
         self.register_buffer("centers", torch.linspace(0.0, cutoff, count))
         self.width = float(cutoff / (count - 1))
 
-    def forward(self, distance: torch.Tensor) -> torch.Tensor:
+    def envelope(self, distance: torch.Tensor) -> torch.Tensor:
         if distance.ndim != 1 or not torch.isfinite(distance).all():
             raise ValueError("distance must be a finite rank-one tensor")
         value = distance.unsqueeze(-1)
-        gaussian = torch.exp(-0.5 * ((value - self.centers.to(value)) / self.width).square())
         inside = (value < self.cutoff).to(value)
         envelope = 0.5 * (torch.cos(torch.pi * value.clamp(max=self.cutoff) / self.cutoff) + 1.0)
-        return gaussian * envelope * inside
+        return envelope * inside
+
+    def forward(self, distance: torch.Tensor) -> torch.Tensor:
+        value = distance.unsqueeze(-1)
+        gaussian = torch.exp(-0.5 * ((value - self.centers.to(value)) / self.width).square())
+        return gaussian * self.envelope(distance)

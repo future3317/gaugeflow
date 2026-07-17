@@ -11,8 +11,9 @@ from torch_geometric.utils import scatter
 
 from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser, HybridDenoiserOutput
+from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
-from .schedules import CosineNoiseSchedule, LinearWrappedVarianceSchedule, standard_normal
+from .schedules import CosineNoiseSchedule, FractionalTorusVarianceSchedule, standard_normal
 from .state_projection import project_translation_state
 
 
@@ -24,10 +25,9 @@ class TensorFreeNoisyBatch:
     log_shape: torch.Tensor
     time: torch.Tensor
     coordinate_score_target: torch.Tensor
-    clean_log_volume_target: torch.Tensor
-    clean_log_shape_target: torch.Tensor
+    clean_volume_latent_target: torch.Tensor
+    clean_shape_latent_target: torch.Tensor
     element_was_masked: torch.Tensor
-    clean_metric: torch.Tensor
 
 
 @dataclass(frozen=True)
@@ -46,16 +46,17 @@ class TensorFreeHybridDiffusion(nn.Module):
     """Matched noising and denoising-score objective for the hybrid state.
 
     Element types follow an absorbing categorical path. Coordinates follow a
-    Cartesian-isotropic Brownian path on the periodic translation quotient.
-    Log volume and trace-free log shape follow the same cosine VP path used by
-    the categorical survival schedule.
+    cell-independent Brownian path on the fractional translation quotient.
+    Standardized volume residual and whitened trace-free log shape follow the
+    same cosine VP path used by the categorical survival schedule.
     """
 
     def __init__(
         self,
         denoiser: HybridCrystalDenoiser,
+        lattice_standardizer: P1LatticeStandardizer,
         *,
-        coordinate_sigma_max: float = 4.0,
+        coordinate_fractional_sigma_max: float = 1.0,
         minimum_time: float = 1.0e-3,
         maximum_time: float = 0.999,
     ) -> None:
@@ -63,9 +64,12 @@ class TensorFreeHybridDiffusion(nn.Module):
         if not 0.0 < minimum_time < maximum_time < 1.0:
             raise ValueError("training times must satisfy 0 < minimum < maximum < 1")
         self.denoiser = denoiser
+        self.lattice_standardizer = lattice_standardizer
         self.categorical = AbsorbingMaskDiffusion()
         self.vp_schedule = CosineNoiseSchedule()
-        self.coordinate_schedule = LinearWrappedVarianceSchedule(sigma_max=coordinate_sigma_max)
+        self.coordinate_schedule = FractionalTorusVarianceSchedule(
+            sigma_max=coordinate_fractional_sigma_max
+        )
         self.minimum_time = float(minimum_time)
         self.maximum_time = float(maximum_time)
 
@@ -113,6 +117,11 @@ class TensorFreeHybridDiffusion(nn.Module):
         clean_coordinates = project_translation_state(clean_fractional_coordinates, batch, graphs)
         lattice_state = LatticeVolumeShape.from_lattice(clean_lattice, fractional_to_cartesian)
         clean_shape = project_lattice_state(lattice_state.log_shape, shape_projector)
+        node_counts = torch.bincount(batch, minlength=graphs)
+        clean_volume_latent = self.lattice_standardizer.encode_volume(
+            lattice_state.log_volume, node_counts
+        )
+        clean_shape_latent = self.lattice_standardizer.encode_shape(clean_shape)
 
         uniform = torch.rand(
             clean_elements.shape,
@@ -123,27 +132,32 @@ class TensorFreeHybridDiffusion(nn.Module):
         categorical_state = self.categorical.corrupt(clean_elements, selected_time, batch, uniform=uniform)
 
         coordinate_sigma = self.coordinate_schedule.sigma(selected_time)[batch]
-        cartesian_noise = standard_normal(
+        fractional_noise = standard_normal(
             clean_fractional_coordinates.shape, clean_fractional_coordinates, generator
         )
-        inverse_lattice = torch.linalg.inv(clean_lattice)
-        fractional_noise = torch.einsum("ni,nij->nj", cartesian_noise, inverse_lattice[batch])
         fractional_noise = project_translation_state(fractional_noise, batch, graphs)
         displacement = coordinate_sigma.unsqueeze(-1) * fractional_noise
         noisy_coordinates = clean_coordinates + displacement
-        clean_metric = clean_lattice @ clean_lattice.transpose(-1, -2)
         coordinate_variance = self.coordinate_schedule.variance(selected_time)[batch].clamp_min(1.0e-12)
-        coordinate_target = -torch.einsum("ni,nij->nj", displacement, clean_metric[batch])
-        coordinate_target = coordinate_target / coordinate_variance.unsqueeze(-1)
+        coordinate_target = -displacement / coordinate_variance.unsqueeze(-1)
         coordinate_target = project_translation_state(coordinate_target, batch, graphs)
 
         alpha = self.vp_schedule.alpha(selected_time)
         sigma = self.vp_schedule.sigma(selected_time).clamp_min(1.0e-8)
-        volume_noise = standard_normal(lattice_state.log_volume.shape, lattice_state.log_volume, generator)
-        raw_shape_noise = standard_normal(clean_shape.shape, clean_shape, generator)
-        shape_noise = project_lattice_state(raw_shape_noise, shape_projector)
-        noisy_volume = alpha * lattice_state.log_volume + sigma * volume_noise
-        noisy_shape = alpha.unsqueeze(-1) * clean_shape + sigma.unsqueeze(-1) * shape_noise
+        volume_noise = standard_normal(
+            clean_volume_latent.shape, clean_volume_latent, generator
+        )
+        shape_noise = standard_normal(clean_shape_latent.shape, clean_shape_latent, generator)
+        noisy_volume_latent = alpha * clean_volume_latent + sigma * volume_noise
+        noisy_shape_latent = (
+            alpha.unsqueeze(-1) * clean_shape_latent
+            + sigma.unsqueeze(-1) * shape_noise
+        )
+        noisy_volume = self.lattice_standardizer.decode_volume(
+            noisy_volume_latent, node_counts
+        )
+        noisy_shape = self.lattice_standardizer.decode_shape(noisy_shape_latent)
+        noisy_shape = project_lattice_state(noisy_shape, shape_projector)
 
         return TensorFreeNoisyBatch(
             element_tokens=categorical_state.tokens,
@@ -152,10 +166,9 @@ class TensorFreeHybridDiffusion(nn.Module):
             log_shape=noisy_shape,
             time=selected_time,
             coordinate_score_target=coordinate_target,
-            clean_log_volume_target=lattice_state.log_volume,
-            clean_log_shape_target=clean_shape,
+            clean_volume_latent_target=clean_volume_latent,
+            clean_shape_latent_target=clean_shape_latent,
             element_was_masked=~categorical_state.clean_mask,
-            clean_metric=clean_metric,
         )
 
     def forward(
@@ -170,16 +183,19 @@ class TensorFreeHybridDiffusion(nn.Module):
         time: torch.Tensor | None = None,
         generator: torch.Generator | None = None,
     ) -> HybridLossOutput:
-        noisy = self.noise_clean_batch(
-            clean_elements,
-            clean_fractional_coordinates,
-            clean_lattice,
-            batch,
-            shape_projector,
-            fractional_to_cartesian,
-            time=time,
-            generator=generator,
-        )
+        # Probability-path construction and target generation stay FP32 even
+        # when the learned network uses BF16 autocast.
+        with torch.autocast(device_type=clean_lattice.device.type, enabled=False):
+            noisy = self.noise_clean_batch(
+                clean_elements,
+                clean_fractional_coordinates,
+                clean_lattice,
+                batch,
+                shape_projector,
+                fractional_to_cartesian,
+                time=time,
+                generator=generator,
+            )
         graphs = noisy.time.numel()
         condition = noisy.log_volume.new_zeros((graphs, 18))
         condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=noisy.log_volume.device)
@@ -203,10 +219,7 @@ class TensorFreeHybridDiffusion(nn.Module):
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
 
         coordinate_error = prediction.coordinate_fractional_score - noisy.coordinate_score_target
-        inverse_metric = torch.linalg.inv(noisy.clean_metric)
-        coordinate_quadratic = torch.einsum(
-            "ni,nij,nj->n", coordinate_error, inverse_metric[batch], coordinate_error
-        )
+        coordinate_quadratic = coordinate_error.square().sum(dim=-1)
         coordinate_weight = self.coordinate_schedule.variance(noisy.time)[batch]
         graph_coordinate = scatter(
             coordinate_weight * coordinate_quadratic,
@@ -215,15 +228,14 @@ class TensorFreeHybridDiffusion(nn.Module):
             dim_size=graphs,
             reduce="mean",
         )
-        coordinate_loss = graph_coordinate.mean()
+        coordinate_loss = graph_coordinate.mean() / 3.0
 
-        volume_error = prediction.clean_log_volume - noisy.clean_log_volume_target
+        volume_error = (
+            prediction.clean_volume_latent - noisy.clean_volume_latent_target
+        )
         volume_loss = volume_error.square().mean()
-        shape_error = prediction.clean_log_shape - noisy.clean_log_shape_target
-        shape_dimension = torch.diagonal(shape_projector, dim1=-2, dim2=-1).sum(-1).clamp_min(1.0)
-        shape_loss = (
-            shape_error.square().sum(-1) / shape_dimension
-        ).mean()
+        shape_error = prediction.clean_shape_latent - noisy.clean_shape_latent_target
+        shape_loss = shape_error.square().mean()
         loss = element_loss + coordinate_loss + volume_loss + shape_loss
         return HybridLossOutput(
             loss=loss,

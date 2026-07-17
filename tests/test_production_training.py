@@ -6,6 +6,7 @@ from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBluepr
 from gaugeflow.production.checkpointing import load_production_checkpoint, save_production_checkpoint
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
+from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.reverse_sampler import TensorFreeReverseSampler
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
@@ -37,10 +38,19 @@ def _small_model() -> HybridCrystalDenoiser:
     )
 
 
+def _standardizer() -> P1LatticeStandardizer:
+    return P1LatticeStandardizer.from_json(
+        Path(__file__).parents[1]
+        / "configs/statistics/h1a_p1_lattice_standardization.json"
+    )
+
+
 def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     torch.manual_seed(101)
     elements, coordinates, lattice, blueprint = _small_clean_batch()
-    diffusion = TensorFreeHybridDiffusion(_small_model(), coordinate_sigma_max=2.0)
+    diffusion = TensorFreeHybridDiffusion(
+        _small_model(), _standardizer(), coordinate_fractional_sigma_max=1.0
+    )
     output = diffusion(
         elements,
         coordinates,
@@ -70,7 +80,9 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
 def test_production_trainer_updates_ema_and_all_heads():
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     config = ProductionTrainingConfig(learning_rate=1.0e-3, ema_decay=0.9)
-    diffusion = TensorFreeHybridDiffusion(_small_model(), coordinate_sigma_max=2.0)
+    diffusion = TensorFreeHybridDiffusion(
+        _small_model(), _standardizer(), coordinate_fractional_sigma_max=1.0
+    )
     trainer = ProductionTrainer(diffusion, config)
     before = {name: value.clone() for name, value in diffusion.denoiser.state_dict().items()}
     output, gradient_norm = trainer.train_step(
@@ -98,7 +110,12 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     torch.manual_seed(104)
     model = _small_model()
     blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
-    sampler = TensorFreeReverseSampler(model, coordinate_sigma_max=2.0, maximum_time=0.8)
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        coordinate_fractional_sigma_max=1.0,
+        maximum_time=0.8,
+    )
     generated = sampler.sample(
         blueprint,
         steps=4,
@@ -120,7 +137,7 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
 
 def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(tmp_path: Path):
     model = _small_model()
-    diffusion = TensorFreeHybridDiffusion(model)
+    diffusion = TensorFreeHybridDiffusion(model, _standardizer())
     trainer = ProductionTrainer(diffusion, ProductionTrainingConfig())
     prior = EmpiricalNodeCountPrior.fit(torch.tensor([2, 2, 3, 4]))
     path = tmp_path / "production.pt"
@@ -134,7 +151,7 @@ def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(
         metadata={"model": {"hidden_dim": 16}, "protocol": "s1a_tensor_free_v1"},
     )
     restored_model = _small_model()
-    restored_diffusion = TensorFreeHybridDiffusion(restored_model)
+    restored_diffusion = TensorFreeHybridDiffusion(restored_model, _standardizer())
     restored_trainer = ProductionTrainer(restored_diffusion, ProductionTrainingConfig())
     step, restored_prior, metadata = load_production_checkpoint(
         path,

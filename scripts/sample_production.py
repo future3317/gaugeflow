@@ -15,6 +15,7 @@ from gaugeflow.production.checkpointing import (
     read_production_checkpoint_metadata,
 )
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
+from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
 from gaugeflow.production.training import ExponentialMovingAverage
 
@@ -41,8 +42,16 @@ def main() -> None:
     metadata = read_production_checkpoint_metadata(args.checkpoint)
     model_config = metadata.get("model_config")
     training_config = metadata.get("training_config")
-    if not isinstance(model_config, dict) or not isinstance(training_config, dict):
+    standardization_config = metadata.get("lattice_standardization")
+    if (
+        not isinstance(model_config, dict)
+        or not isinstance(training_config, dict)
+        or not isinstance(standardization_config, dict)
+    ):
         raise ValueError("checkpoint does not contain production model/training configuration")
+    lattice_standardizer = P1LatticeStandardizer.from_mapping(
+        standardization_config
+    )
     model = HybridCrystalDenoiser(**model_config).to(device)
     ema = ExponentialMovingAverage(model, float(training_config["ema_decay"]))
     _, node_prior, _ = load_production_checkpoint(
@@ -51,7 +60,10 @@ def main() -> None:
     ema.copy_to(model)
     sampler = TensorFreeReverseSampler(
         model,
-        coordinate_sigma_max=float(training_config["coordinate_sigma_max"]),
+        lattice_standardizer,
+        coordinate_fractional_sigma_max=float(
+            training_config["coordinate_fractional_sigma_max"]
+        ),
         maximum_time=float(training_config["maximum_time"]),
     )
     args.output.mkdir(parents=True, exist_ok=True)
