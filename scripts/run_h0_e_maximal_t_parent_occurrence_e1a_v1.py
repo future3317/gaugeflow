@@ -3,64 +3,30 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import importlib.metadata
 import json
-import subprocess
 from collections import defaultdict
 from pathlib import Path
 from time import perf_counter
 from typing import Any
 
 import numpy as np
-import pyarrow.dataset as pds
-import pyarrow.parquet as pq
 
 from gaugeflow.catalogue import (
     EmbeddingParentOccurrence,
-    balanced_selection,
     search_maximal_t_parents,
     standardize_child_to_e0_setting,
+)
+from gaugeflow.catalogue.occurrence_protocol import (
+    clean_git_commit,
+    frozen_e1a_selection,
+    join_alex_rows,
 )
 from gaugeflow.file_utils import (
     load_gzip_json,
     sha256_file,
     write_deterministic_gzip_json,
 )
-
-
-def _ordered_id_hash(values: list[str]) -> str:
-    payload = json.dumps(values, separators=(",", ":")).encode()
-    return hashlib.sha256(payload).hexdigest()
-
-
-def _git_commit(repo_root: Path) -> str:
-    tracked = subprocess.run(
-        ["git", "diff", "--ignore-space-at-eol", "--quiet"],
-        cwd=repo_root,
-        check=False,
-    )
-    staged = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=repo_root,
-        check=False,
-    )
-    untracked = subprocess.run(
-        ["git", "ls-files", "--others", "--exclude-standard"],
-        cwd=repo_root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
-    if tracked.returncode != 0 or staged.returncode != 0 or untracked.strip():
-        raise RuntimeError("the frozen E1a run requires a clean Git worktree")
-    return subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repo_root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
 
 
 def _validate_dependencies(config: dict[str, Any], data_root: Path) -> None:
@@ -83,50 +49,6 @@ def _validate_dependencies(config: dict[str, Any], data_root: Path) -> None:
             raise ValueError(f"Alex source hash mismatch: {split}")
     if importlib.metadata.version("pyxtal") != dependencies["pyxtal_version"]:
         raise ValueError("PyXtal version does not match the frozen E1a protocol")
-
-
-def _frozen_selection(config: dict[str, Any], data_root: Path) -> list[dict[str, object]]:
-    decompositions = pq.read_table(
-        data_root / "processed/gaugeflow_h0_v4/parent_decomposition_pilot_v1/decompositions.parquet"
-    ).to_pylist()
-    eligible = [
-        row for row in decompositions if int(row["candidate_count"]) == 0 and not bool(row["processing_failure"])
-    ]
-    selection = config["selection"]
-    reproduced = list(
-        balanced_selection(
-            eligible,
-            split_counts={str(key): int(value) for key, value in selection["split_counts"].items()},
-            seed=int(selection["seed"]),
-            site_boundaries=selection["site_bins"],
-        )
-    )
-    observed_ids = [str(row["material_id"]) for row in reproduced]
-    if observed_ids != list(selection["material_ids"]):
-        raise ValueError("frozen E1a material IDs do not reproduce from v1")
-    if _ordered_id_hash(observed_ids) != selection["ordered_material_ids_sha256"]:
-        raise ValueError("frozen E1a ordered material-ID hash does not match")
-    return reproduced
-
-
-def _join_raw_rows(selection: list[dict[str, object]], data_root: Path) -> dict[str, dict[str, object]]:
-    requested = {str(row["material_id"]) for row in selection}
-    observed: dict[str, dict[str, object]] = {}
-    columns = ["material_id", "positions", "cell", "atomic_numbers"]
-    for split in ("train", "val", "test"):
-        path = data_root / f"raw/huggingface/Alex-MP-20/{split}.parquet"
-        table = pds.dataset(path, format="parquet").to_table(
-            filter=pds.field("material_id").isin(requested), columns=columns
-        )
-        for row in table.to_pylist():
-            material_id = str(row["material_id"])
-            if material_id in observed:
-                raise ValueError("Alex material ID occurs in more than one source split")
-            row["source_split_observed"] = split
-            observed[material_id] = row
-    if set(observed) != requested:
-        raise ValueError("not every frozen E1a material joined to Alex")
-    return observed
 
 
 def _serialize_occurrence(value: EmbeddingParentOccurrence) -> dict[str, object]:
@@ -241,8 +163,8 @@ def _metrics(config: dict[str, Any], results: list[dict[str, object]]) -> tuple[
 
 def run(config: dict[str, Any], data_root: Path) -> tuple[list[dict[str, object]], dict[str, object]]:
     _validate_dependencies(config, data_root)
-    selection = _frozen_selection(config, data_root)
-    raw = _join_raw_rows(selection, data_root)
+    selection = frozen_e1a_selection(config, data_root)
+    raw = join_alex_rows(selection, data_root)
     e0_records = load_gzip_json(
         data_root / "processed/gaugeflow_h0_v5/maximal_subgroup_embeddings_v2/catalogue_records.json.gz"
     )
@@ -350,7 +272,7 @@ def main() -> None:
     args = parser.parse_args()
     repo_root = args.config.resolve().parents[2]
     config = json.loads(args.config.read_text(encoding="utf-8"))
-    implementation_commit = _git_commit(repo_root)
+    implementation_commit = clean_git_commit(repo_root, protocol="E1a")
     results, manifest = run(config, args.data_root)
     results_path = args.data_root / config["required_outputs"]["results"]
     manifest_path = args.data_root / config["required_outputs"]["manifest"]

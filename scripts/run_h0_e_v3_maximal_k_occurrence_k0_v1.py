@@ -17,15 +17,15 @@ from gaugeflow.catalogue import (
     search_maximal_k_parents,
     standardize_child_to_e0_setting,
 )
+from gaugeflow.catalogue.occurrence_protocol import (
+    clean_git_commit,
+    frozen_e1a_selection,
+    join_alex_rows,
+)
 from gaugeflow.file_utils import (
     load_gzip_json,
     sha256_file,
     write_deterministic_gzip_json,
-)
-from scripts.run_h0_e_maximal_t_parent_occurrence_e1a_v1 import (
-    _frozen_selection,
-    _git_commit,
-    _join_raw_rows,
 )
 
 
@@ -263,8 +263,8 @@ def run(
     config: dict[str, Any], data_root: Path, repo_root: Path
 ) -> tuple[list[dict[str, object]], dict[str, object]]:
     e1a_config, quarantine = _validate_dependencies(config, data_root, repo_root)
-    selection = _frozen_selection(e1a_config, data_root)
-    raw = _join_raw_rows(selection, data_root)
+    selection = frozen_e1a_selection(e1a_config, data_root)
+    raw = join_alex_rows(selection, data_root)
     quarantine_keys = _quarantine_keys(quarantine)
     e0_records = load_gzip_json(
         data_root
@@ -391,7 +391,7 @@ def main() -> None:
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parents[1]
     config = json.loads(args.config.read_text(encoding="utf-8"))
-    implementation_commit = _git_commit(repo_root)
+    implementation_commit = clean_git_commit(repo_root, protocol="K0")
     results, manifest = run(config, args.data_root, repo_root)
     output = args.data_root / config["required_outputs"]["results"]
     write_deterministic_gzip_json(output, results)
