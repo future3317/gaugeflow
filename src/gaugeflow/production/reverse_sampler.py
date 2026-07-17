@@ -180,9 +180,16 @@ class TensorFreeReverseSampler:
                     variance_from = self.coordinate_schedule.variance(time_from)
                     variance_to = self.coordinate_schedule.variance(time_to)
                     variance_drop = variance_from - variance_to
+                    coordinate_score = (
+                        prediction.coordinate_fractional_scaled_score
+                        / variance_from[blueprint.batch]
+                        .sqrt()
+                        .clamp_min(1.0e-8)
+                        .unsqueeze(-1)
+                    )
                     coordinate_drift = (
                         variance_drop[blueprint.batch].unsqueeze(-1)
-                        * prediction.coordinate_fractional_score
+                        * coordinate_score
                     )
                     next_coordinates = coordinates + coordinate_drift
                     if stochastic and float(scalar_to) > 0.0:

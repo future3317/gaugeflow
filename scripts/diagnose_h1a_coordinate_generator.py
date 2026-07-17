@@ -150,8 +150,9 @@ def _score_calibration(
                     blueprint.shape_projector,
                     blueprint.fractional_to_cartesian,
                 )
-            predicted = prediction.coordinate_fractional_score.float()
-            target = noisy.coordinate_score_target.float()
+            sigma = diffusion.coordinate_schedule.sigma(time)[packed.batch].unsqueeze(-1)
+            predicted = prediction.coordinate_fractional_scaled_score.float() / sigma
+            target = noisy.coordinate_scaled_score_target.float() / sigma
             error = predicted - target
             variance = diffusion.coordinate_schedule.variance(time)[packed.batch]
             clean = packed.frac_coords

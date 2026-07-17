@@ -29,7 +29,7 @@ class TensorFreeNoisyBatch:
     log_volume: torch.Tensor
     log_shape: torch.Tensor
     time: torch.Tensor
-    coordinate_score_target: torch.Tensor
+    coordinate_scaled_score_target: torch.Tensor
     clean_volume_latent_target: torch.Tensor
     clean_shape_latent_target: torch.Tensor
     element_was_masked: torch.Tensor
@@ -142,11 +142,12 @@ class TensorFreeHybridDiffusion(nn.Module):
         )
         displacement = coordinate_sigma.unsqueeze(-1) * fractional_noise
         noisy_coordinates = clean_coordinates + displacement
-        coordinate_target = wrapped_normal_score(
+        coordinate_score = wrapped_normal_score(
             displacement,
             coordinate_sigma.unsqueeze(-1),
         )
-        coordinate_target = project_translation_state(coordinate_target, batch, graphs)
+        coordinate_score = project_translation_state(coordinate_score, batch, graphs)
+        coordinate_target = coordinate_sigma.unsqueeze(-1) * coordinate_score
 
         alpha = self.vp_schedule.alpha(selected_time)
         sigma = self.vp_schedule.sigma(selected_time).clamp_min(1.0e-8)
@@ -171,7 +172,7 @@ class TensorFreeHybridDiffusion(nn.Module):
             log_volume=noisy_volume,
             log_shape=noisy_shape,
             time=selected_time,
-            coordinate_score_target=coordinate_target,
+            coordinate_scaled_score_target=coordinate_target,
             clean_volume_latent_target=clean_volume_latent,
             clean_shape_latent_target=clean_shape_latent,
             element_was_masked=~categorical_state.clean_mask,
@@ -224,11 +225,13 @@ class TensorFreeHybridDiffusion(nn.Module):
         mask = noisy.element_was_masked.to(node_cross_entropy)
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
 
-        coordinate_error = prediction.coordinate_fractional_score - noisy.coordinate_score_target
+        coordinate_error = (
+            prediction.coordinate_fractional_scaled_score
+            - noisy.coordinate_scaled_score_target
+        )
         coordinate_quadratic = coordinate_error.square().sum(dim=-1)
-        coordinate_weight = self.coordinate_schedule.variance(noisy.time)[batch]
         graph_coordinate = scatter(
-            coordinate_weight * coordinate_quadratic,
+            coordinate_quadratic,
             batch,
             dim=0,
             dim_size=graphs,

@@ -168,8 +168,8 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     shifted = model(*shifted_values)
     for name in (
         "clean_element_logits",
-        "coordinate_cartesian_score",
-        "coordinate_fractional_score",
+        "coordinate_cartesian_scaled_score",
+        "coordinate_fractional_scaled_score",
         "clean_volume_latent",
         "clean_shape_latent",
     ):
@@ -197,14 +197,14 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     assert torch.allclose(rotation.T @ rotation, torch.eye(3), atol=2e-6, rtol=2e-6)
     assert torch.allclose(transformed.clean_element_logits, original.clean_element_logits, atol=2e-5, rtol=2e-5)
     assert torch.allclose(
-        transformed.coordinate_cartesian_score,
-        original.coordinate_cartesian_score @ rotation,
+        transformed.coordinate_cartesian_scaled_score,
+        original.coordinate_cartesian_scaled_score @ rotation,
         atol=3e-5,
         rtol=3e-5,
     )
     assert torch.allclose(
-        transformed.coordinate_fractional_score,
-        original.coordinate_fractional_score @ basis.T,
+        transformed.coordinate_fractional_scaled_score,
+        original.coordinate_fractional_scaled_score @ basis.T,
         atol=4e-5,
         rtol=4e-5,
     )

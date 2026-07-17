@@ -129,8 +129,8 @@ class EquivariantDenoisingBlock(nn.Module):
 @dataclass(frozen=True)
 class HybridDenoiserOutput:
     clean_element_logits: torch.Tensor
-    coordinate_cartesian_score: torch.Tensor
-    coordinate_fractional_score: torch.Tensor
+    coordinate_cartesian_scaled_score: torch.Tensor
+    coordinate_fractional_scaled_score: torch.Tensor
     clean_volume_latent: torch.Tensor
     clean_shape_latent: torch.Tensor
     gauge_atlas: CartesianGaugeAtlasOutput
@@ -347,8 +347,8 @@ class HybridCrystalDenoiser(nn.Module):
         clean_shape_latent = self.shape_head(graph_context)
         return HybridDenoiserOutput(
             clean_element_logits=element_logits,
-            coordinate_cartesian_score=cartesian_score,
-            coordinate_fractional_score=fractional_score,
+            coordinate_cartesian_scaled_score=cartesian_score,
+            coordinate_fractional_scaled_score=fractional_score,
             clean_volume_latent=clean_volume_latent,
             clean_shape_latent=clean_shape_latent,
             gauge_atlas=gauge_atlas,

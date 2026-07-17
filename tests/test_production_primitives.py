@@ -209,19 +209,28 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
     for block in model.blocks:
         assert hasattr(block, "time_film") and hasattr(block, "condition_film")
     assert not torch.allclose(first.clean_element_logits, second.clean_element_logits)
-    assert not torch.allclose(first.coordinate_fractional_score, second.coordinate_fractional_score)
+    assert not torch.allclose(
+        first.coordinate_fractional_scaled_score,
+        second.coordinate_fractional_scaled_score,
+    )
     assert not torch.allclose(first.clean_volume_latent, second.clean_volume_latent)
     assert not torch.allclose(first.clean_shape_latent, second.clean_shape_latent)
     batch = values[4]
     for graph in range(2):
-        selected = first.coordinate_fractional_score[batch == graph]
+        selected = first.coordinate_fractional_scaled_score[batch == graph]
         assert torch.allclose(selected.mean(dim=0), torch.zeros(3), atol=2e-6)
     lattice = LatticeVolumeShape(values[2], values[3]).lattice(values[8])
-    expected_fractional = torch.einsum("ni,nij->nj", first.coordinate_cartesian_score, lattice[batch].transpose(-1, -2))
+    expected_fractional = torch.einsum(
+        "ni,nij->nj",
+        first.coordinate_cartesian_scaled_score,
+        lattice[batch].transpose(-1, -2),
+    )
     expected_fractional = (
         expected_fractional - torch.stack([expected_fractional[batch == graph].mean(0) for graph in range(2)])[batch]
     )
-    assert torch.allclose(first.coordinate_fractional_score, expected_fractional, atol=2e-6)
+    assert torch.allclose(
+        first.coordinate_fractional_scaled_score, expected_fractional, atol=2e-6
+    )
 
 
 def test_no_target_metadata_in_model_signature():

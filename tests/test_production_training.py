@@ -68,7 +68,7 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
         torch.zeros(2, dtype=torch.long),
     )
     for graph in range(2):
-        selected = output.noisy.coordinate_score_target[blueprint.batch == graph]
+        selected = output.noisy.coordinate_scaled_score_target[blueprint.batch == graph]
         assert torch.allclose(selected.mean(0), torch.zeros(3), atol=2e-6)
     output.loss.backward()
     assert all(

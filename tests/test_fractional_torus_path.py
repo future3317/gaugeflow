@@ -59,7 +59,10 @@ def test_fractional_coordinate_forward_kernel_is_independent_of_cell_metric():
             )
         )
     assert torch.equal(noisy[0].fractional_coordinates, noisy[1].fractional_coordinates)
-    assert torch.equal(noisy[0].coordinate_score_target, noisy[1].coordinate_score_target)
+    assert torch.equal(
+        noisy[0].coordinate_scaled_score_target,
+        noisy[1].coordinate_scaled_score_target,
+    )
 
 
 def test_wrapped_normal_score_matches_autograd_image_sum_and_is_periodic():
