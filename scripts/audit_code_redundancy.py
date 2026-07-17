@@ -29,6 +29,8 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h0_d_opd_catalogue_v2.py",
     ROOT / "scripts" / "build_h0_e_maximal_embedding_catalogue_v2.py",
     ROOT / "scripts" / "audit_h0_e_maximal_embedding_catalogue_v2.py",
+    ROOT / "scripts" / "run_h0_e_maximal_t_parent_occurrence_e1a_v1.py",
+    ROOT / "scripts" / "audit_h0_e_maximal_t_parent_occurrence_e1a_v1.py",
 )
 
 
@@ -65,7 +67,9 @@ class ModuleAudit(ast.NodeVisitor):
         payload = ast.dump(normalized, annotate_fields=True, include_attributes=False)
         return hashlib.sha256(payload.encode()).hexdigest()
 
-    def _record_definition(self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, kind: str) -> None:
+    def _record_definition(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, kind: str
+    ) -> None:
         qualified = ".".join((*self.scope, node.name))
         self.definitions.append(
             Definition(
@@ -78,7 +82,9 @@ class ModuleAudit(ast.NodeVisitor):
             )
         )
 
-    def _visit_scoped(self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, kind: str) -> None:
+    def _visit_scoped(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef, kind: str
+    ) -> None:
         self._record_definition(node, kind)
         self._scan_block(node.body)
         self.scope.append(node.name)
@@ -153,8 +159,16 @@ def _argparse_unused(path: Path, tree: ast.AST) -> list[str]:
     declared: set[str] = set()
     accessed: set[str] = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "add_argument":
-            flags = [arg.value for arg in node.args if isinstance(arg, ast.Constant) and isinstance(arg.value, str)]
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "add_argument"
+        ):
+            flags = [
+                arg.value
+                for arg in node.args
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str)
+            ]
             explicit_dest = next(
                 (
                     keyword.value.value
@@ -166,7 +180,9 @@ def _argparse_unused(path: Path, tree: ast.AST) -> list[str]:
             if explicit_dest:
                 declared.add(str(explicit_dest))
             elif flags:
-                option = next((value for value in flags if value.startswith("--")), flags[0])
+                option = next(
+                    (value for value in flags if value.startswith("--")), flags[0]
+                )
                 declared.add(option.lstrip("-").replace("-", "_"))
         if (
             isinstance(node, ast.Attribute)
@@ -193,21 +209,26 @@ def audit(paths: list[Path] | None = None) -> dict[str, object]:
             if unused:
                 cli_unused[path.relative_to(ROOT).as_posix()] = unused
 
-    definitions = [definition for visitor in audits for definition in visitor.definitions]
+    definitions = [
+        definition for visitor in audits for definition in visitor.definitions
+    ]
     references = sum((visitor.references for visitor in audits), Counter())
     private_unreferenced = [
         asdict(definition)
         for definition in definitions
-        if definition.private and references[definition.qualified_name.rsplit(".", 1)[-1]] == 0
+        if definition.private
+        and references[definition.qualified_name.rsplit(".", 1)[-1]] == 0
     ]
     body_groups: dict[str, list[Definition]] = defaultdict(list)
     for definition in definitions:
         short_name = definition.qualified_name.rsplit(".", 1)[-1]
         frozen_builder_provenance = (
-            short_name == "sha256_file"
-            and definition.path.startswith("scripts/build_")
+            short_name == "sha256_file" and definition.path.startswith("scripts/build_")
         )
-        if short_name not in {"__init__", "forward", "main"} and not frozen_builder_provenance:
+        if (
+            short_name not in {"__init__", "forward", "main"}
+            and not frozen_builder_provenance
+        ):
             body_groups[definition.body_sha256].append(definition)
     duplicate_bodies = [
         [asdict(definition) for definition in group]
@@ -215,17 +236,23 @@ def audit(paths: list[Path] | None = None) -> dict[str, object]:
         if len(group) > 1
     ]
     unused_self_attributes = {
-        visitor.path.relative_to(ROOT).as_posix(): sorted(set(visitor.self_stores) - set(visitor.self_loads))
+        visitor.path.relative_to(ROOT).as_posix(): sorted(
+            set(visitor.self_stores) - set(visitor.self_loads)
+        )
         for visitor in audits
         if set(visitor.self_stores) - set(visitor.self_loads)
     }
     unreachable = {
-        visitor.path.relative_to(ROOT).as_posix(): sorted(set(visitor.unreachable_lines))
+        visitor.path.relative_to(ROOT).as_posix(): sorted(
+            set(visitor.unreachable_lines)
+        )
         for visitor in audits
         if visitor.unreachable_lines
     }
     constant_branches = {
-        visitor.path.relative_to(ROOT).as_posix(): sorted(set(visitor.constant_branch_lines))
+        visitor.path.relative_to(ROOT).as_posix(): sorted(
+            set(visitor.constant_branch_lines)
+        )
         for visitor in audits
         if visitor.constant_branch_lines
     }
@@ -252,7 +279,11 @@ def main() -> None:
     )
     arguments = parser.parse_args()
     paths = _active_paths() if arguments.scope == "active" else _all_paths()
-    print(json.dumps(audit(paths), indent=None if arguments.compact else 2, sort_keys=True))
+    print(
+        json.dumps(
+            audit(paths), indent=None if arguments.compact else 2, sort_keys=True
+        )
+    )
 
 
 if __name__ == "__main__":

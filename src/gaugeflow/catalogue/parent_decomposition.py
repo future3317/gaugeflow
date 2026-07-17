@@ -215,7 +215,7 @@ def _expanded_parent(
     return fractional % 1.0, species
 
 
-def _candidate_from_parent(
+def certify_parent_candidate(
     child: StandardCrystal,
     parent: StandardCrystal,
     *,
@@ -359,7 +359,7 @@ def find_parent_candidates(
             )
         except ValueError:
             continue
-        candidate = _candidate_from_parent(
+        candidate = certify_parent_candidate(
             child,
             parent,
             matcher_settings=matcher_settings,
@@ -480,19 +480,23 @@ def _strain_representation(action: CompactDisplacementAction) -> FloatArray:
         atol=1e-9,
         rtol=1e-9,
     ):
-        raise RuntimeError("Kelvin strain action violates the affine quotient group law")
+        raise RuntimeError(
+            "Kelvin strain action violates the affine quotient group law"
+        )
     return representation
 
 
-def _representation_multiplicity(
-    character: FloatArray, irrep: RealIrrep
-) -> int:
+def _representation_multiplicity(character: FloatArray, irrep: RealIrrep) -> int:
     irrep_character = np.trace(irrep.matrices, axis1=1, axis2=2)
     norm = float(np.mean(irrep_character * irrep_character))
     inner = float(np.mean(character * irrep_character))
     multiplicity = int(round(inner / norm))
-    if multiplicity < 0 or not np.isclose(inner, multiplicity * norm, atol=1e-8, rtol=1e-8):
-        raise RuntimeError("Cartesian strain character has nonintegral irrep occurrence")
+    if multiplicity < 0 or not np.isclose(
+        inner, multiplicity * norm, atol=1e-8, rtol=1e-8
+    ):
+        raise RuntimeError(
+            "Cartesian strain character has nonintegral irrep occurrence"
+        )
     return multiplicity
 
 
@@ -525,7 +529,9 @@ def _vector_stabilizer(
     return selected
 
 
-def _logarithmic_strain(parent_lattice: FloatArray, child_lattice: FloatArray) -> FloatArray:
+def _logarithmic_strain(
+    parent_lattice: FloatArray, child_lattice: FloatArray
+) -> FloatArray:
     """Return the symmetric Hencky strain in the parent Cartesian frame.
 
     Lattices use row vectors.  If ``P A = C``, the column-vector deformation
@@ -581,8 +587,7 @@ def _terminal_evaluation(
     from pymatgen.core import Lattice, Structure
 
     difference_parent = translation_quotient_displacement(
-        candidate.expanded_parent_fractional
-        + predicted @ parent_lattice_inverse,
+        candidate.expanded_parent_fractional + predicted @ parent_lattice_inverse,
         candidate.child_fractional_aligned,
         parent_lattice,
         masses,
@@ -591,8 +596,7 @@ def _terminal_evaluation(
     difference_child = difference_fractional @ candidate.child_lattice_aligned
     periodic_rms = float(np.sqrt(np.mean(np.sum(difference_child**2, axis=1))))
     predicted_fractional = (
-        candidate.expanded_parent_fractional
-        + predicted @ parent_lattice_inverse
+        candidate.expanded_parent_fractional + predicted @ parent_lattice_inverse
     ) % 1.0
     terminal_dataset = spglib.get_symmetry_dataset(
         (
@@ -691,10 +695,13 @@ def decompose_parent_candidate(
         candidate.parent.fractional,
         candidate.parent.species,
     )
-    if not np.array_equal(candidate.expanded_species, np.tile(
-        candidate.parent.species, quotient.translations.order
-    )):
-        raise RuntimeError("candidate node order does not match compact displacement action")
+    if not np.array_equal(
+        candidate.expanded_species,
+        np.tile(candidate.parent.species, quotient.translations.order),
+    ):
+        raise RuntimeError(
+            "candidate node order does not match compact displacement action"
+        )
     parent_lattice = candidate.supercell_hnf @ candidate.parent.lattice
     parent_lattice_inverse = np.linalg.inv(parent_lattice)
     masses = _atomic_masses(candidate.expanded_species)
@@ -746,9 +753,7 @@ def decompose_parent_candidate(
         )
         stabilizer = tuple(
             int(value)
-            for value in np.flatnonzero(
-                component_rms <= component_stabilizer_tolerance
-            )
+            for value in np.flatnonzero(component_rms <= component_stabilizer_tolerance)
         )
         irrep_key = _irrep_key(action.group.element_keys, irrep)
         displacement_orbits[irrep_key] = orbit
@@ -769,9 +774,7 @@ def decompose_parent_candidate(
     # Symmetric strain sector in an orthonormal Kelvin basis.  This is the
     # minimal six-coordinate Cartesian representation of a homogeneous metric
     # distortion and is mathematically equivalent to a symmetric 3 x 3 tensor.
-    strain_tensor = _logarithmic_strain(
-        parent_lattice, candidate.child_lattice_aligned
-    )
+    strain_tensor = _logarithmic_strain(parent_lattice, candidate.child_lattice_aligned)
     kelvin_basis = _kelvin_basis()
     strain = np.einsum("aij,ij->a", kelvin_basis, strain_tensor, optimize=True)
     strain_representation = _strain_representation(action)
@@ -841,7 +844,11 @@ def decompose_parent_candidate(
     for count in (1, 2):
         for subset in combinations(eligible, count):
             declared = tuple(
-                sorted(set(subset[0].stabilizer).intersection(*(value.stabilizer for value in subset[1:])))
+                sorted(
+                    set(subset[0].stabilizer).intersection(
+                        *(value.stabilizer for value in subset[1:])
+                    )
+                )
             )
             if not declared or action.group.identity not in declared:
                 continue
@@ -863,9 +870,7 @@ def decompose_parent_candidate(
                 declared,
                 masses,
             )
-            residual_rms = float(
-                np.sqrt(np.mean(np.sum(residual * residual, axis=1)))
-            )
+            residual_rms = float(np.sqrt(np.mean(np.sum(residual * residual, axis=1))))
             predicted = mode + residual
             periodic_rms, terminal_group, terminal_agrees, structure_agrees = (
                 _terminal_evaluation(
@@ -880,8 +885,7 @@ def decompose_parent_candidate(
                 )
             )
             fractions = [
-                sum(value.energy for value in subset if value.sector == sector)
-                / total
+                sum(value.energy for value in subset if value.sector == sector) / total
                 for sector, total in sector_totals.items()
                 if total
                 > (
@@ -892,7 +896,8 @@ def decompose_parent_candidate(
             ]
             explained = float(np.mean(fractions)) if fractions else 1.0
             deterministic = "|".join(
-                f"{value.sector}:{value.irrep_key}:{value.branch_key}" for value in subset
+                f"{value.sector}:{value.irrep_key}:{value.branch_key}"
+                for value in subset
             )
             ordering: tuple[float | int | str, ...] = (
                 0 if residual_rms <= residual_rms_limit else 1,

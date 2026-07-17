@@ -88,8 +88,10 @@ its code/data/report surface.
   The overall decision remains `H0-E-v1_failed_stop_before_H1`.
   Its active-tree runners were retired after commit
   `f6f0262bfe9bbd983213467b20e66bce5fcb8485`; use that commit to reproduce
-  the frozen v1 artifact. The H0-E-v2 parent-occurrence E1 pilot is not yet
-  frozen or run and may not relabel the old spglib tolerance ladder.
+  the frozen v1 artifact. The H0-E-v2 E1a maximal-t parent-occurrence protocol
+  is frozen on 64 v1 no-candidate rows but has not yet run. It may not relabel
+  the old spglib tolerance ladder. E1a failure stops E1b and H1a; E1a success
+  permits only a separately frozen maximal-k E1b protocol.
   H0-E-v2 E0 has qualified a source-hashed, independently certified
   maximal t/k-subgroup and Wyckoff-splitting embedding catalogue: 3,744 raw
   source rows reduce to 2,843 rational affine embeddings without multiplicity

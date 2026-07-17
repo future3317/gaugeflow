@@ -140,7 +140,7 @@ are in [`reports/h0_e_parent_decomposition_pilot_v1/`](reports/h0_e_parent_decom
 
 The frozen v1 builder/auditor are reproducible from commit
 `f6f0262bfe9bbd983213467b20e66bce5fcb8485`; they are not compatibility paths
-in the active tree. H0-E-v2 has not been preregistered or run. Two bounded
+in the active tree. Two bounded
 candidate-source diagnostics have already been rejected: finite metric-only
 parent projection added `0/64` candidates, and a wider spglib tolerance ladder
 found only one independently valid candidate among 64 previously uncovered
@@ -166,6 +166,14 @@ permits only a bounded parent-occurrence E1 pilot. It does not repair or
 reclassify H0-E-v1, qualify H0-E, or authorize H1a. See
 [`reports/h0_e_maximal_embedding_catalogue_v2/`](reports/h0_e_maximal_embedding_catalogue_v2/).
 
+The versioned E1a maximal-translationengleiche occurrence protocol is frozen
+but not run. It fixes 64 v1 no-candidate rows, the complete E0 `kind=t` fiber,
+setting-exact primitive affine transforms and a minimum of three newly
+certified candidate materials. The projector uses the one-sided 0.2 Angstrom
+source displacement as its scientific threshold; the raw orbit defect is only
+a triangle-safe `2x` prefilter. E1a failure stops E1b and H1a. E1a success may
+only authorize a separately frozen maximal-k E1b protocol.
+
 ## Repository layout
 
 ```text
@@ -181,6 +189,7 @@ configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
 reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
 reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
+configs/gates/h0_e_maximal_t_parent_occurrence_e1a_v1.json frozen E1a protocol
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```

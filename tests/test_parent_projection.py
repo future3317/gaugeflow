@@ -3,13 +3,11 @@ from __future__ import annotations
 import numpy as np
 import spglib
 
-from gaugeflow.catalogue.affine_quotient import (
-    primitive_space_group_from_hall,
-    standard_hall_numbers,
-)
+from gaugeflow.catalogue.affine_quotient import primitive_space_group_from_hall
 from gaugeflow.catalogue.parent_projection import (
     _operation_table,
     conjugate_embedding_to_primitive,
+    conventional_to_primitive_structure,
     project_lattice_metric,
     project_translationengleiche_parent,
 )
@@ -25,6 +23,33 @@ def test_conventional_embedding_conjugates_to_unimodular_primitive_action():
     primitive = conjugate_embedding_to_primitive(conventional, parent_primitive, child_primitive)
     assert primitive.denominator == 1
     assert np.array_equal(primitive.as_float(), np.eye(4))
+
+
+def test_f_centering_quotient_is_an_exact_vectorized_coordinate_change():
+    conventional_lattice = np.diag([4.0, 4.0, 4.0])
+    conventional_fractional = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.5, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.5, 0.0],
+        ]
+    )
+    primitive_basis = np.array([[0.0, 0.5, 0.5], [0.5, 0.0, 0.5], [0.5, 0.5, 0.0]])
+    lattice, fractional, species = conventional_to_primitive_structure(
+        conventional_lattice,
+        conventional_fractional,
+        np.full(4, 29, dtype=np.int64),
+        primitive_basis,
+    )
+    assert fractional.shape == (1, 3)
+    assert np.array_equal(species, np.array([29], dtype=np.int64))
+    assert np.isclose(
+        abs(np.linalg.det(lattice)),
+        abs(np.linalg.det(conventional_lattice)) / 4.0,
+        atol=1e-12,
+        rtol=0.0,
+    )
 
 
 def test_metric_reynolds_projection_is_invariant_under_axis_exchange():
@@ -127,7 +152,7 @@ def test_batio3_positive_control_projects_p4mm_distortion_to_pm3m():
 
 
 def test_nonsymmorphic_general_orbit_projection_preserves_sg62():
-    parent = primitive_space_group_from_hall(standard_hall_numbers()[62])
+    parent = primitive_space_group_from_hall(292)
     rotations = parent.rotations
     translations = parent.translation_numerators.astype(np.float64) / parent.translation_denominator
     lattice = project_lattice_metric(

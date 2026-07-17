@@ -27,6 +27,58 @@ class ParentProjection:
     projected_group_max_error_angstrom: float
 
 
+def conventional_to_primitive_structure(
+    lattice: FloatArray,
+    fractional: FloatArray,
+    species: IntArray,
+    primitive_basis: FloatArray,
+    *,
+    duplicate_tolerance: float = 1e-7,
+) -> tuple[FloatArray, FloatArray, IntArray]:
+    """Transform one standardized conventional structure without site loops.
+
+    ``primitive_basis`` follows the spglib/spgrep convention
+    ``f_conv = P f_prim``.  Centering copies are removed by a species-aware
+    periodic equivalence matrix.  This is an exact coordinate change plus
+    quotient, not a new symmetry search or an idealization.
+    """
+    cell = np.asarray(lattice, dtype=np.float64)
+    positions = np.asarray(fractional, dtype=np.float64)
+    numbers = np.asarray(species, dtype=np.int64)
+    basis = np.asarray(primitive_basis, dtype=np.float64)
+    if (
+        cell.shape != (3, 3)
+        or positions.ndim != 2
+        or positions.shape[1] != 3
+        or numbers.shape != (positions.shape[0],)
+        or basis.shape != (3, 3)
+        or duplicate_tolerance <= 0.0
+    ):
+        raise ValueError("conventional-to-primitive inputs have inconsistent shapes")
+    determinant = abs(float(np.linalg.det(basis)))
+    expected = int(round(positions.shape[0] * determinant))
+    if expected < 1 or not np.isclose(positions.shape[0] * determinant, expected, atol=1e-8, rtol=0.0):
+        raise ValueError("primitive basis is incompatible with the site count")
+    primitive_cell = basis.T @ cell
+    primitive_positions = (positions @ np.linalg.inv(basis).T) % 1.0
+    delta = primitive_positions[:, None, :] - primitive_positions[None, :, :]
+    delta -= np.rint(delta)
+    equivalent = (numbers[:, None] == numbers[None, :]) & (np.max(np.abs(delta), axis=2) <= duplicate_tolerance)
+    earlier = np.tril(equivalent, k=-1).any(axis=1)
+    keep = ~earlier
+    if int(keep.sum()) != expected:
+        raise ValueError("centering quotient did not produce the expected site count")
+    primitive_positions = primitive_positions[keep]
+    primitive_species = numbers[keep]
+    if np.linalg.det(primitive_cell) < 0.0:
+        primitive_cell = primitive_cell.copy()
+        primitive_positions = primitive_positions.copy()
+        primitive_cell[0] *= -1.0
+        primitive_positions[:, 0] *= -1.0
+        primitive_positions %= 1.0
+    return primitive_cell, primitive_positions, primitive_species
+
+
 def conjugate_embedding_to_primitive(
     conventional: RationalAffineTransform,
     parent_primitive_basis: FloatArray,
@@ -217,7 +269,10 @@ def project_translationengleiche_parent(
         )
     except (ValueError, RuntimeError):
         return None
-    if assignment_maximum > maximum_source_displacement_angstrom:
+    # The raw orbit defect compares two source points related through a parent
+    # operation.  Its triangle bound is twice the one-sided distance from the
+    # source to the parent fixed set; it is not itself the source displacement.
+    if assignment_maximum > 2.0 * maximum_source_displacement_angstrom:
         return None
     target = raw_parent_fractional[permutations]
     delta = (moved - target).reshape(-1, 3)
@@ -232,6 +287,8 @@ def project_translationengleiche_parent(
     source_delta = projected_fractional - raw_parent_fractional
     source_displacement, _ = closest_image_displacements_numpy(source_delta, projected_lattice)
     source_norm = np.linalg.norm(source_displacement, axis=1)
+    if float(source_norm.max(initial=0.0)) > maximum_source_displacement_angstrom:
+        return None
     try:
         projected_moved = (
             np.einsum(
