@@ -326,6 +326,28 @@ every result. O0-v2 therefore qualifies the mechanism only. H0-E and H0 remain
 unqualified, and the only permitted successor is a separately frozen held-out
 O1 coverage protocol.
 
+### H0-E-v4 O1-v1 held-out occupational census
+
+O1 froze the complete 835-row clean remainder of the v1 zero-candidate
+universe after removing every O0 source ID; it did not draw a second selected
+panel. The 125 v1-positive, 63 clean O0 and 835 O1 rows form a disjoint exact
+partition of the 1,023-material clean universe. The unchanged aggregate
+coverage rule required at least 19 new O1 materials.
+
+The formal four-process CPU run evaluated all 13,370 canonical E0 material
+edges and found 224 candidate materials with 454 unique
+`(material_id, embedding_key)` paths. There were zero processing failures,
+nonfinite values, partial occupancies or duplicate canonical paths. Every
+coloring reconstructed exactly, every coloring stabilizer was a valid subgroup
+with order equal to the observed child, and all candidates remained inside the
+0.2-Angstrom displacement and 0.15 Hencky limits. Aggregate coverage is
+`359/1023 = 0.350929`.
+
+An independent reverse-material/reverse-catalogue auditor rebuilt all 835 rows,
+13,370 edges and 454 occurrences, including every stored array and scalar.
+O1-v1 therefore qualifies H0-E-v4 and H0-v4. It authorizes only a separately
+frozen real-data H1a; H1b and H2--H6 have not started.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

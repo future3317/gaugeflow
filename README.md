@@ -7,9 +7,10 @@ marginalization**. It does not use the retired continuous-logit flow as a
 fallback.
 
 The project now has a tensor-free production trainer and joint reverse sampler.
-Their bounded S1a-I0 software closure passed on CUDA. The first H0 data
-activation audit did not pass, so real-data H1a/H1b training has not started.
-Consequently, the repository does
+Their bounded S1a-I0 software closure passed on CUDA. The historical first H0
+audit remains failed, while the versioned H0-v4 repair is now independently
+qualified. Real-data H1a has not started and requires its own frozen protocol;
+H1b and all later Gates remain prohibited. Consequently, the repository does
 not claim successful tensor-conditioned generation or target-separated sample
 distributions.
 
@@ -24,12 +25,13 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1, H0-E-v2 E1a and H0-E-v3 K0 are frozen failed; stop before H1a |
+| Parent--distortion--child hierarchy | H0-D-v2 and H0-E-v4 O1-v1 qualified; H0-E-v1/v2/v3 remain frozen failed history |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | H0-A/H0-B/H0-C and H0-D-v2 qualified; H0-D-v1 and H0-E-v1 are frozen failed; H0 remains failed |
-| Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
+| H0 data activation | Versioned H0-v4 qualified; historical H0-v1/H0-D-v1/H0-E-v1 remain frozen failed |
+| Tensor-free real-data H1a | Authorized only as the next separately frozen Gate; not started |
+| Full-blueprint H1b | Prohibited until H1a qualifies |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
 The condensed no-training evidence is:
@@ -117,9 +119,10 @@ The original Chinese design/data note is retained as
 These interfaces do not authorize hierarchical training. The first formal H0
 activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v4
 repair has qualified H0-A, H0-B and H0-C without overwriting v1--v3. The
-algorithmic H0-D-v2 affine catalogue has also qualified. H0-E-v1 has now
-failed its frozen nontrivial-parent coverage threshold (`0.12207 < 0.15`), so
-H1a/H1b and all later gates remain unauthorized.
+algorithmic H0-D-v2 affine catalogue and the held-out H0-E-v4 O1 census have
+also qualified. H0-E-v1 remains frozen failed at `0.12207 < 0.15`; the clean
+v4 census reaches `359/1023 = 0.350929`. This qualifies H0-v4 but authorizes
+only a separately frozen H1a. H1b and all later Gates remain unauthorized.
 
 H0-D-v2 covers all 230 parent space groups and 6,188 parent-quotiented HNFs
 with `det(B) <= 4`. It stores complete finite affine quotients, 53,441
@@ -199,14 +202,16 @@ O0-v2 is only a mechanism-panel qualification: H0-E/H0 remain unqualified and
 H1a is still prohibited until a separately frozen held-out O1 passes. See
 [`reports/h0_e_v4_occupational_order_o0_v2/`](reports/h0_e_v4_occupational_order_o0_v2/).
 
-The O1-v1 protocol is now frozen but not yet run. It is a full census of all
+The O1-v1 protocol and result are now frozen. It is a full census of all
 835 clean v1 zero-candidate rows that are disjoint from the O0 source panel,
 not another mechanism-locating sample. Together with the 125 v1-positive and
 63 clean O0 rows, these form an exact disjoint partition of the 1,023-material
-clean universe. The original aggregate coverage threshold remains `>=0.15`,
-so O1 must identify at least 19 additional distinct materials while all exact
-geometry, coloring, path-canonicalization and independent-audit checks pass.
-H1a remains prohibited until that frozen run succeeds.
+clean universe. O1 found 224 additional materials and 454 unique material--path
+pairs, raising aggregate coverage to `359/1023 = 0.350929`; all exact geometry,
+coloring, path-canonicalization and independent reverse-order audit checks
+passed. H0-v4 is qualified. H1a is the only permitted next Gate and has not
+started. See
+[`reports/h0_e_v4_occupational_order_o1_v1/`](reports/h0_e_v4_occupational_order_o1_v1/).
 
 ## Repository layout
 

@@ -162,8 +162,9 @@ High-confidence data conclusions:
 1. **H0:** freeze source versions/hashes, the formula/prototype split, catalogue
    provenance, cross-source joins and derivation attestations. The historical
    `h0_data_activation_v1` audit remains failed; the versioned v4 repair has
-   passed H0-A through H0-D-v2, while H0-E-v1 is frozen failed on coverage. H0
-   as a whole does not pass.
+   passed H0-A through H0-D-v2 and H0-E-v4 O1-v1. The exhaustive clean census
+   reaches `359/1023=0.350929`, so H0-v4 now passes without rewriting the
+   historical H0-E-v1 failure.
 2. **H1a:** qualify the P1 real-data tensor-free hybrid generator.
 3. **H1b:** qualify the complete 230-space-group/Wyckoff parent blueprint
    generator. H1 passes only after both H1a and H1b pass.

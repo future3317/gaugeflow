@@ -109,18 +109,20 @@ its code/data/report surface.
   yielded 13 exact species-free-parent/integer-coloring occurrences over 962
   edges. This permits only a separately frozen held-out O1 protocol. It does
   not qualify H0-E or H0 and does not authorize H1a.
-  H0-E-v4 O1-v1 is now frozen but not run. It is the complete 835-row clean,
-  O0-disjoint remainder of the v1 zero-candidate universe; no sampling or
-  outcome-dependent parent-space-group selection is used. It must find at
-  least 19 distinct additional materials so the exact clean-universe coverage
-  reaches `154/1023 >= 0.15`, while all path and coloring certificates pass.
+  H0-E-v4 O1-v1 is independently qualified on the complete 835-row clean,
+  O0-disjoint remainder of the v1 zero-candidate universe. It found 224 new
+  materials and 454 unique canonical material paths with zero failures; exact
+  clean-universe coverage is `359/1023 = 0.350929 >= 0.15`. Every path and
+  coloring certificate was independently reproduced. H0-E-v4 and H0-v4 are
+  qualified. Only a separately frozen real-data H1a may run next.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
 S0.4.1 and S1a-I0 do not authorize tensor work. H0-E-v1/v2/v3 remain frozen
 negative history. O0-v2 addresses the occupational mechanism on a locating
-panel, but only a separately frozen held-out O1 may run next. H1a remains
-unauthorized until that unbiased occurrence gate qualifies H0-E/H0.
+panel, and the disjoint full-census O1-v1 now qualifies H0-E-v4/H0-v4. H1a is
+the only authorized next Gate and still requires a separately frozen protocol;
+H1b and H2--H6 remain prohibited.
 
 ## Hierarchical symmetry-breaking rules
 

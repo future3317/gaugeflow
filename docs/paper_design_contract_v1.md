@@ -44,8 +44,12 @@ remains frozen failed, while H0-D-v2 qualifies the complete abstract finite
 affine OPD catalogue using compact displacement actions and vectorized
 fixed-space-lattice enumeration. H0-E-v1 concrete parent realization is now
 frozen failed: all 125 discovered candidates qualified, but coverage was
-`125/1024=0.12207<0.15`. H1a, H1b, H2,
-H3, H4, H5 and H6 remain strictly ordered and unauthorized.
+`125/1024=0.12207<0.15`. The versioned occupational-order repair subsequently
+qualified on the complete held-out O1 census: 224/835 new materials and 454
+canonical paths raise clean-universe coverage to `359/1023=0.350929`, with an
+independent exhaustive rebuild. H0-v4 is therefore qualified. H1a is the only
+authorized next Gate and must be separately frozen; H1b and H2--H6 remain
+strictly ordered and unauthorized.
 
 ## Production state spaces
 
