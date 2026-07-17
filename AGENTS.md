@@ -76,18 +76,21 @@ its code/data/report surface.
   formula-, exact-prototype-, matcher-envelope- and component-disjoint, and
   PhononDB v2 has a full-universe Hessian-algebra certificate plus a frozen
   1,024-material long-tail/stratified mode audit; frozen TensorNet and QET
-  MatPES-PBE-2025.2 teachers pass the 512/32 held-out and covariance audit. H0-D-v1
-  is frozen failed: the package sources qualify, but no full-real-k-star affine
-  OPD catalogue/measure exists and the point-operation-only branch schema is
-  insufficient. H0-D/E still require the repaired physical path measure and parent-decomposition pilot,
+  MatPES-PBE-2025.2 teachers pass the 512/32 held-out and covariance audit.
+  H0-D-v1 is frozen failed. H0-D-v2 now qualifies the complete abstract
+  finite-affine catalogue for all 230 groups and all 6,188 canonical
+  `det(B)<=4` HNF orbits: 53,441 physical-real irreps and 75,416 OPD classes,
+  with an independent exhaustive structural audit and deterministic algebra
+  rebuild panel. H0-E still requires concrete Alex parent displacement
+  occurrence, realized physical-class mass and the bounded decomposition pilot,
   so the overall decision remains
   `H0_not_passed_stop_before_H1`.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
 S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
-versioned H0-D repair based on the finite affine quotient, full real k-star and
-parent displacement-representation occurrence. H0-E and H1a remain unauthorized.
+versioned H0-E parent-decomposition pilot using the qualified H0-D-v2 finite
+affine catalogue. H1a remains unauthorized.
 
 ## Hierarchical symmetry-breaking rules
 
@@ -135,6 +138,10 @@ parent displacement-representation occurrence. H0-E and H1a remain unauthorized.
   duplicate-expansion invariance and smooth stratum transitions tested.
 - Preserve the proven-unique 4,032-candidate generic fast path. Mixed/axial
   paths retain multiplicity-corrected deduplication.
+- Offline OPD construction uses the exact fixed-space-lattice algorithm,
+  compact permutation-plus-3x3 displacement actions, generator-complete
+  homomorphism checks and packed stabilizers. Do not replace it with dense
+  `3N x 3N` actions or full subgroup enumeration in the production builder.
 - Avoid adding a new method until a small versioned diagnostic identifies the
   failure mechanism it addresses.
 - Completed exploratory protocols belong in Git history and the condensed

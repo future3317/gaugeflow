@@ -18,7 +18,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["mypy==1.16.1", "ruff==0.12.3", "pytest>=8"]
-catalogue = ["spgrep==0.6.0", "spgrep-modulation==0.3.0"]
+catalogue = [
+  "spglib==2.7.0",
+  "spgrep==0.6.0",
+  "spgrep-modulation==0.3.0",
+  "hsnf==0.4.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

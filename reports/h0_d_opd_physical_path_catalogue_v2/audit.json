@@ -1,0 +1,69 @@
+{
+  "algebra_rebuild_space_groups": [
+    1,
+    2,
+    62,
+    221
+  ],
+  "checks": {
+    "all_230_explicit_exact_branches": true,
+    "all_230_parent_groups": true,
+    "all_hnf_orbits_complete": true,
+    "compact_displacement_action_homomorphism": true,
+    "complete_real_irreps": true,
+    "domain_conjugacy_invariance": true,
+    "duplicate_expansion_measure_invariance": true,
+    "exact_affine_translation_cosets": true,
+    "finite_group_axioms": true,
+    "group_enumeration_order_invariance": true,
+    "manifest_counts_match": true,
+    "manifest_did_not_claim_unverified_check": true,
+    "manifest_measure_matches_protocol": true,
+    "manifest_present": true,
+    "manifest_qualification_consistent": true,
+    "manifest_versions_match": true,
+    "opd_basis_gauge_invariance": true,
+    "packed_stabilizer_intersection_equivalence": true,
+    "pointwise_stabilizer": true,
+    "protocol_matches": true,
+    "real_irrep_occurrence_integrality": true,
+    "records_hash_matches": true,
+    "records_present": true,
+    "representation_homomorphism": true,
+    "required_checks_recomputed": true,
+    "reynolds_projector_idempotence": true,
+    "source_version_hsnf": true,
+    "source_version_spglib": true,
+    "source_version_spgrep": true,
+    "source_version_spgrep-modulation": true,
+    "spgrep_modulation_reference_agreement": true,
+    "unimodular_hnf_invariance": true
+  },
+  "counts": {
+    "abstract_opd_classes": 75416,
+    "exact_branches": 230,
+    "maximum_quotient_order": 192,
+    "parent_space_groups": 230,
+    "real_irreps": 53441,
+    "supercell_orbits": 6188
+  },
+  "decision": "H0-D-v2_qualified_H0-E_may_start",
+  "errors": [],
+  "installed_versions": {
+    "hsnf": "0.4.0",
+    "spglib": "2.7.0",
+    "spgrep": "0.6.0",
+    "spgrep-modulation": "0.3.0"
+  },
+  "manifest_sha256": "081c5e357cb578789c580679a34b13f13b4ea5723aa4727035dac4a99b8679f4",
+  "protocol": "h0_d_opd_physical_path_catalogue_v2",
+  "qualified": true,
+  "records_sha256": "ba711a63874444cfc5ca1c9d5603cdcad65ae63799f44fd209aff979e73c940c",
+  "spgrep_modulation_reference": {
+    "our_class_count": 6,
+    "passed": true,
+    "reference_class_count": 6,
+    "representation": "Gamma polar Cartesian vector T1u",
+    "space_group": 221
+  }
+}

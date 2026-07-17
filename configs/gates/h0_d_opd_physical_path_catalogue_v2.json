@@ -1,0 +1,86 @@
+{
+  "protocol": "h0_d_opd_physical_path_catalogue_v2",
+  "frozen_at_utc": "2026-07-17T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "supersedes_without_overwriting": "h0_d_opd_physical_path_catalogue_v1",
+  "scientific_scope": "ordered stoichiometric commensurate parent-to-child distortions with det(B)<=4 and at most two active OPD branches",
+  "catalogue_definition": "two_level_algorithmic_catalogue",
+  "abstract_level": {
+    "parent_space_groups": 230,
+    "hall_setting_rule": "lowest_spglib_hall_number_per_space_group",
+    "supercell_rule": "all upper HNFs with det(B)<=4 quotiented by parent rotations and unimodular row-basis changes",
+    "group_object": "finite affine quotient G_parent^B/T_B with exact rotation and translation coset",
+    "representation_object": "complete physically irreducible real representation of the finite affine quotient",
+    "opd_object": "nonzero Reynolds fixed space with recomputed pointwise stabilizer modulo parent-domain conjugacy",
+    "equivalent_acceleration": "enumerate the representation fixed-space lattice by vectorized PSD-kernel intersections instead of enumerating every abstract subgroup"
+  },
+  "parent_realization_level": {
+    "occurrence_rule": "retain only real irreps with positive multiplicity in the concrete parent Wyckoff displacement representation",
+    "displacement_representation": "compact node permutation plus Cartesian 3x3 rotation",
+    "dense_3n_by_3n_matrices_forbidden": true,
+    "activation_stage": "H0-E parent decomposition pilot"
+  },
+  "runtime_compilation": {
+    "stabilizer_storage": "packed_uint64_bitset",
+    "maximum_quotient_order": 192,
+    "maximum_bitset_words": 3,
+    "multi_opd_intersection": "bitwise_and",
+    "opd_basis_and_projector": "precomputed_offline",
+    "subgroup_search_during_generation": false,
+    "two_branch_pairs": "lazy_canonical_pair_construction_not_quadratic_catalogue_expansion"
+  },
+  "offline_acceleration": {
+    "homomorphism_certificate": "generator_by_full_group_vectorized_check_equivalent_to_all_pairs",
+    "displacement_action": "node_permutation_plus_cartesian_3x3_rotation_not_dense_3N_matrix",
+    "fixed_space_lattice": "Fix(<g1,...,gk>)=intersection_i ker(D(gi)-I)",
+    "parallelism": "bounded_process_pool_default_maximum_four_workers"
+  },
+  "measure_rule": {
+    "exact_branch_mass": 0.5,
+    "distorted_total_mass": 0.5,
+    "distorted_allocation": "uniform_over_available_supercell_index_then_active_branch_count_then_realized_physical_classes",
+    "tuple_multiplicity_affects_mass": false,
+    "learned_path_logits_may_modify_reference_measure": true
+  },
+  "qualified_sources": {
+    "spglib": "2.7.0",
+    "spgrep": "0.6.0",
+    "spgrep_modulation": "0.3.0_cross_check_only",
+    "hsnf": "0.4.0"
+  },
+  "required_outputs": {
+    "catalogue_manifest": "processed/gaugeflow_h0_v4/opd_catalogue_v2/catalogue_manifest.json",
+    "catalogue_records": "processed/gaugeflow_h0_v4/opd_catalogue_v2/catalogue_records.json.gz"
+  },
+  "required_checks": [
+    "all_230_parent_groups",
+    "all_230_explicit_exact_branches",
+    "all_hnf_orbits_complete",
+    "finite_group_axioms",
+    "exact_affine_translation_cosets",
+    "complete_real_irreps",
+    "representation_homomorphism",
+    "reynolds_projector_idempotence",
+    "pointwise_stabilizer",
+    "opd_basis_gauge_invariance",
+    "domain_conjugacy_invariance",
+    "group_enumeration_order_invariance",
+    "unimodular_hnf_invariance",
+    "duplicate_expansion_measure_invariance",
+    "compact_displacement_action_homomorphism",
+    "real_irrep_occurrence_integrality",
+    "packed_stabilizer_intersection_equivalence",
+    "spgrep_modulation_reference_agreement"
+  ],
+  "numerical_thresholds": {
+    "group_and_representation_max_abs_error_float64": 1e-9,
+    "projector_max_abs_error_float64": 1e-9,
+    "mass_sum_abs_error_float64": 1e-12
+  },
+  "independent_audit": {
+    "exhaustive_structure": "all 230 parents and every canonical HNF orbit are reconstructed through the exact affine quotient",
+    "deterministic_algebra_rebuild_space_groups": [1, 2, 62, 221],
+    "reference_cross_check": "SG 221 Gamma polar Cartesian vector against spgrep-modulation"
+  },
+  "advancement_rule": "H0-D-v2 qualifies only if the complete abstract atlas, parent-realization interface, reference panel and every required check pass. Otherwise stop before H0-E."
+}

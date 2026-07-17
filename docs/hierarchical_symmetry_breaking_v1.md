@@ -130,23 +130,37 @@ High-confidence data conclusions:
    H0-C-v2 now separately activates exact-revision TensorNet and QET checkpoints,
    with immediate file rehashing, matched MatPES-PBE-2025.2 provenance,
    held-out errors, covariance tests and an explicit ban on reverse guidance.
-4. The child split is frozen under H0-A v2. Parent--child pairs and OPD
-   catalogues do not yet exist; every future candidate parent and mode scan must
-   inherit this child assignment.
-5. H0-D-v1 is frozen failed. `spgrep-modulation` is qualified only as a
-   little-group isotropy cross-check. A production path class must retain the
-   full affine operation (including translation cosets), use a full real
-   k-star representation that occurs in the concrete parent displacement
-   representation, and quotient fixed-space/stabilizer domains before class
-   mass is assigned. Point-operation indices alone do not certify a child
-   space group.
+4. The child split is frozen under H0-A v2. H0-D-v2 has qualified the abstract
+   OPD catalogue, but concrete parent--child pairs do not yet exist; every H0-E
+   parent candidate and mode scan must inherit this child assignment.
+5. H0-D-v1 is frozen failed. H0-D-v2 constructs the exact finite affine
+   quotient (including translation cosets) for all 230 groups and all 6,188
+   canonical `det(B)<=4` HNF orbits. It qualifies 53,441 complete
+   physical-real irreps and 75,416 domain-quotiented OPD classes.
+   `spgrep-modulation` remains an independent little-group isotropy
+   cross-check, not the catalogue source. H0-E must still retain only irreps
+   with positive occurrence in each concrete parent displacement
+   representation and then assign multiplicity-free realized class mass.
+6. The H0-D builder uses the exact identity
+
+   \[
+   \operatorname{Fix}\langle g_1,\ldots,g_k\rangle
+   =\bigcap_i\ker[D(g_i)-I]
+   \]
+
+   to enumerate distinct fixed spaces directly. Batched PSD-kernel
+   eigendecompositions replace redundant subgroup enumeration; compact node
+   permutations plus Cartesian `3 x 3` rotations replace dense displacement
+   matrices. These are equivalent representations and are covered by
+   subgroup-Reynolds and dense-action numerical tests.
 
 ## Qualification order and scientific boundary
 
 1. **H0:** freeze source versions/hashes, the formula/prototype split, catalogue
    provenance, cross-source joins and derivation attestations. The historical
-   `h0_data_activation_v1` audit remains failed; v2 has passed H0-A only, so H0
-   as a whole still does not pass.
+   `h0_data_activation_v1` audit remains failed; the versioned v4 repair has
+   passed H0-A through H0-D-v2, while H0-E remains open. H0 as a whole still
+   does not pass.
 2. **H1a:** qualify the P1 real-data tensor-free hybrid generator.
 3. **H1b:** qualify the complete 230-space-group/Wyckoff parent blueprint
    generator. H1 passes only after both H1a and H1b pass.

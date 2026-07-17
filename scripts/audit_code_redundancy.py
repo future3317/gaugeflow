@@ -24,6 +24,9 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "build_phonondb_force_constants_v2.py",
     ROOT / "scripts" / "audit_phonondb_h0_b.py",
     ROOT / "scripts" / "audit_h0_activation.py",
+    ROOT / "scripts" / "build_h0_d_opd_catalogue_v2.py",
+    ROOT / "scripts" / "diagnose_h0_d_opd_catalogue_v2.py",
+    ROOT / "scripts" / "audit_h0_d_opd_catalogue_v2.py",
 )
 
 
@@ -130,7 +133,12 @@ def _active_paths() -> list[Path]:
         for path in (ROOT / "src" / "gaugeflow" / "production").glob("*.py")
         if path.name != "__init__.py"
     )
-    return [*production, *ACTIVE_ENTRYPOINTS]
+    catalogue = sorted(
+        path
+        for path in (ROOT / "src" / "gaugeflow" / "catalogue").glob("*.py")
+        if path.name != "__init__.py"
+    )
+    return [*production, *catalogue, *ACTIVE_ENTRYPOINTS]
 
 
 def _all_paths() -> list[Path]:

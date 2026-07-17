@@ -24,11 +24,11 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | Mathematical/code contracts implemented; no mode catalogue, parent-pair corpus, or hierarchical training is qualified |
+| Parent--distortion--child hierarchy | Contracts plus the H0-D-v2 abstract affine OPD catalogue are qualified; concrete parent realization and hierarchical training are not |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | v1 frozen failed; v4 H0-A/H0-B/H0-C qualified; H0-D-v1 frozen failed on the missing affine full-real-k-star OPD catalogue; H0-D/E block advancement |
+| H0 data activation | v1 frozen failed; v4 H0-A/H0-B/H0-C and H0-D-v2 qualified; H0-D-v1 remains frozen failed; H0-E alone blocks advancement |
 | Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
@@ -116,8 +116,18 @@ The original Chinese design/data note is retained as
 [`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
 These interfaces do not authorize hierarchical training. The first formal H0
 activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v4
-repair has qualified H0-A, H0-B and H0-C without overwriting v1--v3, but H0-D/E remain open;
+repair has qualified H0-A, H0-B and H0-C without overwriting v1--v3. The
+algorithmic H0-D-v2 affine catalogue has also qualified; H0-E remains open;
 H1a/H1b and all later gates remain unauthorized.
+
+H0-D-v2 covers all 230 parent space groups and 6,188 parent-quotiented HNFs
+with `det(B) <= 4`. It stores complete finite affine quotients, 53,441
+physical-real irreps and 75,416 abstract OPD classes. The offline builder uses
+compact permutation-plus-`3 x 3` displacement actions, generator-complete
+homomorphism checks, vectorized fixed-space intersections and packed
+stabilizers. These are mathematically equivalent representations, not an
+approximate catalogue. The independent audit and exact artifact hashes are in
+[`reports/h0_d_opd_physical_path_catalogue_v2/`](reports/h0_d_opd_physical_path_catalogue_v2/).
 
 ## Repository layout
 
@@ -128,10 +138,11 @@ src/gaugeflow/parity.py     SO(3)/O(3) parity rules
 src/gaugeflow/stabilizer.py proper/full point-group utilities
 src/gaugeflow/data.py       TensorOrbit crystal dataset loader
 src/gaugeflow/direct_irrep.py complete direct-CG baseline
+src/gaugeflow/catalogue/    offline exact affine-quotient/OPD compiler
 scripts/                    production train/sample, current data and audit entry points
 configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
-reports/h0_data_activation_v1/ current hierarchical data-activation evidence
+reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```
@@ -161,7 +172,7 @@ be used for reported experiments.
 Install/update the editable package if needed:
 
 ```bash
-$PY -m pip install -e '.[dev]'
+$PY -m pip install -e '.[dev,catalogue]'
 ```
 
 ## Validation

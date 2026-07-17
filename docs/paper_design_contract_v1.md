@@ -39,8 +39,11 @@ tensor conditioning, relaxation, DFT or DFPT. H0 v1 is frozen as
 the versioned v4 repair. H0-B uses full-universe force-constant algebra plus a
 frozen long-tail/stratified numerical audit rather than claiming a second
 10,034-material eigendecomposition sweep. H0-C uses frozen TensorNet/QET
-MatPES-PBE-2025.2 teachers under an offline-only 512/32 qualification. H0-D/E
-remain open. H1a, H1b, H2,
+MatPES-PBE-2025.2 teachers under an offline-only 512/32 qualification. H0-D-v1
+remains frozen failed, while H0-D-v2 qualifies the complete abstract finite
+affine OPD catalogue using compact displacement actions and vectorized
+fixed-space-lattice enumeration. H0-E concrete parent realization remains
+open. H1a, H1b, H2,
 H3, H4, H5 and H6 remain strictly ordered and unauthorized.
 
 ## Production state spaces
