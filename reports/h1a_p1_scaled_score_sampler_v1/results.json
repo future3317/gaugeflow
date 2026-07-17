@@ -1,0 +1,242 @@
+{
+  "checks": {
+    "all_seed_coordinate_ratio": true,
+    "all_seed_validation_ratio": true,
+    "finite_positive_lattices": true,
+    "mean_coordinate_ratio": true,
+    "mean_validation_ratio": true,
+    "minimum_distance_aggregate": true,
+    "minimum_distance_each_seed": true,
+    "sampling_failures": true,
+    "tensor_bypass": true,
+    "terminal_masks": true,
+    "training_finite": true
+  },
+  "decision": "scaled_score_sampler_qualified_freeze_full_tensor_free_benchmark",
+  "mean_final_over_initial_coordinate": 0.3529711520230728,
+  "mean_final_over_initial_total": 0.6429698152770177,
+  "protocol": "h1a_p1_scaled_score_sampler_v1",
+  "protocol_sha256": "c63bc3d723cf79338925d46ee9fbca9934fabbab76ab4152d8eb2a7d2cf059aa",
+  "qualified": true,
+  "seed_results": {
+    "5201": {
+      "final_over_initial_coordinate": 0.34058245420843486,
+      "final_over_initial_total": 0.6380808621577233,
+      "final_validation": {
+        "coordinate": 0.05269135159687721,
+        "element": 3.2269317656755447,
+        "shape": 0.9217217601835728,
+        "tensor_candidate_count": 0.0,
+        "total": 4.586225688457489,
+        "volume": 0.38488082494586706
+      },
+      "initial_validation": {
+        "coordinate": 0.1547095305286348,
+        "element": 4.759750813245773,
+        "shape": 1.2491602525115013,
+        "tensor_candidate_count": 0.0,
+        "total": 7.187530547380447,
+        "volume": 1.023910041898489
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.984375,
+        "minimum_distance_quantiles_angstrom": [
+          0.2768053710460663,
+          1.2708183526992798,
+          2.7568836212158203
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          10.624494552612305,
+          24.093600273132324,
+          43.9737663269043
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.1547095305286348,
+          "element": 4.759750813245773,
+          "shape": 1.2491602525115013,
+          "tensor_candidate_count": 0.0,
+          "total": 7.187530547380447,
+          "volume": 1.023910041898489
+        },
+        "1000": {
+          "coordinate": 0.058921653137076646,
+          "element": 4.021457135677338,
+          "shape": 1.2013633251190186,
+          "tensor_candidate_count": 0.0,
+          "total": 5.894383251667023,
+          "volume": 0.6126410774886608
+        },
+        "2500": {
+          "coordinate": 0.05462321422965033,
+          "element": 3.4599070250988007,
+          "shape": 1.1007051393389702,
+          "tensor_candidate_count": 0.0,
+          "total": 5.010230123996735,
+          "volume": 0.3949947766959667
+        },
+        "5000": {
+          "coordinate": 0.05269135159687721,
+          "element": 3.2269317656755447,
+          "shape": 0.9217217601835728,
+          "tensor_candidate_count": 0.0,
+          "total": 4.586225688457489,
+          "volume": 0.38488082494586706
+        }
+      }
+    },
+    "5202": {
+      "final_over_initial_coordinate": 0.41221890379750603,
+      "final_over_initial_total": 0.6539970016977644,
+      "final_validation": {
+        "coordinate": 0.05211225230596028,
+        "element": 3.30865378677845,
+        "shape": 0.9522781670093536,
+        "tensor_candidate_count": 0.0,
+        "total": 4.709821328520775,
+        "volume": 0.3967771399766207
+      },
+      "initial_validation": {
+        "coordinate": 0.12641888041980565,
+        "element": 4.756062626838684,
+        "shape": 1.3088180348277092,
+        "tensor_candidate_count": 0.0,
+        "total": 7.201594680547714,
+        "volume": 1.0102951489388943
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.984375,
+        "minimum_distance_quantiles_angstrom": [
+          0.4389834702014923,
+          1.253244400024414,
+          2.378803253173828
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          12.969313621520996,
+          24.388590812683105,
+          69.31797790527344
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.12641888041980565,
+          "element": 4.756062626838684,
+          "shape": 1.3088180348277092,
+          "tensor_candidate_count": 0.0,
+          "total": 7.201594680547714,
+          "volume": 1.0102951489388943
+        },
+        "1000": {
+          "coordinate": 0.061627167044207454,
+          "element": 4.05788742005825,
+          "shape": 1.2282171957194805,
+          "tensor_candidate_count": 0.0,
+          "total": 5.956145912408829,
+          "volume": 0.6084142215549946
+        },
+        "2500": {
+          "coordinate": 0.05450620855845045,
+          "element": 3.490394815802574,
+          "shape": 1.1051886677742004,
+          "tensor_candidate_count": 0.0,
+          "total": 5.050795495510101,
+          "volume": 0.4007058823481202
+        },
+        "5000": {
+          "coordinate": 0.05211225230596028,
+          "element": 3.30865378677845,
+          "shape": 0.9522781670093536,
+          "tensor_candidate_count": 0.0,
+          "total": 4.709821328520775,
+          "volume": 0.3967771399766207
+        }
+      }
+    },
+    "5203": {
+      "final_over_initial_coordinate": 0.3061120980632774,
+      "final_over_initial_total": 0.6368315819755653,
+      "final_validation": {
+        "coordinate": 0.05305862552631879,
+        "element": 3.265400215983391,
+        "shape": 0.9571088366210461,
+        "tensor_candidate_count": 0.0,
+        "total": 4.660538673400879,
+        "volume": 0.3849710263311863
+      },
+      "initial_validation": {
+        "coordinate": 0.173330704215914,
+        "element": 4.796334594488144,
+        "shape": 1.261710174381733,
+        "tensor_candidate_count": 0.0,
+        "total": 7.318322151899338,
+        "volume": 1.08694664016366
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.984375,
+        "minimum_distance_quantiles_angstrom": [
+          0.2684219479560852,
+          1.5471951961517334,
+          2.3879947662353516
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          8.48371696472168,
+          26.574612617492676,
+          61.07405471801758
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.173330704215914,
+          "element": 4.796334594488144,
+          "shape": 1.261710174381733,
+          "tensor_candidate_count": 0.0,
+          "total": 7.318322151899338,
+          "volume": 1.08694664016366
+        },
+        "1000": {
+          "coordinate": 0.05706074477348011,
+          "element": 4.0755632519721985,
+          "shape": 1.2305188290774822,
+          "tensor_candidate_count": 0.0,
+          "total": 5.970073729753494,
+          "volume": 0.606930784881115
+        },
+        "2500": {
+          "coordinate": 0.0545071245287545,
+          "element": 3.455253943800926,
+          "shape": 1.1177235431969166,
+          "tensor_candidate_count": 0.0,
+          "total": 5.026234298944473,
+          "volume": 0.3987496681511402
+        },
+        "5000": {
+          "coordinate": 0.05305862552631879,
+          "element": 3.265400215983391,
+          "shape": 0.9571088366210461,
+          "tensor_candidate_count": 0.0,
+          "total": 4.660538673400879,
+          "volume": 0.3849710263311863
+        }
+      }
+    }
+  }
+}
