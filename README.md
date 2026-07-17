@@ -187,6 +187,18 @@ prefilter. An independent reverse-order audit reproduced the negative result.
 H0-E-v3 is stopped; H1a remains unauthorized. See
 [`reports/h0_e_v3_maximal_k_occurrence_k0_v1/`](reports/h0_e_v3_maximal_k_occurrence_k0_v1/).
 
+H0-E-v4 O0-v2 has now qualified the missing occupational-order mechanism.
+After removing one task-incompatible material at the versioned data boundary,
+the unchanged 0.2-Angstrom/0.15-Hencky domain yielded 10 candidate materials
+and 13 occurrences across 962 maximal-t/k edges. Every occurrence has an exact
+coloring stabilizer whose order equals the observed child operation order; an
+independent reverse-order rebuild reproduced all rows and numerics. The parent
+is now a species-free geometry carrier and production reconstruction accepts a
+separate full-vocabulary integer coloring, rather than copying parent species.
+O0-v2 is only a mechanism-panel qualification: H0-E/H0 remain unqualified and
+H1a is still prohibited until a separately frozen held-out O1 passes. See
+[`reports/h0_e_v4_occupational_order_o0_v2/`](reports/h0_e_v4_occupational_order_o0_v2/).
+
 ## Repository layout
 
 ```text
@@ -204,6 +216,7 @@ reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
 reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
 reports/h0_e_maximal_t_parent_occurrence_e1a_v1/ frozen failed E1a evidence
 reports/h0_e_v3_maximal_k_occurrence_k0_v1/ frozen failed K0 evidence
+reports/h0_e_v4_occupational_order_o0_v2/ qualified mechanism-only O0 evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```

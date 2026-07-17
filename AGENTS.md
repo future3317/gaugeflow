@@ -104,13 +104,18 @@ its code/data/report surface.
   continue this version, relax the 0.2-Angstrom/0.15-Hencky bounds, or relabel
   K0 as E1b. Its 205 assignment-compatible edges have orbit defect at least
   1.22584 Angstrom; the failure is not near threshold.
+  H0-E-v4 O0-v2 is independently qualified as a bounded occupational-order
+  mechanism closure: after one versioned material exclusion, 10/63 materials
+  yielded 13 exact species-free-parent/integer-coloring occurrences over 962
+  edges. This permits only a separately frozen held-out O1 protocol. It does
+  not qualify H0-E or H0 and does not authorize H1a.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
-S0.4.1 and S1a-I0 do not authorize tensor work. H0-E-v1 failed and is frozen;
-no later H gate may run until a separately proposed, versioned H0-E successor
-addresses the observed parent-candidate coverage mechanism. H1a remains
-unauthorized.
+S0.4.1 and S1a-I0 do not authorize tensor work. H0-E-v1/v2/v3 remain frozen
+negative history. O0-v2 addresses the occupational mechanism on a locating
+panel, but only a separately frozen held-out O1 may run next. H1a remains
+unauthorized until that unbiased occurrence gate qualifies H0-E/H0.
 
 ## Hierarchical symmetry-breaking rules
 

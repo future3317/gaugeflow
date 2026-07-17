@@ -308,6 +308,24 @@ the frozen `0.4 Angstrom` prefilter. Independent reverse-order reconstruction
 reproduced the full negative result. K0 and H0-E-v3 are frozen failed; no H1
 stage was started.
 
+### H0-E-v4 O0-v2 occupational-order mechanism closure
+
+The t/k failures exposed a representation error rather than a need for wider
+geometric tolerances: parent projection required the full parent action to
+preserve terminal species before chemical ordering was allowed to lower the
+symmetry. The v4 implementation separates the species-free parent geometry
+from an ordered full-vocabulary coloring and computes its exact stabilizer in
+the parent-supercell node action. Production reconstruction uses the same
+stabilizer intersection and no longer has a parent-species copying path.
+
+After versioned removal of one parent-occurrence-incompatible material, the
+frozen 63-row O0-v2 panel evaluated 962 edges and found 10 materials with 13
+qualified occurrences. All geometric, coloring, subgroup, integer-element and
+forward/reverse checks passed; an independent reverse-order audit reproduced
+every result. O0-v2 therefore qualifies the mechanism only. H0-E and H0 remain
+unqualified, and the only permitted successor is a separately frozen held-out
+O1 coverage protocol.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
