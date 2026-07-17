@@ -33,6 +33,12 @@ from .parent_decomposition import (
     standardize_crystal,
     translation_quotient_displacement,
 )
+from .parent_projection import (
+    ParentProjection,
+    conjugate_embedding_to_primitive,
+    project_lattice_metric,
+    project_translationengleiche_parent,
+)
 from .path_measure import RealizedPathClass, allocate_reference_measure
 from .subgroup_embeddings import (
     AffineInclusionCertificate,
@@ -55,6 +61,7 @@ __all__ = [
     "RationalAffineTransform",
     "DecompositionResult",
     "ParentCandidate",
+    "ParentProjection",
     "StandardCrystal",
     "TranslationQuotient",
     "build_compact_displacement_action",
@@ -62,6 +69,7 @@ __all__ = [
     "balanced_selection",
     "canonical_stabilizer_key",
     "certify_affine_subgroup_inclusion",
+    "conjugate_embedding_to_primitive",
     "canonical_supercell_orbits",
     "enumerate_fixed_space_projectors",
     "enumerate_opd_classes",
@@ -73,6 +81,8 @@ __all__ = [
     "normalized_relation_variant",
     "real_irrep_multiplicity",
     "primitive_space_group_from_hall",
+    "project_lattice_metric",
+    "project_translationengleiche_parent",
     "standard_hall_numbers",
     "stabilizer_bitset",
     "species_wyckoff_exact_cover",

@@ -243,6 +243,29 @@ subgroup index, with common rational denominator at most 12. This is the
 preferred compact coordinate system for E1 site/strain projection, but it does
 not rewrite the frozen E0 artifact.
 
+The pre-gate E1 projector now uses that primitive representation directly. It
+Reynolds-projects the row-lattice metric, fixes a proper Cartesian gauge,
+solves exact periodic species-preserving assignments and verifies the complete
+permutation group law before averaging sites. A positive-control tetragonal
+BaTiO3 distortion is recovered as cubic `Pm-3m` (SG 221), while incompatible
+species are rejected. Synthetic nonsymmorphic general-position perturbations
+for SG 14, 19, 62 and 194 also return to their exact parent groups with group
+errors of order `1e-15`; SG 62 remains an active regression test. Four
+deterministic low-space-group rows from the frozen
+v1 no-candidate panel produced no certified maximal-t parent in a no-write
+smoke; this is insufficient to freeze or judge E1 and no tolerance was changed.
+
+The same implementation replaces a cubic broadcasted Seitz-table search by
+batched products plus a modulo-lattice integer key, followed by a full
+float64 closure verification. Against the previous brute-force reference, all
+230 standard primitive space groups produced identical tables; cumulative CPU
+time was `0.3103 s` versus `0.03853 s` (`8.05x`). Species blocks now batch all
+group-element periodic costs through one shared exact-CVP factorization before
+the unchanged Hungarian solves; on the 48-operation BaTiO3 control this was
+`25.81 ms` versus `19.33 ms` (`1.34x`) with identical permutations and error.
+These are exact representation/vectorization changes, not candidate pruning or
+an approximate symmetry test.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
