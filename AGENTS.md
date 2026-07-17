@@ -92,12 +92,18 @@ its code/data/report surface.
   maximal-t search found `0/64` new candidate materials versus the
   preregistered minimum `3/64`, and its independent reverse-order audit passed.
   E1b and H1a are therefore prohibited. Do not relabel the old spglib ladder,
-  widen E1a thresholds or silently continue maximal-k search.
+  widen E1a thresholds or relabel a later versioned successor as E1b.
   H0-E-v2 E0 has qualified a source-hashed, independently certified
   maximal t/k-subgroup and Wyckoff-splitting embedding catalogue: 3,744 raw
   source rows reduce to 2,843 rational affine embeddings without multiplicity
   bias. E0 authorized the now-failed bounded E1a pilot; it no longer authorizes
   E1b. H0-E and H0 remain unqualified and H1a remains unauthorized.
+  H0-E-v3 K0 is also frozen failed: the exact cell-changing maximal-k
+  translation quotient found `0/64` new candidate materials across all 578
+  preregistered edges. An independent reverse-order audit passed. Do not
+  continue this version, relax the 0.2-Angstrom/0.15-Hencky bounds, or relabel
+  K0 as E1b. Its 205 assignment-compatible edges have orbit defect at least
+  1.22584 Angstrom; the failure is not near threshold.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 

@@ -288,6 +288,26 @@ norm 0.4898, above the frozen 0.15 bound. Thus a matcher-only patch cannot
 rescue the gate. E1b and H1a were not started; any multi-step or cell-changing
 successor requires a new H0-E-v3 proposal rather than changing E1a history.
 
+### H0-E-v3 K0 cell-changing maximal-k occurrence
+
+E1a also established that a deeper translationengleiche chain is not a useful
+successor: for `H subset M subset G`, `Fix(G) subset Fix(M)`, so distance to a
+deeper parent fixed space cannot be smaller than distance to the first maximal
+parent fixed space. K0 was therefore frozen as a new H0-E-v3 mechanism test,
+not as continuation of the prohibited E1b branch. It reconstructs the full
+parent action in a child supercell from the exact quotient
+`Z^3 / B Z^3`, performs one species-preserving group-law assignment, Reynolds
+projects once, and quotients back to the primitive parent.
+
+The implementation passed synthetic P1, inversion and off-diagonal-basis
+positive controls. The fixed 64-row real panel nevertheless yielded zero new
+candidates over all 578 maximal-k edges. A read-only rejection decomposition
+found 265 site-count/index incompatibilities, 108 assignment group-law
+failures, and 205 orbit-defect failures with minimum `1.22584 Angstrom` against
+the frozen `0.4 Angstrom` prefilter. Independent reverse-order reconstruction
+reproduced the full negative result. K0 and H0-E-v3 are frozen failed; no H1
+stage was started.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

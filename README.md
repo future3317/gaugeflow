@@ -24,7 +24,7 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1 and H0-E-v2 E1a are frozen failed; stop before E1b/H1a |
+| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1, H0-E-v2 E1a and H0-E-v3 K0 are frozen failed; stop before H1a |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
@@ -176,6 +176,17 @@ group action, and three nonqualifying embeddings belong to one high-strain
 material. E1b and H1a remain prohibited. See
 [`reports/h0_e_maximal_t_parent_occurrence_e1a_v1/`](reports/h0_e_maximal_t_parent_occurrence_e1a_v1/).
 
+The separately versioned H0-E-v3 K0 pilot tested the cell-changing mechanism
+that E1a did not contain. It generated the exact finite translation quotient
+`Z^3 / B Z^3` for all 578 index-2--4 maximal-k edges and recovered all
+synthetic positive controls, but found `0/64` real candidates. Of the real
+edges, 265 have composition/site counts incompatible with the cell index, 108
+fail the complete species-permutation group law, and the remaining 205 have
+orbit defects of at least `1.22584 Angstrom`, far above the frozen `0.4`
+prefilter. An independent reverse-order audit reproduced the negative result.
+H0-E-v3 is stopped; H1a remains unauthorized. See
+[`reports/h0_e_v3_maximal_k_occurrence_k0_v1/`](reports/h0_e_v3_maximal_k_occurrence_k0_v1/).
+
 ## Repository layout
 
 ```text
@@ -192,6 +203,7 @@ reports/tensororbit_*/      current data activation evidence
 reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
 reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
 reports/h0_e_maximal_t_parent_occurrence_e1a_v1/ frozen failed E1a evidence
+reports/h0_e_v3_maximal_k_occurrence_k0_v1/ frozen failed K0 evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```
