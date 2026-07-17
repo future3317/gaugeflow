@@ -49,6 +49,24 @@ panel. A future successor would need a separately proposed H0-E-v3 mechanism
 for multi-step and/or cell-changing paths; the failed E1a protocol does not
 authorize silently continuing to its planned E1b.
 
+## Post-archive data-quality disposition
+
+A read-only source audit was performed after freezing the result for
+`alex<agm004639609>`. The 12-site La--Nd--Se--Tm structure is finite, has
+`|det L| = 308.4374 Angstrom^3`, lattice condition number `1.9168`, minimum
+periodic intersite distance `2.8425 Angstrom`, and energy above hull
+`0.00909 eV/atom`. Spglib returns SG 12 at every tested symprec from `0.005`
+through `0.2 Angstrom`. It is therefore not classified as a corrupt material
+row.
+
+The three SG12-to-SG71 embeddings are instead classified as ineligible parent
+paths: they fail the frozen StructureMatcher certificate and their Hencky norm
+`0.48977` exceeds the frozen `0.15` path-domain limit. They are quarantined for
+future versioned parent-occurrence successors by
+`configs/data_quality/parent_occurrence_quarantine_v1.json`. This disposition
+does not edit the frozen E1a panel, results, hashes, decision, H0-A child split,
+or the material's eligibility for exact-child tasks.
+
 ## Provenance
 
 - Protocol freeze commit: `2110f8961de7c00c5fdd9bae6d9163c0b7499778`
@@ -62,4 +80,3 @@ authorize silently continuing to its planned E1b.
   `4b52e962c1c35e405c8f7bdb2ab8c256c6200291ca0d0131e82a1b9dd7bcb00d`
 - External artifact root:
   `E:/DATA/T2C-Flow/processed/gaugeflow_h0_v5/maximal_t_parent_occurrence_e1a_v1/`
-

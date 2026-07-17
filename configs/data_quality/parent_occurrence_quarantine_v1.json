@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "protocol": "parent_occurrence_quarantine_v1",
+  "status": "active_for_future_versioned_parent_occurrence_successors",
+  "frozen_history_unchanged": [
+    "h0_a_alex_formula_prototype_split_v1",
+    "h0_e_maximal_t_parent_occurrence_e1a_v1"
+  ],
+  "scope": {
+    "included": "candidate parent paths evaluated by a future, separately frozen H0-E successor",
+    "excluded": [
+      "Alex source rows",
+      "the frozen H0-A child split",
+      "the frozen H0-E-v2 E1a panel and artifacts",
+      "exact-child structure tasks"
+    ]
+  },
+  "classification_policy": {
+    "material_exclusion": [
+      "nonfinite coordinates or lattice",
+      "singular or numerically unusable lattice",
+      "unphysical near-contact after periodic minimum-image evaluation",
+      "source join or duplicate-identity corruption",
+      "space-group assignment unstable across the preregistered tolerance panel"
+    ],
+    "path_quarantine": [
+      "parent reconstruction exceeds the preregistered displacement or strain domain",
+      "projected parent fails strict parent-space-group reidentification",
+      "projected parent fails the preregistered StructureMatcher certificate",
+      "assignment does not define the complete parent permutation group action"
+    ],
+    "fail_closed": true,
+    "no_ad_hoc_deletion": true
+  },
+  "path_quarantine": [
+    {
+      "material_id": "alex<agm004639609>",
+      "child_space_group": 12,
+      "parent_space_group": 71,
+      "action": "exclude_all_matching_parent_embeddings",
+      "reason": "The source crystal is numerically and crystallographically valid, but all three observed SG12-to-SG71 embeddings fail the frozen StructureMatcher certificate and require a source Hencky strain far outside the frozen parent-path domain.",
+      "evidence": {
+        "observed_embedding_count": 3,
+        "source_max_displacement_angstrom": 0.09859,
+        "source_hencky_norm": 0.48977,
+        "frozen_hencky_limit": 0.15,
+        "projected_group_max_error_angstrom": 3e-15,
+        "finite": true,
+        "lattice_determinant_abs_angstrom3": 308.4373629562778,
+        "lattice_condition_number": 1.9167508345866882,
+        "minimum_periodic_distance_angstrom": 2.8425362904632108,
+        "stable_space_group": 12,
+        "space_group_symprec_panel_angstrom": [
+          0.005,
+          0.01,
+          0.02,
+          0.05,
+          0.1,
+          0.15,
+          0.2
+        ],
+        "energy_above_hull_ev_per_atom": 0.0090913504999949
+      },
+      "source": "frozen H0-E-v2 E1a failure localization plus post-archive read-only source audit",
+      "introduced_utc_date": "2026-07-17"
+    }
+  ],
+  "material_exclusions": []
+}
