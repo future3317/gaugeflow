@@ -244,47 +244,75 @@ def _sampler_sensitivity(
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
     results: list[dict[str, Any]] = []
-    for steps in specification["steps"]:
-        distances: list[torch.Tensor] = []
-        terminal_coordinate_steps: list[float] = []
-        generator = torch.Generator(device=device).manual_seed(
-            int(specification["sample_seed"]) + 1
-        )
-        for start in range(0, samples, 8):
-            selected_counts = counts[start : start + 8].to(device)
-            blueprint = ParentBlueprintBatch.from_node_counts(
-                selected_counts, dtype=torch.float32, device=device
+    time_grids = specification.get("time_grids")
+    if not isinstance(time_grids, list):
+        time_grids = [specification["time_grid"]]
+    for time_grid in time_grids:
+        for steps in specification["steps"]:
+            results.append(
+                _sample_sensitivity_point(
+                    sampler,
+                    counts,
+                    specification,
+                    steps=int(steps),
+                    time_grid=str(time_grid),
+                    device=device,
+                    threshold=threshold,
+                )
             )
-            generated = sampler.sample(
-                blueprint,
-                steps=int(steps),
-                generator=generator,
-                stochastic=bool(specification["stochastic"]),
-                time_grid=str(specification["time_grid"]),
-            )
-            distances.append(
-                _minimum_distances(
-                    generated.fractional_coordinates,
-                    generated.lattice,
-                    generated.batch,
-                ).cpu()
-            )
-            terminal_coordinate_steps.append(
-                float(generated.diagnostics.coordinate_step_rms[-1])
-            )
-        values = torch.cat(distances).double()
-        results.append(
-            {
-                "steps": int(steps),
-                "fraction_at_least_threshold": float(
-                    (values >= threshold).double().mean()
-                ),
-                "minimum_distance_quantiles_angstrom": _quantiles(values),
-                "mean_terminal_coordinate_step_rms": sum(terminal_coordinate_steps)
-                / len(terminal_coordinate_steps),
-            }
-        )
     return results
+
+
+@torch.no_grad()
+def _sample_sensitivity_point(
+    sampler: TensorFreeReverseSampler,
+    counts: torch.Tensor,
+    specification: dict[str, Any],
+    *,
+    steps: int,
+    time_grid: str,
+    device: torch.device,
+    threshold: float,
+) -> dict[str, Any]:
+    samples = int(counts.numel())
+    distances: list[torch.Tensor] = []
+    terminal_coordinate_steps: list[float] = []
+    generator = torch.Generator(device=device).manual_seed(
+        int(specification["sample_seed"]) + 1
+    )
+    for start in range(0, samples, 8):
+        selected_counts = counts[start : start + 8].to(device)
+        blueprint = ParentBlueprintBatch.from_node_counts(
+            selected_counts, dtype=torch.float32, device=device
+        )
+        generated = sampler.sample(
+            blueprint,
+            steps=steps,
+            generator=generator,
+            stochastic=bool(specification["stochastic"]),
+            time_grid=time_grid,
+        )
+        distances.append(
+            _minimum_distances(
+                generated.fractional_coordinates,
+                generated.lattice,
+                generated.batch,
+            ).cpu()
+        )
+        terminal_coordinate_steps.append(
+            float(generated.diagnostics.coordinate_step_rms[-1])
+        )
+    values = torch.cat(distances).double()
+    return {
+        "time_grid": time_grid,
+        "steps": steps,
+        "fraction_at_least_threshold": float(
+            (values >= threshold).double().mean()
+        ),
+        "minimum_distance_quantiles_angstrom": _quantiles(values),
+        "mean_terminal_coordinate_step_rms": sum(terminal_coordinate_steps)
+        / len(terminal_coordinate_steps),
+    }
 
 
 def main() -> None:
@@ -299,7 +327,7 @@ def main() -> None:
     protocol = load_json_object(arguments.protocol)
     source_protocol = load_json_object(arguments.source_protocol)
     if (
-        protocol.get("protocol") != "h1a_coordinate_diagnostic_v1"
+        not str(protocol.get("protocol")).startswith("h1a_")
         or source_protocol.get("protocol") != protocol["source_protocol"]
     ):
         raise ValueError("coordinate diagnostic protocol identity mismatch")
@@ -344,6 +372,18 @@ def main() -> None:
             device=device,
         )
     sensitivity_spec = protocol["sampler_sensitivity"]
+    sensitivity_seeds = sensitivity_spec.get("seeds")
+    if not isinstance(sensitivity_seeds, list):
+        sensitivity_seeds = [sensitivity_spec["seed"]]
+    sensitivity = {
+        str(seed): _sampler_sensitivity(
+            runtimes[int(seed)],
+            sensitivity_spec,
+            device=device,
+            threshold=threshold,
+        )
+        for seed in sensitivity_seeds
+    }
     result = {
         "protocol": protocol["protocol"],
         "source_protocol": protocol["source_protocol"],
@@ -351,12 +391,7 @@ def main() -> None:
         "train_reference_geometry": _reference_geometry(
             train, train_indices, device=device, threshold=threshold
         ),
-        "sampler_sensitivity": _sampler_sensitivity(
-            runtimes[int(sensitivity_spec["seed"])],
-            sensitivity_spec,
-            device=device,
-            threshold=threshold,
-        ),
+        "sampler_sensitivity": sensitivity,
         "decision_boundary": protocol["decision_boundary"],
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)

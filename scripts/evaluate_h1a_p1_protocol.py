@@ -103,6 +103,7 @@ def _sample_checkpoint(
     protocol_name: str,
     protocol_sha256: str,
     minimum_distance_threshold: float,
+    time_grid: str,
     batch_size: int = 8,
 ) -> dict[str, Any]:
     runtime = load_tensor_free_ema_runtime(
@@ -140,7 +141,7 @@ def _sample_checkpoint(
                 steps=steps,
                 generator=sample_generator,
                 stochastic=True,
-                time_grid="uniform_log_alpha",
+                time_grid=time_grid,
             )
         except SamplingFailure:
             failures += counts.numel()
@@ -269,6 +270,7 @@ def main() -> None:
             protocol_name=protocol_name,
             protocol_sha256=protocol_sha256,
             minimum_distance_threshold=distance_threshold,
+            time_grid=str(evaluation["time_grid"]),
         )
         seed_results[str(seed)] = {
             "initial_validation": initial,

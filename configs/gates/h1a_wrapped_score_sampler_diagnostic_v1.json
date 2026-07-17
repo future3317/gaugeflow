@@ -1,0 +1,30 @@
+{
+  "protocol": "h1a_wrapped_score_sampler_diagnostic_v1",
+  "status_before_run": "frozen_not_run",
+  "source_protocol": "h1a_p1_wrapped_score_repair_v1",
+  "source_protocol_sha256": "6e524d87503f87f93e30f12b7706ac18b17be551d8d895e3d19ff5e2cb7be39b",
+  "source_checkpoint_step": 5000,
+  "seeds": [5201, 5202, 5203],
+  "score_calibration": {
+    "validation_graphs": 128,
+    "validation_seed": 8201,
+    "noise_seed": 8202,
+    "batch_size": 16,
+    "times": [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95]
+  },
+  "reference_geometry": {
+    "train_graphs": 4096,
+    "train_seed": 8203,
+    "distance_threshold_angstrom": 0.5
+  },
+  "sampler_sensitivity": {
+    "seeds": [5201, 5202, 5203],
+    "samples": 64,
+    "sample_seed": 9204,
+    "steps": [50],
+    "time_grids": ["uniform_log_alpha", "uniform_time"],
+    "stochastic": true,
+    "common_initial_random_stream_only": true
+  },
+  "decision_boundary": "Diagnostic only. It cannot overwrite the failed wrapped-score protocol or authorize H1b-H6. A sampler change requires a separately frozen qualification protocol."
+}
