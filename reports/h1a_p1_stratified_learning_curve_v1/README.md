@@ -1,6 +1,6 @@
 # H1a stratified-time learning curve v1
 
-**Status: frozen before execution.**
+**Status: seed-5301 screen passed; remaining two seeds authorized.**
 
 The preceding full benchmark used checkpoints trained on only 80,000 graph
 presentations (0.148 of the 540,164-structure split). A read-only gradient
@@ -24,3 +24,20 @@ and 5303 may run only if every seed-5301 screen check passes. Even a full
 three-seed pass authorizes only a separately frozen benchmark against the
 training distribution, with held-out structures reserved for novelty and
 leakage diagnostics.
+
+## Seed-5301 screen result
+
+The screen completed 20,000 steps with approximately 500 graphs/s and 2.27 GiB
+peak allocated CUDA memory. The final-to-initial validation ratios were
+`0.55947` total and `0.22536` coordinate, passing the frozen `0.65` and `0.30`
+bounds. All 128 reverse trajectories completed, no MASK remained, all lattices
+were finite with positive volume, and every structure had minimum periodic
+distance at least 0.5 A. The minimum/median/maximum nearest distances were
+`0.6617 / 1.6950 / 3.0653 A`.
+
+The validation curve shows that coordinate loss improves from `0.22601` at
+initialization to `0.06063` at the old 80,000-graph exposure, `0.05383` after
+approximately one split pass, and `0.05093` at 20,000 steps. The later gain is
+real but small. Moreover, the generated median remains well below the roughly
+2.70 A training-reference median. This result authorizes seeds 5302 and 5303
+under the same protocol; it is not H1a qualification.
