@@ -1,0 +1,416 @@
+{
+  "decision_boundary": "The audit may motivate one separately frozen H1a repair. It cannot authorize H1b, tensor conditioning, oracle, relaxation, DFT or DFPT.",
+  "graphs": 16,
+  "parameter_count_by_group": {
+    "condition": 841165,
+    "coordinate": 206273,
+    "element": 170422,
+    "lattice": 296454,
+    "shared": 2958848
+  },
+  "protocol": "h1a_joint_gradient_audit_v1",
+  "source_checkpoint_step": 5000,
+  "source_protocol": "h1a_p1_scaled_score_sampler_v1",
+  "time_resolved": [
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.0,
+        "shape": 0.02891155882061469,
+        "volume": -0.17912464688008362
+      },
+      "coordinate_zero_baseline_loss": 0.8970952928066254,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 1.5721032309460443,
+          "condition": 0.010047754286814462,
+          "coordinate": 1.1268638948897487,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 1.0934259729681781
+        },
+        "element": {
+          "all": 0.0,
+          "condition": 0.0,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.0
+        },
+        "shape": {
+          "all": 4.686423791687947,
+          "condition": 0.02087592645482194,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7714190637699251,
+          "shared": 4.622449717070592
+        },
+        "volume": {
+          "all": 2.3903693939346713,
+          "condition": 0.008466256661064958,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.6900382326706156,
+          "shared": 2.288587108692144
+        }
+      },
+      "loss": {
+        "coordinate": 0.7894153296947479,
+        "element": 0.0,
+        "shape": 0.22799529507756233,
+        "volume": 0.02976598171517253
+      },
+      "masked_fraction": 0.0,
+      "time": 0.005
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.0,
+        "shape": -0.017410425023061275,
+        "volume": -0.17843646568264435
+      },
+      "coordinate_zero_baseline_loss": 0.8021642118692398,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 1.7282032204068103,
+          "condition": 0.009048919168457598,
+          "coordinate": 1.472425561415183,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.8768376235035877
+        },
+        "element": {
+          "all": 0.0,
+          "condition": 0.0,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.0
+        },
+        "shape": {
+          "all": 4.534559667702434,
+          "condition": 0.02161057568164058,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7628097743619147,
+          "shared": 4.46988642666744
+        },
+        "volume": {
+          "all": 2.702482446892608,
+          "condition": 0.009109194073138698,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7971730903304575,
+          "shared": 2.582211287223598
+        }
+      },
+      "loss": {
+        "coordinate": 0.7058531492948532,
+        "element": 0.0,
+        "shape": 0.23047667741775513,
+        "volume": 0.032932134345173836
+      },
+      "masked_fraction": 0.0,
+      "time": 0.01
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.0,
+        "shape": -0.00550341312223024,
+        "volume": -0.1793459584628694
+      },
+      "coordinate_zero_baseline_loss": 0.7982817143201828,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 1.2774699048136828,
+          "condition": 0.005376856478586942,
+          "coordinate": 1.1736401613112175,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.4846446156394465
+        },
+        "element": {
+          "all": 0.0,
+          "condition": 0.0,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.0
+        },
+        "shape": {
+          "all": 4.952016938876243,
+          "condition": 0.02096360176314601,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7769033824416794,
+          "shared": 4.890645750836745
+        },
+        "volume": {
+          "all": 2.5218716326583817,
+          "condition": 0.008693299081884502,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.752957080348351,
+          "shared": 2.4068197814077497
+        }
+      },
+      "loss": {
+        "coordinate": 0.7292969524860382,
+        "element": 0.0,
+        "shape": 0.22928163781762123,
+        "volume": 0.03162248292937875
+      },
+      "masked_fraction": 0.0,
+      "time": 0.02
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.018356635286351355,
+        "shape": -0.0011877156945707956,
+        "volume": 0.027457124183250414
+      },
+      "coordinate_zero_baseline_loss": 0.5500578284263611,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 0.5159263705450752,
+          "condition": 0.0016765466210056181,
+          "coordinate": 0.5028807426859003,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.09789061442688617
+        },
+        "element": {
+          "all": 26.421739062762608,
+          "condition": 0.16076371243403698,
+          "coordinate": 0.0,
+          "element": 14.304799295129339,
+          "lattice": 0.0,
+          "shared": 21.89937756893221
+        },
+        "shape": {
+          "all": 4.626749320802865,
+          "condition": 0.020378159835619934,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7489863154001906,
+          "shared": 4.565663697521729
+        },
+        "volume": {
+          "all": 2.2802811267952343,
+          "condition": 0.008468109577801938,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.6927319240011025,
+          "shared": 2.172433787367967
+        }
+      },
+      "loss": {
+        "coordinate": 0.5433326065540314,
+        "element": 2.10409277677536,
+        "shape": 0.22431080043315887,
+        "volume": 0.028183046728372574
+      },
+      "masked_fraction": 0.008928571594879031,
+      "time": 0.05
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": -0.03862720442978489,
+        "shape": 0.03556297236966256,
+        "volume": -0.044396557120478894
+      },
+      "coordinate_zero_baseline_loss": 0.1365785039961338,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 0.4378152992876072,
+          "condition": 0.0012876676574068357,
+          "coordinate": 0.4352453294902483,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.04621950683303729
+        },
+        "element": {
+          "all": 12.685021072238332,
+          "condition": 0.08368421359970796,
+          "coordinate": 0.0,
+          "element": 7.737411568929088,
+          "lattice": 0.0,
+          "shared": 10.043988291935516
+        },
+        "shape": {
+          "all": 5.073996144928257,
+          "condition": 0.020531558258714916,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7904570599073393,
+          "shared": 5.011986955012893
+        },
+        "volume": {
+          "all": 2.350785630108426,
+          "condition": 0.007803421046790527,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.6833225523838328,
+          "shared": 2.248746706471967
+        }
+      },
+      "loss": {
+        "coordinate": 0.13171866163611412,
+        "element": 1.4145294278860092,
+        "shape": 0.2428799867630005,
+        "volume": 0.02916022576391697
+      },
+      "masked_fraction": 0.02142857213038951,
+      "time": 0.1
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.08700100722748577,
+        "shape": 0.03555928554933516,
+        "volume": 0.06188417526813265
+      },
+      "coordinate_zero_baseline_loss": 0.0051364838145673275,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 0.17536879069644945,
+          "condition": 0.00032189229588178376,
+          "coordinate": 0.17498251893071265,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.011598309014965634
+        },
+        "element": {
+          "all": 8.921922716055,
+          "condition": 0.05232424952520692,
+          "coordinate": 0.0,
+          "element": 4.937913423742694,
+          "lattice": 0.0,
+          "shared": 7.425673131493355
+        },
+        "shape": {
+          "all": 4.642563943628606,
+          "condition": 0.017923947738883866,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7971396416251963,
+          "shared": 4.57297602608643
+        },
+        "volume": {
+          "all": 2.5489955410537006,
+          "condition": 0.007709278775733902,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.6322200360219613,
+          "shared": 2.4693275377741646
+        }
+      },
+      "loss": {
+        "coordinate": 0.0051421415992081165,
+        "element": 2.625747263431549,
+        "shape": 0.2499517798423767,
+        "volume": 0.033611640334129333
+      },
+      "masked_fraction": 0.11250000260770321,
+      "time": 0.2
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": -0.013428536587342815,
+        "shape": 0.0847470226884143,
+        "volume": 0.11360289677984807
+      },
+      "coordinate_zero_baseline_loss": 9.640562126378427e-08,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 0.12999922544846862,
+          "condition": 0.0004891935910236334,
+          "coordinate": 0.12870775273490717,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.016514065112964917
+        },
+        "element": {
+          "all": 5.8228801356549775,
+          "condition": 0.040520232835686315,
+          "coordinate": 0.0,
+          "element": 2.372699180605993,
+          "lattice": 0.0,
+          "shared": 5.2961906937696375
+        },
+        "shape": {
+          "all": 3.3133439833528984,
+          "condition": 0.01775442625174257,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.7771186205047731,
+          "shared": 3.2207545666087736
+        },
+        "volume": {
+          "all": 2.770991052440885,
+          "condition": 0.01485255687116372,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.6951469044650279,
+          "shared": 2.6730622148752357
+        }
+      },
+      "loss": {
+        "coordinate": 0.00032229382850346155,
+        "element": 2.652611494064331,
+        "shape": 0.4112228974699974,
+        "volume": 0.11621816083788872
+      },
+      "masked_fraction": 0.5000000149011612,
+      "time": 0.5
+    },
+    {
+      "coordinate_shared_cosine": {
+        "element": 0.10335653796457916,
+        "shape": 0.17055183929874282,
+        "volume": -0.04253401724040213
+      },
+      "coordinate_zero_baseline_loss": 2.345259488050139e-14,
+      "gradient_norm": {
+        "coordinate": {
+          "all": 0.1763176560064904,
+          "condition": 0.0008478404805025842,
+          "coordinate": 0.17514789916048967,
+          "element": 0.0,
+          "lattice": 0.0,
+          "shared": 0.01870371623037568
+        },
+        "element": {
+          "all": 4.349113627343806,
+          "condition": 0.022336817852228928,
+          "coordinate": 0.0,
+          "element": 1.4685706680281951,
+          "lattice": 0.0,
+          "shared": 4.093534398442101
+        },
+        "shape": {
+          "all": 1.240631112651004,
+          "condition": 0.012076640493837311,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.5824767074745918,
+          "shared": 1.0933652228464972
+        },
+        "volume": {
+          "all": 1.30391663433232,
+          "condition": 0.009038459193807594,
+          "coordinate": 0.0,
+          "element": 0.0,
+          "lattice": 0.5003549956104263,
+          "shared": 1.2009142460347522
+        }
+      },
+      "loss": {
+        "coordinate": 0.00021685012234229362,
+        "element": 4.06678032875061,
+        "shape": 0.7864244878292084,
+        "volume": 0.7182434499263763
+      },
+      "masked_fraction": 0.9857143014669418,
+      "time": 0.9
+    }
+  ]
+}

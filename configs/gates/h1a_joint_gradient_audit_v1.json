@@ -1,0 +1,23 @@
+{
+  "protocol": "h1a_joint_gradient_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "post-failure attribution of H1a coordinate underfitting; no model update and no H1b-H6",
+  "source_protocol": "h1a_p1_scaled_score_sampler_v1",
+  "source_protocol_sha256": "c63bc3d723cf79338925d46ee9fbca9934fabbab76ab4152d8eb2a7d2cf059aa",
+  "source_checkpoint_step": 5000,
+  "seed": 5201,
+  "data": {
+    "split": "train",
+    "graphs": 16,
+    "subset_seed": 11201,
+    "noise_repeats": 4,
+    "noise_seed": 11202
+  },
+  "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9],
+  "precision": "fp32",
+  "decision_rule": {
+    "gradient_interference": "coordinate shared-gradient cosine below zero identifies destructive multi-head interference",
+    "gradient_dominance": "other-head shared-gradient norm substantially above the coordinate norm under global clipping identifies scale competition",
+    "boundary": "The audit may motivate one separately frozen H1a repair. It cannot authorize H1b, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}
