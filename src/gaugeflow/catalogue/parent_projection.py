@@ -8,6 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import linear_sum_assignment
 
+from gaugeflow.catalogue.affine_quotient import integer_lattice_coset_representatives
 from gaugeflow.catalogue.subgroup_embeddings import RationalAffineTransform
 from gaugeflow.geometry import closest_image_displacements_numpy
 
@@ -212,6 +213,279 @@ def _logarithmic_strain_norm(reference: FloatArray, projected: FloatArray) -> fl
     return float(0.5 * np.linalg.norm(np.log(eigenvalues)))
 
 
+def _project_parent_action(
+    source_lattice: FloatArray,
+    source_fractional: FloatArray,
+    species: IntArray,
+    rotations: IntArray,
+    translations: FloatArray,
+    *,
+    maximum_source_displacement_angstrom: float,
+    projected_lattice: FloatArray | None = None,
+) -> ParentProjection | None:
+    """Project one fixed affine action without changing its discrete branch."""
+    source_cell = np.asarray(source_lattice, dtype=np.float64)
+    source_positions = np.asarray(source_fractional, dtype=np.float64) % 1.0
+    numbers = np.asarray(species, dtype=np.int64)
+    group_rotations = np.asarray(rotations, dtype=np.int64)
+    group_translations = np.asarray(translations, dtype=np.float64)
+    if (
+        source_cell.shape != (3, 3)
+        or source_positions.ndim != 2
+        or source_positions.shape[1] != 3
+        or numbers.shape != (source_positions.shape[0],)
+        or group_rotations.ndim != 3
+        or group_rotations.shape[1:] != (3, 3)
+        or group_translations.shape != (group_rotations.shape[0], 3)
+        or maximum_source_displacement_angstrom <= 0.0
+    ):
+        raise ValueError("parent-action projection inputs have inconsistent shapes")
+    if projected_lattice is None:
+        target_cell = project_lattice_metric(source_cell, group_rotations)
+    else:
+        target_cell = np.asarray(projected_lattice, dtype=np.float64)
+        if target_cell.shape != (3, 3) or np.linalg.det(target_cell) <= 0.0:
+            raise ValueError("provided projected lattice must be right-handed [3,3]")
+    operation_table = _operation_table(group_rotations, group_translations)
+    rotations_float = group_rotations.astype(np.float64)
+    moved = (
+        np.einsum(
+            "ni,gji->gnj",
+            source_positions,
+            rotations_float,
+            optimize=True,
+        )
+        + group_translations[:, None, :]
+    )
+    try:
+        permutations, assignment_maximum = _assignment_permutations(
+            moved,
+            source_positions,
+            numbers,
+            target_cell,
+            operation_table,
+        )
+    except (ValueError, RuntimeError):
+        return None
+    if assignment_maximum > 2.0 * maximum_source_displacement_angstrom:
+        return None
+    target = source_positions[permutations]
+    delta = (moved - target).reshape(-1, 3)
+    displacement, _ = closest_image_displacements_numpy(delta, target_cell)
+    estimates = target @ target_cell + displacement.reshape(moved.shape)
+    ordered = np.empty_like(estimates)
+    group_index = np.arange(group_rotations.shape[0])[:, None]
+    ordered[group_index, permutations] = estimates
+    projected_cartesian = ordered.mean(axis=0)
+    target_inverse = np.linalg.inv(target_cell)
+    projected_fractional = (projected_cartesian @ target_inverse) % 1.0
+    source_delta = projected_fractional - source_positions
+    source_displacement, _ = closest_image_displacements_numpy(source_delta, target_cell)
+    source_norm = np.linalg.norm(source_displacement, axis=1)
+    if float(source_norm.max(initial=0.0)) > maximum_source_displacement_angstrom:
+        return None
+    try:
+        projected_moved = (
+            np.einsum(
+                "ni,gji->gnj",
+                projected_fractional,
+                rotations_float,
+                optimize=True,
+            )
+            + group_translations[:, None, :]
+        )
+        _, projected_error = _assignment_permutations(
+            projected_moved,
+            projected_fractional,
+            numbers,
+            target_cell,
+            operation_table,
+        )
+    except (ValueError, RuntimeError):
+        return None
+    return ParentProjection(
+        lattice=target_cell,
+        fractional=projected_fractional,
+        species=numbers,
+        permutations=permutations,
+        source_max_displacement_angstrom=float(source_norm.max(initial=0.0)),
+        source_rms_displacement_angstrom=float(np.sqrt(np.mean(source_norm * source_norm))),
+        source_hencky_norm=_logarithmic_strain_norm(source_cell, target_cell),
+        projected_group_max_error_angstrom=projected_error,
+    )
+
+
+def klassengleiche_supercell_operations(
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    embedding_basis: IntArray,
+    embedding_origin: FloatArray,
+    *,
+    maximum_index: int = 4,
+) -> tuple[IntArray, FloatArray]:
+    """Lift a primitive parent action into one child-supercell coordinate chart.
+
+    If ``f_parent = B f_child + o``, every parent operation and translation
+    coset ``z in Z^3 / B Z^3`` acts through
+
+    ``B^-1 R B`` and ``B^-1 (R o + t + z - o)``.
+    """
+    rotations = np.asarray(parent_rotations, dtype=np.int64)
+    translations = np.asarray(parent_translations, dtype=np.float64)
+    basis = np.asarray(embedding_basis, dtype=np.int64)
+    origin = np.asarray(embedding_origin, dtype=np.float64)
+    if (
+        rotations.ndim != 3
+        or rotations.shape[1:] != (3, 3)
+        or translations.shape != (rotations.shape[0], 3)
+        or basis.shape != (3, 3)
+        or origin.shape != (3,)
+    ):
+        raise ValueError("klassengleiche operation inputs have inconsistent shapes")
+    index = abs(int(round(np.linalg.det(basis))))
+    if not 2 <= index <= maximum_index:
+        raise ValueError(f"klassengleiche embedding index must lie in 2..{maximum_index}")
+    inverse = np.linalg.inv(basis.astype(np.float64))
+    cosets = integer_lattice_coset_representatives(basis, maximum_index=maximum_index)
+    changed = np.einsum(
+        "ij,gjk,kl->gil",
+        inverse,
+        rotations.astype(np.float64),
+        basis.astype(np.float64),
+        optimize=True,
+    )
+    rounded = np.rint(changed).astype(np.int64)
+    if not np.allclose(changed, rounded, atol=1e-9, rtol=0.0):
+        raise ValueError("parent rotations do not preserve the embedded child lattice")
+    offsets = (
+        np.einsum("gij,j->gi", rotations.astype(np.float64), origin, optimize=True)
+        + translations
+        - origin[None, :]
+    )
+    lifted_translations = np.einsum(
+        "ij,grj->gri",
+        inverse,
+        offsets[:, None, :] + cosets[None, :, :],
+        optimize=True,
+    )
+    lifted_rotations = np.repeat(rounded, index, axis=0)
+    lifted_translations = lifted_translations.reshape(-1, 3) % 1.0
+    keys = np.concatenate(
+        [
+            lifted_rotations.reshape(-1, 9),
+            _quantized_translations(lifted_translations),
+        ],
+        axis=1,
+    )
+    if np.unique(keys, axis=0).shape[0] != rotations.shape[0] * index:
+        raise RuntimeError("klassengleiche affine quotient contains duplicate operations")
+    _operation_table(lifted_rotations, lifted_translations)
+    return lifted_rotations, lifted_translations
+
+
+def _quotient_parent_sites(
+    supercell_fractional: FloatArray,
+    species: IntArray,
+    parent_lattice: FloatArray,
+    embedding_basis: IntArray,
+    embedding_origin: FloatArray,
+    *,
+    index: int,
+    tolerance_angstrom: float = 1e-7,
+) -> tuple[FloatArray, IntArray]:
+    mapped = (
+        np.asarray(supercell_fractional, dtype=np.float64)
+        @ np.asarray(embedding_basis, dtype=np.float64).T
+        + np.asarray(embedding_origin, dtype=np.float64)
+    ) % 1.0
+    numbers = np.asarray(species, dtype=np.int64)
+    delta = (mapped[:, None, :] - mapped[None, :, :]).reshape(-1, 3)
+    cartesian, _ = closest_image_displacements_numpy(delta, parent_lattice)
+    distances = np.linalg.norm(cartesian, axis=1).reshape(mapped.shape[0], mapped.shape[0])
+    equivalent = (numbers[:, None] == numbers[None, :]) & (distances <= tolerance_angstrom)
+    if not np.all(equivalent.sum(axis=1) == index):
+        raise ValueError("projected supercell sites do not form exact parent translation orbits")
+    keep = ~np.tril(equivalent, k=-1).any(axis=1)
+    expected = mapped.shape[0] // index
+    if mapped.shape[0] % index or int(keep.sum()) != expected:
+        raise ValueError("parent-cell quotient has the wrong site count")
+    return mapped[keep], numbers[keep]
+
+
+def project_klassengleiche_parent(
+    child_lattice: FloatArray,
+    child_fractional: FloatArray,
+    species: IntArray,
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    primitive_embedding: RationalAffineTransform,
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_index: int = 4,
+) -> tuple[ParentProjection, int] | None:
+    """Project an index-2..4 child supercell onto its primitive parent."""
+    child_cell = np.asarray(child_lattice, dtype=np.float64)
+    child_positions = np.asarray(child_fractional, dtype=np.float64) % 1.0
+    numbers = np.asarray(species, dtype=np.int64)
+    rotations = np.asarray(parent_rotations, dtype=np.int64)
+    translations = np.asarray(parent_translations, dtype=np.float64)
+    transform = primitive_embedding.as_float()
+    basis_float = transform[:3, :3]
+    basis = np.rint(basis_float).astype(np.int64)
+    if not np.allclose(basis_float, basis, atol=1e-9, rtol=0.0):
+        raise ValueError("klassengleiche primitive embedding basis must be integral")
+    index = abs(int(round(np.linalg.det(basis))))
+    if not 2 <= index <= maximum_index:
+        raise ValueError(f"klassengleiche primitive embedding index must lie in 2..{maximum_index}")
+    if numbers.size % index:
+        return None
+    raw_parent_lattice = np.linalg.inv(basis.astype(np.float64)).T @ child_cell
+    projected_parent_lattice = project_lattice_metric(raw_parent_lattice, rotations)
+    projected_child_lattice = basis.T @ projected_parent_lattice
+    lifted_rotations, lifted_translations = klassengleiche_supercell_operations(
+        rotations,
+        translations,
+        basis,
+        transform[:3, 3],
+        maximum_index=maximum_index,
+    )
+    projected = _project_parent_action(
+        child_cell,
+        child_positions,
+        numbers,
+        lifted_rotations,
+        lifted_translations,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        projected_lattice=projected_child_lattice,
+    )
+    if projected is None:
+        return None
+    try:
+        parent_fractional, parent_species = _quotient_parent_sites(
+            projected.fractional,
+            numbers,
+            projected_parent_lattice,
+            basis,
+            transform[:3, 3],
+            index=index,
+        )
+    except ValueError:
+        return None
+    return (
+        ParentProjection(
+            lattice=projected_parent_lattice,
+            fractional=parent_fractional,
+            species=parent_species,
+            permutations=projected.permutations,
+            source_max_displacement_angstrom=projected.source_max_displacement_angstrom,
+            source_rms_displacement_angstrom=projected.source_rms_displacement_angstrom,
+            source_hencky_norm=projected.source_hencky_norm,
+            projected_group_max_error_angstrom=projected.projected_group_max_error_angstrom,
+        ),
+        lifted_rotations.shape[0],
+    )
+
+
 def project_translationengleiche_parent(
     child_lattice: FloatArray,
     child_fractional: FloatArray,
@@ -247,74 +521,11 @@ def project_translationengleiche_parent(
         raise ValueError("translationengleiche primitive embedding must be unimodular")
     raw_parent_lattice = np.linalg.inv(basis).T @ child_cell
     raw_parent_fractional = (child_positions @ basis.T + transform[:3, 3]) % 1.0
-    projected_lattice = project_lattice_metric(raw_parent_lattice, rotations)
-    operation_table = _operation_table(rotations, translations)
-    rotations_float = rotations.astype(np.float64)
-    moved = (
-        np.einsum(
-            "ni,gji->gnj",
-            raw_parent_fractional,
-            rotations_float,
-            optimize=True,
-        )
-        + translations[:, None, :]
-    )
-    try:
-        permutations, assignment_maximum = _assignment_permutations(
-            moved,
-            raw_parent_fractional,
-            numbers,
-            projected_lattice,
-            operation_table,
-        )
-    except (ValueError, RuntimeError):
-        return None
-    # The raw orbit defect compares two source points related through a parent
-    # operation.  Its triangle bound is twice the one-sided distance from the
-    # source to the parent fixed set; it is not itself the source displacement.
-    if assignment_maximum > 2.0 * maximum_source_displacement_angstrom:
-        return None
-    target = raw_parent_fractional[permutations]
-    delta = (moved - target).reshape(-1, 3)
-    displacement, _ = closest_image_displacements_numpy(delta, projected_lattice)
-    estimates = target @ projected_lattice + displacement.reshape(moved.shape)
-    ordered = np.empty_like(estimates)
-    group_index = np.arange(rotations.shape[0])[:, None]
-    ordered[group_index, permutations] = estimates
-    projected_cartesian = ordered.mean(axis=0)
-    projected_lattice_inverse = np.linalg.inv(projected_lattice)
-    projected_fractional = (projected_cartesian @ projected_lattice_inverse) % 1.0
-    source_delta = projected_fractional - raw_parent_fractional
-    source_displacement, _ = closest_image_displacements_numpy(source_delta, projected_lattice)
-    source_norm = np.linalg.norm(source_displacement, axis=1)
-    if float(source_norm.max(initial=0.0)) > maximum_source_displacement_angstrom:
-        return None
-    try:
-        projected_moved = (
-            np.einsum(
-                "ni,gji->gnj",
-                projected_fractional,
-                rotations_float,
-                optimize=True,
-            )
-            + translations[:, None, :]
-        )
-        _, projected_error = _assignment_permutations(
-            projected_moved,
-            projected_fractional,
-            numbers,
-            projected_lattice,
-            operation_table,
-        )
-    except (ValueError, RuntimeError):
-        return None
-    return ParentProjection(
-        lattice=projected_lattice,
-        fractional=projected_fractional,
-        species=numbers,
-        permutations=permutations,
-        source_max_displacement_angstrom=float(source_norm.max(initial=0.0)),
-        source_rms_displacement_angstrom=float(np.sqrt(np.mean(source_norm * source_norm))),
-        source_hencky_norm=_logarithmic_strain_norm(raw_parent_lattice, projected_lattice),
-        projected_group_max_error_angstrom=projected_error,
+    return _project_parent_action(
+        raw_parent_lattice,
+        raw_parent_fractional,
+        numbers,
+        rotations,
+        translations,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
     )

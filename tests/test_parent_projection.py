@@ -8,6 +8,8 @@ from gaugeflow.catalogue.parent_projection import (
     _operation_table,
     conjugate_embedding_to_primitive,
     conventional_to_primitive_structure,
+    klassengleiche_supercell_operations,
+    project_klassengleiche_parent,
     project_lattice_metric,
     project_translationengleiche_parent,
 )
@@ -104,6 +106,131 @@ def test_translationengleiche_projection_rejects_species_incompatible_inversion(
         maximum_source_displacement_angstrom=0.2,
     )
     assert result is None
+
+
+def test_klassengleiche_affine_action_closes_for_off_diagonal_index_two_basis():
+    rotations = np.stack([np.eye(3, dtype=np.int64), -np.eye(3, dtype=np.int64)])
+    lifted_rotations, lifted_translations = klassengleiche_supercell_operations(
+        rotations,
+        np.zeros((2, 3), dtype=np.float64),
+        np.array([[1, -1, 0], [1, 1, 0], [0, 0, 1]], dtype=np.int64),
+        np.zeros(3, dtype=np.float64),
+    )
+    assert lifted_rotations.shape == (4, 3, 3)
+    assert lifted_translations.shape == (4, 3)
+    table = _operation_table(lifted_rotations, lifted_translations)
+    assert table.shape == (4, 4)
+
+
+def test_klassengleiche_projection_recovers_broken_translation_parent():
+    parent_lattice = np.diag([3.0, 4.0, 5.0])
+    basis = np.diag([2, 1, 1])
+    child_lattice = basis.T @ parent_lattice
+    parent_fractional = np.array([[0.13, 0.21, 0.37], [0.31, 0.07, 0.62]])
+    parent_species = np.array([14, 8], dtype=np.int64)
+    child_fractional = np.concatenate(
+        [
+            parent_fractional @ np.linalg.inv(basis),
+            (parent_fractional + np.array([1.0, 0.0, 0.0])) @ np.linalg.inv(basis),
+        ]
+    )
+    child_species = np.tile(parent_species, 2)
+    child_fractional = (
+        child_fractional
+        + np.array(
+            [
+                [0.006, -0.004, 0.002],
+                [-0.003, 0.005, -0.004],
+                [-0.005, 0.003, -0.002],
+                [0.004, -0.006, 0.003],
+            ]
+        )
+    ) % 1.0
+    projected = project_klassengleiche_parent(
+        child_lattice,
+        child_fractional,
+        child_species,
+        np.eye(3, dtype=np.int64)[None],
+        np.zeros((1, 3), dtype=np.float64),
+        RationalAffineTransform.from_array(
+            np.array(
+                [
+                    [2.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                ]
+            )
+        ),
+        maximum_source_displacement_angstrom=0.2,
+    )
+    assert projected is not None
+    parent, full_action_order = projected
+    assert full_action_order == 2
+    assert parent.species.shape == (2,)
+    assert parent.source_max_displacement_angstrom < 0.06
+    assert parent.projected_group_max_error_angstrom <= 1e-12
+
+
+def test_klassengleiche_projection_recovers_nontrivial_point_group_parent():
+    parent_lattice = np.array(
+        [[3.1, 0.0, 0.0], [0.4, 4.2, 0.0], [0.3, 0.6, 5.3]]
+    )
+    basis = np.diag([2, 1, 1])
+    child_lattice = basis.T @ parent_lattice
+    parent_fractional = np.array(
+        [
+            [0.13, 0.21, 0.37],
+            [0.87, 0.79, 0.63],
+            [0.31, 0.07, 0.62],
+            [0.69, 0.93, 0.38],
+        ]
+    )
+    parent_species = np.array([14, 14, 8, 8], dtype=np.int64)
+    child_fractional = np.concatenate(
+        [
+            parent_fractional @ np.linalg.inv(basis),
+            (parent_fractional + np.array([1.0, 0.0, 0.0])) @ np.linalg.inv(basis),
+        ]
+    )
+    perturbation = np.zeros_like(child_fractional)
+    for left, right, value in (
+        (0, 5, [0.006, -0.003, 0.002]),
+        (4, 1, [-0.004, 0.005, 0.001]),
+        (2, 7, [0.003, 0.002, -0.004]),
+        (6, 3, [-0.005, -0.001, 0.003]),
+    ):
+        perturbation[left] = value
+        perturbation[right] = -np.asarray(value)
+    child_fractional = (child_fractional + perturbation) % 1.0
+    rotations = np.stack(
+        [np.eye(3, dtype=np.int64), -np.eye(3, dtype=np.int64)]
+    )
+    projected = project_klassengleiche_parent(
+        child_lattice,
+        child_fractional,
+        np.tile(parent_species, 2),
+        rotations,
+        np.zeros((2, 3), dtype=np.float64),
+        RationalAffineTransform.from_array(
+            np.array(
+                [
+                    [2.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                ]
+            )
+        ),
+        maximum_source_displacement_angstrom=0.2,
+    )
+    assert projected is not None
+    parent, full_action_order = projected
+    assert full_action_order == 4
+    dataset = spglib.get_symmetry_dataset(
+        (parent.lattice, parent.fractional, parent.species.astype(np.int32)),
+        symprec=1e-5,
+    )
+    assert dataset is not None
+    assert int(dataset.number) == 2
 
 
 def test_vectorized_operation_table_matches_direct_seitz_products():

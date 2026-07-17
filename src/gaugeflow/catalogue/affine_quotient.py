@@ -41,6 +41,55 @@ def _validate_upper_hnf(matrix: IntArray, maximum_index: int = 4) -> int:
     return determinant
 
 
+def _integer_lattice_quotient(
+    basis: IntArray,
+    *,
+    maximum_index: int,
+) -> tuple[tuple[int, int, int], IntArray, IntArray]:
+    """Return Smith invariants, the left map and coset representatives.
+
+    The quotient is ``Z^3 / basis Z^3`` with column-vector integer
+    translations.  This lower-level form accepts any nonsingular integral
+    basis; canonical HNF validation remains the responsibility of catalogue
+    interfaces that require one unique supercell label.
+    """
+    from hsnf import smith_normal_form
+
+    matrix = np.asarray(basis, dtype=np.int64)
+    if matrix.shape != (3, 3):
+        raise ValueError("integer lattice basis must have shape [3,3]")
+    determinant = abs(_integer_determinant(matrix))
+    if not 1 <= determinant <= maximum_index:
+        raise ValueError(f"integer lattice index must lie in 1..{maximum_index}")
+    smith, left, _ = smith_normal_form(matrix)
+    diagonal = tuple(abs(int(value)) for value in np.diag(smith))
+    if np.prod(diagonal) != determinant or any(value < 1 for value in diagonal):
+        raise RuntimeError("Smith factors do not match the integer lattice index")
+    left = np.asarray(left, dtype=np.int64)
+    left_inverse = np.rint(np.linalg.inv(left)).astype(np.int64)
+    if not np.array_equal(left @ left_inverse, np.eye(3, dtype=np.int64)):
+        raise RuntimeError("Smith left transform is not unimodular")
+    residues = tuple(
+        tuple(int(x) for x in value) for value in product(*(range(d) for d in diagonal))
+    )
+    representatives = np.stack(
+        [left_inverse @ np.asarray(value, dtype=np.int64) for value in residues]
+    )
+    return diagonal, left, representatives
+
+
+def integer_lattice_coset_representatives(
+    basis: NDArray[np.integer],
+    *,
+    maximum_index: int = 4,
+) -> IntArray:
+    """Enumerate ``Z^3 / basis Z^3`` once without assuming an HNF gauge."""
+    _, _, representatives = _integer_lattice_quotient(
+        np.asarray(basis, dtype=np.int64), maximum_index=maximum_index
+    )
+    return representatives
+
+
 def enumerate_upper_hnfs(maximum_index: int = 4) -> tuple[IntArray, ...]:
     """Enumerate canonical upper HNFs in deterministic lexicographic order."""
     matrices: list[IntArray] = []
@@ -194,20 +243,14 @@ class TranslationQuotient:
 
     @classmethod
     def from_supercell(cls, supercell_matrix: NDArray[np.integer]) -> "TranslationQuotient":
-        from hsnf import smith_normal_form
-
         matrix = np.asarray(supercell_matrix, dtype=np.int64)
         determinant = _validate_upper_hnf(matrix)
-        smith, left, _ = smith_normal_form(matrix.T)
-        diagonal = tuple(abs(int(value)) for value in np.diag(smith))
-        if np.prod(diagonal) != determinant or any(value < 1 for value in diagonal):
+        diagonal, left, representatives = _integer_lattice_quotient(
+            matrix.T, maximum_index=4
+        )
+        if np.prod(diagonal) != determinant:
             raise RuntimeError("Smith factors do not match the supercell index")
-        left = np.asarray(left, dtype=np.int64)
-        left_inverse = np.rint(np.linalg.inv(left)).astype(np.int64)
-        if not np.array_equal(left @ left_inverse, np.eye(3, dtype=np.int64)):
-            raise RuntimeError("Smith left transform is not unimodular")
         residues = tuple(tuple(int(x) for x in value) for value in product(*(range(d) for d in diagonal)))
-        representatives = np.stack([left_inverse @ np.asarray(value, dtype=np.int64) for value in residues])
         return cls(matrix, left, diagonal, residues, representatives)
 
     @property

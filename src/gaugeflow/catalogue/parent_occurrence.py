@@ -18,6 +18,7 @@ from gaugeflow.catalogue.parent_projection import (
     ParentProjection,
     conjugate_embedding_to_primitive,
     conventional_to_primitive_structure,
+    project_klassengleiche_parent,
     project_translationengleiche_parent,
 )
 from gaugeflow.catalogue.subgroup_embeddings import RationalAffineTransform
@@ -39,6 +40,9 @@ class PrimitiveSetting:
 class EmbeddingParentOccurrence:
     embedding_key: str
     parent_space_group: int
+    cell_index: int
+    full_action_order: int
+    parent_site_count: int
     projection: ParentProjection
     candidate: ParentCandidate
 
@@ -230,6 +234,88 @@ def project_maximal_t_embedding(
     return EmbeddingParentOccurrence(
         embedding_key=str(record["embedding_key"]),
         parent_space_group=parent_space_group,
+        cell_index=1,
+        full_action_order=int(parent_setting.rotations.shape[0]),
+        parent_site_count=int(projection.species.size),
+        projection=projection,
+        candidate=candidate,
+    )
+
+
+def project_maximal_k_embedding(
+    child: StandardCrystal,
+    record: Mapping[str, object],
+    *,
+    maximum_source_displacement_angstrom: float,
+    matcher_settings: dict[str, float | bool],
+    angle_tolerance: float,
+) -> EmbeddingParentOccurrence | None:
+    """Project and certify one exact index-2..4 maximal-k embedding."""
+    import spglib
+
+    cell_index = int(record["cell_index"])
+    if str(record["kind"]) != "k" or not 2 <= cell_index <= 4:
+        raise ValueError("K0 accepts maximal klassengleiche records of index 2..4 only")
+    if int(record["child_space_group"]) != child.space_group:
+        raise ValueError("embedding child group does not match the material")
+    parent_space_group = int(record["parent_space_group"])
+    parent_setting = pyxtal_primitive_setting(parent_space_group)
+    child_setting = pyxtal_primitive_setting(child.space_group)
+    primitive_embedding = conjugate_embedding_to_primitive(
+        _embedding_transform(record),
+        parent_setting.primitive_basis,
+        child_setting.primitive_basis,
+    )
+    projected = project_klassengleiche_parent(
+        child.lattice,
+        child.fractional,
+        child.species,
+        parent_setting.rotations,
+        parent_setting.translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_index=4,
+    )
+    if projected is None:
+        return None
+    projection, full_action_order = projected
+    identified = spglib.get_symmetry_dataset(
+        (
+            projection.lattice,
+            projection.fractional,
+            projection.species.astype(np.int32),
+        ),
+        symprec=1e-5,
+        angle_tolerance=float(angle_tolerance),
+    )
+    if identified is None or int(identified.number) != parent_space_group:
+        return None
+    parent = StandardCrystal(
+        lattice=projection.lattice,
+        fractional=projection.fractional,
+        species=projection.species,
+        space_group=parent_space_group,
+        rotations=parent_setting.rotations,
+        translations=parent_setting.translations,
+    )
+    candidate = certify_parent_candidate(
+        child,
+        parent,
+        matcher_settings=matcher_settings,
+        construction="maximal_k_embedding_v3",
+        symprec=1e-5,
+    )
+    if (
+        candidate is None
+        or abs(int(round(np.linalg.det(candidate.supercell_hnf)))) != cell_index
+    ):
+        return None
+    return EmbeddingParentOccurrence(
+        embedding_key=str(record["embedding_key"]),
+        parent_space_group=parent_space_group,
+        cell_index=cell_index,
+        full_action_order=full_action_order,
+        parent_site_count=int(projection.species.size),
         projection=projection,
         candidate=candidate,
     )
@@ -250,6 +336,29 @@ def search_maximal_t_parents(
             child,
             record,
             maximum_source_displacement_angstrom=(maximum_source_displacement_angstrom),
+            matcher_settings=matcher_settings,
+            angle_tolerance=angle_tolerance,
+        )
+        if occurrence is not None:
+            selected.append(occurrence)
+    return tuple(selected)
+
+
+def search_maximal_k_parents(
+    child: StandardCrystal,
+    records: Sequence[Mapping[str, object]],
+    *,
+    maximum_source_displacement_angstrom: float,
+    matcher_settings: dict[str, float | bool],
+    angle_tolerance: float,
+) -> tuple[EmbeddingParentOccurrence, ...]:
+    """Enumerate the complete frozen maximal-k fiber for one child group."""
+    selected = []
+    for record in records:
+        occurrence = project_maximal_k_embedding(
+            child,
+            record,
+            maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
             matcher_settings=matcher_settings,
             angle_tolerance=angle_tolerance,
         )

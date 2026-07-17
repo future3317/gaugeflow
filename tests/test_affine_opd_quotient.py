@@ -11,8 +11,20 @@ from gaugeflow.catalogue import (
     canonical_supercell_orbits,
     enumerate_real_irreps,
     enumerate_upper_hnfs,
+    integer_lattice_coset_representatives,
     real_irrep_multiplicity,
 )
+
+
+def test_integer_lattice_cosets_support_off_diagonal_non_hnf_embedding_basis():
+    basis = np.array([[1, -1, 0], [1, 1, 0], [0, 0, 1]], dtype=np.int64)
+    representatives = integer_lattice_coset_representatives(basis)
+    assert representatives.shape == (2, 3)
+    difference = np.linalg.solve(
+        basis.astype(np.float64),
+        (representatives[1] - representatives[0]).astype(np.float64),
+    )
+    assert not np.allclose(difference, np.rint(difference), atol=1e-12, rtol=0.0)
 
 
 def _p_minus_one() -> PrimitiveSpaceGroup:
