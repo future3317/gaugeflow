@@ -85,9 +85,22 @@ class TensorFreeHybridDiffusion(nn.Module):
         *,
         generator: torch.Generator | None = None,
     ) -> torch.Tensor:
-        uniform = torch.rand(
+        if graph_count < 1:
+            raise ValueError("time sampling requires at least one graph")
+        # Randomized stratification is an unbiased uniform-time estimator, but
+        # unlike iid draws it covers every 1/G interval in each G-graph batch.
+        # This matters for the torus score, whose useful signal is concentrated
+        # near the clean end of the path.  The implementation is fully batched
+        # and does not alter the target objective.
+        jitter = torch.rand(
             (graph_count,), dtype=reference.dtype, device=reference.device, generator=generator
         )
+        strata = (
+            torch.arange(graph_count, dtype=reference.dtype, device=reference.device)
+            + jitter
+        ) / graph_count
+        order = torch.randperm(graph_count, device=reference.device, generator=generator)
+        uniform = strata[order]
         return self.minimum_time + (self.maximum_time - self.minimum_time) * uniform
 
     def noise_clean_batch(

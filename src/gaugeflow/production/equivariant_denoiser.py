@@ -242,7 +242,6 @@ class HybridCrystalDenoiser(nn.Module):
             edge_envelope = self.radial.envelope(edges.distance)
         source, target = edges.source, edges.target
         degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
-        edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
         node_time = self.time_embedding(time)[batch]
         initial_nodes = self.element_embedding(element_tokens) + self.degree_embedding(
             degree.log1p().unsqueeze(-1)
@@ -263,17 +262,21 @@ class HybridCrystalDenoiser(nn.Module):
         )
         graph_state = self.state_embedding(state_features)
         node_state = graph_state[batch]
-        geometry_queries = self.geometry_query_encoder(
-            initial_nodes + node_state,
-            node_time,
-            source,
-            target,
-            edges.direction,
-            radial,
-            batch,
-            graphs,
-        )
         if bool(condition_present.any()):
+            # Tensor-free pretraining uses a learned null token but does not
+            # construct an atlas.  Keep its expensive geometry-query encoder
+            # outside that path instead of computing an unused tensor.
+            edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
+            geometry_queries = self.geometry_query_encoder(
+                initial_nodes + node_state,
+                node_time,
+                source,
+                target,
+                edges.direction,
+                radial,
+                batch,
+                graphs,
+            )
             gauge_atlas = self.gauge_atlas(
                 tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
             )

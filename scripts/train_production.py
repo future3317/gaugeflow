@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import time
 from pathlib import Path
 
 import torch
@@ -179,6 +180,10 @@ def main() -> None:
     log_path = args.output / "training_metrics.jsonl"
     data_iterator = iter(loader)
     device_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
+    throughput_start = time.perf_counter()
+    throughput_graphs = 0
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     while trainer.step < steps:
         try:
             batch_data = next(data_iterator)
@@ -199,7 +204,11 @@ def main() -> None:
             blueprint,
             generator=device_generator,
         )
+        throughput_graphs += graph_count
         if trainer.step % log_every == 0 or trainer.step == 1:
+            if device.type == "cuda":
+                torch.cuda.synchronize(device)
+            elapsed = time.perf_counter() - throughput_start
             record = {
                 "step": trainer.step,
                 "loss": float(output.loss.detach().cpu()),
@@ -209,10 +218,18 @@ def main() -> None:
                 "shape_loss": float(output.shape_loss.detach().cpu()),
                 "masked_fraction": float(output.masked_fraction.detach().cpu()),
                 "gradient_norm": gradient_norm,
+                "graphs_per_second": throughput_graphs / elapsed,
+                "peak_cuda_memory_mib": (
+                    float(torch.cuda.max_memory_allocated(device)) / (1024.0**2)
+                    if device.type == "cuda"
+                    else 0.0
+                ),
             }
             with log_path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
             print(json.dumps(record, sort_keys=True), flush=True)
+            throughput_start = time.perf_counter()
+            throughput_graphs = 0
         if trainer.step in checkpoint_steps:
             save_production_checkpoint(
                 args.output / f"checkpoint_step_{trainer.step:08d}.pt",

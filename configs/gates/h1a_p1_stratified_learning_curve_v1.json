@@ -1,0 +1,100 @@
+{
+  "protocol": "h1a_p1_stratified_learning_curve_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "tensor-free H1a learning curve after coordinate-field and joint-gradient attribution; no H1b-H6",
+  "prerequisites": {
+    "failed_full_benchmark": "h1a_tensor_free_benchmark_v1",
+    "gradient_audit": "h1a_joint_gradient_audit_v1",
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_qualified": true,
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "time_sampling": "randomized within-minibatch stratification with exactly uniform marginal",
+    "tensor_free_query_path": "skip Cartesian geometry-query encoder and atlas enumeration; retain the learned null-condition token distinct from a physical zero tensor",
+    "coordinate_path": "exact wrapped-normal scaled score on the fractional product torus modulo common translation",
+    "reverse_grid": "100 uniform increments of linear torus variance",
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0
+  },
+  "training": {
+    "seeds": [5301, 5302, 5303],
+    "steps": 20000,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "coordinate_fractional_sigma_max": 1.0,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1250, 5000, 8441, 12000, 20000]
+  },
+  "staged_execution": {
+    "screen_seed": 5301,
+    "screen_first": true,
+    "full_seed_rule": "run seeds 5302 and 5303 only after seed 5301 passes every screen acceptance check",
+    "graph_presentations_at_1250": 80000,
+    "steps_per_training_split_pass": 8441,
+    "graph_presentations_at_final": 1280000
+  },
+  "fixed_evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 7301,
+    "samples_per_seed": 128,
+    "sampling_seed": 7302,
+    "sampler_steps": 100,
+    "time_grid": "uniform_time"
+  },
+  "screen_acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.65,
+    "mean_final_coordinate_over_initial_max": 0.30,
+    "three_seed_final_coordinate_over_initial_max": 0.30,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.97
+    }
+  },
+  "acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.75,
+    "mean_final_coordinate_over_initial_max": 0.30,
+    "three_seed_final_coordinate_over_initial_max": 0.40,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.98
+    }
+  },
+  "screen_decision_rule": {
+    "pass": "seed_5301_screen_qualified_run_remaining_two_seeds",
+    "fail": "seed_5301_screen_failed_stop_and_reassess_joint_objective",
+    "boundary": "The screen only decides whether two more tensor-free seeds are worth running."
+  },
+  "decision_rule": {
+    "pass": "learning_curve_qualified_run_corrected_full_H1a_benchmark",
+    "fail": "learning_curve_failed_stop_before_full_benchmark_and_H1b",
+    "boundary": "Passing authorizes only a separately frozen corrected H1a benchmark. It does not authorize H1b, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}

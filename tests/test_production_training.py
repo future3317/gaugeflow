@@ -77,6 +77,46 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     )
 
 
+def test_tensor_free_path_skips_geometry_query_encoder():
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = _small_model()
+    calls = 0
+
+    def count_calls(_module, _inputs, _output):
+        nonlocal calls
+        calls += 1
+
+    handle = model.geometry_query_encoder.register_forward_hook(count_calls)
+    diffusion = TensorFreeHybridDiffusion(model, _standardizer())
+    diffusion(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=torch.tensor([0.3, 0.6]),
+        generator=torch.Generator().manual_seed(106),
+    )
+    handle.remove()
+    assert calls == 0
+
+
+def test_randomized_stratified_times_preserve_uniform_batch_coverage():
+    diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
+    graph_count = 16
+    sampled = diffusion.sample_time(
+        graph_count,
+        torch.zeros(1),
+        generator=torch.Generator().manual_seed(107),
+    )
+    unit = (sampled - diffusion.minimum_time) / (
+        diffusion.maximum_time - diffusion.minimum_time
+    )
+    observed_strata = torch.floor(unit.sort().values * graph_count).long()
+    assert torch.equal(observed_strata, torch.arange(graph_count))
+
+
 def test_production_trainer_updates_ema_and_all_heads():
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     config = ProductionTrainingConfig(learning_rate=1.0e-3, ema_decay=0.9)

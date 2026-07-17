@@ -215,6 +215,7 @@ def main() -> None:
         required=True,
     )
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--stage", choices=("screen", "full"), default="full")
     arguments = parser.parse_args()
     protocol = load_json_object(arguments.protocol)
     protocol_name = str(protocol.get("protocol"))
@@ -226,7 +227,11 @@ def main() -> None:
         raise RuntimeError("CUDA was requested but unavailable")
     evaluation = protocol["fixed_evaluation"]
     training = protocol["training"]
-    acceptance = protocol["acceptance"]
+    acceptance = (
+        protocol["screen_acceptance"]
+        if arguments.stage == "screen"
+        else protocol["acceptance"]
+    )
     distance_guardrail = acceptance.get("minimum_distance_guardrail")
     distance_threshold = (
         float(distance_guardrail["threshold_angstrom"])
@@ -241,7 +246,12 @@ def main() -> None:
     seed_results: dict[str, Any] = {}
     ratios: list[float] = []
     coordinate_ratios: list[float] = []
-    for seed in training["seeds"]:
+    selected_seeds = (
+        [int(protocol["staged_execution"]["screen_seed"])]
+        if arguments.stage == "screen"
+        else [int(seed) for seed in training["seeds"]]
+    )
+    for seed in selected_seeds:
         run = arguments.run_root / f"seed_{seed}"
         validation_curve: dict[str, dict[str, float]] = {}
         for checkpoint_step in training["checkpoint_steps"]:
@@ -339,6 +349,7 @@ def main() -> None:
     qualified = all(checks.values())
     result = {
         "protocol": protocol_name,
+        "stage": arguments.stage,
         "protocol_sha256": protocol_sha256,
         "seed_results": seed_results,
         "mean_final_over_initial_total": sum(ratios) / len(ratios),
@@ -346,7 +357,9 @@ def main() -> None:
         / len(coordinate_ratios),
         "checks": checks,
         "qualified": qualified,
-        "decision": protocol["decision_rule"]["pass" if qualified else "fail"],
+        "decision": protocol[
+            "screen_decision_rule" if arguments.stage == "screen" else "decision_rule"
+        ]["pass" if qualified else "fail"],
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text(
