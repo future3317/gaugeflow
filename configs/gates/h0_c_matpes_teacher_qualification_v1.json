@@ -1,0 +1,93 @@
+{
+  "protocol": "h0_c_matpes_teacher_qualification_v1",
+  "status": "frozen_after_runtime_preflight_before_metric_inference",
+  "purpose": "Qualify two frozen, architecture-distinct MatPES-PBE-2025.2 teachers for later offline PES supervision; this protocol does not authorize H1 or online sampling guidance.",
+  "runtime": {
+    "python": "/home/future04/micromamba/envs/gaugeflow-h0c/bin/python",
+    "python_version": "3.11.15",
+    "torch": "2.5.1+cu124",
+    "matgl": "4.0.3",
+    "matgl_source_commit": "0158fe83cbc5e00e289ff622948c256a4f58bfa2",
+    "matgl_source_archive_sha256": "ed7d477d780ed392162139773dc0caa7b54735687fcfa0094b7adfd9062757b7",
+    "ase": "3.29.0",
+    "huggingface_hub": "1.23.0",
+    "torch_geometric": "2.8.0",
+    "pymatgen_core": "2026.7.16",
+    "numpy": "2.4.6",
+    "device": "cuda",
+    "gpu": "NVIDIA GeForce RTX 4060 Ti"
+  },
+  "dataset": {
+    "name": "MatPES-PBE-2025.2",
+    "split": "test",
+    "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-test.jsonl",
+    "sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07",
+    "rows": 21660,
+    "energy_unit": "eV total",
+    "force_unit": "eV/angstrom",
+    "stress_source_unit": "kbar Voigt [xx,yy,zz,yz,xz,xy] with DFT compressive-positive sign",
+    "stress_teacher_unit": "GPa full 3x3 with tensile-positive sign",
+    "stress_conversion": "target_full_gpa = -0.1 * voigt6_to_full3x3(source_stress)"
+  },
+  "selection": {
+    "method": "take the lexicographically smallest SHA256(protocol + ':' + matpes_id) values from the complete held-out test split",
+    "sample_size": 512,
+    "invariance_sample_size": 32,
+    "selection_seed_string": "h0_c_matpes_teacher_qualification_v1",
+    "no_prediction_dependent_selection": true
+  },
+  "teachers": {
+    "primary": {
+      "role": "frozen_pes_teacher",
+      "repo_id": "materialyze/TensorNet-PES-MatPES-PBE-2025.2",
+      "revision": "7ac2b90400a87eca7f44c1e7956dca6b1c85e418",
+      "architecture": "TensorNet",
+      "dataset": "MatPES-PBE-2025.2",
+      "required_files": ["README.md", "model.json", "model.pt", "state.pt"]
+    },
+    "disagreement": {
+      "role": "architecture_distinct_disagreement_teacher",
+      "repo_id": "materialyze/M3GNet-PES-MatPES-PBE-2025.2",
+      "revision": "8414b23e68b173d6e36271e4366ee3717364051c",
+      "architecture": "M3GNet",
+      "dataset": "MatPES-PBE-2025.2",
+      "required_files": ["README.md", "model.json", "model.pt", "state.pt"]
+    }
+  },
+  "thresholds": {
+    "primary_energy_mae_ev_per_atom": 0.05,
+    "primary_force_mae_ev_per_angstrom": 0.2,
+    "primary_stress_mae_gpa": 1.2,
+    "disagreement_energy_mae_ev_per_atom": 0.065,
+    "disagreement_force_mae_ev_per_angstrom": 0.28,
+    "disagreement_stress_mae_gpa": 1.4,
+    "sampling_failures": 0,
+    "nonfinite_predictions": 0,
+    "minimum_energy_disagreement_mae_ev_per_atom": 0.001,
+    "minimum_force_disagreement_mae_ev_per_angstrom": 0.005,
+    "rigid_energy_error_ev_per_atom": 0.0001,
+    "rigid_force_covariance_rmse_ev_per_angstrom": 0.001,
+    "rigid_stress_covariance_rmse_gpa": 0.005,
+    "cell_basis_energy_error_ev_per_atom": 0.0005,
+    "cell_basis_force_rmse_ev_per_angstrom": 0.005,
+    "cell_basis_stress_rmse_gpa": 0.02
+  },
+  "invariance_transforms": {
+    "translation_cartesian_angstrom": [0.137, -0.271, 0.389],
+    "proper_rotation_axis": [1.0, 2.0, -1.0],
+    "proper_rotation_angle_radians": 0.731,
+    "atom_permutation": "reverse site order",
+    "unimodular_cell_basis": [[1, 1, 0], [0, 1, 0], [0, 0, 1]]
+  },
+  "qualification_rules": [
+    "both pinned checkpoint snapshots have complete file hashes and load without fallback",
+    "the two model classes and weight hashes are distinct",
+    "both checkpoints declare the MatPES-PBE-2025.2 energy reference, cutoff and periodic neighbor convention",
+    "the primary TensorNet exposes a named atom-feature layer suitable for frozen offline representation extraction",
+    "held-out energy, force and stress MAEs satisfy their separately frozen limits",
+    "translation, proper-rotation, atom-permutation and unimodular-cell invariance/covariance satisfy the frozen FP32 limits",
+    "all predictions are finite and no selected structure fails",
+    "teacher disagreement is nonzero and is retained as an uncertainty field, not used as reverse-sampling guidance"
+  ],
+  "advancement_rule": "H0-C qualifies only if every rule passes. H0-D remains unauthorized until H0-C is committed and pushed; H1 remains unauthorized until H0-A through H0-E all qualify."
+}

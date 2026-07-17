@@ -1,0 +1,104 @@
+{
+  "protocol": "h0_data_activation_v4",
+  "status": "active_strict_gate_no_training_until_pass",
+  "supersedes_without_overwriting": "h0_data_activation_v3",
+  "data_center_manifest": "MANIFEST.json",
+  "data_center_manifest_sha256": "bc9e8aa5eeccec7f8952ce4028061103b518af537c151acd865b51c6c89e36a7",
+  "split_inheritance_rule": "child split first; all parent candidates, alternate cells, OPD paths, mode scans, and cross-source joins inherit it",
+  "h0_a": {
+    "source": "Alex-MP-20",
+    "grain": "one child crystal structure per row",
+    "expected_rows": 675204,
+    "split_key": ["reduced_formula", "prototype_cluster"],
+    "source_files": [
+      {"path": "raw/huggingface/Alex-MP-20/train.parquet", "bytes": 155967383, "sha256": "81eca8a6dd1e3e99a30f3efb94d23fb733bc6d5e0d62c6e082e21e4727f76e0d"},
+      {"path": "raw/huggingface/Alex-MP-20/val.parquet", "bytes": 20766698, "sha256": "001dee2a0f799fecf167f5d4b5d02e6b875e0b7f6aef88dea2e997f60973df76"},
+      {"path": "raw/huggingface/Alex-MP-20/test.parquet", "bytes": 20778699, "sha256": "ed2d62a3102b40b2a91f94f8e351d1d875f35305026d439b1a755a0727846a03"}
+    ],
+    "gaugeflow_split_manifest": "processed/gaugeflow_h0_v2/alex_formula_prototype_split.json",
+    "gaugeflow_split_audit": "processed/gaugeflow_h0_v2/alex_formula_prototype_split_audit.json",
+    "split_protocol": "h0_a_alex_formula_prototype_split_v1",
+    "audit_protocol": "h0_a_alex_formula_prototype_split_audit_v1",
+    "maximum_fraction_deviation": 0.02,
+    "required_zero_overlap": ["reduced_formula", "prototype", "matcher_envelope", "component"]
+  },
+  "h0_b": {
+    "source": "PhononDB full-Hessian-projected compact force constants v2",
+    "expected_materials": 10034,
+    "phonopy_version": "4.3.1",
+    "derived_manifest": "processed/phonondb_force_constants_v2/MANIFEST.json",
+    "derived_protocol": "phonondb_force_constants_v2_full_hessian_projection",
+    "builder_sha256": "9ada5327166578db93c285ef071cb6bbec0602175a688957f56657276988b9a9",
+    "auditor_sha256": "459a43abb8f6c95dbd603002e584623040a69ffd96e26cbead36f61734c78278",
+    "attestation_manifest": "processed/gaugeflow_h0_v3/phonondb_derivation_attestation.json",
+    "attestation_protocol": "h0_b_phonondb_derivation_attestation_v4_stratified",
+    "attestation_sha256": "305357a71d18550725f9aa3c49cbfe105ec26085c4bc08b7263ae7c773c22e44",
+    "primitive_matrix_policy": "Use the source YAML primitive_matrix when present; otherwise explicit P",
+    "imaginary_frequency_convention_thz": -0.05,
+    "source_files": [
+      {"path": "processed/phonondb_mode_v1/MANIFEST.json", "bytes": 1920, "sha256": "644e3bda19f5b36525e3c32b290d9f1fb99e0bcc59f52fbc15d6001851c006a3"},
+      {"path": "processed/phonondb_mode_v1/index.parquet", "bytes": 2598513, "sha256": "f13935131ec0b350937448f1b70123a00bac3a5281a09fe8b620597eae55e3ed"},
+      {"path": "processed/phonondb_force_constants_v1/MANIFEST.json", "bytes": 2420, "sha256": "a4ddeefb08897a374b7f34b26e31523b4fd5ae8f99a0489a605eb995bc708ed2"},
+      {"path": "processed/phonondb_force_constants_v1/index.parquet", "bytes": 2825417, "sha256": "2490c27b2fa14823d661d803264e2cc13a3d3045f308f3cb515c1435311337d6"},
+      {"path": "processed/phonondb_force_constants_v2/MANIFEST.json", "bytes": 1187, "sha256": "4dffd25355a00b90d9936078fe58cb5dbcb9dccf35e8f5462d40d7e695c49bae", "direct_hash": true},
+      {"path": "processed/phonondb_force_constants_v2/index.parquet", "bytes": 1970609, "sha256": "b6d984a6c5b0fd352db55c2afce2c8540e816994f9d3f0beb33835fcdc74286b", "direct_hash": true}
+    ],
+    "required_attestations": [
+      "primitive_supercell_mapping",
+      "force_constant_solver",
+      "symmetrization_policy",
+      "acoustic_sum_rule",
+      "translational_zero_mode_test",
+      "imaginary_frequency_convention",
+      "degenerate_subspace_numerical_test",
+      "non_analytic_correction_attestation"
+    ]
+  },
+  "h0_c": {
+    "source": "MatPES-PBE-2025.2",
+    "source_files": [
+      {"path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-train.jsonl", "bytes": 2122625852, "sha256": "cb92d9cc1f68ac7b7e52eb3b22f9fd5a304d1ad3cbc581de665e22287ec644fb"},
+      {"path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-valid.jsonl", "bytes": 117736992, "sha256": "2e39908974a4d30de472b0fc1e15bc307c721aed6e7758baaed0860fd24a13d1"},
+      {"path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-test.jsonl", "bytes": 117922394, "sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07"}
+    ],
+    "teacher_manifest": "processed/gaugeflow_h0_v4/matpes_teacher_qualification_v2/matpes_teacher_qualification.json",
+    "teacher_manifest_sha256": "a7a870c14eb768f2b9b4a003aaee7a933c8f95f4fe7c80cdd6ef5c24d95d9c3b",
+    "teacher_protocol": "h0_c_matpes_teacher_qualification_v2",
+    "test_split_sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07",
+    "required_teacher_checks": [
+      "snapshot_identity",
+      "snapshot_protocol",
+      "snapshot_config",
+      "snapshot_files",
+      "runtime_identity",
+      "dataset_count",
+      "sample_complete",
+      "sampling_failures",
+      "nonfinite_predictions",
+      "primary_energy",
+      "primary_force",
+      "primary_stress",
+      "disagreement_energy",
+      "disagreement_force",
+      "disagreement_stress",
+      "energy_disagreement_nonzero",
+      "force_disagreement_nonzero",
+      "architectures_distinct",
+      "architectures_declared",
+      "atom_feature_layer",
+      "invariance"
+    ]
+  },
+  "h0_d": {
+    "catalogue_manifest": "processed/gaugeflow_h0_v4/opd_catalogue_manifest.json",
+    "equivalence_generators": ["parent_normalizer", "k_star_relabeling", "opd_basis_change", "unimodular_supercell_basis_change", "domain_relabeling"],
+    "exact_branch_mass_must_be_explicit": true
+  },
+  "h0_e": {
+    "pilot_size_min": 1000,
+    "pilot_size_max": 5000,
+    "pilot_manifest": "processed/gaugeflow_h0_v4/parent_decomposition_pilot.json",
+    "residual_rms_limit_angstrom": 0.1
+  },
+  "advancement_rule": "H0-A through H0-E must all be qualified before H1a or H1b starts"
+}

@@ -1,0 +1,70 @@
+{
+  "protocol": "h0_c_matpes_teacher_qualification_v2",
+  "qualified": true,
+  "decision": "H0-C qualified; H0-D may start only after this result is committed and pushed, while H1 remains blocked by H0-D/E",
+  "counts": {
+    "test_rows": 21660,
+    "selected": 512,
+    "invariance_selected": 32,
+    "inference_failures": 0
+  },
+  "identity": {
+    "config_sha256": "edf35df7eb220395671c988c6f24a70c4c264633473ed8817e6d3a7c31f36c4a",
+    "auditor_sha256": "6928ca47efc1a3cbf0fcb8e7ea558bed5441acb28731406dc1b61df7ea24ac72",
+    "checkpoint_manifest_sha256": "c975c76f44be340b91cc6e716cbfb5a80c77f05309e7da5f8185ccca5f6d191f",
+    "dataset_sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07",
+    "selected_ids_sha256": "8996edcdd891b168fcbc62b31288f1fbf70da53485f72a7d8846c29a4ff196c8",
+    "full_result_sha256": "a7a870c14eb768f2b9b4a003aaee7a933c8f95f4fe7c80cdd6ef5c24d95d9c3b",
+    "metrics_parquet_sha256": "11f48da874c1dbe6105ef29d03a216086cdacd9beab4e89eaf8b770f8cfa5f5b"
+  },
+  "teachers": {
+    "primary": {
+      "architecture": "TensorNet",
+      "revision": "7ac2b90400a87eca7f44c1e7956dca6b1c85e418",
+      "parameters": 837378,
+      "peak_cuda_memory_bytes": 1394009088
+    },
+    "disagreement": {
+      "architecture": "QET",
+      "revision": "54d4d6aa4100d8c4350945bd5a3d56b0bcd51c4b",
+      "parameters": 905492,
+      "peak_cuda_memory_bytes": 1394278912
+    }
+  },
+  "held_out_metrics": {
+    "TensorNet": {
+      "energy_mae_ev_per_atom": 0.031731388163174154,
+      "force_mae_ev_per_angstrom": 0.12626411409042512,
+      "stress_mae_gpa": 0.7445358365328872
+    },
+    "QET": {
+      "energy_mae_ev_per_atom": 0.039037256530459113,
+      "force_mae_ev_per_angstrom": 0.12722390672907646,
+      "stress_mae_gpa": 0.647814939049956
+    },
+    "teacher_disagreement": {
+      "energy_mae_ev_per_atom": 0.028564343341385023,
+      "force_mae_ev_per_angstrom": 0.10125531532890875,
+      "stress_mae_gpa": 0.5599390775265611
+    }
+  },
+  "maximum_invariance_errors": {
+    "TensorNet": {
+      "rigid_energy_ev_per_atom": 9.655952453613281e-06,
+      "rigid_force_ev_per_angstrom": 9.700996396966812e-05,
+      "rigid_stress_gpa": 3.422185141835958e-05,
+      "cell_energy_ev_per_atom": 1.6689300537109375e-06,
+      "cell_force_ev_per_angstrom": 1.593652306226205e-05,
+      "cell_stress_gpa": 3.2194664457907475e-05
+    },
+    "QET": {
+      "rigid_energy_ev_per_atom": 9.179115295410156e-06,
+      "rigid_force_ev_per_angstrom": 0.00010446047748164382,
+      "rigid_stress_gpa": 3.5251681191396976e-05,
+      "cell_energy_ev_per_atom": 1.6689300537109375e-06,
+      "cell_force_ev_per_angstrom": 1.7515968607596725e-05,
+      "cell_stress_gpa": 3.0590754434946444e-05
+    }
+  },
+  "usage_policy": "Frozen offline PES labels, uncertainty filtering, representation extraction and auxiliary losses only. Never reverse-sampling guidance and never independent DFT validation."
+}

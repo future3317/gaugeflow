@@ -126,6 +126,45 @@ def _audit_alex_split(config: dict[str, Any], data_root: Path) -> dict[str, Any]
     }
 
 
+def _audit_matpes_teacher(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
+    """Validate the qualification manifest, not merely checkpoint presence."""
+    relative = config.get("teacher_manifest")
+    path = data_root / str(relative) if relative else None
+    present = path is not None and path.is_file()
+    manifest = (
+        json.loads(path.read_text(encoding="utf-8")) if present and path is not None else {}
+    )
+    observed_sha = _sha256(path) if present and path is not None else None
+    expected_sha = config.get("teacher_manifest_sha256")
+    required_checks = tuple(map(str, config.get("required_teacher_checks", ())))
+    reported_checks = manifest.get("checks", {})
+    checks = {
+        "manifest_present": present,
+        "manifest_hash_matches": expected_sha is not None and observed_sha == expected_sha,
+        "protocol_matches": manifest.get("protocol") == config.get("teacher_protocol"),
+        "qualification_passed": manifest.get("qualified") is True,
+        "dataset_matches": manifest.get("dataset_sha256")
+        == config.get("test_split_sha256"),
+        "required_checks_pass": bool(required_checks)
+        and all(reported_checks.get(name) is True for name in required_checks),
+        "offline_usage_only": "Never reverse-sampling guidance"
+        in str(manifest.get("usage_policy", "")),
+    }
+    return {
+        "qualified": all(checks.values()),
+        "manifest": str(relative) if relative else None,
+        "manifest_sha256": observed_sha,
+        "checks": checks,
+        "required_teacher_checks": list(required_checks),
+        "counts": manifest.get("counts", {}),
+        "metrics": manifest.get("metrics", {}),
+        "teacher_classes": {
+            role: metadata.get("model_class")
+            for role, metadata in manifest.get("teacher_metadata", {}).items()
+        },
+    }
+
+
 def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
     root_manifest_path = data_root / str(config["data_center_manifest"])
     if not root_manifest_path.is_file():
@@ -272,15 +311,16 @@ def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
     )
 
     matpes = _source_attestation(data_root, root_manifest, config["h0_c"]["source_files"])
-    checkpoint = config["h0_c"].get("teacher_checkpoint")
-    checkpoint_path = data_root / str(checkpoint) if checkpoint else None
-    matpes["teacher_checkpoint_present"] = bool(
-        checkpoint_path is not None and checkpoint_path.is_file()
-    )
+    teacher = _audit_matpes_teacher(config["h0_c"], data_root)
+    matpes["teacher_qualification"] = teacher
     matpes["status"] = (
         "qualified"
-        if matpes["passed"] and matpes["teacher_checkpoint_present"]
-        else "blocked_frozen_teacher_missing"
+        if matpes["passed"] and teacher["qualified"]
+        else (
+            "blocked_frozen_teacher_missing"
+            if not teacher["checks"]["manifest_present"]
+            else "blocked_teacher_not_qualified"
+        )
     )
 
     catalogue = data_root / str(config["h0_d"]["catalogue_manifest"])
@@ -328,6 +368,7 @@ def render_markdown(result: dict[str, Any]) -> str:
     )
     alex_gate = result["components"]["H0-A"]
     phonon_gate = result["components"]["H0-B"]
+    matpes_gate = result["components"]["H0-C"]
     if alex_gate["status"] == "qualified":
         split_evidence = alex_gate["formula_prototype_split"]
         alex_statement = (
@@ -367,6 +408,26 @@ def render_markdown(result: dict[str, Any]) -> str:
             "2. Add or repair the missing PhononDB translational-mode, degenerate-subspace, and "
             "NAC attestations without overwriting frozen historical artifacts."
         )
+    if matpes_gate["status"] == "qualified":
+        teacher = matpes_gate["teacher_qualification"]
+        classes = teacher.get("teacher_classes", {})
+        counts = teacher.get("counts", {})
+        matpes_statement = (
+            "- MatPES-PBE H0-C is qualified with frozen "
+            f"{classes.get('primary', 'primary')} and "
+            f"{classes.get('disagreement', 'independent')} checkpoints: "
+            f"{counts.get('selected', 'unknown')} held-out structures and "
+            f"{counts.get('invariance_selected', 'unknown')} transformation-audit "
+            "structures passed the versioned metric, covariance, identity and runtime checks. "
+            "These teachers are restricted to offline supervision and uncertainty fields."
+        )
+        matpes_next = "3. Preserve the qualified MatPES teacher manifest and offline-only policy."
+    else:
+        matpes_statement = (
+            "- MatPES-PBE data files are present, but no qualified frozen teacher manifest "
+            "is activated."
+        )
+        matpes_next = "3. Qualify a frozen MatPES-PBE teacher and disagreement model."
     return "\n".join(
         [
             f"# {result['protocol']}",
@@ -387,7 +448,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "",
             alex_statement,
             phonon_statement,
-            "- MatPES-PBE data files are present; no frozen, hashed teacher checkpoint is activated.",
+            matpes_statement,
             "- A normalized OPD path-class catalogue and the 1,000--5,000 structure parent "
             "decomposition pilot do not yet exist.",
             "",
@@ -407,7 +468,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "",
             "1. Preserve the qualified Alex child split and require every later artifact to inherit it.",
             phonon_next,
-            "3. Qualify a frozen MatPES-PBE teacher and disagreement model.",
+            matpes_next,
             "4. Build a deduplicated OPD physical path-class measure, then run the bounded parent "
             "decomposition pilot.",
             "5. Split H1 into H1a (P1 real-data hybrid generator) and H1b (full 230-group/Wyckoff "
@@ -431,6 +492,8 @@ def main() -> None:
     args = parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8"))
     result = audit_activation(config, args.data_root)
+    result["config_sha256"] = _sha256(args.config)
+    result["auditor_sha256"] = _sha256(Path(__file__))
     if args.alex_profile is not None:
         result["alex_source_profile"] = json.loads(args.alex_profile.read_text(encoding="utf-8"))
     args.output_json.parent.mkdir(parents=True, exist_ok=True)

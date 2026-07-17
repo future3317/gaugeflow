@@ -1,0 +1,12 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.5.1+cu124
+torch-geometric==2.8.0
+torchdata==0.11.0
+numpy==2.4.6
+scipy==1.17.1
+pyarrow==22.0.0
+ase==3.29.0
+pymatgen-core==2026.7.16
+huggingface-hub==1.23.0
+lightning==2.6.1
+matgl @ git+https://github.com/materialyzeai/matgl.git@0158fe83cbc5e00e289ff622948c256a4f58bfa2

@@ -6,7 +6,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from scripts.audit_alex_mp20_source import audit_source
-from scripts.audit_h0_activation import audit_activation, render_markdown
+from scripts.audit_h0_activation import (
+    _audit_matpes_teacher,
+    audit_activation,
+    render_markdown,
+)
 
 
 def _digest(payload: bytes) -> str:
@@ -95,6 +99,38 @@ def test_h0_audit_distinguishes_source_presence_from_qualification(tmp_path):
     assert result["components"]["H0-C"]["status"] == "blocked_frozen_teacher_missing"
     assert result["h0_passed"] is False
     assert "H0_not_passed_stop_before_H1" in render_markdown(result)
+
+
+def test_h0_c_requires_a_hashed_qualified_offline_teacher_manifest(tmp_path):
+    manifest = {
+        "protocol": "h0-c-v2",
+        "qualified": True,
+        "dataset_sha256": "test-split",
+        "checks": {"invariance": True, "runtime_identity": True},
+        "counts": {"selected": 512, "invariance_selected": 32},
+        "teacher_metadata": {
+            "primary": {"model_class": "TensorNet"},
+            "disagreement": {"model_class": "QET"},
+        },
+        "usage_policy": "Never reverse-sampling guidance; offline labels only.",
+    }
+    path = tmp_path / "teacher.json"
+    path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+    config = {
+        "teacher_manifest": "teacher.json",
+        "teacher_manifest_sha256": _digest(path.read_bytes()),
+        "teacher_protocol": "h0-c-v2",
+        "test_split_sha256": "test-split",
+        "required_teacher_checks": ["invariance", "runtime_identity"],
+    }
+    result = _audit_matpes_teacher(config, tmp_path)
+    assert result["qualified"] is True
+    assert result["teacher_classes"] == {
+        "primary": "TensorNet",
+        "disagreement": "QET",
+    }
+    config["teacher_manifest_sha256"] = "wrong"
+    assert _audit_matpes_teacher(config, tmp_path)["qualified"] is False
 
 
 def test_alex_source_audit_detects_formula_leakage_without_false_corruption(tmp_path):

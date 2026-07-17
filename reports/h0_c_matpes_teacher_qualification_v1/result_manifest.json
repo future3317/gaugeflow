@@ -1,0 +1,51 @@
+{
+  "protocol": "h0_c_matpes_teacher_qualification_v1",
+  "qualified": false,
+  "decision": "H0-C failed; stop before H0-D and H1",
+  "failure": "The architecture-distinct M3GNet teacher violated every frozen rigid/cell invariance envelope under the intended MatGL 4.0.3 PYG runtime.",
+  "counts": {
+    "test_rows": 21660,
+    "selected": 512,
+    "invariance_selected": 32,
+    "inference_failures": 0
+  },
+  "identity": {
+    "config_sha256": "e54e23d27c886ffe485d5b3e3c0ee365f5515aef6da4c9cc6e389d4deae33e72",
+    "auditor_sha256": "1adc0197098873510aec3d2e13931f41ebffb5c4968226514b7752b4dddee573",
+    "checkpoint_manifest_sha256": "e48798b2c675ce1539a65c5bc773c668b0e1667e2e554627fa2a843a5bec4fb0",
+    "dataset_sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07",
+    "selected_ids_sha256": "8996edcdd891b168fcbc62b31288f1fbf70da53485f72a7d8846c29a4ff196c8",
+    "full_result_sha256": "d2617067af7099715a570226c99567a64fc9a7b72d83c9b6004fdb960a7b1cb2",
+    "metrics_parquet_sha256": "beca0235b05261c5d7a3b0f20b25d2e8351edf517671995c7716a728f1fe8998"
+  },
+  "held_out_metrics": {
+    "TensorNet": {
+      "energy_mae_ev_per_atom": 0.031731387323727864,
+      "force_mae_ev_per_angstrom": 0.12626411110104357,
+      "stress_mae_gpa": 0.7445359367546643
+    },
+    "M3GNet": {
+      "energy_mae_ev_per_atom": 0.04068247247294329,
+      "force_mae_ev_per_angstrom": 0.16880049829480592,
+      "stress_mae_gpa": 0.8205786121251538
+    }
+  },
+  "maximum_invariance_errors": {
+    "TensorNet": {
+      "rigid_energy_ev_per_atom": 9.775161743164062e-06,
+      "rigid_force_ev_per_angstrom": 9.633910405091848e-05,
+      "rigid_stress_gpa": 3.519268897214144e-05,
+      "cell_energy_ev_per_atom": 1.6689300537109375e-06,
+      "cell_force_ev_per_angstrom": 1.62190549067537e-05,
+      "cell_stress_gpa": 3.184631293326872e-05
+    },
+    "M3GNet": {
+      "rigid_energy_ev_per_atom": 0.003302680121527778,
+      "rigid_force_ev_per_angstrom": 0.0446110488546028,
+      "rigid_stress_gpa": 0.2057222362275545,
+      "cell_energy_ev_per_atom": 0.004999637603759766,
+      "cell_force_ev_per_angstrom": 0.0361787015275179,
+      "cell_stress_gpa": 0.3132359456305688
+    }
+  }
+}

@@ -72,18 +72,19 @@ its code/data/report surface.
   started.
 - The parent--distortion--child mathematical/code contracts are implemented.
   `h0_data_activation_v1` remains frozen as a failed historical audit.
-  `h0_data_activation_v3` has qualified H0-A and H0-B: the Alex child-first split is
+  `h0_data_activation_v4` has qualified H0-A, H0-B and H0-C: the Alex child-first split is
   formula-, exact-prototype-, matcher-envelope- and component-disjoint, and
   PhononDB v2 has a full-universe Hessian-algebra certificate plus a frozen
-  1,024-material long-tail/stratified mode audit. H0-C--E still require the
-  frozen MatPES teacher, OPD physical path measure and parent-decomposition pilot,
+  1,024-material long-tail/stratified mode audit; frozen TensorNet and QET
+  MatPES-PBE-2025.2 teachers pass the 512/32 held-out and covariance audit. H0-D/E
+  still require the OPD physical path measure and parent-decomposition pilot,
   so the overall decision remains
   `H0_not_passed_stop_before_H1`.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
-S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
-versioned real-data tensor-free S1a qualification.
+S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is H0-D's
+deduplicated OPD physical path-class measure; H1a remains unauthorized.
 
 ## Hierarchical symmetry-breaking rules
 

@@ -28,7 +28,7 @@ distributions.
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | v1 frozen failed; v3 H0-A/H0-B qualified, H0-C--E still block advancement |
+| H0 data activation | v1 frozen failed; v4 H0-A/H0-B/H0-C qualified, H0-D/E still block advancement |
 | Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
@@ -115,8 +115,8 @@ See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_bre
 The original Chinese design/data note is retained as
 [`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
 These interfaces do not authorize hierarchical training. The first formal H0
-activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v3
-repair has qualified H0-A and H0-B without overwriting v1/v2, but H0-C--E remain open;
+activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v4
+repair has qualified H0-A, H0-B and H0-C without overwriting v1--v3, but H0-D/E remain open;
 H1a/H1b and all later gates remain unauthorized.
 
 ## Repository layout
@@ -252,7 +252,8 @@ The next milestone is completion of H0, not training. H0-A now freezes all
 zero formula, exact-prototype, matcher-envelope or connected-component overlap.
 The exhaustive cross-split StructureMatcher candidate universe is empty. H0-B
 now qualifies the full 10,034-material Hessian algebra and a frozen 1,024-row
-long-tail/stratified mode audit. H0 still requires a frozen MatPES-PBE teacher,
-a deduplicated OPD physical path measure and the bounded
-parent-decomposition pilot. Only then may H1a and H1b start. Tensor conditioning
-remains H6.
+long-tail/stratified mode audit. H0-C qualifies frozen TensorNet and QET
+MatPES-PBE-2025.2 teachers on the same deterministic 512/32 audit panel, with
+strictly offline-only use. H0 still requires a deduplicated OPD physical path
+measure and the bounded parent-decomposition pilot. Only then may H1a and H1b
+start. Tensor conditioning remains H6.

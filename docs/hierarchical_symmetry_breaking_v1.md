@@ -114,7 +114,7 @@ manifest dated 2026-07-17 reports:
 | auxiliary tensor | Materials Project | 3,316 records; retained as a separate source, not a drop-in replacement for JARVIS |
 | nonzero-q modes | PhononDB | v2 re-derives all 10,034 compact float64 force constants from a full-supercell Hessian projected onto permutation symmetry and bilateral ASR; full-universe algebra passes, and a frozen 1,024-material audit covering all prior acoustic failures, large projection corrections, dielectric long tails and deterministic NAC/size strata qualifies acoustic modes, degenerate projectors and NAC semantics |
 | Gamma modes | JARVIS-DFPT | 4,995 complete schema-4 records among the 4,998-ID cohort; three named source failures are documented externally |
-| PES | MatPES-PBE 2025.2 | streaming JSONL and BSD-3-Clause card are present; this is a training dataset for a teacher, not itself a frozen teacher checkpoint |
+| PES | MatPES-PBE 2025.2 | H0-C-v2 qualifies exact-revision TensorNet and architecture-distinct QET teachers on a deterministic 512-row held-out panel plus 32-row covariance audit; use is offline-only |
 
 High-confidence data conclusions:
 
@@ -126,9 +126,10 @@ High-confidence data conclusions:
    evaluated at requested q points. H0-B uses full-universe algebraic checks
    and an explicitly labelled stratified numerical audit; it does not claim a
    10,034-material eigendecomposition sweep.
-3. MatPES data availability does not establish availability or qualification of
-   `TensorNet-PES-MatPES-PBE-2025.2`. A frozen checkpoint and independent
-   disagreement teacher must be separately activated.
+3. MatPES data availability alone does not establish teacher qualification.
+   H0-C-v2 now separately activates exact-revision TensorNet and QET checkpoints,
+   with immediate file rehashing, matched MatPES-PBE-2025.2 provenance,
+   held-out errors, covariance tests and an explicit ban on reverse guidance.
 4. The child split is frozen under H0-A v2. Parent--child pairs and OPD
    catalogues do not yet exist; every future candidate parent and mode scan must
    inherit this child assignment.
