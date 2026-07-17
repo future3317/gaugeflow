@@ -168,10 +168,11 @@ unauthorized.
   sources: both failed the frozen real-material diagnostic and must not return
   as runtime fallbacks.
 - Future versioned parent-occurrence successors must apply
-  `configs/data_quality/parent_occurrence_quarantine_v1.json` before candidate
-  evaluation. Keep path quarantine distinct from material deletion: only
-  demonstrably corrupt source rows may enter a material-level exclusion list.
-  Never retroactively filter a frozen panel or rewrite its artifact hashes.
+  `configs/data_quality/parent_occurrence_quarantine_v2.json` before candidate
+  enumeration. Material exclusions are task-scoped data cleaning: remove them
+  at the dataset boundary, record evidence and hashes, and never add a model or
+  projection fallback for them. Keep raw source rows and frozen panels intact;
+  never retroactively filter a frozen result or rewrite its artifact hashes.
 - Avoid adding a new method until a small versioned diagnostic identifies the
   failure mechanism it addresses.
 - Completed exploratory protocols belong in Git history and the condensed

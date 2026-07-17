@@ -1,0 +1,68 @@
+{
+  "schema": 2,
+  "protocol": "parent_occurrence_quarantine_v2",
+  "status": "active_for_future_versioned_parent_occurrence_successors",
+  "supersedes_without_overwriting": "parent_occurrence_quarantine_v1",
+  "frozen_history_unchanged": [
+    "h0_a_alex_formula_prototype_split_v1",
+    "h0_e_maximal_t_parent_occurrence_e1a_v1",
+    "h0_e_v3_maximal_k_occurrence_k0_v1",
+    "h0_e_v4_occupational_order_o0_v1"
+  ],
+  "scope": {
+    "included": "future parent-occurrence and blueprint-activation datasets frozen after this manifest",
+    "excluded": [
+      "raw Alex source files",
+      "the frozen H0-A child split",
+      "all frozen H0-E panels, reports and artifacts",
+      "exact-child structure tasks outside parent-occurrence activation"
+    ]
+  },
+  "application_order": [
+    "verify source identity and manifest hash",
+    "remove material-level exclusions before enumerating candidate edges",
+    "apply path-level quarantine to remaining material-edge pairs",
+    "freeze the filtered ordered IDs and candidate counts in the successor Gate protocol"
+  ],
+  "classification_policy": {
+    "material_exclusion": [
+      "nonfinite coordinates or lattice",
+      "singular or numerically unusable lattice",
+      "unphysical near-contact after periodic minimum-image evaluation",
+      "source join or duplicate-identity corruption",
+      "space-group assignment unstable across the preregistered tolerance panel",
+      "material is explicitly declared outside the bounded parent-occurrence activation domain after a versioned diagnostic"
+    ],
+    "path_quarantine": [
+      "only particular parent embeddings fail while the material remains eligible for other parent paths"
+    ],
+    "fail_closed": true,
+    "no_ad_hoc_deletion": true,
+    "no_model_fallback_for_bad_data": true,
+    "raw_source_deletion_forbidden": true
+  },
+  "material_exclusions": [
+    {
+      "material_id": "alex<agm004639609>",
+      "action": "exclude_material_before_parent_edge_enumeration",
+      "scope": "future parent-occurrence and blueprint-activation datasets only",
+      "classification": "bounded_parent_occurrence_domain_incompatibility",
+      "reason": "The user elected to remove this material from future parent-occurrence activation after all observed SG12-to-SG71 embeddings violated the frozen parent-path strain/certificate domain. The crystallographic source row remains intact for unrelated tasks and historical reproduction.",
+      "evidence": {
+        "child_space_group": 12,
+        "primitive_sites": 12,
+        "maximal_t_edges_removed": 25,
+        "maximal_k_edges_removed": 21,
+        "observed_problem_embedding_count": 3,
+        "source_max_displacement_angstrom": 0.09859,
+        "source_hencky_norm": 0.48977,
+        "frozen_hencky_limit": 0.15,
+        "finite": true,
+        "stable_space_group": 12
+      },
+      "source": "frozen H0-E-v2/v3 results plus the versioned parent-path localization audit",
+      "introduced_utc_date": "2026-07-17"
+    }
+  ],
+  "path_quarantine": []
+}

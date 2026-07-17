@@ -41,6 +41,39 @@ def test_parent_path_quarantine_does_not_rewrite_frozen_e1a_or_child_data():
     assert len(entry["evidence"]["space_group_symprec_panel_angstrom"]) == 7
 
 
+def test_v2_material_cleaning_excludes_problem_row_before_edge_enumeration():
+    frozen = json.loads(
+        Path("configs/gates/h0_e_maximal_t_parent_occurrence_e1a_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    cleaning = json.loads(
+        Path("configs/data_quality/parent_occurrence_quarantine_v2.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    material_id = "alex<agm004639609>"
+    excluded = {entry["material_id"] for entry in cleaning["material_exclusions"]}
+    filtered = [
+        candidate
+        for candidate in frozen["selection"]["material_ids"]
+        if candidate not in excluded
+    ]
+
+    assert cleaning["supersedes_without_overwriting"] == (
+        "parent_occurrence_quarantine_v1"
+    )
+    assert excluded == {material_id}
+    assert material_id not in filtered
+    assert len(filtered) == 63
+    assert cleaning["path_quarantine"] == []
+    assert cleaning["classification_policy"]["no_model_fallback_for_bad_data"]
+    assert cleaning["classification_policy"]["raw_source_deletion_forbidden"]
+    assert hashlib.sha256(
+        json.dumps(filtered, separators=(",", ":")).encode()
+    ).hexdigest() == "6e78ebd1c47ae94f770bc04bb3fc1c0ae89088cb4509cea6dec621cc4069f25b"
+
+
 def test_h0_e_v3_k0_is_a_new_frozen_cell_changing_mechanism_gate():
     config = json.loads(
         Path("configs/gates/h0_e_v3_maximal_k_occurrence_k0_v1.json").read_text(
@@ -91,4 +124,39 @@ def test_h0_e_v4_o0_freezes_ordered_occupational_mechanism_without_h0_claim():
     )
     assert config["advancement_rule"].startswith(
         "O0 success permits only a separately frozen held-out O1"
+    )
+
+
+def test_h0_e_v4_o0_v2_uses_cleaned_panel_without_relaxing_physics():
+    frozen_v1 = json.loads(
+        Path("configs/gates/h0_e_v4_occupational_order_o0_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    config = json.loads(
+        Path("configs/gates/h0_e_v4_occupational_order_o0_v2.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    cleaning_path = Path(config["dependencies"]["data_cleaning"])
+
+    assert config["supersedes_without_overwriting"] == frozen_v1["protocol"]
+    assert config["dependencies"]["e0_manifest_sha256"] == (
+        frozen_v1["dependencies"]["e0_manifest_sha256"]
+    )
+    assert config["selection"]["source_panel_size"] == 64
+    assert config["selection"]["material_exclusions"] == 1
+    assert config["selection"]["size"] == 63
+    assert config["setting_and_search"]["material_edges_removed_before_enumeration"] == 46
+    assert config["setting_and_search"]["expected_candidate_edges"] == 962
+    assert config["thresholds"]["selected_rows"] == 63
+    assert config["thresholds"]["new_candidate_materials_min"] == 3
+    assert config["thresholds"]["source_max_displacement_angstrom"] == (
+        frozen_v1["thresholds"]["source_max_displacement_angstrom"]
+    )
+    assert config["thresholds"]["source_hencky_norm_max"] == (
+        frozen_v1["thresholds"]["source_hencky_norm_max"]
+    )
+    assert hashlib.sha256(cleaning_path.read_bytes()).hexdigest() == (
+        config["dependencies"]["data_cleaning_sha256"]
     )
