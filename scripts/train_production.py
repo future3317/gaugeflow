@@ -10,7 +10,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from gaugeflow.file_utils import sha256_file
+from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset, collate_packed_alex
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import (
@@ -26,6 +26,7 @@ from gaugeflow.production.training import ProductionTrainer, ProductionTrainingC
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--protocol", type=Path, required=True)
     parser.add_argument("--cache-root", type=Path, required=True)
     parser.add_argument(
         "--lattice-standardization",
@@ -34,30 +35,36 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--resume", type=Path)
-    parser.add_argument("--steps", type=int, default=100_000)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--checkpoint-every", type=int, default=5_000)
-    parser.add_argument("--log-every", type=int, default=100)
-    parser.add_argument("--num-workers", type=int, default=0)
-    parser.add_argument("--seed", type=int, default=5201)
+    parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--hidden-dim", type=int, default=192)
-    parser.add_argument("--vector-dim", type=int, default=32)
-    parser.add_argument("--layers", type=int, default=4)
-    parser.add_argument("--radial-dim", type=int, default=16)
-    parser.add_argument("--radial-cutoff", type=float, default=8.0)
-    parser.add_argument("--coordinate-fractional-sigma-max", type=float, default=1.0)
-    parser.add_argument("--learning-rate", type=float, default=2.0e-4)
-    parser.add_argument("--weight-decay", type=float, default=1.0e-6)
-    parser.add_argument("--ema-decay", type=float, default=0.999)
-    parser.add_argument("--precision", choices=("fp32", "bf16"), default="bf16")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    if args.steps < 1 or args.batch_size < 1 or args.checkpoint_every < 1 or args.log_every < 1:
-        raise ValueError("training counts must be positive")
+    protocol = load_json_object(args.protocol)
+    model_spec = protocol.get("model")
+    training_spec = protocol.get("training")
+    if not isinstance(model_spec, dict) or not isinstance(training_spec, dict):
+        raise ValueError("production protocol requires model and training objects")
+    seeds = [int(value) for value in training_spec["seeds"]]
+    if args.seed not in seeds:
+        raise ValueError("seed is not preregistered by the production protocol")
+    steps = int(training_spec["steps"])
+    batch_size = int(training_spec["batch_size"])
+    log_every = int(training_spec["log_every"])
+    num_workers = int(training_spec["num_workers"])
+    checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
+    if (
+        steps < 1
+        or batch_size < 1
+        or log_every < 1
+        or num_workers < 0
+        or 0 not in checkpoint_steps
+        or steps not in checkpoint_steps
+        or any(value < 0 or value > steps for value in checkpoint_steps)
+    ):
+        raise ValueError("production protocol has invalid training counts")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but torch.cuda.is_available() is false")
@@ -69,18 +76,24 @@ def main() -> None:
     loader_generator = torch.Generator().manual_seed(args.seed)
     loader = DataLoader(
         dataset,
-        batch_size=args.batch_size,
+        batch_size=batch_size,
         shuffle=True,
-        num_workers=args.num_workers,
+        num_workers=num_workers,
         collate_fn=collate_packed_alex,
         generator=loader_generator,
         drop_last=False,
         pin_memory=device.type == "cuda",
-        persistent_workers=args.num_workers > 0,
+        persistent_workers=num_workers > 0,
     )
     resume_metadata = (
         read_production_checkpoint_metadata(args.resume) if args.resume is not None else None
     )
+    protocol_sha256 = canonical_json_hash(protocol)
+    if resume_metadata is not None and (
+        resume_metadata.get("protocol") != protocol["protocol"]
+        or resume_metadata.get("protocol_sha256") != protocol_sha256
+    ):
+        raise ValueError("resume checkpoint does not match the frozen protocol")
     if resume_metadata is None:
         standardization_value = json.loads(
             args.lattice_standardization.read_text(encoding="utf-8")
@@ -99,11 +112,11 @@ def main() -> None:
         resume_metadata["model_config"]
         if resume_metadata is not None
         else {
-            "hidden_dim": args.hidden_dim,
-            "vector_dim": args.vector_dim,
-            "layers": args.layers,
-            "radial_dim": args.radial_dim,
-            "radial_cutoff": args.radial_cutoff,
+            "hidden_dim": int(model_spec["hidden_dim"]),
+            "vector_dim": int(model_spec["vector_dim"]),
+            "layers": int(model_spec["layers"]),
+            "radial_dim": int(model_spec["radial_dim"]),
+            "radial_cutoff": float(model_spec["radial_cutoff_angstrom"]),
             "atlas_residual_circle_samples": 8,
         }
     )
@@ -112,11 +125,16 @@ def main() -> None:
         ProductionTrainingConfig(**resume_metadata["training_config"])
         if resume_metadata is not None
         else ProductionTrainingConfig(
-            learning_rate=args.learning_rate,
-            weight_decay=args.weight_decay,
-            ema_decay=args.ema_decay,
-            coordinate_fractional_sigma_max=args.coordinate_fractional_sigma_max,
-            precision=args.precision,
+            learning_rate=float(training_spec["learning_rate"]),
+            weight_decay=float(training_spec["weight_decay"]),
+            gradient_clip_norm=float(training_spec["gradient_clip_norm"]),
+            ema_decay=float(training_spec["ema_decay"]),
+            coordinate_fractional_sigma_max=float(
+                training_spec["coordinate_fractional_sigma_max"]
+            ),
+            minimum_time=float(training_spec["minimum_time"]),
+            maximum_time=float(training_spec["maximum_time"]),
+            precision=str(training_spec["precision"]),
         )
     )
     diffusion = TensorFreeHybridDiffusion(
@@ -139,7 +157,8 @@ def main() -> None:
         trainer.step = step
     args.output.mkdir(parents=True, exist_ok=True)
     checkpoint_metadata = {
-        "protocol": "h1a_p1_generator_pilot_v1",
+        "protocol": protocol["protocol"],
+        "protocol_sha256": protocol_sha256,
         "model_config": model_config,
         "training_config": dataclasses.asdict(training_config),
         "lattice_standardization": standardization_value,
@@ -160,7 +179,7 @@ def main() -> None:
     log_path = args.output / "training_metrics.jsonl"
     data_iterator = iter(loader)
     device_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
-    while trainer.step < args.steps:
+    while trainer.step < steps:
         try:
             batch_data = next(data_iterator)
         except StopIteration:
@@ -180,7 +199,7 @@ def main() -> None:
             blueprint,
             generator=device_generator,
         )
-        if trainer.step % args.log_every == 0 or trainer.step == 1:
+        if trainer.step % log_every == 0 or trainer.step == 1:
             record = {
                 "step": trainer.step,
                 "loss": float(output.loss.detach().cpu()),
@@ -194,7 +213,7 @@ def main() -> None:
             with log_path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
             print(json.dumps(record, sort_keys=True), flush=True)
-        if trainer.step % args.checkpoint_every == 0 or trainer.step == args.steps:
+        if trainer.step in checkpoint_steps:
             save_production_checkpoint(
                 args.output / f"checkpoint_step_{trainer.step:08d}.pt",
                 model=model,

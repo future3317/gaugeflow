@@ -1,4 +1,4 @@
-"""Evaluate the frozen three-seed H1a P1 generator pilot."""
+"""Evaluate one frozen three-seed H1a P1 tensor-free protocol."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Any
 import torch
 from torch_geometric.data import Batch
 
-from gaugeflow.file_utils import load_json_object
+from gaugeflow.file_utils import canonical_json_hash, load_json_object
 from gaugeflow.geometry import periodic_radius_multigraph
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.blueprint import ParentBlueprintBatch
@@ -27,7 +27,11 @@ from gaugeflow.production.training import ExponentialMovingAverage
 
 
 def _load_ema_model(
-    checkpoint: Path, device: torch.device
+    checkpoint: Path,
+    device: torch.device,
+    *,
+    protocol_name: str,
+    protocol_sha256: str,
 ) -> tuple[
     HybridCrystalDenoiser,
     P1LatticeStandardizer,
@@ -35,8 +39,11 @@ def _load_ema_model(
     Any,
 ]:
     metadata = read_production_checkpoint_metadata(checkpoint)
-    if metadata.get("protocol") != "h1a_p1_generator_pilot_v1":
-        raise ValueError("checkpoint does not belong to the H1a P1 pilot")
+    if (
+        metadata.get("protocol") != protocol_name
+        or metadata.get("protocol_sha256") != protocol_sha256
+    ):
+        raise ValueError("checkpoint does not match the frozen H1a P1 protocol")
     model_config = metadata.get("model_config")
     training_config = metadata.get("training_config")
     standardization = metadata.get("lattice_standardization")
@@ -68,9 +75,16 @@ def _validation_losses(
     *,
     device: torch.device,
     seed: int,
+    protocol_name: str,
+    protocol_sha256: str,
     batch_size: int = 16,
 ) -> dict[str, float]:
-    model, standardizer, training, _ = _load_ema_model(checkpoint, device)
+    model, standardizer, training, _ = _load_ema_model(
+        checkpoint,
+        device,
+        protocol_name=protocol_name,
+        protocol_sha256=protocol_sha256,
+    )
     diffusion = TensorFreeHybridDiffusion(
         model,
         standardizer,
@@ -131,9 +145,17 @@ def _sample_checkpoint(
     samples: int,
     steps: int,
     seed: int,
+    protocol_name: str,
+    protocol_sha256: str,
+    minimum_distance_threshold: float,
     batch_size: int = 8,
 ) -> dict[str, Any]:
-    model, standardizer, training, node_prior = _load_ema_model(checkpoint, device)
+    model, standardizer, training, node_prior = _load_ema_model(
+        checkpoint,
+        device,
+        protocol_name=protocol_name,
+        protocol_sha256=protocol_sha256,
+    )
     sampler = TensorFreeReverseSampler(
         model,
         standardizer,
@@ -193,8 +215,9 @@ def _sample_checkpoint(
         "sampling_failures": failures,
         "terminal_masks": masks,
         "finite_positive_lattices_fraction": finite_positive / samples,
-        "minimum_distance_at_least_0_5A_fraction": float(
-            (distance >= 0.5).double().mean()
+        "minimum_distance_threshold_angstrom": minimum_distance_threshold,
+        "minimum_distance_guardrail_fraction": float(
+            (distance >= minimum_distance_threshold).double().mean()
         ),
         "minimum_distance_quantiles_angstrom": torch.quantile(
             distance, torch.tensor([0.0, 0.5, 1.0], dtype=torch.float64)
@@ -216,12 +239,11 @@ def _training_log_is_finite(path: Path, expected_step: int) -> bool:
 
 
 def main() -> None:
-    repo_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--protocol",
         type=Path,
-        default=repo_root / "configs/gates/h1a_p1_generator_pilot_v1.json",
+        required=True,
     )
     parser.add_argument(
         "--cache-root",
@@ -232,18 +254,27 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=repo_root / "reports/h1a_p1_generator_pilot_v1/results.json",
+        required=True,
     )
     parser.add_argument("--device", default="cuda")
     arguments = parser.parse_args()
     protocol = load_json_object(arguments.protocol)
-    if protocol.get("protocol") != "h1a_p1_generator_pilot_v1":
-        raise ValueError("unexpected H1a pilot protocol")
+    protocol_name = str(protocol.get("protocol"))
+    if not protocol_name.startswith("h1a_p1_"):
+        raise ValueError("unexpected H1a P1 protocol")
+    protocol_sha256 = canonical_json_hash(protocol)
     device = torch.device(arguments.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but unavailable")
     evaluation = protocol["fixed_evaluation"]
     training = protocol["training"]
+    acceptance = protocol["acceptance"]
+    distance_guardrail = acceptance.get("minimum_distance_guardrail")
+    distance_threshold = (
+        float(distance_guardrail["threshold_angstrom"])
+        if isinstance(distance_guardrail, dict)
+        else 0.5
+    )
     dataset = PackedAlexP1Dataset(arguments.cache_root, "val")
     indices = torch.randperm(
         len(dataset),
@@ -253,22 +284,21 @@ def main() -> None:
     ratios: list[float] = []
     for seed in training["seeds"]:
         run = arguments.run_root / f"seed_{seed}"
-        initial_checkpoint = run / "checkpoint_step_00000000.pt"
+        validation_curve: dict[str, dict[str, float]] = {}
+        for checkpoint_step in training["checkpoint_steps"]:
+            checkpoint = run / f"checkpoint_step_{int(checkpoint_step):08d}.pt"
+            validation_curve[str(checkpoint_step)] = _validation_losses(
+                checkpoint,
+                dataset,
+                indices,
+                device=device,
+                seed=int(evaluation["validation_seed"]) + 1,
+                protocol_name=protocol_name,
+                protocol_sha256=protocol_sha256,
+            )
+        initial = validation_curve["0"]
+        final = validation_curve[str(int(training["steps"]))]
         final_checkpoint = run / f"checkpoint_step_{int(training['steps']):08d}.pt"
-        initial = _validation_losses(
-            initial_checkpoint,
-            dataset,
-            indices,
-            device=device,
-            seed=int(evaluation["validation_seed"]) + 1,
-        )
-        final = _validation_losses(
-            final_checkpoint,
-            dataset,
-            indices,
-            device=device,
-            seed=int(evaluation["validation_seed"]) + 1,
-        )
         ratio = final["total"] / initial["total"]
         ratios.append(ratio)
         samples = _sample_checkpoint(
@@ -277,17 +307,20 @@ def main() -> None:
             samples=int(evaluation["samples_per_seed"]),
             steps=int(evaluation["sampler_steps"]),
             seed=int(evaluation["sampling_seed"]) + int(seed),
+            protocol_name=protocol_name,
+            protocol_sha256=protocol_sha256,
+            minimum_distance_threshold=distance_threshold,
         )
         seed_results[str(seed)] = {
             "initial_validation": initial,
             "final_validation": final,
+            "validation_curve": validation_curve,
             "final_over_initial_total": ratio,
             "training_log_finite": _training_log_is_finite(
                 run / "training_metrics.jsonl", int(training["steps"])
             ),
             "sampling": samples,
         }
-    acceptance = protocol["acceptance"]
     checks = {
         "training_finite": all(
             bool(value["training_log_finite"]) for value in seed_results.values()
@@ -317,18 +350,26 @@ def main() -> None:
             for value in seed_results.values()
         ),
     }
+    if isinstance(distance_guardrail, dict):
+        fractions = [
+            float(value["sampling"]["minimum_distance_guardrail_fraction"])
+            for value in seed_results.values()
+        ]
+        checks["minimum_distance_each_seed"] = min(fractions) >= float(
+            distance_guardrail["each_seed_fraction_min"]
+        )
+        checks["minimum_distance_aggregate"] = sum(fractions) / len(fractions) >= float(
+            distance_guardrail["aggregate_fraction_min"]
+        )
     qualified = all(checks.values())
     result = {
-        "protocol": protocol["protocol"],
+        "protocol": protocol_name,
+        "protocol_sha256": protocol_sha256,
         "seed_results": seed_results,
         "mean_final_over_initial_total": sum(ratios) / len(ratios),
         "checks": checks,
         "qualified": qualified,
-        "decision": (
-            "pilot_qualified_only_freeze_longer_H1a"
-            if qualified
-            else "pilot_failed_stop_at_H1a"
-        ),
+        "decision": protocol["decision_rule"]["pass" if qualified else "fail"],
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text(
@@ -336,7 +377,7 @@ def main() -> None:
     )
     print(json.dumps(result, indent=2, sort_keys=True))
     if not qualified:
-        raise RuntimeError("H1a P1 pilot failed its frozen acceptance checks")
+        raise RuntimeError("H1a P1 protocol failed its frozen acceptance checks")
 
 
 if __name__ == "__main__":
