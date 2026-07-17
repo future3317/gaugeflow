@@ -35,14 +35,24 @@ def _ordered_id_hash(values: list[str]) -> str:
 
 
 def _git_commit(repo_root: Path) -> str:
-    status = subprocess.run(
-        ["git", "status", "--porcelain"],
+    tracked = subprocess.run(
+        ["git", "diff", "--ignore-space-at-eol", "--quiet"],
+        cwd=repo_root,
+        check=False,
+    )
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=repo_root,
+        check=False,
+    )
+    untracked = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard"],
         cwd=repo_root,
         check=True,
         capture_output=True,
         text=True,
     ).stdout
-    if status.strip():
+    if tracked.returncode != 0 or staged.returncode != 0 or untracked.strip():
         raise RuntimeError("the frozen E1a run requires a clean Git worktree")
     return subprocess.run(
         ["git", "rev-parse", "HEAD"],
