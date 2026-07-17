@@ -16,6 +16,58 @@ def standard_normal(
     return torch.randn(shape, dtype=reference.dtype, device=reference.device, generator=generator)
 
 
+def wrapped_normal_score(
+    displacement: torch.Tensor,
+    sigma: torch.Tensor,
+    *,
+    dual_threshold: float = 0.25,
+) -> torch.Tensor:
+    """Exact-to-FP32 score of a unit-period wrapped normal, fully vectorized.
+
+    A nine-image log-sum-exp is used in the narrow-kernel regime and an
+    eight-mode Poisson/Fourier series in the broad-kernel regime. At the
+    switching scale both omitted tails are below ``1e-34``. This evaluates the
+    conditional torus score itself rather than the high-variance score of one
+    randomly selected Euclidean lift.
+    """
+    if not displacement.dtype.is_floating_point or not sigma.dtype.is_floating_point:
+        raise ValueError("wrapped-normal arguments must be floating tensors")
+    if dual_threshold <= 0.0 or not torch.isfinite(sigma).all() or bool((sigma <= 0).any()):
+        raise ValueError("wrapped-normal scales and dual threshold must be positive")
+    scale = torch.broadcast_to(sigma, displacement.shape)
+    centered = torch.remainder(displacement + 0.5, 1.0) - 0.5
+    result = torch.empty_like(centered)
+    image_mask = scale <= dual_threshold
+    if bool(image_mask.any()):
+        selected = centered[image_mask]
+        selected_scale = scale[image_mask]
+        images = torch.arange(-4, 5, dtype=selected.dtype, device=selected.device)
+        residual = selected.unsqueeze(-1) + images
+        logits = -0.5 * (residual / selected_scale.unsqueeze(-1)).square()
+        mean_residual = (torch.softmax(logits, dim=-1) * residual).sum(dim=-1)
+        result[image_mask] = -mean_residual / selected_scale.square()
+    fourier_mask = ~image_mask
+    if bool(fourier_mask.any()):
+        selected = centered[fourier_mask]
+        selected_scale = scale[fourier_mask]
+        modes = torch.arange(1, 9, dtype=selected.dtype, device=selected.device)
+        coefficients = torch.exp(
+            -2.0
+            * math.pi**2
+            * selected_scale.unsqueeze(-1).square()
+            * modes.square()
+        )
+        phase = 2.0 * math.pi * selected.unsqueeze(-1) * modes
+        density = 1.0 + 2.0 * (coefficients * phase.cos()).sum(dim=-1)
+        derivative = -4.0 * math.pi * (
+            modes * coefficients * phase.sin()
+        ).sum(dim=-1)
+        if bool((density <= 0.0).any()):
+            raise FloatingPointError("wrapped-normal Fourier density lost positivity")
+        result[fourier_mask] = derivative / density
+    return result
+
+
 class CosineNoiseSchedule:
     """Variance-preserving cosine schedule with clean time zero.
 

@@ -7,8 +7,10 @@ from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from gaugeflow.production.schedules import FractionalTorusVarianceSchedule
-from gaugeflow.production.state_projection import project_translation_state
+from gaugeflow.production.schedules import (
+    FractionalTorusVarianceSchedule,
+    wrapped_normal_score,
+)
 
 
 def _standardizer() -> P1LatticeStandardizer:
@@ -60,26 +62,30 @@ def test_fractional_coordinate_forward_kernel_is_independent_of_cell_metric():
     assert torch.equal(noisy[0].coordinate_score_target, noisy[1].coordinate_score_target)
 
 
-def test_oracle_fractional_score_recovers_endpoint_in_one_variance_step():
-    generator = torch.Generator().manual_seed(7002)
-    counts = torch.tensor([4, 7, 2])
-    batch = torch.repeat_interleave(torch.arange(3), counts)
-    endpoint = project_translation_state(
-        torch.rand((int(counts.sum()), 3), generator=generator, dtype=torch.float64),
-        batch,
-        3,
+def test_wrapped_normal_score_matches_autograd_image_sum_and_is_periodic():
+    displacement = torch.tensor(
+        [-1.49, -0.47, -0.13, 0.0, 0.29, 0.51, 1.82],
+        dtype=torch.float64,
+        requires_grad=True,
     )
-    variance = torch.tensor([0.17, 0.63, 0.91], dtype=torch.float64)
-    noise = project_translation_state(
-        torch.randn(endpoint.shape, generator=generator, dtype=torch.float64),
-        batch,
-        3,
-    )
-    state = endpoint + variance[batch].sqrt().unsqueeze(-1) * noise
-    oracle_score = -(state - endpoint) / variance[batch].unsqueeze(-1)
-    recovered = state + variance[batch].unsqueeze(-1) * oracle_score
-    rms = (recovered - endpoint).square().mean().sqrt()
-    assert rms <= 1.0e-12
+    sigma = torch.tensor([0.04, 0.11, 0.25, 0.31, 0.5, 0.73, 1.0], dtype=torch.float64)
+    images = torch.arange(-16, 17, dtype=torch.float64)
+    centered = torch.remainder(displacement + 0.5, 1.0) - 0.5
+    log_density = torch.logsumexp(
+        -0.5 * ((centered.unsqueeze(-1) + images) / sigma.unsqueeze(-1)).square(),
+        dim=-1,
+    ).sum()
+    reference = torch.autograd.grad(log_density, displacement)[0]
+    observed = wrapped_normal_score(displacement.detach(), sigma)
+    shifted = wrapped_normal_score(displacement.detach() + 3.0, sigma)
+    assert torch.allclose(observed, reference, atol=2e-10, rtol=2e-10)
+    assert torch.allclose(shifted, observed, atol=2e-10, rtol=2e-10)
+
+
+def test_wrapped_normal_score_vanishes_at_the_uniform_terminal_scale():
+    displacement = torch.linspace(-0.5, 0.5, 101, dtype=torch.float64)
+    score = wrapped_normal_score(displacement, torch.ones_like(displacement))
+    assert float(score.abs().max()) < 4e-8
 
 
 def test_lattice_state_is_visible_without_periodic_edges():

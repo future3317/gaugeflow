@@ -239,6 +239,7 @@ def main() -> None:
     )[: int(evaluation["validation_graphs"])]
     seed_results: dict[str, Any] = {}
     ratios: list[float] = []
+    coordinate_ratios: list[float] = []
     for seed in training["seeds"]:
         run = arguments.run_root / f"seed_{seed}"
         validation_curve: dict[str, dict[str, float]] = {}
@@ -258,6 +259,7 @@ def main() -> None:
         final_checkpoint = run / f"checkpoint_step_{int(training['steps']):08d}.pt"
         ratio = final["total"] / initial["total"]
         ratios.append(ratio)
+        coordinate_ratios.append(final["coordinate"] / initial["coordinate"])
         samples = _sample_checkpoint(
             final_checkpoint,
             device=device,
@@ -273,6 +275,7 @@ def main() -> None:
             "final_validation": final,
             "validation_curve": validation_curve,
             "final_over_initial_total": ratio,
+            "final_over_initial_coordinate": coordinate_ratios[-1],
             "training_log_finite": _training_log_is_finite(
                 run / "training_metrics.jsonl", int(training["steps"])
             ),
@@ -307,6 +310,19 @@ def main() -> None:
             for value in seed_results.values()
         ),
     }
+    coordinate_mean_bound = acceptance.get(
+        "mean_final_coordinate_over_initial_max"
+    )
+    coordinate_seed_bound = acceptance.get(
+        "three_seed_final_coordinate_over_initial_max"
+    )
+    if coordinate_mean_bound is not None and coordinate_seed_bound is not None:
+        checks["mean_coordinate_ratio"] = sum(coordinate_ratios) / len(
+            coordinate_ratios
+        ) <= float(coordinate_mean_bound)
+        checks["all_seed_coordinate_ratio"] = max(coordinate_ratios) <= float(
+            coordinate_seed_bound
+        )
     if isinstance(distance_guardrail, dict):
         fractions = [
             float(value["sampling"]["minimum_distance_guardrail_fraction"])
@@ -324,6 +340,8 @@ def main() -> None:
         "protocol_sha256": protocol_sha256,
         "seed_results": seed_results,
         "mean_final_over_initial_total": sum(ratios) / len(ratios),
+        "mean_final_over_initial_coordinate": sum(coordinate_ratios)
+        / len(coordinate_ratios),
         "checks": checks,
         "qualified": qualified,
         "decision": protocol["decision_rule"]["pass" if qualified else "fail"],
