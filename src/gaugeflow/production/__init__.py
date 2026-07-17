@@ -10,6 +10,7 @@ from .blueprint import (
     ModeCatalog,
     ModeCatalogEntry,
     ModeDiffusionState,
+    OccupationalPattern,
     OPDBranch,
     ParentBlueprint,
     ParentBlueprintBatch,
@@ -22,7 +23,11 @@ from .checkpointing import (
     read_production_checkpoint_metadata,
     save_production_checkpoint,
 )
-from .child_reconstruction import ChildReconstructor, HierarchicalSample, ParentCrystal
+from .child_reconstruction import (
+    ChildReconstructor,
+    HierarchicalSample,
+    ParentGeometryCarrier,
+)
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
@@ -66,9 +71,10 @@ __all__ = [
     "ModeCatalogEntry",
     "ModeDiffusionState",
     "OPDBranch",
+    "OccupationalPattern",
     "ParentBlueprint",
     "ParentBlueprintBatch",
-    "ParentCrystal",
+    "ParentGeometryCarrier",
     "PointGroupMetricChart",
     "ProductionTrainer",
     "ProductionTrainingConfig",

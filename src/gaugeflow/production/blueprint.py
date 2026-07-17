@@ -13,6 +13,8 @@ from dataclasses import dataclass
 
 import torch
 
+from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
+
 
 def trace_free_projector(*, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
     """Kelvin-coordinate projector onto symmetric trace-free matrices."""
@@ -23,27 +25,24 @@ def trace_free_projector(*, dtype: torch.dtype, device: torch.device) -> torch.T
 
 @dataclass(frozen=True)
 class ParentBlueprint:
-    """Discrete ordered parent-phase description.
+    """Discrete geometric parent-phase description.
 
-    ``wyckoff_orbits``, ``multiplicities`` and ``species`` describe asymmetric
-    sites.  They are sampled variables, not labels copied from a paired child.
+    The parent declares only a space group and its geometric Wyckoff carrier.
+    Terminal integer elements are sampled as a separate occupational field.
     """
 
     parent_space_group: int
     wyckoff_orbits: tuple[str, ...]
     multiplicities: tuple[int, ...]
-    species: tuple[int, ...]
 
     def __post_init__(self) -> None:
         sites = len(self.wyckoff_orbits)
         if not 1 <= self.parent_space_group <= 230:
             raise ValueError("parent space-group number must lie in 1..230")
-        if sites < 1 or len(self.multiplicities) != sites or len(self.species) != sites:
-            raise ValueError("parent Wyckoff, multiplicity and species tuples must align")
+        if sites < 1 or len(self.multiplicities) != sites:
+            raise ValueError("parent Wyckoff and multiplicity tuples must align")
         if any(value < 1 for value in self.multiplicities):
             raise ValueError("parent Wyckoff multiplicities must be positive")
-        if any(value < 1 or value > 118 for value in self.species):
-            raise ValueError("parent species must be physical atomic numbers in 1..118")
 
     @property
     def atom_count(self) -> int:
@@ -87,6 +86,116 @@ class ParentBlueprintBatch:
             shape_projector=projector.expand(graphs, -1, -1).clone(),
             fractional_to_cartesian=chart.expand(graphs, -1, -1).clone(),
         )
+
+
+@dataclass(frozen=True)
+class OccupationalPattern:
+    """Strictly ordered categorical coloring of one expanded geometry carrier.
+
+    ``site_classes`` is the element-name-independent partition of sites and
+    ``species_by_class`` assigns one physical zero-based element token to each
+    class.  It is neither a partial occupancy nor a probability vector.
+    """
+
+    site_classes: torch.Tensor
+    species_by_class: torch.Tensor
+
+    def __post_init__(self) -> None:
+        if (
+            self.site_classes.ndim != 1
+            or self.site_classes.dtype != torch.long
+            or self.site_classes.numel() < 1
+        ):
+            raise ValueError("occupational site classes must be a nonempty int64 vector")
+        if (
+            self.species_by_class.ndim != 1
+            or self.species_by_class.dtype != torch.long
+            or self.species_by_class.numel() < 1
+        ):
+            raise ValueError("occupational class species must be a nonempty int64 vector")
+        classes = torch.unique(self.site_classes, sorted=True)
+        expected = torch.arange(
+            self.species_by_class.numel(),
+            dtype=torch.long,
+            device=self.site_classes.device,
+        )
+        if not torch.equal(classes, expected):
+            raise ValueError("occupational classes must be contiguous from zero")
+        if bool(
+            (
+                (self.species_by_class < 0)
+                | (self.species_by_class >= CHEMICAL_ELEMENT_COUNT)
+            ).any()
+        ):
+            raise ValueError("occupational species must lie in the 118-element vocabulary")
+        if torch.unique(self.species_by_class).numel() != self.species_by_class.numel():
+            raise ValueError("distinct occupational classes require distinct element tokens")
+
+    @classmethod
+    def from_tokens(cls, tokens: torch.Tensor) -> "OccupationalPattern":
+        if tokens.ndim != 1 or tokens.dtype != torch.long or tokens.numel() < 1:
+            raise ValueError("ordered element tokens must be a nonempty int64 vector")
+        species, classes = torch.unique(tokens, sorted=True, return_inverse=True)
+        return cls(classes, species)
+
+    @property
+    def tokens(self) -> torch.Tensor:
+        return self.species_by_class.to(self.site_classes.device)[self.site_classes]
+
+    @property
+    def partition(self) -> torch.Tensor:
+        """Element-name-independent site-equivalence matrix."""
+        return self.site_classes[:, None] == self.site_classes[None, :]
+
+    def stabilizer_indices(self, permutations: torch.Tensor) -> torch.Tensor:
+        """Return exact parent-action elements preserving the ordered coloring."""
+        nodes = self.site_classes.numel()
+        if (
+            permutations.ndim != 2
+            or permutations.shape[1] != nodes
+            or permutations.dtype != torch.long
+        ):
+            raise ValueError("occupational permutations must have shape [group,nodes]")
+        ordered = torch.sort(permutations, dim=1).values
+        expected = torch.arange(nodes, dtype=torch.long, device=permutations.device)
+        if not torch.equal(ordered, expected.expand_as(ordered)):
+            raise ValueError("occupational group action contains a non-permutation row")
+        tokens = self.tokens.to(permutations.device)
+        preserved = torch.all(tokens[permutations] == tokens.unsqueeze(0), dim=1)
+        indices = torch.nonzero(preserved, as_tuple=False).flatten()
+        if indices.numel() < 1:
+            raise RuntimeError("occupational stabilizer lost the identity")
+        return indices
+
+    def stabilizer_is_subgroup(
+        self,
+        permutations: torch.Tensor,
+        stabilizer_indices: torch.Tensor | None = None,
+    ) -> bool:
+        """Check identity and closure directly in the faithful node action."""
+        selected = (
+            self.stabilizer_indices(permutations)
+            if stabilizer_indices is None
+            else stabilizer_indices.to(device=permutations.device, dtype=torch.long)
+        )
+        nodes = permutations.shape[1]
+        identity_rows = torch.all(
+            permutations
+            == torch.arange(nodes, dtype=torch.long, device=permutations.device),
+            dim=1,
+        )
+        if not bool(identity_rows[selected].any()):
+            return False
+        lookup = {tuple(map(int, row)): index for index, row in enumerate(permutations.tolist())}
+        selected_set = set(map(int, selected.tolist()))
+        for left in selected_set:
+            for right in selected_set:
+                product = tuple(
+                    map(int, permutations[left, permutations[right]].tolist())
+                )
+                if lookup.get(product) not in selected_set:
+                    return False
+        return True
 
 
 def _integer_determinant(matrix: torch.Tensor) -> int:
@@ -266,7 +375,12 @@ class DistortionBlueprint:
     def exact_parent(cls, *, device: torch.device | str = "cpu") -> "DistortionBlueprint":
         return cls(torch.eye(3, dtype=torch.long, device=device), ())
 
-    def child_operation_indices(self, parent_fractional_rotations: torch.Tensor) -> torch.Tensor:
+    def child_operation_indices(
+        self,
+        parent_fractional_rotations: torch.Tensor,
+        *,
+        occupational_stabilizer_indices: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         retained = supercell_compatible_operation_indices(parent_fractional_rotations, self.supercell_matrix)
         for mode in self.modes:
             if not mode.active:
@@ -275,6 +389,20 @@ class DistortionBlueprint:
             if bool((branch_indices >= parent_fractional_rotations.shape[0]).any()):
                 raise ValueError("OPD stabilizer index lies outside the parent operation catalogue")
             retained = retained[torch.isin(retained, branch_indices)]
+        if occupational_stabilizer_indices is not None:
+            occupational = occupational_stabilizer_indices.to(
+                device=retained.device, dtype=torch.long
+            )
+            if occupational.ndim != 1 or occupational.numel() < 1:
+                raise ValueError("occupational stabilizer must be a nonempty index vector")
+            if bool(
+                (
+                    (occupational < 0)
+                    | (occupational >= parent_fractional_rotations.shape[0])
+                ).any()
+            ):
+                raise ValueError("occupational stabilizer index lies outside parent operations")
+            retained = retained[torch.isin(retained, occupational)]
         if retained.numel() < 1:
             raise ValueError("distortion branch intersection removed the identity operation")
         return retained

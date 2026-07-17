@@ -7,6 +7,7 @@ from functools import lru_cache
 from typing import Mapping, Sequence
 
 import numpy as np
+import torch
 from numpy.typing import NDArray
 
 from gaugeflow.catalogue.parent_decomposition import (
@@ -15,13 +16,18 @@ from gaugeflow.catalogue.parent_decomposition import (
     certify_parent_candidate,
 )
 from gaugeflow.catalogue.parent_projection import (
+    GeometryParentProjection,
     ParentProjection,
     conjugate_embedding_to_primitive,
     conventional_to_primitive_structure,
+    project_geometry_klassengleiche_parent,
+    project_geometry_translationengleiche_parent,
     project_klassengleiche_parent,
     project_translationengleiche_parent,
 )
 from gaugeflow.catalogue.subgroup_embeddings import RationalAffineTransform
+from gaugeflow.production.blueprint import OccupationalPattern
+from gaugeflow.vocabulary import atomic_numbers_to_tokens
 
 FloatArray = NDArray[np.float64]
 IntArray = NDArray[np.int64]
@@ -45,6 +51,98 @@ class EmbeddingParentOccurrence:
     parent_site_count: int
     projection: ParentProjection
     candidate: ParentCandidate
+
+
+@dataclass(frozen=True)
+class OccupationalParentOccurrence:
+    """Species-free parent geometry plus an exact ordered child coloring."""
+
+    embedding_key: str
+    parent_space_group: int
+    child_space_group: int
+    cell_index: int
+    full_action_order: int
+    parent_site_count: int
+    projection: GeometryParentProjection
+    occupational_pattern: OccupationalPattern
+    occupational_stabilizer_indices: IntArray
+    child_operation_order: int
+    child_atomic_numbers: IntArray
+
+    @property
+    def exact_coloring_reconstruction(self) -> bool:
+        reconstructed = self.occupational_pattern.tokens.detach().cpu().numpy() + 1
+        return bool(np.array_equal(reconstructed, self.child_atomic_numbers))
+
+    @property
+    def stabilizer_order_matches_child(self) -> bool:
+        return int(self.occupational_stabilizer_indices.size) == self.child_operation_order
+
+
+def _strict_geometry_parent_reidentified(
+    projection: GeometryParentProjection,
+    *,
+    expected_space_group: int,
+    angle_tolerance: float,
+) -> bool:
+    """Identify a carrier geometry without assigning it a physical element."""
+    import spglib
+
+    carrier_classes = np.ones(projection.fractional.shape[0], dtype=np.int32)
+    identified = spglib.get_symmetry_dataset(
+        (projection.lattice, projection.fractional, carrier_classes),
+        symprec=1e-5,
+        angle_tolerance=float(angle_tolerance),
+    )
+    return identified is not None and int(identified.number) == int(expected_space_group)
+
+
+def _occupational_occurrence(
+    child: StandardCrystal,
+    record: Mapping[str, object],
+    projection: GeometryParentProjection,
+    *,
+    full_action_order: int,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> OccupationalParentOccurrence | None:
+    """Attach the terminal coloring only after the full geometry action exists."""
+    if projection.source_hencky_norm > maximum_source_hencky_norm:
+        return None
+    parent_space_group = int(record["parent_space_group"])
+    if not _strict_geometry_parent_reidentified(
+        projection,
+        expected_space_group=parent_space_group,
+        angle_tolerance=angle_tolerance,
+    ):
+        return None
+    if projection.permutations.shape != (full_action_order, child.species.size):
+        raise RuntimeError("geometry action does not cover the terminal coloring sites")
+    tokens = atomic_numbers_to_tokens(torch.from_numpy(child.species.copy()))
+    pattern = OccupationalPattern.from_tokens(tokens)
+    permutations = torch.from_numpy(projection.permutations.copy())
+    stabilizer = pattern.stabilizer_indices(permutations)
+    if not pattern.stabilizer_is_subgroup(permutations, stabilizer):
+        raise RuntimeError("occupational stabilizer is not a subgroup of the parent action")
+    child_operation_order = int(child.rotations.shape[0])
+    if stabilizer.numel() != child_operation_order:
+        return None
+    occurrence = OccupationalParentOccurrence(
+        embedding_key=str(record["embedding_key"]),
+        parent_space_group=parent_space_group,
+        child_space_group=child.space_group,
+        cell_index=int(record["cell_index"]),
+        full_action_order=full_action_order,
+        parent_site_count=int(projection.fractional.shape[0]),
+        projection=projection,
+        occupational_pattern=pattern,
+        occupational_stabilizer_indices=stabilizer.detach().cpu().numpy(),
+        child_operation_order=child_operation_order,
+        child_atomic_numbers=child.species.copy(),
+    )
+    if not occurrence.exact_coloring_reconstruction:
+        raise RuntimeError("occupational class encoding did not reconstruct terminal elements")
+    return occurrence
 
 
 @lru_cache(maxsize=230)
@@ -321,6 +419,99 @@ def project_maximal_k_embedding(
     )
 
 
+def project_occupational_maximal_t_embedding(
+    child: StandardCrystal,
+    record: Mapping[str, object],
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> OccupationalParentOccurrence | None:
+    """Project a t-parent geometry, then reduce it by ordered coloring."""
+    if str(record["kind"]) != "t" or int(record["cell_index"]) != 1:
+        raise ValueError("occupational t projection accepts maximal-t records only")
+    if int(record["child_space_group"]) != child.space_group:
+        raise ValueError("embedding child group does not match the material")
+    if maximum_source_hencky_norm <= 0.0:
+        raise ValueError("source Hencky bound must be positive")
+    parent_space_group = int(record["parent_space_group"])
+    parent_setting = pyxtal_primitive_setting(parent_space_group)
+    child_setting = pyxtal_primitive_setting(child.space_group)
+    primitive_embedding = conjugate_embedding_to_primitive(
+        _embedding_transform(record),
+        parent_setting.primitive_basis,
+        child_setting.primitive_basis,
+    )
+    projection = project_geometry_translationengleiche_parent(
+        child.lattice,
+        child.fractional,
+        int(child.species.size),
+        parent_setting.rotations,
+        parent_setting.translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+    )
+    if projection is None:
+        return None
+    return _occupational_occurrence(
+        child,
+        record,
+        projection,
+        full_action_order=int(parent_setting.rotations.shape[0]),
+        maximum_source_hencky_norm=maximum_source_hencky_norm,
+        angle_tolerance=angle_tolerance,
+    )
+
+
+def project_occupational_maximal_k_embedding(
+    child: StandardCrystal,
+    record: Mapping[str, object],
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> OccupationalParentOccurrence | None:
+    """Project a k-parent supercell geometry, then reduce it by coloring."""
+    cell_index = int(record["cell_index"])
+    if str(record["kind"]) != "k" or not 2 <= cell_index <= 4:
+        raise ValueError("occupational k projection accepts index-2..4 maximal-k records only")
+    if int(record["child_space_group"]) != child.space_group:
+        raise ValueError("embedding child group does not match the material")
+    if maximum_source_hencky_norm <= 0.0:
+        raise ValueError("source Hencky bound must be positive")
+    parent_space_group = int(record["parent_space_group"])
+    parent_setting = pyxtal_primitive_setting(parent_space_group)
+    child_setting = pyxtal_primitive_setting(child.space_group)
+    primitive_embedding = conjugate_embedding_to_primitive(
+        _embedding_transform(record),
+        parent_setting.primitive_basis,
+        child_setting.primitive_basis,
+    )
+    projected = project_geometry_klassengleiche_parent(
+        child.lattice,
+        child.fractional,
+        int(child.species.size),
+        parent_setting.rotations,
+        parent_setting.translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_index=4,
+    )
+    if projected is None:
+        return None
+    projection, full_action_order = projected
+    if full_action_order != int(parent_setting.rotations.shape[0]) * cell_index:
+        raise RuntimeError("klassengleiche geometry action has the wrong quotient order")
+    return _occupational_occurrence(
+        child,
+        record,
+        projection,
+        full_action_order=full_action_order,
+        maximum_source_hencky_norm=maximum_source_hencky_norm,
+        angle_tolerance=angle_tolerance,
+    )
+
+
 def search_maximal_t_parents(
     child: StandardCrystal,
     records: Sequence[Mapping[str, object]],
@@ -360,6 +551,52 @@ def search_maximal_k_parents(
             record,
             maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
             matcher_settings=matcher_settings,
+            angle_tolerance=angle_tolerance,
+        )
+        if occurrence is not None:
+            selected.append(occurrence)
+    return tuple(selected)
+
+
+def search_occupational_maximal_t_parents(
+    child: StandardCrystal,
+    records: Sequence[Mapping[str, object]],
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> tuple[OccupationalParentOccurrence, ...]:
+    """Enumerate the frozen maximal-t geometry fiber with ordered coloring."""
+    selected = []
+    for record in records:
+        occurrence = project_occupational_maximal_t_embedding(
+            child,
+            record,
+            maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+            maximum_source_hencky_norm=maximum_source_hencky_norm,
+            angle_tolerance=angle_tolerance,
+        )
+        if occurrence is not None:
+            selected.append(occurrence)
+    return tuple(selected)
+
+
+def search_occupational_maximal_k_parents(
+    child: StandardCrystal,
+    records: Sequence[Mapping[str, object]],
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> tuple[OccupationalParentOccurrence, ...]:
+    """Enumerate the frozen maximal-k geometry fiber with ordered coloring."""
+    selected = []
+    for record in records:
+        occurrence = project_occupational_maximal_k_embedding(
+            child,
+            record,
+            maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+            maximum_source_hencky_norm=maximum_source_hencky_norm,
             angle_tolerance=angle_tolerance,
         )
         if occurrence is not None:

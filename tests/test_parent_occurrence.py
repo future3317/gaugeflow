@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
+from gaugeflow.catalogue.affine_quotient import integer_lattice_coset_representatives
 from gaugeflow.catalogue.parent_decomposition import StandardCrystal
 from gaugeflow.catalogue.parent_occurrence import (
     project_maximal_k_embedding,
     project_maximal_t_embedding,
+    project_occupational_maximal_k_embedding,
+    project_occupational_maximal_t_embedding,
     standardize_child_to_e0_setting,
 )
 
@@ -159,3 +162,101 @@ def test_setting_exact_k0_recovers_index_two_translation_parent():
     assert occurrence.full_action_order == 2
     assert occurrence.parent_site_count == 2
     assert abs(int(round(np.linalg.det(occurrence.candidate.supercell_hnf)))) == 2
+
+
+def test_occupational_t_projection_recovers_geometry_rejected_by_species_assignment():
+    lattice = np.array(
+        [[4.1, 0.0, 0.0], [0.3, 5.2, 0.0], [0.2, 0.4, 6.3]],
+        dtype=np.float64,
+    )
+    position = np.array([0.137, 0.219, 0.371])
+    fractional = np.stack([position, (-position) % 1.0])
+    child = StandardCrystal(
+        lattice=lattice,
+        fractional=fractional,
+        species=np.array([14, 8], dtype=np.int64),
+        space_group=1,
+        rotations=np.eye(3, dtype=np.int64)[None],
+        translations=np.zeros((1, 3), dtype=np.float64),
+    )
+    record = {
+        "cell_index": 1,
+        "child_space_group": 1,
+        "embedding_key": "synthetic-p-1-to-colored-p1",
+        "kind": "t",
+        "parent_space_group": 2,
+        "subgroup_index": 2,
+        "transform_denominator": 1,
+        "transform_numerators": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
+    }
+
+    legacy = project_maximal_t_embedding(
+        child,
+        record,
+        maximum_source_displacement_angstrom=0.2,
+        matcher_settings={"ltol": 0.2, "stol": 0.3, "angle_tol": 5.0, "scale": True},
+        angle_tolerance=5.0,
+    )
+    occurrence = project_occupational_maximal_t_embedding(
+        child,
+        record,
+        maximum_source_displacement_angstrom=0.2,
+        maximum_source_hencky_norm=0.15,
+        angle_tolerance=5.0,
+    )
+
+    assert legacy is None
+    assert occurrence is not None
+    assert not hasattr(occurrence.projection, "species")
+    assert occurrence.full_action_order == 2
+    assert occurrence.occupational_stabilizer_indices.size == 1
+    assert occurrence.stabilizer_order_matches_child
+    assert occurrence.exact_coloring_reconstruction
+
+
+def test_occupational_off_diagonal_k_projection_uses_full_translation_quotient():
+    parent_lattice = np.array(
+        [[3.2, 0.0, 0.0], [0.4, 4.3, 0.0], [0.2, 0.7, 5.4]],
+        dtype=np.float64,
+    )
+    basis = np.array([[1, -1, 0], [1, 1, 0], [0, 0, 1]], dtype=np.int64)
+    parent_fractional = np.array(
+        [[0.113, 0.217, 0.319], [0.347, 0.071, 0.613], [0.729, 0.443, 0.157]],
+        dtype=np.float64,
+    )
+    cosets = integer_lattice_coset_representatives(basis)
+    child_fractional = np.concatenate(
+        [(parent_fractional + coset) @ np.linalg.inv(basis).T for coset in cosets]
+    ) % 1.0
+    child = StandardCrystal(
+        lattice=basis.T @ parent_lattice,
+        fractional=child_fractional,
+        species=np.array([6, 7, 8, 13, 14, 15], dtype=np.int64),
+        space_group=1,
+        rotations=np.eye(3, dtype=np.int64)[None],
+        translations=np.zeros((1, 3), dtype=np.float64),
+    )
+    occurrence = project_occupational_maximal_k_embedding(
+        child,
+        {
+            "cell_index": 2,
+            "child_space_group": 1,
+            "embedding_key": "synthetic-off-diagonal-index-two-colored-p1",
+            "kind": "k",
+            "parent_space_group": 1,
+            "subgroup_index": 2,
+            "transform_denominator": 1,
+            "transform_numerators": [1, -1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0],
+        },
+        maximum_source_displacement_angstrom=0.2,
+        maximum_source_hencky_norm=0.15,
+        angle_tolerance=5.0,
+    )
+
+    assert occurrence is not None
+    assert occurrence.cell_index == 2
+    assert occurrence.full_action_order == 2
+    assert occurrence.parent_site_count == 3
+    assert occurrence.occupational_stabilizer_indices.tolist() == [0]
+    assert occurrence.stabilizer_order_matches_child
+    assert occurrence.exact_coloring_reconstruction

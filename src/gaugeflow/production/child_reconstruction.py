@@ -8,35 +8,39 @@ import torch
 
 from gaugeflow.manifold import wrap01
 
-from .blueprint import DistortionBlueprint, ModeDiffusionState, validate_supercell_hnf
+from .blueprint import (
+    DistortionBlueprint,
+    ModeDiffusionState,
+    OccupationalPattern,
+    validate_supercell_hnf,
+)
 
 
 @dataclass(frozen=True)
-class ParentCrystal:
-    """Ordered parent crystal in row-vector lattice convention."""
+class ParentGeometryCarrier:
+    """Species-free parent geometry in row-vector lattice convention."""
 
-    species: torch.Tensor
     fractional_coordinates: torch.Tensor
     lattice: torch.Tensor
-    masses: torch.Tensor
 
     def __post_init__(self) -> None:
-        nodes = self.species.numel()
-        if self.species.shape != (nodes,) or self.species.dtype != torch.long:
-            raise ValueError("parent species must be an int64 vector")
+        nodes = self.fractional_coordinates.shape[0]
+        if nodes < 1:
+            raise ValueError("parent geometry carrier must contain at least one site")
         if self.fractional_coordinates.shape != (nodes, 3):
             raise ValueError("parent fractional coordinates must have shape [nodes,3]")
         if self.lattice.shape != (3, 3) or float(torch.linalg.det(self.lattice)) <= 0.0:
             raise ValueError("parent lattice must be a right-handed 3x3 row matrix")
-        if self.masses.shape != (nodes,) or bool((self.masses <= 0).any()):
-            raise ValueError("parent masses must be a positive vector")
-        if not all(torch.isfinite(value).all() for value in (self.fractional_coordinates, self.lattice, self.masses)):
-            raise ValueError("parent crystal contains non-finite values")
+        if not all(
+            torch.isfinite(value).all()
+            for value in (self.fractional_coordinates, self.lattice)
+        ):
+            raise ValueError("parent geometry carrier contains non-finite values")
 
 
 @dataclass(frozen=True)
 class ChildCrystal:
-    species: torch.Tensor
+    element_tokens: torch.Tensor
     fractional_coordinates: torch.Tensor
     lattice: torch.Tensor
     mode_displacement: torch.Tensor
@@ -47,7 +51,7 @@ class ChildCrystal:
 
 @dataclass(frozen=True)
 class HierarchicalSample:
-    parent_structure: ParentCrystal
+    parent_structure: ParentGeometryCarrier
     distortion_blueprint: DistortionBlueprint
     child_structure: ChildCrystal
 
@@ -84,9 +88,9 @@ def supercell_coset_translations(
 
 
 def expand_parent_supercell(
-    parent: ParentCrystal,
+    parent: ParentGeometryCarrier,
     supercell_matrix: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Expand the parent into ``B L`` and return child-cell fractional sites."""
     translations = supercell_coset_translations(
         supercell_matrix,
@@ -98,10 +102,8 @@ def expand_parent_supercell(
     expanded_fractional = wrap01(
         (parent.fractional_coordinates.unsqueeze(0) + translations.unsqueeze(1)) @ inverse
     ).reshape(-1, 3)
-    species = parent.species.repeat(translations.shape[0])
-    masses = parent.masses.repeat(translations.shape[0])
     lattice = matrix @ parent.lattice
-    return species, masses, expanded_fractional, lattice, translations
+    return expanded_fractional, lattice, translations
 
 
 def reynolds_project_displacements(
@@ -143,19 +145,32 @@ class ChildReconstructor:
 
     def reconstruct(
         self,
-        parent: ParentCrystal,
+        parent: ParentGeometryCarrier,
         blueprint: DistortionBlueprint,
         state: ModeDiffusionState,
         *,
+        occupational_pattern: OccupationalPattern,
+        element_masses: torch.Tensor,
         parent_fractional_rotations: torch.Tensor,
+        parent_node_permutations: torch.Tensor,
         parent_cartesian_operations: torch.Tensor,
         displacement_representations: torch.Tensor,
         invariant_strain_basis: torch.Tensor,
     ) -> ChildCrystal:
-        species, masses, parent_fractional, parent_lattice, translations = expand_parent_supercell(
+        parent_fractional, parent_lattice, translations = expand_parent_supercell(
             parent, blueprint.supercell_matrix
         )
-        nodes = species.numel()
+        nodes = parent_fractional.shape[0]
+        if occupational_pattern.site_classes.numel() != nodes:
+            raise ValueError("occupational coloring does not match the expanded geometry")
+        if (
+            element_masses.shape != (118,)
+            or not torch.isfinite(element_masses).all()
+            or bool((element_masses <= 0).any())
+        ):
+            raise ValueError("element masses must be a finite positive 118-vector")
+        element_tokens = occupational_pattern.tokens.to(parent_fractional.device)
+        masses = element_masses.to(parent_fractional)[element_tokens]
         if len(state.mode_amplitudes) != len(blueprint.modes):
             raise ValueError("mode amplitude tuple must align with the sampled modes")
         if state.residual_displacements.shape != (nodes, 3):
@@ -172,8 +187,23 @@ class ChildReconstructor:
         ):
             raise ValueError("child strain basis must be symmetric")
 
-        child_indices = blueprint.child_operation_indices(parent_fractional_rotations)
         operation_count = parent_fractional_rotations.shape[0]
+        if parent_node_permutations.shape != (operation_count, nodes):
+            raise ValueError("node permutations must align with parent operations and nodes")
+        node_permutations = parent_node_permutations.to(
+            device=element_tokens.device,
+            dtype=torch.long,
+        )
+        occupational_indices = occupational_pattern.stabilizer_indices(node_permutations)
+        if not occupational_pattern.stabilizer_is_subgroup(
+            node_permutations,
+            occupational_indices,
+        ):
+            raise ValueError("occupational stabilizer is not a parent subgroup")
+        child_indices = blueprint.child_operation_indices(
+            parent_fractional_rotations,
+            occupational_stabilizer_indices=occupational_indices,
+        )
         if parent_cartesian_operations.shape != (operation_count, 3, 3):
             raise ValueError("Cartesian operations must align with parent fractional operations")
         if displacement_representations.shape != (operation_count, 3 * nodes, 3 * nodes):
@@ -254,7 +284,7 @@ class ChildReconstructor:
         if not all(torch.isfinite(value).all() for value in (child_fractional, child_lattice)):
             raise ValueError("child reconstruction produced non-finite state")
         return ChildCrystal(
-            species=species,
+            element_tokens=element_tokens,
             fractional_coordinates=child_fractional,
             lattice=child_lattice,
             mode_displacement=mode_displacement,

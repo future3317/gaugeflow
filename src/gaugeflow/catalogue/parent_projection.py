@@ -28,6 +28,31 @@ class ParentProjection:
     projected_group_max_error_angstrom: float
 
 
+@dataclass(frozen=True)
+class GeometryParentProjection:
+    """Species-free parent geometry and its exact node permutation action."""
+
+    lattice: FloatArray
+    fractional: FloatArray
+    permutations: IntArray
+    source_max_displacement_angstrom: float
+    source_rms_displacement_angstrom: float
+    source_hencky_norm: float
+    projected_group_max_error_angstrom: float
+
+
+def _strip_internal_carrier_labels(projection: ParentProjection) -> GeometryParentProjection:
+    return GeometryParentProjection(
+        lattice=projection.lattice,
+        fractional=projection.fractional,
+        permutations=projection.permutations,
+        source_max_displacement_angstrom=projection.source_max_displacement_angstrom,
+        source_rms_displacement_angstrom=projection.source_rms_displacement_angstrom,
+        source_hencky_norm=projection.source_hencky_norm,
+        projected_group_max_error_angstrom=projection.projected_group_max_error_angstrom,
+    )
+
+
 def conventional_to_primitive_structure(
     lattice: FloatArray,
     fractional: FloatArray,
@@ -486,6 +511,37 @@ def project_klassengleiche_parent(
     )
 
 
+def project_geometry_klassengleiche_parent(
+    child_lattice: FloatArray,
+    child_fractional: FloatArray,
+    node_count: int,
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    primitive_embedding: RationalAffineTransform,
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_index: int = 4,
+) -> tuple[GeometryParentProjection, int] | None:
+    """Project a k-parent geometry without assigning a dummy physical species."""
+    if node_count < 1 or np.asarray(child_fractional).shape != (node_count, 3):
+        raise ValueError("geometry carrier node count does not match child coordinates")
+    internal_labels = np.zeros(node_count, dtype=np.int64)
+    projected = project_klassengleiche_parent(
+        child_lattice,
+        child_fractional,
+        internal_labels,
+        parent_rotations,
+        parent_translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_index=maximum_index,
+    )
+    if projected is None:
+        return None
+    parent, action_order = projected
+    return _strip_internal_carrier_labels(parent), action_order
+
+
 def project_translationengleiche_parent(
     child_lattice: FloatArray,
     child_fractional: FloatArray,
@@ -529,3 +585,29 @@ def project_translationengleiche_parent(
         translations,
         maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
     )
+
+
+def project_geometry_translationengleiche_parent(
+    child_lattice: FloatArray,
+    child_fractional: FloatArray,
+    node_count: int,
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    primitive_embedding: RationalAffineTransform,
+    *,
+    maximum_source_displacement_angstrom: float,
+) -> GeometryParentProjection | None:
+    """Project a t-parent geometry without assigning a dummy physical species."""
+    if node_count < 1 or np.asarray(child_fractional).shape != (node_count, 3):
+        raise ValueError("geometry carrier node count does not match child coordinates")
+    internal_labels = np.zeros(node_count, dtype=np.int64)
+    projected = project_translationengleiche_parent(
+        child_lattice,
+        child_fractional,
+        internal_labels,
+        parent_rotations,
+        parent_translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+    )
+    return None if projected is None else _strip_internal_carrier_labels(projected)

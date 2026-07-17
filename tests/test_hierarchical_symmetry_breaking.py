@@ -5,6 +5,7 @@ from gaugeflow.production.blueprint import (
     DistortionBlueprint,
     ModeCatalogEntry,
     ModeDiffusionState,
+    OccupationalPattern,
     OPDBranch,
     ParentBlueprint,
     SelectedMode,
@@ -12,7 +13,7 @@ from gaugeflow.production.blueprint import (
 )
 from gaugeflow.production.child_reconstruction import (
     ChildReconstructor,
-    ParentCrystal,
+    ParentGeometryCarrier,
     expand_parent_supercell,
     supercell_coset_translations,
 )
@@ -38,19 +39,81 @@ def _identity_representations(operations: int, nodes: int, dtype: torch.dtype) -
     return torch.eye(3 * nodes, dtype=dtype).expand(operations, -1, -1).clone()
 
 
-def _parent() -> ParentCrystal:
-    return ParentCrystal(
-        species=torch.tensor([5, 7], dtype=torch.long),
+def _parent() -> ParentGeometryCarrier:
+    return ParentGeometryCarrier(
         fractional_coordinates=torch.tensor([[0.15, 0.2, 0.3], [0.65, 0.7, 0.8]], dtype=torch.float64),
         lattice=torch.diag(torch.tensor([3.0, 4.0, 5.0], dtype=torch.float64)),
-        masses=torch.tensor([10.81, 14.01], dtype=torch.float64),
     )
 
 
+def _element_masses() -> torch.Tensor:
+    masses = torch.ones(118, dtype=torch.float64)
+    masses[4] = 10.81
+    masses[6] = 14.01
+    return masses
+
+
+def _identity_node_permutations(operations: int, nodes: int) -> torch.Tensor:
+    return torch.arange(nodes, dtype=torch.long).expand(operations, -1).clone()
+
+
 def test_parent_blueprint_is_not_a_child_space_group_claim():
-    blueprint = ParentBlueprint(221, ("1a", "1b"), (1, 1), (5, 7))
+    blueprint = ParentBlueprint(221, ("1a", "1b"), (1, 1))
     assert blueprint.parent_space_group == 221
     assert blueprint.atom_count == 2
+
+
+def _klein_four_permutations() -> torch.Tensor:
+    return torch.tensor(
+        [
+            [0, 1, 2, 3],
+            [1, 0, 3, 2],
+            [2, 3, 0, 1],
+            [3, 2, 1, 0],
+        ],
+        dtype=torch.long,
+    )
+
+
+def test_occupational_coloring_has_exact_name_independent_stabilizer():
+    permutations = _klein_four_permutations()
+    pattern = OccupationalPattern.from_tokens(torch.tensor([5, 5, 7, 7]))
+    renamed = OccupationalPattern.from_tokens(torch.tensor([100, 100, 2, 2]))
+
+    assert pattern.stabilizer_indices(permutations).tolist() == [0, 1]
+    assert pattern.stabilizer_is_subgroup(permutations)
+    assert torch.equal(pattern.partition, renamed.partition)
+    assert torch.equal(
+        pattern.stabilizer_indices(permutations),
+        renamed.stabilizer_indices(permutations),
+    )
+
+
+def test_uniform_coloring_recovers_full_group_and_node_relabeling_is_conjugate():
+    permutations = _klein_four_permutations()
+    uniform = OccupationalPattern.from_tokens(torch.zeros(4, dtype=torch.long))
+    assert uniform.stabilizer_indices(permutations).tolist() == [0, 1, 2, 3]
+
+    pattern = OccupationalPattern.from_tokens(torch.tensor([5, 5, 7, 7]))
+    order = torch.tensor([2, 0, 3, 1])
+    inverse = torch.argsort(order)
+    conjugated = inverse[permutations[:, order]]
+    relabeled = OccupationalPattern.from_tokens(pattern.tokens[order])
+    assert torch.equal(
+        pattern.stabilizer_indices(permutations),
+        relabeled.stabilizer_indices(conjugated),
+    )
+    with pytest.raises(ValueError, match="118-element vocabulary"):
+        OccupationalPattern.from_tokens(torch.tensor([118]))
+
+
+def test_distortion_child_group_intersects_occupational_stabilizer():
+    rotations = torch.eye(3).expand(4, -1, -1).clone()
+    child = DistortionBlueprint.exact_parent().child_operation_indices(
+        rotations,
+        occupational_stabilizer_indices=torch.tensor([0, 2]),
+    )
+    assert child.tolist() == [0, 2]
 
 
 def test_exact_distortion_branch_reconstructs_the_parent_exactly():
@@ -61,23 +124,46 @@ def test_exact_distortion_branch_reconstructs_the_parent_exactly():
         parent,
         blueprint,
         state,
+        occupational_pattern=OccupationalPattern.from_tokens(torch.tensor([4, 6])),
+        element_masses=_element_masses(),
         parent_fractional_rotations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
+        parent_node_permutations=_identity_node_permutations(1, 2),
         parent_cartesian_operations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
         displacement_representations=_identity_representations(1, 2, torch.float64),
         invariant_strain_basis=torch.empty((0, 3, 3), dtype=torch.float64),
     )
-    assert torch.equal(child.species, parent.species)
+    assert child.element_tokens.tolist() == [4, 6]
     assert torch.allclose(child.fractional_coordinates, parent.fractional_coordinates)
     assert torch.allclose(child.lattice, parent.lattice)
     assert child.child_operation_indices.tolist() == [0]
 
 
+def test_reconstruction_uses_occupational_order_as_a_real_symmetry_breaking_field():
+    parent = _parent()
+    child = ChildReconstructor().reconstruct(
+        parent,
+        DistortionBlueprint.exact_parent(),
+        ModeDiffusionState(
+            (),
+            torch.zeros(0, dtype=torch.float64),
+            torch.zeros((2, 3), dtype=torch.float64),
+        ),
+        occupational_pattern=OccupationalPattern.from_tokens(torch.tensor([4, 6])),
+        element_masses=_element_masses(),
+        parent_fractional_rotations=torch.eye(3, dtype=torch.float64).expand(2, -1, -1),
+        parent_node_permutations=torch.tensor([[0, 1], [1, 0]], dtype=torch.long),
+        parent_cartesian_operations=torch.eye(3, dtype=torch.float64).expand(2, -1, -1),
+        displacement_representations=_identity_representations(2, 2, torch.float64),
+        invariant_strain_basis=torch.empty((0, 3, 3), dtype=torch.float64),
+    )
+    assert child.element_tokens.tolist() == [4, 6]
+    assert child.child_operation_indices.tolist() == [0]
+
+
 def test_low_index_commensurate_mode_creates_a_nontrivial_child():
-    parent = ParentCrystal(
-        species=torch.tensor([8]),
+    parent = ParentGeometryCarrier(
         fractional_coordinates=torch.zeros((1, 3), dtype=torch.float64),
         lattice=3.0 * torch.eye(3, dtype=torch.float64),
-        masses=torch.ones(1, dtype=torch.float64),
     )
     supercell = torch.diag(torch.tensor([2, 1, 1], dtype=torch.long))
     mode_basis = torch.tensor([[1.0], [0.0], [0.0], [-1.0], [0.0], [0.0]], dtype=torch.float64)
@@ -101,12 +187,15 @@ def test_low_index_commensurate_mode_creates_a_nontrivial_child():
         parent,
         blueprint,
         state,
+        occupational_pattern=OccupationalPattern.from_tokens(torch.tensor([7, 7])),
+        element_masses=_element_masses(),
         parent_fractional_rotations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
+        parent_node_permutations=_identity_node_permutations(1, 2),
         parent_cartesian_operations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
         displacement_representations=_identity_representations(1, 2, torch.float64),
         invariant_strain_basis=torch.empty((0, 3, 3), dtype=torch.float64),
     )
-    assert child.species.tolist() == [8, 8]
+    assert child.element_tokens.tolist() == [7, 7]
     assert child.mode_displacement[:, 0].tolist() == pytest.approx([2**-0.5 * 0.1, -(2**-0.5) * 0.1])
     assert not torch.allclose(
         child.fractional_coordinates,
@@ -119,8 +208,8 @@ def test_supercell_cosets_and_compatible_parent_operations_are_exact():
     translations = supercell_coset_translations(supercell)
     assert translations.shape == (4, 3)
     parent = _parent()
-    species, _, coordinates, lattice, _ = expand_parent_supercell(parent, supercell)
-    assert species.numel() == 8 and coordinates.shape == (8, 3)
+    coordinates, lattice, _ = expand_parent_supercell(parent, supercell)
+    assert coordinates.shape == (8, 3)
     assert torch.allclose(torch.linalg.det(lattice), 4.0 * torch.linalg.det(parent.lattice))
     rotations = torch.stack((torch.eye(3), torch.diag(torch.tensor([-1.0, -1.0, 1.0]))))
     compatible = supercell_compatible_operation_indices(rotations, supercell)
@@ -136,13 +225,16 @@ def test_residual_is_projected_and_budget_is_fail_closed():
         parent,
         blueprint,
         state,
+        occupational_pattern=OccupationalPattern.from_tokens(torch.tensor([4, 6])),
+        element_masses=_element_masses(),
         parent_fractional_rotations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
+        parent_node_permutations=_identity_node_permutations(1, 2),
         parent_cartesian_operations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
         displacement_representations=_identity_representations(1, 2, torch.float64),
         invariant_strain_basis=torch.empty((0, 3, 3), dtype=torch.float64),
     )
     assert torch.allclose(
-        (parent.masses.unsqueeze(-1) * child.residual_displacement).sum(0),
+        (_element_masses()[child.element_tokens, None] * child.residual_displacement).sum(0),
         torch.zeros(3, dtype=torch.float64),
         atol=1e-12,
     )
@@ -152,7 +244,10 @@ def test_residual_is_projected_and_budget_is_fail_closed():
             parent,
             blueprint,
             too_large,
+            occupational_pattern=OccupationalPattern.from_tokens(torch.tensor([4, 6])),
+            element_masses=_element_masses(),
             parent_fractional_rotations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
+            parent_node_permutations=_identity_node_permutations(1, 2),
             parent_cartesian_operations=torch.eye(3, dtype=torch.float64).unsqueeze(0),
             displacement_representations=_identity_representations(1, 2, torch.float64),
             invariant_strain_basis=torch.empty((0, 3, 3), dtype=torch.float64),
