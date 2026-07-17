@@ -34,6 +34,7 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h1a_generator_substrate.py",
     ROOT / "scripts" / "audit_h1a_gradient_scale.py",
     ROOT / "scripts" / "evaluate_h1a_p1_protocol.py",
+    ROOT / "scripts" / "diagnose_h1a_coordinate_generator.py",
 )
 
 

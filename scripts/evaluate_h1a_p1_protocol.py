@@ -15,56 +15,9 @@ from gaugeflow.file_utils import canonical_json_hash, load_json_object
 from gaugeflow.geometry import periodic_radius_multigraph
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.blueprint import ParentBlueprintBatch
-from gaugeflow.production.checkpointing import (
-    load_production_checkpoint,
-    read_production_checkpoint_metadata,
-)
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
-from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
-from gaugeflow.production.training import ExponentialMovingAverage
-
-
-def _load_ema_model(
-    checkpoint: Path,
-    device: torch.device,
-    *,
-    protocol_name: str,
-    protocol_sha256: str,
-) -> tuple[
-    HybridCrystalDenoiser,
-    P1LatticeStandardizer,
-    dict[str, Any],
-    Any,
-]:
-    metadata = read_production_checkpoint_metadata(checkpoint)
-    if (
-        metadata.get("protocol") != protocol_name
-        or metadata.get("protocol_sha256") != protocol_sha256
-    ):
-        raise ValueError("checkpoint does not match the frozen H1a P1 protocol")
-    model_config = metadata.get("model_config")
-    training_config = metadata.get("training_config")
-    standardization = metadata.get("lattice_standardization")
-    if not all(
-        isinstance(value, dict)
-        for value in (model_config, training_config, standardization)
-    ):
-        raise ValueError("pilot checkpoint metadata is incomplete")
-    model = HybridCrystalDenoiser(**model_config).to(device)
-    ema = ExponentialMovingAverage(model, float(training_config["ema_decay"]))
-    _, node_prior, _ = load_production_checkpoint(
-        checkpoint, model=model, ema=ema, map_location=device
-    )
-    ema.copy_to(model)
-    model.eval()
-    return (
-        model,
-        P1LatticeStandardizer.from_mapping(standardization),
-        training_config,
-        node_prior,
-    )
+from gaugeflow.production.runtime import load_tensor_free_ema_runtime
 
 
 @torch.no_grad()
@@ -79,26 +32,28 @@ def _validation_losses(
     protocol_sha256: str,
     batch_size: int = 16,
 ) -> dict[str, float]:
-    model, standardizer, training, _ = _load_ema_model(
+    runtime = load_tensor_free_ema_runtime(
         checkpoint,
         device,
         protocol_name=protocol_name,
         protocol_sha256=protocol_sha256,
     )
     diffusion = TensorFreeHybridDiffusion(
-        model,
-        standardizer,
+        runtime.model,
+        runtime.lattice_standardizer,
         coordinate_fractional_sigma_max=float(
-            training["coordinate_fractional_sigma_max"]
+            runtime.training_config["coordinate_fractional_sigma_max"]
         ),
-        minimum_time=float(training["minimum_time"]),
-        maximum_time=float(training["maximum_time"]),
+        minimum_time=float(runtime.training_config["minimum_time"]),
+        maximum_time=float(runtime.training_config["maximum_time"]),
     )
     generator = torch.Generator(device=device).manual_seed(seed)
     totals = {name: 0.0 for name in ("total", "element", "coordinate", "volume", "shape")}
     graphs_seen = 0
     candidate_count = 0
-    use_bf16 = training.get("precision") == "bf16" and device.type == "cuda"
+    use_bf16 = (
+        runtime.training_config.get("precision") == "bf16" and device.type == "cuda"
+    )
     for start in range(0, indices.numel(), batch_size):
         selected = indices[start : start + batch_size]
         packed = Batch.from_data_list(
@@ -150,23 +105,25 @@ def _sample_checkpoint(
     minimum_distance_threshold: float,
     batch_size: int = 8,
 ) -> dict[str, Any]:
-    model, standardizer, training, node_prior = _load_ema_model(
+    runtime = load_tensor_free_ema_runtime(
         checkpoint,
         device,
         protocol_name=protocol_name,
         protocol_sha256=protocol_sha256,
     )
     sampler = TensorFreeReverseSampler(
-        model,
-        standardizer,
+        runtime.model,
+        runtime.lattice_standardizer,
         coordinate_fractional_sigma_max=float(
-            training["coordinate_fractional_sigma_max"]
+            runtime.training_config["coordinate_fractional_sigma_max"]
         ),
-        maximum_time=float(training["maximum_time"]),
+        maximum_time=float(runtime.training_config["maximum_time"]),
     )
     count_generator = torch.Generator().manual_seed(seed)
     sample_generator = torch.Generator(device=device).manual_seed(seed + 1)
-    node_counts = node_prior.sample(samples, generator=count_generator, device=device)
+    node_counts = runtime.node_count_prior.sample(
+        samples, generator=count_generator, device=device
+    )
     failures = 0
     masks = 0
     finite_positive = 0
