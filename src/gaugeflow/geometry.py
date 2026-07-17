@@ -26,19 +26,15 @@ class PeriodicEdges:
     image_shift: torch.Tensor
 
 
-def _closest_integer_shift(delta: torch.Tensor, lattice: torch.Tensor) -> torch.Tensor:
-    """Solve the three-dimensional closest-vector problem by sphere decoding.
-
-    The discrete image choice is necessarily piecewise constant. Selection is
-    therefore performed in detached float64 QR coordinates, while callers
-    reconstruct the winning Cartesian displacement from the original tensors
-    so gradients inside each Voronoi cell remain exact.
-    """
-    matrix = lattice.detach().to(dtype=torch.float64, device="cpu").numpy().T
-    fractional = delta.detach().to(dtype=torch.float64, device="cpu").numpy()
+def _sphere_decode_shift(
+    matrix: np.ndarray,
+    fractional: np.ndarray,
+    orthogonal: np.ndarray,
+    triangular: np.ndarray,
+) -> np.ndarray:
+    """Solve one exact three-dimensional CVP with a shared QR factorization."""
     if not np.isfinite(matrix).all() or not np.isfinite(fractional).all():
         raise ValueError("closest-image CVP inputs must be finite")
-    orthogonal, triangular = np.linalg.qr(matrix)
     if np.min(np.abs(np.diag(triangular))) <= np.finfo(np.float64).tiny:
         raise ValueError("closest-image CVP requires an invertible lattice")
     transformed = orthogonal.T @ (-matrix @ fractional)
@@ -73,7 +69,52 @@ def _closest_integer_shift(delta: torch.Tensor, lattice: torch.Tensor) -> torch.
                 search(level - 1, next_cost)
 
     search(dimension - 1, 0.0)
+    return best
+
+
+def _closest_integer_shift(delta: torch.Tensor, lattice: torch.Tensor) -> torch.Tensor:
+    """Solve the three-dimensional closest-vector problem by sphere decoding.
+
+    The discrete image choice is necessarily piecewise constant. Selection is
+    therefore performed in detached float64 QR coordinates, while callers
+    reconstruct the winning Cartesian displacement from the original tensors
+    so gradients inside each Voronoi cell remain exact.
+    """
+    matrix = lattice.detach().to(dtype=torch.float64, device="cpu").numpy().T
+    fractional = delta.detach().to(dtype=torch.float64, device="cpu").numpy()
+    orthogonal, triangular = np.linalg.qr(matrix)
+    best = _sphere_decode_shift(matrix, fractional, orthogonal, triangular)
     return torch.tensor(best, dtype=delta.dtype, device=delta.device)
+
+
+def closest_image_displacements_numpy(
+    delta: np.ndarray, lattice: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return exact closest images for many vectors in one fixed lattice.
+
+    This is the batched, gradient-free companion of
+    :func:`closest_image_displacement`.  It reuses one float64 QR
+    factorization for every vector while retaining the same exact sphere
+    decoder; unlike a fixed image cube, it remains correct for skew cells.
+    """
+    fractional = np.asarray(delta, dtype=np.float64)
+    cell = np.asarray(lattice, dtype=np.float64)
+    if fractional.ndim != 2 or fractional.shape[1] != 3 or cell.shape != (3, 3):
+        raise ValueError("delta and lattice must have shapes [N,3] and [3,3]")
+    if not np.isfinite(fractional).all() or not np.isfinite(cell).all():
+        raise ValueError("closest-image inputs must be finite")
+    if fractional.shape[0] == 0:
+        return fractional.copy(), np.empty((0, 3), dtype=np.int64)
+    matrix = cell.T
+    orthogonal, triangular = np.linalg.qr(matrix)
+    shifts = np.stack(
+        [
+            _sphere_decode_shift(matrix, value, orthogonal, triangular)
+            for value in fractional
+        ],
+        axis=0,
+    ).astype(np.int64, copy=False)
+    return (fractional + shifts) @ cell, shifts
 
 
 def closest_image_displacement(

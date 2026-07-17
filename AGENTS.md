@@ -81,16 +81,18 @@ its code/data/report surface.
   finite-affine catalogue for all 230 groups and all 6,188 canonical
   `det(B)<=4` HNF orbits: 53,441 physical-real irreps and 75,416 OPD classes,
   with an independent exhaustive structural audit and deterministic algebra
-  rebuild panel. H0-E still requires concrete Alex parent displacement
-  occurrence, realized physical-class mass and the bounded decomposition pilot,
-  so the overall decision remains
-  `H0_not_passed_stop_before_H1`.
+  rebuild panel. H0-E-v1 evaluated concrete occurrence in the direct sum of
+  compact displacement and six-dimensional Kelvin strain representations. All
+  125 discovered candidates qualified, but candidate coverage was
+  `125/1024 = 0.12207 < 0.15`; the independently audited gate is frozen failed.
+  The overall decision remains `H0-E-v1_failed_stop_before_H1`.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
-S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
-versioned H0-E parent-decomposition pilot using the qualified H0-D-v2 finite
-affine catalogue. H1a remains unauthorized.
+S0.4.1 and S1a-I0 do not authorize tensor work. H0-E-v1 failed and is frozen;
+no later H gate may run until a separately proposed, versioned H0-E successor
+addresses the observed parent-candidate coverage mechanism. H1a remains
+unauthorized.
 
 ## Hierarchical symmetry-breaking rules
 

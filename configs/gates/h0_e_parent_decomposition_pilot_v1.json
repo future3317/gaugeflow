@@ -1,0 +1,94 @@
+{
+  "protocol": "h0_e_parent_decomposition_pilot_v1",
+  "frozen_at_utc": "2026-07-17T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "depends_on": {
+    "h0_a_split_protocol": "h0_a_alex_formula_prototype_split_v1",
+    "h0_a_assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+    "h0_d_protocol": "h0_d_opd_physical_path_catalogue_v2",
+    "h0_d_records_sha256": "ba711a63874444cfc5ca1c9d5603cdcad65ae63799f44fd209aff979e73c940c"
+  },
+  "scientific_scope": "ordered stoichiometric Alex-MP-20 crystals; exact branch plus low-index commensurate displacement-or-strain parent distortions with det(B)<=4 and at most two active physical-real irrep components",
+  "pilot": {
+    "size": 1024,
+    "seed": 20260717,
+    "source_splits": ["train", "val", "test"],
+    "gaugeflow_split_counts": {"train": 820, "val": 102, "test": 102},
+    "strata": ["gaugeflow_split", "child_crystal_system", "primitive_site_bin"],
+    "primitive_site_bins": [4, 8, 16, 32, 64],
+    "stratum_allocation": "deterministic cyclic balanced draw within each frozen split quota",
+    "within_stratum_order": "sha256(seed || material_id)",
+    "split_inheritance_required": true
+  },
+  "child_standardization": {
+    "symprec_angstrom": 0.01,
+    "angle_tolerance_degree": 5.0,
+    "to_primitive": true,
+    "no_idealize": true
+  },
+  "parent_search": {
+    "symprec_ladder_angstrom": [0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
+    "angle_tolerance_degree": 5.0,
+    "to_primitive": true,
+    "no_idealize": false,
+    "nontrivial_rule": "strictly_more_affine_operations_or_fewer_primitive_sites_than_the_child",
+    "structure_matcher": {
+      "ltol": 0.2,
+      "stol": 0.3,
+      "angle_tol": 5.0,
+      "primitive_cell": false,
+      "scale": true,
+      "attempt_supercell": true
+    },
+    "candidate_selection": "minimum periodic reconstruction RMS, then lower symprec, lower supercell index, parent SG number",
+    "tensor_condition_forbidden": true,
+    "target_cif_metadata_as_model_input_forbidden": true
+  },
+  "decomposition": {
+    "supercell_hnf_maximum_index": 4,
+    "complete_physical_real_irreps": true,
+    "occurrence": "positive integral occurrence in the direct sum of compact displacement and symmetric Cartesian strain representations",
+    "isotypic_projection": "real central idempotent applied through compact permutation-plus-3x3 displacement actions or the vectorized six-dimensional Kelvin strain action",
+    "maximum_active_irrep_components": 2,
+    "active_subset_rule": "enumerate one- and two-component subsets; declared child affine stabilizer is their exact intersection; select minimum reconstruction RMS then terminal agreement then maximum sector-normalized explained energy",
+    "component_energy_floors": {
+      "displacement_mass_weighted_amu_angstrom2": 1e-12,
+      "strain_kelvin_norm2": 1e-12
+    },
+    "translation_gauge": "mass_weighted_zero_mean",
+    "realized_stabilizer_displacement_rms_tolerance_angstrom": 0.015,
+    "realized_stabilizer_metric_relative_tolerance": 0.002,
+    "residual_projection": "declared_active_OPD_stabilizer_intersection_Reynolds",
+    "residual_rms_limit_angstrom": 0.1,
+    "dense_3n_by_3n_displacement_matrices_forbidden": true,
+    "physical_class_measure": {
+      "exact_branch_mass": 0.5,
+      "distorted_total_mass": 0.5,
+      "tuple_multiplicity_affects_mass": false
+    }
+  },
+  "required_outputs": {
+    "selection_manifest": "processed/gaugeflow_h0_v4/parent_decomposition_pilot_v1/selection_manifest.json",
+    "selection_records": "processed/gaugeflow_h0_v4/parent_decomposition_pilot_v1/selection.parquet",
+    "decomposition_records": "processed/gaugeflow_h0_v4/parent_decomposition_pilot_v1/decompositions.parquet",
+    "pilot_manifest": "processed/gaugeflow_h0_v4/parent_decomposition_pilot_v1/pilot_manifest.json"
+  },
+  "thresholds": {
+    "selection_and_split_join_fraction": 1.0,
+    "exact_branch_reconstruction_fraction": 1.0,
+    "sampling_failures": 0,
+    "nonfinite_results": 0,
+    "nontrivial_parent_candidate_fraction_min": 0.15,
+    "qualified_nontrivial_fraction_of_candidates_min": 0.9,
+    "qualified_nontrivial_periodic_rms_max_angstrom": 0.1,
+    "qualified_nontrivial_periodic_rms_p95_max_angstrom": 0.075,
+    "qualified_nontrivial_top2_energy_fraction_median_min": 0.8,
+    "terminal_space_group_agreement_fraction_min": 0.9,
+    "occurrence_integrality_fraction": 1.0,
+    "physical_measure_normalization_abs_error_max": 1e-12,
+    "duplicate_measure_max_abs_change": 1e-12,
+    "distinct_nontrivial_parent_space_groups_min": 10,
+    "distinct_nontrivial_child_space_groups_min": 20
+  },
+  "advancement_rule": "H0-E-v1 qualifies only if every threshold and independent audit passes. Failure stops before H1a/H1b and all later gates."
+}

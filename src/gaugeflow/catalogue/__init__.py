@@ -23,6 +23,16 @@ from .finite_group import (
     intersect_stabilizer_bitsets,
     stabilizer_bitset,
 )
+from .parent_decomposition import (
+    DecompositionResult,
+    ParentCandidate,
+    StandardCrystal,
+    balanced_selection,
+    decompose_parent_candidate,
+    find_parent_candidates,
+    standardize_crystal,
+    translation_quotient_displacement,
+)
 from .path_measure import RealizedPathClass, allocate_reference_measure
 
 __all__ = [
@@ -33,18 +43,26 @@ __all__ = [
     "PrimitiveSpaceGroup",
     "RealIrrep",
     "RealizedPathClass",
+    "DecompositionResult",
+    "ParentCandidate",
+    "StandardCrystal",
     "TranslationQuotient",
     "build_compact_displacement_action",
     "allocate_reference_measure",
+    "balanced_selection",
     "canonical_stabilizer_key",
     "canonical_supercell_orbits",
     "enumerate_fixed_space_projectors",
     "enumerate_opd_classes",
     "enumerate_real_irreps",
     "enumerate_upper_hnfs",
+    "decompose_parent_candidate",
+    "find_parent_candidates",
     "intersect_stabilizer_bitsets",
     "real_irrep_multiplicity",
     "primitive_space_group_from_hall",
     "standard_hall_numbers",
     "stabilizer_bitset",
+    "standardize_crystal",
+    "translation_quotient_displacement",
 ]

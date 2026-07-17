@@ -42,8 +42,9 @@ frozen long-tail/stratified numerical audit rather than claiming a second
 MatPES-PBE-2025.2 teachers under an offline-only 512/32 qualification. H0-D-v1
 remains frozen failed, while H0-D-v2 qualifies the complete abstract finite
 affine OPD catalogue using compact displacement actions and vectorized
-fixed-space-lattice enumeration. H0-E concrete parent realization remains
-open. H1a, H1b, H2,
+fixed-space-lattice enumeration. H0-E-v1 concrete parent realization is now
+frozen failed: all 125 discovered candidates qualified, but coverage was
+`125/1024=0.12207<0.15`. H1a, H1b, H2,
 H3, H4, H5 and H6 remain strictly ordered and unauthorized.
 
 ## Production state spaces

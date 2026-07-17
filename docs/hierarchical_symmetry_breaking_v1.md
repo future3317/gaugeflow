@@ -130,17 +130,20 @@ High-confidence data conclusions:
    H0-C-v2 now separately activates exact-revision TensorNet and QET checkpoints,
    with immediate file rehashing, matched MatPES-PBE-2025.2 provenance,
    held-out errors, covariance tests and an explicit ban on reverse guidance.
-4. The child split is frozen under H0-A v2. H0-D-v2 has qualified the abstract
-   OPD catalogue, but concrete parent--child pairs do not yet exist; every H0-E
-   parent candidate and mode scan must inherit this child assignment.
+4. The child split is frozen under H0-A v2. H0-D-v2 qualified the abstract OPD
+   catalogue. H0-E-v1 then found 125 concrete parent--child paths in its frozen
+   1,024-row pilot and qualified every discovered path, but failed the separate
+   parent-candidate coverage threshold (`0.12207 < 0.15`). Every future
+   versioned successor must inherit the same child assignment.
 5. H0-D-v1 is frozen failed. H0-D-v2 constructs the exact finite affine
    quotient (including translation cosets) for all 230 groups and all 6,188
    canonical `det(B)<=4` HNF orbits. It qualifies 53,441 complete
    physical-real irreps and 75,416 domain-quotiented OPD classes.
    `spgrep-modulation` remains an independent little-group isotropy
-   cross-check, not the catalogue source. H0-E must still retain only irreps
-   with positive occurrence in each concrete parent displacement
-   representation and then assign multiplicity-free realized class mass.
+   cross-check, not the catalogue source. H0-E-v1 retained only irreps with
+   positive occurrence in the direct sum of each concrete parent's compact
+   displacement action and six-dimensional Kelvin strain action, then assigned
+   multiplicity-free realized class mass. Strain was active in 113/125 paths.
 6. The H0-D builder uses the exact identity
 
    \[
@@ -159,8 +162,8 @@ High-confidence data conclusions:
 1. **H0:** freeze source versions/hashes, the formula/prototype split, catalogue
    provenance, cross-source joins and derivation attestations. The historical
    `h0_data_activation_v1` audit remains failed; the versioned v4 repair has
-   passed H0-A through H0-D-v2, while H0-E remains open. H0 as a whole still
-   does not pass.
+   passed H0-A through H0-D-v2, while H0-E-v1 is frozen failed on coverage. H0
+   as a whole does not pass.
 2. **H1a:** qualify the P1 real-data tensor-free hybrid generator.
 3. **H1b:** qualify the complete 230-space-group/Wyckoff parent blueprint
    generator. H1 passes only after both H1a and H1b pass.

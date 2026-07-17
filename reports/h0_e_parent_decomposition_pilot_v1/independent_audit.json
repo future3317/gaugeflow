@@ -1,0 +1,69 @@
+{
+  "audit_passed": true,
+  "decision": "H0-E-v1_failed_stop_before_H1",
+  "deterministic_32_record_rebuild": {
+    "candidate_rows": 1,
+    "exact_record_agreements": 32,
+    "missing_source_rows": [],
+    "panel_size": 32,
+    "passed": true
+  },
+  "failed_frozen_thresholds": [
+    "nontrivial_parent_candidate_fraction"
+  ],
+  "gate_qualified": false,
+  "manifest_consistent": true,
+  "measure_checks": {
+    "physical_measure_assignments_recomputed": true,
+    "physical_measure_duplicate_invariant": true,
+    "physical_measure_normalized": true,
+    "physical_measure_order_invariant": true
+  },
+  "metrics_recomputed": {
+    "distinct_nontrivial_child_space_groups": 25,
+    "distinct_nontrivial_parent_space_groups": 34,
+    "exact_branch_reconstruction_fraction": 1.0,
+    "nonfinite_results": 0,
+    "nontrivial_parent_candidate_fraction": 0.1220703125,
+    "occurrence_integrality_fraction": 1.0,
+    "qualified_nontrivial_count": 125,
+    "qualified_nontrivial_fraction_of_candidates": 1.0,
+    "qualified_nontrivial_periodic_rms_max_angstrom": 3.23876681344612e-08,
+    "qualified_nontrivial_periodic_rms_p95_angstrom": 1.3715291936298825e-08,
+    "qualified_nontrivial_top2_energy_fraction_median": 0.9081097457351242,
+    "sampling_failures": 0,
+    "selected": 1024,
+    "selection_and_split_join_fraction": 1.0,
+    "terminal_space_group_agreement_fraction": 1.0
+  },
+  "protocol": "h0_e_parent_decomposition_pilot_v1_independent_audit",
+  "records_sha256": "4f3c22ef084a15e82ac0cdd5c8a5c26c3083af4a65a59a789e1f03946e205358",
+  "selection_sha256": "9575768b609f758e70f94148720094b7cb9d5c13c12c455e78669b93b7d9e3b0",
+  "structural_checks": {
+    "active_sectors_are_declared": true,
+    "h0_d_hash_matches": true,
+    "protocol_matches": true,
+    "record_ids_exactly_selection": true,
+    "records_hash_matches": true,
+    "selection_hash_matches": true,
+    "selection_ids_unique": true,
+    "selection_protocol_matches": true,
+    "tensor_condition_absent": true
+  },
+  "threshold_checks": {
+    "child_diversity": true,
+    "exact_branch_reconstruction": true,
+    "nonfinite_results": true,
+    "nontrivial_parent_candidate_fraction": false,
+    "occurrence_integrality": true,
+    "parent_diversity": true,
+    "periodic_rms_max": true,
+    "periodic_rms_p95": true,
+    "pilot_size": true,
+    "qualified_nontrivial_fraction_of_candidates": true,
+    "sampling_failures": true,
+    "selection_and_split_join": true,
+    "terminal_space_group": true,
+    "top2_energy": true
+  }
+}
