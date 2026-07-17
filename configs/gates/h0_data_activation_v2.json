@@ -1,0 +1,138 @@
+{
+  "protocol": "h0_data_activation_v2",
+  "status": "active_strict_gate_no_training_until_pass",
+  "supersedes_without_overwriting": "h0_data_activation_v1",
+  "data_center_manifest": "MANIFEST.json",
+  "data_center_manifest_sha256": "bc9e8aa5eeccec7f8952ce4028061103b518af537c151acd865b51c6c89e36a7",
+  "split_inheritance_rule": "child split first; all parent candidates, alternate cells, OPD paths, mode scans, and cross-source joins inherit it",
+  "h0_a": {
+    "source": "Alex-MP-20",
+    "grain": "one child crystal structure per row",
+    "expected_rows": 675204,
+    "split_key": ["reduced_formula", "prototype_cluster"],
+    "source_files": [
+      {
+        "path": "raw/huggingface/Alex-MP-20/train.parquet",
+        "bytes": 155967383,
+        "sha256": "81eca8a6dd1e3e99a30f3efb94d23fb733bc6d5e0d62c6e082e21e4727f76e0d"
+      },
+      {
+        "path": "raw/huggingface/Alex-MP-20/val.parquet",
+        "bytes": 20766698,
+        "sha256": "001dee2a0f799fecf167f5d4b5d02e6b875e0b7f6aef88dea2e997f60973df76"
+      },
+      {
+        "path": "raw/huggingface/Alex-MP-20/test.parquet",
+        "bytes": 20778699,
+        "sha256": "ed2d62a3102b40b2a91f94f8e351d1d875f35305026d439b1a755a0727846a03"
+      }
+    ],
+    "gaugeflow_split_manifest": "processed/gaugeflow_h0_v2/alex_formula_prototype_split.json",
+    "gaugeflow_split_audit": "processed/gaugeflow_h0_v2/alex_formula_prototype_split_audit.json",
+    "split_protocol": "h0_a_alex_formula_prototype_split_v1",
+    "audit_protocol": "h0_a_alex_formula_prototype_split_audit_v1",
+    "maximum_fraction_deviation": 0.02,
+    "required_zero_overlap": [
+      "reduced_formula",
+      "prototype",
+      "matcher_envelope",
+      "component"
+    ]
+  },
+  "h0_b": {
+    "source": "PhononDB compact force constants v1",
+    "expected_materials": 10034,
+    "phonopy_version": "4.3.1",
+    "derived_manifest": "processed/phonondb_force_constants_v1/MANIFEST.json",
+    "source_files": [
+      {
+        "path": "processed/phonondb_force_constants_v1/MANIFEST.json",
+        "bytes": 2420,
+        "sha256": "a4ddeefb08897a374b7f34b26e31523b4fd5ae8f99a0489a605eb995bc708ed2"
+      },
+      {
+        "path": "processed/phonondb_force_constants_v1/index.parquet",
+        "bytes": 2825417,
+        "sha256": "2490c27b2fa14823d661d803264e2cc13a3d3045f308f3cb515c1435311337d6"
+      },
+      {
+        "path": "scripts/build_phonondb_force_constants.py",
+        "bytes": 14164,
+        "sha256": "45efa8621a8e4435cafa00775eb3f17f46efbdfe690c79019e366e775f90dc3f",
+        "direct_hash": true
+      },
+      {
+        "path": "scripts/phonondb_qpoints.py",
+        "bytes": 5325,
+        "sha256": "eaa94a317ba24b5701654d806a8676f073dfa799c276f74aed0381c62a98efb0",
+        "direct_hash": true
+      },
+      {
+        "path": "scripts/validate_phonondb_force_constants.py",
+        "bytes": 8205,
+        "sha256": "9c8fb399a20ce04ffa5936e3efc5d413c9235457df72441efc5bb267256176f2",
+        "direct_hash": true
+      }
+    ],
+    "attestation_manifest": "processed/gaugeflow_h0_v2/phonondb_derivation_attestation.json",
+    "required_attestations": [
+      "primitive_supercell_mapping",
+      "force_constant_solver",
+      "symmetrization_policy",
+      "acoustic_sum_rule",
+      "translational_zero_mode_test",
+      "imaginary_frequency_convention",
+      "degenerate_subspace_numerical_test",
+      "non_analytic_correction_attestation"
+    ]
+  },
+  "h0_c": {
+    "source": "MatPES-PBE-2025.2",
+    "source_files": [
+      {
+        "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-train.jsonl",
+        "bytes": 2122625852,
+        "sha256": "cb92d9cc1f68ac7b7e52eb3b22f9fd5a304d1ad3cbc581de665e22287ec644fb"
+      },
+      {
+        "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-valid.jsonl",
+        "bytes": 117736992,
+        "sha256": "2e39908974a4d30de472b0fc1e15bc307c721aed6e7758baaed0860fd24a13d1"
+      },
+      {
+        "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-test.jsonl",
+        "bytes": 117922394,
+        "sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07"
+      }
+    ],
+    "teacher_manifest": "processed/gaugeflow_h0_v2/matpes_teacher_qualification.json",
+    "required_teacher_evidence": [
+      "architecture",
+      "checkpoint_sha256",
+      "energy_reference",
+      "cutoff_and_neighbor_convention",
+      "pbe_units",
+      "atom_feature_layer",
+      "rotation_and_cell_invariance",
+      "architecture_distinct_disagreement_teacher"
+    ]
+  },
+  "h0_d": {
+    "catalogue_manifest": "processed/gaugeflow_h0_v2/opd_catalogue_manifest.json",
+    "equivalence_generators": [
+      "parent_normalizer",
+      "k_star_relabeling",
+      "opd_basis_change",
+      "unimodular_supercell_basis_change",
+      "domain_relabeling"
+    ],
+    "exact_branch_mass_must_be_explicit": true
+  },
+  "h0_e": {
+    "pilot_size_min": 1000,
+    "pilot_size_max": 5000,
+    "pilot_manifest": "processed/gaugeflow_h0_v2/parent_decomposition_pilot.json",
+    "residual_rms_limit_angstrom": 0.1
+  },
+  "advancement_rule": "H0-A through H0-E must all be qualified before H1a or H1b starts"
+}

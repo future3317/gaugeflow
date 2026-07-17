@@ -109,7 +109,7 @@ manifest dated 2026-07-17 reports:
 
 | Domain | Activated source | Evidence and present limit |
 |---|---|---|
-| structure | Alex-MP-20 | 675,204 rows are structurally valid and ID-disjoint across the upstream files, but there are 15,621 train--val, 15,524 train--test, and 4,278 val--test reduced-formula overlaps; GaugeFlow must rebuild the child split before parent decomposition |
+| structure | Alex-MP-20 | H0-A v2 assigns all 675,204 rows to a child-first 540,164/67,520/67,520 split; formula, exact-prototype, matcher-envelope and connected-component overlap are zero, and the complete cross-split StructureMatcher candidate universe is empty |
 | tensor | JARVIS/GMTNet | 5,000 source rows; 4,998 full-O(3)-audited targets; reserved for later oracle/tensor gates |
 | auxiliary tensor | Materials Project | 3,316 records; retained as a separate source, not a drop-in replacement for JARVIS |
 | nonzero-q modes | PhononDB | all 10,034 compact float64 force-constant caches were derived with phonopy 4.3.1 and the traditional solver; the source manifest records zero failures and ASR statistics, while translational-zero-mode, degenerate-subspace, and NAC attestations remain open |
@@ -128,15 +128,16 @@ High-confidence data conclusions:
 3. MatPES data availability does not establish availability or qualification of
    `TensorNet-PES-MatPES-PBE-2025.2`. A frozen checkpoint and independent
    disagreement teacher must be separately activated.
-4. Parent--child pairs and OPD catalogues do not yet exist. H3 cannot start
-   until the split is frozen first and every candidate parent/mode scan follows
-   the child's split.
+4. The child split is frozen under H0-A v2. Parent--child pairs and OPD
+   catalogues do not yet exist; every future candidate parent and mode scan must
+   inherit this child assignment.
 
 ## Qualification order and scientific boundary
 
 1. **H0:** freeze source versions/hashes, the formula/prototype split, catalogue
-   provenance, cross-source joins and derivation attestations. The current
-   `h0_data_activation_v1` audit does not pass.
+   provenance, cross-source joins and derivation attestations. The historical
+   `h0_data_activation_v1` audit remains failed; v2 has passed H0-A only, so H0
+   as a whole still does not pass.
 2. **H1a:** qualify the P1 real-data tensor-free hybrid generator.
 3. **H1b:** qualify the complete 230-space-group/Wyckoff parent blueprint
    generator. H1 passes only after both H1a and H1b pass.

@@ -1,0 +1,256 @@
+{
+  "alex_source_profile": {
+    "cross_split_overlap": {
+      "train--test": {
+        "material_ids": 0,
+        "reduced_formula_groups": 15524
+      },
+      "train--val": {
+        "material_ids": 0,
+        "reduced_formula_groups": 15621
+      },
+      "val--test": {
+        "material_ids": 0,
+        "reduced_formula_groups": 4278
+      }
+    },
+    "dataset": "Alex-MP-20",
+    "decision": "source_valid_but_rebuild_child_split",
+    "gaugeflow_split_reuse_authorized": false,
+    "grain": "one child crystal structure per row",
+    "profiles": {
+      "test": {
+        "bad_atom_range": 0,
+        "bad_cell_shape": 0,
+        "bad_position_shape": 0,
+        "duplicate_material_ids": 0,
+        "maximum_atoms": 20,
+        "metadata_rows": 67521,
+        "minimum_atoms": 1,
+        "nonfinite": 0,
+        "nonpositive_volume": 0,
+        "null_space_group": 0,
+        "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+        "parquet_format_version": "2.6",
+        "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/test.parquet",
+        "reduced_formula_groups": 64293,
+        "rows": 67521,
+        "unique_material_ids": 67521
+      },
+      "train": {
+        "bad_atom_range": 0,
+        "bad_cell_shape": 0,
+        "bad_position_shape": 0,
+        "duplicate_material_ids": 0,
+        "maximum_atoms": 20,
+        "metadata_rows": 540162,
+        "minimum_atoms": 1,
+        "nonfinite": 0,
+        "nonpositive_volume": 0,
+        "null_space_group": 0,
+        "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+        "parquet_format_version": "2.6",
+        "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/train.parquet",
+        "reduced_formula_groups": 442743,
+        "rows": 540162,
+        "unique_material_ids": 540162
+      },
+      "val": {
+        "bad_atom_range": 0,
+        "bad_cell_shape": 0,
+        "bad_position_shape": 0,
+        "duplicate_material_ids": 0,
+        "maximum_atoms": 20,
+        "metadata_rows": 67521,
+        "minimum_atoms": 1,
+        "nonfinite": 0,
+        "nonpositive_volume": 0,
+        "null_space_group": 0,
+        "parquet_created_by": "parquet-cpp-arrow version 22.0.0",
+        "parquet_format_version": "2.6",
+        "path": "/mnt/e/DATA/T2C-Flow/raw/huggingface/Alex-MP-20/val.parquet",
+        "reduced_formula_groups": 64395,
+        "rows": 67521,
+        "unique_material_ids": 67521
+      }
+    },
+    "source_structure_validity_passed": true,
+    "upstream_split_formula_disjoint": false
+  },
+  "components": {
+    "H0-A": {
+      "files": [
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/Alex-MP-20/train.parquet",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/Alex-MP-20/val.parquet",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/Alex-MP-20/test.parquet",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        }
+      ],
+      "formula_prototype_split": {
+        "assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+        "audit_present": true,
+        "checks": {
+          "assignment_hash_matches_audit": true,
+          "assignment_hash_matches_manifest": true,
+          "assignment_present": true,
+          "audit_protocol_matches": true,
+          "audit_qualified": true,
+          "fraction_deviation_within_limit": true,
+          "matcher_candidate_universe_empty": true,
+          "protocol_matches": true,
+          "required_overlap_zero": true,
+          "row_count_complete": true,
+          "split_manifest_hash_matches_audit": true
+        },
+        "component_count": 567,
+        "largest_component_rows": 84581,
+        "manifest_present": true,
+        "qualified": true,
+        "split_counts": {
+          "test": 67520,
+          "train": 540164,
+          "val": 67520
+        }
+      },
+      "formula_prototype_split_present": true,
+      "passed": true,
+      "status": "qualified"
+    },
+    "H0-B": {
+      "derived_counts": {
+        "expected": 10034,
+        "failed": 0,
+        "imaginary_below_tolerance_in_audit_qpoints": 3186,
+        "selected": 10034,
+        "successful": 10034
+      },
+      "evidence": {
+        "acoustic_sum_rule": true,
+        "degenerate_subspace_numerical_test": false,
+        "force_constant_solver": true,
+        "imaginary_frequency_convention": true,
+        "non_analytic_correction_attestation": false,
+        "primitive_supercell_mapping": true,
+        "symmetrization_policy": true,
+        "translational_zero_mode_test": false
+      },
+      "files": [
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "processed/phonondb_force_constants_v1/MANIFEST.json",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "processed/phonondb_force_constants_v1/index.parquet",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "direct_sha256",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": false,
+          "path": "scripts/build_phonondb_force_constants.py",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "direct_sha256",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": false,
+          "path": "scripts/phonondb_qpoints.py",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "direct_sha256",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": false,
+          "path": "scripts/validate_phonondb_force_constants.py",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        }
+      ],
+      "missing_attestations": [
+        "translational_zero_mode_test",
+        "degenerate_subspace_numerical_test",
+        "non_analytic_correction_attestation"
+      ],
+      "passed": true,
+      "phonopy_version": "4.3.1",
+      "status": "partial_missing_derivation_attestations"
+    },
+    "H0-C": {
+      "files": [
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-train.jsonl",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-valid.jsonl",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        },
+        {
+          "attestation_mode": "root_manifest",
+          "bytes_match_frozen_attestation": true,
+          "manifest_present": true,
+          "path": "raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-test.jsonl",
+          "present": true,
+          "sha256_matches_frozen_attestation": true
+        }
+      ],
+      "passed": true,
+      "status": "blocked_frozen_teacher_missing",
+      "teacher_checkpoint_present": false
+    },
+    "H0-D": {
+      "catalogue_manifest": "processed/gaugeflow_h0_v2/opd_catalogue_manifest.json",
+      "catalogue_present": false,
+      "status": "blocked_catalogue_missing"
+    },
+    "H0-E": {
+      "pilot_manifest": "processed/gaugeflow_h0_v2/parent_decomposition_pilot.json",
+      "pilot_present": false,
+      "status": "blocked_pilot_missing"
+    }
+  },
+  "data_center_manifest_matches": true,
+  "data_center_manifest_sha256": "bc9e8aa5eeccec7f8952ce4028061103b518af537c151acd865b51c6c89e36a7",
+  "data_root": "/mnt/e/DATA/T2C-Flow",
+  "decision": "H0_not_passed_stop_before_H1",
+  "h0_passed": false,
+  "next_gate_authorized": false,
+  "protocol": "h0_data_activation_v2"
+}

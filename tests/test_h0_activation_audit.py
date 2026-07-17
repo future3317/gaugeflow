@@ -54,6 +54,17 @@ def test_h0_audit_distinguishes_source_presence_from_qualification(tmp_path):
         "h0_a": {
             "source_files": [entry("alex.parquet")],
             "gaugeflow_split_manifest": "missing-split.json",
+            "gaugeflow_split_audit": "missing-split-audit.json",
+            "split_protocol": "test-split",
+            "audit_protocol": "test-split-audit",
+            "expected_rows": 1,
+            "maximum_fraction_deviation": 0.02,
+            "required_zero_overlap": [
+                "reduced_formula",
+                "prototype",
+                "matcher_envelope",
+                "component",
+            ],
         },
         "h0_b": {
             "source_files": [entry("phonon-manifest.json"), entry("phonon-index.parquet")],

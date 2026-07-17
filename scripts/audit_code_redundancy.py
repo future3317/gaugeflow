@@ -19,6 +19,8 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_tensororbit_v2_build.py",
     ROOT / "scripts" / "prepare_v2_oracle_qualification.py",
     ROOT / "scripts" / "audit_alex_mp20_source.py",
+    ROOT / "scripts" / "build_alex_h0_split.py",
+    ROOT / "scripts" / "audit_alex_h0_split.py",
     ROOT / "scripts" / "audit_h0_activation.py",
 )
 

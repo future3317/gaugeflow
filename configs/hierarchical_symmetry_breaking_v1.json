@@ -29,7 +29,7 @@
   },
   "mandatory_order": ["H0", "H1a", "H1b", "H2", "H3", "H4", "H5", "H6"],
   "gate_state": {
-    "H0": "failed_no_advance_split_teacher_catalogue_and_pilot_not_qualified",
+    "H0": "v2_partial_h0_a_qualified_h0_b_to_h0_e_block_no_advance",
     "H1a": "not_authorized",
     "H1b": "not_authorized",
     "H2": "not_started",

@@ -67,6 +67,65 @@ def _source_attestation(
     return {"passed": passed, "files": results}
 
 
+def _audit_alex_split(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
+    manifest_path = data_root / str(config["gaugeflow_split_manifest"])
+    audit_relative = config.get("gaugeflow_split_audit")
+    if audit_relative is None:
+        return {
+            "qualified": False,
+            "manifest_present": manifest_path.is_file(),
+            "audit_present": False,
+            "historical_protocol_without_strict_split_audit": True,
+        }
+    audit_path = data_root / str(audit_relative)
+    if not manifest_path.is_file() or not audit_path.is_file():
+        return {
+            "qualified": False,
+            "manifest_present": manifest_path.is_file(),
+            "audit_present": audit_path.is_file(),
+        }
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    overlap = audit.get("cross_split_overlap", {})
+    required_zero = tuple(map(str, config["required_zero_overlap"]))
+    zero_overlap = all(
+        int(values.get(key, -1)) == 0
+        for values in overlap.values()
+        for key in required_zero
+    )
+    assignment_path = manifest_path.parent / str(manifest.get("assignment_path", ""))
+    assignment_sha = _sha256(assignment_path) if assignment_path.is_file() else None
+    checks = {
+        "protocol_matches": manifest.get("protocol") == config["split_protocol"],
+        "audit_protocol_matches": audit.get("protocol") == config["audit_protocol"],
+        "audit_qualified": audit.get("qualified") is True,
+        "split_manifest_hash_matches_audit": audit.get("split_manifest_sha256")
+        == _sha256(manifest_path),
+        "assignment_present": assignment_path.is_file(),
+        "assignment_hash_matches_manifest": assignment_sha == manifest.get("assignment_sha256"),
+        "assignment_hash_matches_audit": assignment_sha == audit.get("assignment_sha256"),
+        "row_count_complete": int(manifest.get("rows", -1)) == int(config["expected_rows"])
+        and int(audit.get("rows", -1)) == int(config["expected_rows"]),
+        "fraction_deviation_within_limit": float(audit.get("maximum_fraction_deviation", 1.0))
+        <= float(config["maximum_fraction_deviation"]),
+        "required_overlap_zero": zero_overlap,
+        "matcher_candidate_universe_empty": int(
+            audit.get("structure_matcher", {}).get("possible_cross_split_candidate_pairs", -1)
+        )
+        == 0,
+    }
+    return {
+        "qualified": all(checks.values()),
+        "manifest_present": True,
+        "audit_present": True,
+        "checks": checks,
+        "split_counts": audit.get("split_counts", {}),
+        "component_count": manifest.get("component_count"),
+        "largest_component_rows": manifest.get("largest_component_rows"),
+        "assignment_sha256": assignment_sha,
+    }
+
+
 def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
     root_manifest_path = data_root / str(config["data_center_manifest"])
     if not root_manifest_path.is_file():
@@ -76,10 +135,11 @@ def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
     manifest_ok = observed_manifest_sha == config["data_center_manifest_sha256"]
 
     alex = _source_attestation(data_root, root_manifest, config["h0_a"]["source_files"])
-    alex_split = data_root / str(config["h0_a"]["gaugeflow_split_manifest"])
-    alex["formula_prototype_split_present"] = alex_split.is_file()
+    alex_split = _audit_alex_split(config["h0_a"], data_root)
+    alex["formula_prototype_split"] = alex_split
+    alex["formula_prototype_split_present"] = bool(alex_split["manifest_present"])
     alex["status"] = (
-        "qualified" if alex["passed"] and alex_split.is_file() else "blocked_split_not_frozen"
+        "qualified" if alex["passed"] and alex_split["qualified"] else "blocked_split_not_frozen"
     )
 
     phonon = _source_attestation(data_root, root_manifest, config["h0_b"]["source_files"])
@@ -168,6 +228,25 @@ def render_markdown(result: dict[str, Any]) -> str:
     alex_overlap = (
         alex_profile.get("cross_split_overlap", {}) if isinstance(alex_profile, dict) else {}
     )
+    alex_gate = result["components"]["H0-A"]
+    if alex_gate["status"] == "qualified":
+        split_evidence = alex_gate["formula_prototype_split"]
+        alex_statement = (
+            "- Alex-MP-20 H0-A is qualified: all source hashes match, the child-first "
+            f"formula/prototype split contains {split_evidence['split_counts']}, its "
+            f"{split_evidence['component_count']} connected components have zero cross-split "
+            "formula, prototype, matcher-envelope and component overlap, and the exhaustive "
+            "StructureMatcher candidate universe across splits is empty."
+        )
+    else:
+        alex_statement = (
+            "- Alex-MP-20 Parquet sources match the frozen data-center manifest. The source "
+            f"profile contains {alex_rows:,} structurally valid rows; upstream reduced-formula "
+            f"overlap is train--val {alex_overlap.get('train--val', {}).get('reduced_formula_groups', 'unknown')}, "
+            f"train--test {alex_overlap.get('train--test', {}).get('reduced_formula_groups', 'unknown')}, "
+            f"and val--test {alex_overlap.get('val--test', {}).get('reduced_formula_groups', 'unknown')}. "
+            "GaugeFlow's formula/prototype-disjoint child split has not qualified."
+        )
     return "\n".join(
         [
             "# H0 data activation v1",
@@ -186,12 +265,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "",
             "## Evidence and interpretation",
             "",
-            "- Alex-MP-20 Parquet sources match the frozen data-center manifest. The source "
-            f"profile contains {alex_rows:,} structurally valid rows; upstream reduced-formula "
-            f"overlap is train--val {alex_overlap.get('train--val', {}).get('reduced_formula_groups', 'unknown')}, "
-            f"train--test {alex_overlap.get('train--test', {}).get('reduced_formula_groups', 'unknown')}, "
-            f"and val--test {alex_overlap.get('val--test', {}).get('reduced_formula_groups', 'unknown')}. "
-            "GaugeFlow's formula/prototype-disjoint child split has not been materialized.",
+            alex_statement,
             "- PhononDB contains 10,034 successful compact float64 force-constant caches with "
             f"phonopy {result['components']['H0-B'].get('phonopy_version')}; remaining formal "
             f"attestations: {', '.join(missing) if missing else 'none'}.",
@@ -213,7 +287,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "",
             "## Limitations and next actions",
             "",
-            "1. Freeze the Alex child split before constructing any parent/path/join artifact.",
+            "1. Preserve the qualified Alex child split and require every later artifact to inherit it.",
             "2. Add the missing PhononDB translational-mode, degenerate-subspace, and NAC "
             "attestations without changing the existing force-constant cache.",
             "3. Qualify a frozen MatPES-PBE teacher and disagreement model.",

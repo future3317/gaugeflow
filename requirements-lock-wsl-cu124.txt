@@ -2,11 +2,11 @@
 torch==2.5.1+cu124
 torch-geometric==2.6.1
 e3nn==0.5.1
-pymatgen==2022.0.16
+pymatgen==2024.11.13
 pandas==2.2.0
 pyarrow==22.0.0
 numpy==1.26.4
-scipy==1.10.1
+scipy==1.15.3
 spglib==2.7.0
 monty==2025.3.3
 PyYAML==6.0.3

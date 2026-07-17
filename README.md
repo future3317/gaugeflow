@@ -28,7 +28,7 @@ distributions.
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | Frozen as `H0_not_passed_stop_before_H1` |
+| H0 data activation | v1 frozen failed; v2 H0-A qualified, H0-B--E still block advancement |
 | Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 
@@ -115,8 +115,9 @@ See [`docs/hierarchical_symmetry_breaking_v1.md`](docs/hierarchical_symmetry_bre
 The original Chinese design/data note is retained as
 [`docs/method_update_and_dataset_usage_zh.md`](docs/method_update_and_dataset_usage_zh.md).
 These interfaces do not authorize hierarchical training. The first formal H0
-activation audit is frozen as `H0_not_passed_stop_before_H1`; H1a/H1b and all
-later gates remain unauthorized.
+activation audit is frozen as `H0_not_passed_stop_before_H1`. The versioned v2
+repair has qualified H0-A without overwriting v1, but H0-B--E remain open;
+H1a/H1b and all later gates remain unauthorized.
 
 ## Repository layout
 
@@ -246,10 +247,11 @@ not authorize oracle promotion, relaxation, DFT or DFPT.
 
 ## Next implementation milestone
 
-The next milestone is completion of H0, not training. Alex-MP-20 contains
-675,204 structurally valid rows, but its upstream split has 15,621 train--val,
-15,524 train--test and 4,278 val--test reduced-formula overlaps. GaugeFlow must
-freeze a formula/prototype-disjoint child split first. H0 also requires the
-remaining PhononDB derivation attestations, a frozen MatPES-PBE teacher, a
-deduplicated OPD physical path measure and the bounded parent-decomposition
-pilot. Only then may H1a and H1b start. Tensor conditioning remains H6.
+The next milestone is completion of H0, not training. H0-A now freezes all
+675,204 Alex-MP-20 rows into a child-first 540,164/67,520/67,520 split with
+zero formula, exact-prototype, matcher-envelope or connected-component overlap.
+The exhaustive cross-split StructureMatcher candidate universe is empty. H0
+still requires the remaining PhononDB derivation attestations, a frozen
+MatPES-PBE teacher, a deduplicated OPD physical path measure and the bounded
+parent-decomposition pilot. Only then may H1a and H1b start. Tensor conditioning
+remains H6.
