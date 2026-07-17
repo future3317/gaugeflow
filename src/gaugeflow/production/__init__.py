@@ -4,6 +4,7 @@ This package is intentionally separate from the archived continuous-logit ODE
 prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
+from .alex_p1_data import PackedAlexP1Dataset
 from .blueprint import (
     DistortionBlueprint,
     EmpiricalNodeCountPrior,
@@ -75,6 +76,7 @@ __all__ = [
     "ParentBlueprint",
     "ParentBlueprintBatch",
     "ParentGeometryCarrier",
+    "PackedAlexP1Dataset",
     "PointGroupMetricChart",
     "ProductionTrainer",
     "ProductionTrainingConfig",
