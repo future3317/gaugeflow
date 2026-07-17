@@ -1,0 +1,328 @@
+{
+  "decision_boundary": "Diagnostic only. It cannot overwrite the failed wrapped-score protocol or authorize H1b-H6. A sampler change requires a separately frozen qualification protocol.",
+  "protocol": "h1a_wrapped_score_sampler_diagnostic_v1",
+  "sampler_sensitivity": {
+    "5201": [
+      {
+        "fraction_at_least_threshold": 0.90625,
+        "mean_terminal_coordinate_step_rms": 0.006427786924177781,
+        "minimum_distance_quantiles_angstrom": [
+          0.36792507767677307,
+          0.38171830266714096,
+          0.4561295315623283,
+          0.9253473579883575,
+          1.51357741355896,
+          1.7728582620620728
+        ],
+        "steps": 50,
+        "time_grid": "uniform_log_alpha"
+      },
+      {
+        "fraction_at_least_threshold": 0.890625,
+        "mean_terminal_coordinate_step_rms": 0.0013805578855681233,
+        "minimum_distance_quantiles_angstrom": [
+          0.22126300632953644,
+          0.23133497208356857,
+          0.428596656024456,
+          0.962181806564331,
+          1.5838309228420253,
+          1.8210605382919312
+        ],
+        "steps": 50,
+        "time_grid": "uniform_time"
+      }
+    ],
+    "5202": [
+      {
+        "fraction_at_least_threshold": 0.90625,
+        "mean_terminal_coordinate_step_rms": 0.005765680398326367,
+        "minimum_distance_quantiles_angstrom": [
+          0.43971630930900574,
+          0.44852451741695404,
+          0.46272265911102295,
+          0.921510636806488,
+          1.488711667060852,
+          1.7449320554733276
+        ],
+        "steps": 50,
+        "time_grid": "uniform_log_alpha"
+      },
+      {
+        "fraction_at_least_threshold": 0.859375,
+        "mean_terminal_coordinate_step_rms": 0.0013364002297748812,
+        "minimum_distance_quantiles_angstrom": [
+          0.166392982006073,
+          0.28462639153003694,
+          0.38100925981998446,
+          0.9536027014255524,
+          1.6920961976051327,
+          1.8159784078598022
+        ],
+        "steps": 50,
+        "time_grid": "uniform_time"
+      }
+    ],
+    "5203": [
+      {
+        "fraction_at_least_threshold": 0.921875,
+        "mean_terminal_coordinate_step_rms": 0.006778719456633553,
+        "minimum_distance_quantiles_angstrom": [
+          0.36764663457870483,
+          0.4165063789486885,
+          0.48399837762117387,
+          0.9380121827125549,
+          1.6593615353107445,
+          1.8844443559646606
+        ],
+        "steps": 50,
+        "time_grid": "uniform_log_alpha"
+      },
+      {
+        "fraction_at_least_threshold": 0.875,
+        "mean_terminal_coordinate_step_rms": 0.0018256256880704314,
+        "minimum_distance_quantiles_angstrom": [
+          0.2575741112232208,
+          0.3069858354330063,
+          0.404074364900589,
+          0.9348373711109161,
+          1.6386879503726959,
+          1.9817837476730347
+        ],
+        "steps": 50,
+        "time_grid": "uniform_time"
+      }
+    ]
+  },
+  "score_calibration": {
+    "5201": [
+      {
+        "endpoint_rms_angstrom": 1.0754983320799645,
+        "oracle_endpoint_rms_angstrom": 2.6201816093290627e-07,
+        "prediction_target_cosine": 0.1884114561947231,
+        "prediction_to_target_norm": 0.0054848699510832545,
+        "score_explained_fraction": 0.002036734229343029,
+        "score_mse_per_component": 89.65628495175615,
+        "time": 0.01,
+        "zero_score_mse_per_component": 89.83926365518163
+      },
+      {
+        "endpoint_rms_angstrom": 2.284607976365076,
+        "oracle_endpoint_rms_angstrom": 0.7946372870070928,
+        "prediction_target_cosine": 0.07149382884024037,
+        "prediction_to_target_norm": 0.023787946915569954,
+        "score_explained_fraction": 0.0028355183704745768,
+        "score_mse_per_component": 10.864386012411526,
+        "time": 0.05,
+        "zero_score_mse_per_component": 10.895279778374565
+      },
+      {
+        "endpoint_rms_angstrom": 2.596103083421275,
+        "oracle_endpoint_rms_angstrom": 1.8333049405312452,
+        "prediction_target_cosine": 0.03794800240465077,
+        "prediction_to_target_norm": 0.03970264563935534,
+        "score_explained_fraction": 0.0014370287893301636,
+        "score_mse_per_component": 1.3838145753257296,
+        "time": 0.1,
+        "zero_score_mse_per_component": 1.3858060184706988
+      },
+      {
+        "endpoint_rms_angstrom": 2.7255995725142363,
+        "oracle_endpoint_rms_angstrom": 2.7003468255412026,
+        "prediction_target_cosine": -0.00044218390779172603,
+        "prediction_to_target_norm": 0.46765282228796,
+        "score_explained_fraction": -0.21911272502854984,
+        "score_mse_per_component": 0.0045476870404349435,
+        "time": 0.25,
+        "zero_score_mse_per_component": 0.0037303252989410334
+      },
+      {
+        "endpoint_rms_angstrom": 2.704017910639849,
+        "oracle_endpoint_rms_angstrom": 2.693108583631785,
+        "prediction_target_cosine": -0.015421144104078433,
+        "prediction_to_target_norm": 57.104755659248376,
+        "score_explained_fraction": -3262.714357919084,
+        "score_mse_per_component": 0.0006149541805538102,
+        "time": 0.5,
+        "zero_score_mse_per_component": 1.8842156914304832e-07
+      },
+      {
+        "endpoint_rms_angstrom": 2.6854866492714256,
+        "oracle_endpoint_rms_angstrom": 2.6815201523205126,
+        "prediction_target_cosine": 0.011510012416350092,
+        "prediction_to_target_norm": 5462.422642096196,
+        "score_explained_fraction": -29837937.257667948,
+        "score_mse_per_component": 0.0002910569762914545,
+        "time": 0.75,
+        "zero_score_mse_per_component": 9.754594093533148e-12
+      },
+      {
+        "endpoint_rms_angstrom": 2.7455832168244543,
+        "oracle_endpoint_rms_angstrom": 2.7396492799042513,
+        "prediction_target_cosine": -0.011084901594077717,
+        "prediction_to_target_norm": 78820.29376406637,
+        "score_explained_fraction": -6212640494.725461,
+        "score_mse_per_component": 2.2705185424106625e-05,
+        "time": 0.95,
+        "zero_score_mse_per_component": 3.6546755666497484e-15
+      }
+    ],
+    "5202": [
+      {
+        "endpoint_rms_angstrom": 1.0749232738859227,
+        "oracle_endpoint_rms_angstrom": 2.7012360847698426e-07,
+        "prediction_target_cosine": 0.18955882249115913,
+        "prediction_to_target_norm": 0.006948623355825642,
+        "score_explained_fraction": 0.0025860405050883717,
+        "score_mse_per_component": 89.60693568042201,
+        "time": 0.01,
+        "zero_score_mse_per_component": 89.83926365518163
+      },
+      {
+        "endpoint_rms_angstrom": 2.283764302752326,
+        "oracle_endpoint_rms_angstrom": 0.7946373081032664,
+        "prediction_target_cosine": 0.07313174859815916,
+        "prediction_to_target_norm": 0.022290200648978742,
+        "score_explained_fraction": 0.002763410813147127,
+        "score_mse_per_component": 10.865171644422743,
+        "time": 0.05,
+        "zero_score_mse_per_component": 10.895279778374565
+      },
+      {
+        "endpoint_rms_angstrom": 2.604661544826094,
+        "oracle_endpoint_rms_angstrom": 1.8333049405312452,
+        "prediction_target_cosine": 0.033162994414681235,
+        "prediction_to_target_norm": 0.03178451064591668,
+        "score_explained_fraction": 0.0010979124165487741,
+        "score_mse_per_component": 1.384284524836092,
+        "time": 0.1,
+        "zero_score_mse_per_component": 1.3858060184706988
+      },
+      {
+        "endpoint_rms_angstrom": 2.728064443084389,
+        "oracle_endpoint_rms_angstrom": 2.700346847614161,
+        "prediction_target_cosine": -0.0008541328083371779,
+        "prediction_to_target_norm": 0.43869176544552907,
+        "score_explained_fraction": -0.19319988486672202,
+        "score_mse_per_component": 0.004451023717211862,
+        "time": 0.25,
+        "zero_score_mse_per_component": 0.0037303252989410334
+      },
+      {
+        "endpoint_rms_angstrom": 2.7027119999078053,
+        "oracle_endpoint_rms_angstrom": 2.6931085725656434,
+        "prediction_target_cosine": 0.019249502541785354,
+        "prediction_to_target_norm": 44.4163010536271,
+        "score_explained_fraction": -1971.097731683545,
+        "score_mse_per_component": 0.00037158574335850205,
+        "time": 0.5,
+        "zero_score_mse_per_component": 1.884215662280012e-07
+      },
+      {
+        "endpoint_rms_angstrom": 2.6853539414894354,
+        "oracle_endpoint_rms_angstrom": 2.6815201523205126,
+        "prediction_target_cosine": -0.03300374874625015,
+        "prediction_to_target_norm": 4974.503076764098,
+        "score_explained_fraction": -24746010.65808998,
+        "score_mse_per_component": 0.0002413872991585069,
+        "time": 0.75,
+        "zero_score_mse_per_component": 9.754594093533148e-12
+      },
+      {
+        "endpoint_rms_angstrom": 2.743610436750328,
+        "oracle_endpoint_rms_angstrom": 2.7396492907824035,
+        "prediction_target_cosine": 0.0004082507525376533,
+        "prediction_to_target_norm": 127790.17026545265,
+        "score_explained_fraction": -16330327564.425615,
+        "score_mse_per_component": 5.968204914874787e-05,
+        "time": 0.95,
+        "zero_score_mse_per_component": 3.6546755666497484e-15
+      }
+    ],
+    "5203": [
+      {
+        "endpoint_rms_angstrom": 1.0744145856425045,
+        "oracle_endpoint_rms_angstrom": 2.670104615254334e-07,
+        "prediction_target_cosine": 0.19080372230634884,
+        "prediction_to_target_norm": 0.00828402693596845,
+        "score_explained_fraction": 0.0030925805706110143,
+        "score_mse_per_component": 89.56142849392361,
+        "time": 0.01,
+        "zero_score_mse_per_component": 89.83926365518163
+      },
+      {
+        "endpoint_rms_angstrom": 2.284118964671239,
+        "oracle_endpoint_rms_angstrom": 0.7946373104472856,
+        "prediction_target_cosine": 0.07856622796622911,
+        "prediction_to_target_norm": 0.025256980956093585,
+        "score_explained_fraction": 0.0033307431151212707,
+        "score_mse_per_component": 10.858990400265425,
+        "time": 0.05,
+        "zero_score_mse_per_component": 10.895279778374565
+      },
+      {
+        "endpoint_rms_angstrom": 2.5930543564161015,
+        "oracle_endpoint_rms_angstrom": 1.833304964915341,
+        "prediction_target_cosine": 0.031571510161708435,
+        "prediction_to_target_norm": 0.06639025341943834,
+        "score_explained_fraction": -0.00021556284703949657,
+        "score_mse_per_component": 1.386104746761485,
+        "time": 0.1,
+        "zero_score_mse_per_component": 1.3858060184706988
+      },
+      {
+        "endpoint_rms_angstrom": 2.7175897336741777,
+        "oracle_endpoint_rms_angstrom": 2.7003468255412026,
+        "prediction_target_cosine": -0.003658659657668607,
+        "prediction_to_target_norm": 0.6034762328741614,
+        "score_explained_fraction": -0.36859940087471865,
+        "score_mse_per_component": 0.0051053209691985044,
+        "time": 0.25,
+        "zero_score_mse_per_component": 0.0037303252989410334
+      },
+      {
+        "endpoint_rms_angstrom": 2.689127562299352,
+        "oracle_endpoint_rms_angstrom": 2.693108561499501,
+        "prediction_target_cosine": -0.011738685917007573,
+        "prediction_to_target_norm": 61.92283569981856,
+        "score_explained_fraction": -3835.8914290787557,
+        "score_mse_per_component": 0.0007229530925138129,
+        "time": 0.5,
+        "zero_score_mse_per_component": 1.884215662280012e-07
+      },
+      {
+        "endpoint_rms_angstrom": 2.6892630095039975,
+        "oracle_endpoint_rms_angstrom": 2.6815201523205126,
+        "prediction_target_cosine": 0.00910541962627118,
+        "prediction_to_target_norm": 6424.20264728245,
+        "score_explained_fraction": -41270262.98138184,
+        "score_mse_per_component": 0.00040257467816655454,
+        "time": 0.75,
+        "zero_score_mse_per_component": 9.754594212146719e-12
+      },
+      {
+        "endpoint_rms_angstrom": 2.7450654124368286,
+        "oracle_endpoint_rms_angstrom": 2.7396492799042513,
+        "prediction_target_cosine": -0.00040757384013348345,
+        "prediction_to_target_norm": 228730.3476492292,
+        "score_explained_fraction": -52317577107.577324,
+        "score_mse_per_component": 0.00019120377076503175,
+        "time": 0.95,
+        "zero_score_mse_per_component": 3.6546755666497484e-15
+      }
+    ]
+  },
+  "source_protocol": "h1a_p1_wrapped_score_repair_v1",
+  "train_reference_geometry": {
+    "fraction_at_least_threshold": 1.0,
+    "graphs": 4096,
+    "quantiles_angstrom": [
+      0.7534201741218567,
+      1.386600399017334,
+      1.800101637840271,
+      2.69817316532135,
+      3.39628404378891,
+      5.104818820953369
+    ],
+    "threshold_angstrom": 0.5
+  }
+}
