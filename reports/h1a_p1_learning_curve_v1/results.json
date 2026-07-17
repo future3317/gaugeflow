@@ -1,0 +1,236 @@
+{
+  "checks": {
+    "all_seed_validation_ratio": true,
+    "finite_positive_lattices": true,
+    "mean_validation_ratio": true,
+    "minimum_distance_aggregate": false,
+    "minimum_distance_each_seed": false,
+    "sampling_failures": true,
+    "tensor_bypass": true,
+    "terminal_masks": true,
+    "training_finite": true
+  },
+  "decision": "learning_curve_failed_diagnose_at_H1a",
+  "mean_final_over_initial_total": 0.6844257771557868,
+  "protocol": "h1a_p1_learning_curve_v1",
+  "protocol_sha256": "8c170213c24480545471a61b8628d50e1f5ea229d95aee77f648698406125b17",
+  "qualified": false,
+  "seed_results": {
+    "5201": {
+      "final_over_initial_total": 0.6819573257785418,
+      "final_validation": {
+        "coordinate": 0.8766904100775719,
+        "element": 3.228569835424423,
+        "shape": 0.9279784262180328,
+        "tensor_candidate_count": 0.0,
+        "total": 5.420949876308441,
+        "volume": 0.38771125255152583
+      },
+      "initial_validation": {
+        "coordinate": 0.9162494130432606,
+        "element": 4.759771823883057,
+        "shape": 1.2491663098335266,
+        "tensor_candidate_count": 0.0,
+        "total": 7.9491042494773865,
+        "volume": 1.0239166766405106
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.9375,
+        "minimum_distance_quantiles_angstrom": [
+          0.25460052490234375,
+          1.0215701460838318,
+          2.304945468902588
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          11.379484176635742,
+          24.14123821258545,
+          42.47757339477539
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.9162494130432606,
+          "element": 4.759771823883057,
+          "shape": 1.2491663098335266,
+          "tensor_candidate_count": 0.0,
+          "total": 7.9491042494773865,
+          "volume": 1.0239166766405106
+        },
+        "1000": {
+          "coordinate": 0.8785948492586613,
+          "element": 4.013935253024101,
+          "shape": 1.198752012103796,
+          "tensor_candidate_count": 0.0,
+          "total": 6.701437175273895,
+          "volume": 0.610155051574111
+        },
+        "2500": {
+          "coordinate": 0.8757348470389843,
+          "element": 3.4526989609003067,
+          "shape": 1.0978249572217464,
+          "tensor_candidate_count": 0.0,
+          "total": 5.821219772100449,
+          "volume": 0.3949610982090235
+        },
+        "5000": {
+          "coordinate": 0.8766904100775719,
+          "element": 3.228569835424423,
+          "shape": 0.9279784262180328,
+          "tensor_candidate_count": 0.0,
+          "total": 5.420949876308441,
+          "volume": 0.38771125255152583
+        }
+      }
+    },
+    "5202": {
+      "final_over_initial_total": 0.6910518589807947,
+      "final_validation": {
+        "coordinate": 0.8762782365083694,
+        "element": 3.2933287620544434,
+        "shape": 0.9514485523104668,
+        "tensor_candidate_count": 0.0,
+        "total": 5.517538905143738,
+        "volume": 0.39648339059203863
+      },
+      "initial_validation": {
+        "coordinate": 0.9090741723775864,
+        "element": 4.7560853362083435,
+        "shape": 1.3088106885552406,
+        "tensor_candidate_count": 0.0,
+        "total": 7.984261721372604,
+        "volume": 1.0102915316820145
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.84375,
+        "minimum_distance_quantiles_angstrom": [
+          0.08087757229804993,
+          0.913384735584259,
+          2.4025156497955322
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          10.142423629760742,
+          24.68394660949707,
+          61.017879486083984
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.9090741723775864,
+          "element": 4.7560853362083435,
+          "shape": 1.3088106885552406,
+          "tensor_candidate_count": 0.0,
+          "total": 7.984261721372604,
+          "volume": 1.0102915316820145
+        },
+        "1000": {
+          "coordinate": 0.8830356448888779,
+          "element": 4.048534572124481,
+          "shape": 1.222797717899084,
+          "tensor_candidate_count": 0.0,
+          "total": 6.758942633867264,
+          "volume": 0.604574728757143
+        },
+        "2500": {
+          "coordinate": 0.8764619156718254,
+          "element": 3.476309195160866,
+          "shape": 1.0947779193520546,
+          "tensor_candidate_count": 0.0,
+          "total": 5.84734570980072,
+          "volume": 0.3997966544702649
+        },
+        "5000": {
+          "coordinate": 0.8762782365083694,
+          "element": 3.2933287620544434,
+          "shape": 0.9514485523104668,
+          "tensor_candidate_count": 0.0,
+          "total": 5.517538905143738,
+          "volume": 0.39648339059203863
+        }
+      }
+    },
+    "5203": {
+      "final_over_initial_total": 0.6802681467080239,
+      "final_validation": {
+        "coordinate": 0.8770416155457497,
+        "element": 3.268999993801117,
+        "shape": 0.9550390653312206,
+        "tensor_candidate_count": 0.0,
+        "total": 5.488304018974304,
+        "volume": 0.3872233498841524
+      },
+      "initial_validation": {
+        "coordinate": 0.9228446520864964,
+        "element": 4.796354115009308,
+        "shape": 1.261711671948433,
+        "tensor_candidate_count": 0.0,
+        "total": 8.067853897809982,
+        "volume": 1.086943682283163
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 0.953125,
+        "minimum_distance_quantiles_angstrom": [
+          0.2168792486190796,
+          1.1271050572395325,
+          2.178020715713501
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 64,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          11.359097480773926,
+          23.90949535369873,
+          49.679962158203125
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.9228446520864964,
+          "element": 4.796354115009308,
+          "shape": 1.261711671948433,
+          "tensor_candidate_count": 0.0,
+          "total": 8.067853897809982,
+          "volume": 1.086943682283163
+        },
+        "1000": {
+          "coordinate": 0.8784725330770016,
+          "element": 4.076263755559921,
+          "shape": 1.224051270633936,
+          "tensor_candidate_count": 0.0,
+          "total": 6.784568011760712,
+          "volume": 0.6057804729789495
+        },
+        "2500": {
+          "coordinate": 0.8772456385195255,
+          "element": 3.4540877789258957,
+          "shape": 1.1098917722702026,
+          "tensor_candidate_count": 0.0,
+          "total": 5.838692158460617,
+          "volume": 0.3974669543094933
+        },
+        "5000": {
+          "coordinate": 0.8770416155457497,
+          "element": 3.268999993801117,
+          "shape": 0.9550390653312206,
+          "tensor_candidate_count": 0.0,
+          "total": 5.488304018974304,
+          "volume": 0.3872233498841524
+        }
+      }
+    }
+  }
+}
