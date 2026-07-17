@@ -1,0 +1,54 @@
+{
+  "aggregate": {
+    "element_marginal_jsd": 0.02194869445703595,
+    "finite_positive_lattices_fraction": 1.0,
+    "formula_novelty_vs_reference_subset_fraction": 1.0,
+    "formula_uniqueness_fraction": 0.99609375,
+    "generated_minimum_distance_quantiles_angstrom": [
+      0.18402892351150513,
+      0.422256717979908,
+      0.6292653411626816,
+      1.2710707783699036,
+      2.0650108098983764,
+      3.1236684322357178
+    ],
+    "minimum_distance_each_seed_fraction": {
+      "5201": 0.98828125,
+      "5202": 0.96484375,
+      "5203": 0.984375
+    },
+    "minimum_distance_fraction": 0.9791666666666666,
+    "node_count_jsd": 0.2750451424545525,
+    "normalized_minimum_distance_wasserstein": 2.625983162261039,
+    "normalized_volume_wasserstein": 0.10055807596606814,
+    "reference_minimum_distance_quantiles_angstrom": [
+      0.7403629422187805,
+      1.6232928907871247,
+      1.890611881017685,
+      2.759075164794922,
+      3.4493535161018367,
+      4.885038375854492
+    ],
+    "sampling_failures": 0,
+    "terminal_masks": 0,
+    "volume_reference_envelope_fraction": 0.9895833333333334
+  },
+  "checks": {
+    "element_marginal": true,
+    "finite_positive_lattices": true,
+    "formula_uniqueness": true,
+    "minimum_distance_aggregate": true,
+    "minimum_distance_each_seed": true,
+    "minimum_distance_wasserstein": false,
+    "node_count": false,
+    "sampling_failures": true,
+    "terminal_masks": true,
+    "volume_envelope": true,
+    "volume_wasserstein": true
+  },
+  "decision": "H1a_tensor_free_failed_stop_before_H1b",
+  "generated_graphs": 768,
+  "protocol": "h1a_tensor_free_benchmark_v1",
+  "qualified": false,
+  "reference_graphs": 8192
+}
