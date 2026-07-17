@@ -76,15 +76,18 @@ its code/data/report surface.
   formula-, exact-prototype-, matcher-envelope- and component-disjoint, and
   PhononDB v2 has a full-universe Hessian-algebra certificate plus a frozen
   1,024-material long-tail/stratified mode audit; frozen TensorNet and QET
-  MatPES-PBE-2025.2 teachers pass the 512/32 held-out and covariance audit. H0-D/E
-  still require the OPD physical path measure and parent-decomposition pilot,
+  MatPES-PBE-2025.2 teachers pass the 512/32 held-out and covariance audit. H0-D-v1
+  is frozen failed: the package sources qualify, but no full-real-k-star affine
+  OPD catalogue/measure exists and the point-operation-only branch schema is
+  insufficient. H0-D/E still require the repaired physical path measure and parent-decomposition pilot,
   so the overall decision remains
   `H0_not_passed_stop_before_H1`.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
-S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is H0-D's
-deduplicated OPD physical path-class measure; H1a remains unauthorized.
+S0.4.1 and S1a-I0 do not authorize tensor work. The next milestone is a
+versioned H0-D repair based on the finite affine quotient, full real k-star and
+parent displacement-representation occurrence. H0-E and H1a remain unauthorized.
 
 ## Hierarchical symmetry-breaking rules
 

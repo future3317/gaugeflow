@@ -28,7 +28,7 @@ distributions.
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
-| H0 data activation | v1 frozen failed; v4 H0-A/H0-B/H0-C qualified, H0-D/E still block advancement |
+| H0 data activation | v1 frozen failed; v4 H0-A/H0-B/H0-C qualified; H0-D-v1 frozen failed on the missing affine full-real-k-star OPD catalogue; H0-D/E block advancement |
 | Tensor-free real-data H1a and full-blueprint H1b | Not authorized |
 | Real tensor fine-tuning/oracle/DFT/DFPT | Not authorized |
 

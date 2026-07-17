@@ -133,6 +133,13 @@ High-confidence data conclusions:
 4. The child split is frozen under H0-A v2. Parent--child pairs and OPD
    catalogues do not yet exist; every future candidate parent and mode scan must
    inherit this child assignment.
+5. H0-D-v1 is frozen failed. `spgrep-modulation` is qualified only as a
+   little-group isotropy cross-check. A production path class must retain the
+   full affine operation (including translation cosets), use a full real
+   k-star representation that occurs in the concrete parent displacement
+   representation, and quotient fixed-space/stabilizer domains before class
+   mass is assigned. Point-operation indices alone do not certify a child
+   space group.
 
 ## Qualification order and scientific boundary
 

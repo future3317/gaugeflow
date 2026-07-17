@@ -1,0 +1,85 @@
+{
+  "protocol": "h0_d_opd_physical_path_catalogue_v1",
+  "frozen_at_utc": "2026-07-17T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "scientific_scope": "ordered stoichiometric commensurate parent-to-child distortions with det(B)<=4 and at most two active OPD branches",
+  "input_contract": {
+    "parent_space_groups": 230,
+    "maximum_supercell_index": 4,
+    "maximum_active_opd_branches": 2,
+    "parent_cell_convention": "primitive row-lattice coordinates",
+    "child_split_inheritance": "h0_a_alex_child_first_v2"
+  },
+  "qualified_sources": {
+    "spglib": {
+      "version": "2.7.0",
+      "role": "space-group operations and setting identification"
+    },
+    "spgrep": {
+      "version": "0.6.0",
+      "git_tag_object": "3c4ca8c30fbcd5688b297f0b7817cb0c3a83ea68",
+      "role": "physical real irreducible representations and independent representation checks"
+    },
+    "spgrep_modulation": {
+      "version": "0.3.0",
+      "git_tag_object": "26292ba4f9963b56d5d92e85eb4f7d35caf073a3",
+      "role": "small-representation isotropy enumeration cross-check only",
+      "not_sufficient_as_catalogue": true
+    }
+  },
+  "physical_object": {
+    "finite_parent_quotient": "G_parent^B / T_B",
+    "operation_identity": "exact affine operation (fractional rotation, translation coset modulo T_B)",
+    "mode_representation": "full real k-star representation occurring in the parent Wyckoff displacement representation",
+    "opd_branch": "pointwise fixed subspace with an explicit affine stabilizer",
+    "terminal_child": "preimage of the affine quotient stabilizer, not a point-group-only label"
+  },
+  "mandatory_equivalence_generators": [
+    "parent_group_conjugation_and_normalizer_action",
+    "k_star_relabeling",
+    "opd_basis_change_via_fixed_space_projector",
+    "unimodular_supercell_basis_change_via_canonical_hnf",
+    "domain_relabeling"
+  ],
+  "measure_contract": {
+    "one_column_per_physical_path_class": true,
+    "tuple_multiplicity_must_not_change_mass": true,
+    "class_prior_mass_positive_finite": true,
+    "class_masses_sum_to_one_within_parent": true,
+    "exact_branch_explicit_for_every_parent": true,
+    "exact_branch_is_B_identity_and_zero_active_modes": true
+  },
+  "forbidden_shortcuts": [
+    "point_operation_indices_without_translation_cosets",
+    "single_k_little_group_catalogue_presented_as_full_k_star",
+    "child_space_group_number_without_affine_subgroup_certificate",
+    "catalogue_tuple_count_used_as_prior_mass",
+    "structure_independent_irrep_claim_without_displacement_representation_occurrence",
+    "ordinary_subgroup_enumeration_presented_as_OPD_isotropy_enumeration"
+  ],
+  "required_catalogue_manifest": "processed/gaugeflow_h0_v4/opd_catalogue_manifest.json",
+  "required_checks": [
+    "all_230_exact_branches",
+    "finite_group_closure_identity_inverse_associativity",
+    "representation_homomorphism",
+    "real_k_star_closure",
+    "opd_reynolds_idempotence_and_pointwise_fixing",
+    "affine_child_subgroup_closure",
+    "parent_normalizer_invariance",
+    "k_star_relabeling_invariance",
+    "opd_basis_gauge_invariance",
+    "unimodular_supercell_basis_invariance",
+    "domain_relabeling_invariance",
+    "enumeration_order_invariance",
+    "duplicate_expansion_invariance",
+    "class_mass_normalization",
+    "spgrep_modulation_reference_panel_agreement"
+  ],
+  "numerical_thresholds": {
+    "representation_max_abs_error_float64": 1e-9,
+    "projector_idempotence_max_abs_error_float64": 1e-9,
+    "pointwise_fixed_max_abs_error_float64": 1e-9,
+    "mass_sum_abs_error_float64": 1e-12
+  },
+  "advancement_rule": "H0-D qualifies only when the manifest and every required check pass. Otherwise stop before H0-E and all H1+ work."
+}
