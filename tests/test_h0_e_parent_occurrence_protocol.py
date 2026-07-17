@@ -196,3 +196,31 @@ def test_h0_e_v4_o1_freezes_the_complete_disjoint_held_out_census():
     assert config["advancement_rule"].startswith(
         "O1 success qualifies H0-E-v4"
     )
+
+
+def test_h1a_cache_protocol_keeps_the_complete_h0_a_split_without_leakage():
+    config = json.loads(
+        Path("configs/gates/h1a_p1_structure_cache_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    selection = config["selection"]
+    schema = config["packed_schema"]
+    assert config["status_before_run"] == "frozen_not_run"
+    assert selection["filtering"].startswith("none")
+    assert sum(selection["gaugeflow_split_counts"].values()) == 675204
+    assert sum(selection["gaugeflow_split_node_counts"].values()) == 6479556
+    assert selection["maximum_atoms"] == 20
+    assert config["canonical_cell"]["failure_policy"].startswith("fail closed")
+    assert "material_id" in schema["forbidden_model_inputs"]
+    assert "space_group" in schema["forbidden_model_inputs"]
+    assert "tensor condition" in schema["forbidden_model_inputs"]
+    assert schema["model_inputs"] == [
+        "atom_tokens",
+        "fractional_coordinates",
+        "lattice",
+        "batch",
+    ]
+    assert config["advancement_rule"].startswith(
+        "Cache qualification permits only a separately frozen H1a"
+    )

@@ -1,0 +1,125 @@
+{
+  "protocol": "h1a_p1_structure_cache_v1",
+  "frozen_at_utc": "2026-07-18T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "gate_role": "H1a data-plane qualification only; success permits freezing the real-data P1 training protocol but does not train a model, qualify H1a/H1, or authorize H1b-H6",
+  "h0_dependency": {
+    "decision": "H0-E-v4-and-H0_qualified_only_separately_frozen_H1a_may_start",
+    "o1_manifest_sha256": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+    "o1_independent_audit_sha256": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961",
+    "archive_tag": "archive/h0-e-v4-o1-v1-qualified-20260718"
+  },
+  "source": {
+    "dataset": "Alex-MP-20",
+    "rows": 675204,
+    "raw_files": [
+      {
+        "source_split": "train",
+        "path": "raw/huggingface/Alex-MP-20/train.parquet",
+        "rows": 540162,
+        "sha256": "81eca8a6dd1e3e99a30f3efb94d23fb733bc6d5e0d62c6e082e21e4727f76e0d"
+      },
+      {
+        "source_split": "val",
+        "path": "raw/huggingface/Alex-MP-20/val.parquet",
+        "rows": 67521,
+        "sha256": "001dee2a0f799fecf167f5d4b5d02e6b875e0b7f6aef88dea2e997f60973df76"
+      },
+      {
+        "source_split": "test",
+        "path": "raw/huggingface/Alex-MP-20/test.parquet",
+        "rows": 67521,
+        "sha256": "ed2d62a3102b40b2a91f94f8e351d1d875f35305026d439b1a755a0727846a03"
+      }
+    ],
+    "assignment_path": "processed/gaugeflow_h0_v2/alex_formula_prototype_assignments.parquet",
+    "assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+    "split_manifest_path": "processed/gaugeflow_h0_v2/alex_formula_prototype_split.json",
+    "split_manifest_sha256": "746352f9fd135599fd1bec42666dd5b0eee9d9e99a296147dbb8a68c23eae53d",
+    "split_audit_path": "processed/gaugeflow_h0_v2/alex_formula_prototype_split_audit.json",
+    "split_audit_sha256": "b655509f522dd5c108b3e71066a2769c8b95074b466ca9244545013dfa81e373",
+    "license": "CC-BY-4.0"
+  },
+  "selection": {
+    "filtering": "none; every H0-A-qualified row is retained",
+    "parent_occurrence_quarantine_applies": false,
+    "reason": "the parent-occurrence quarantine is task-scoped; its finite ordered child structure remains valid for P1 structure generation",
+    "gaugeflow_split_counts": {
+      "train": 540164,
+      "val": 67520,
+      "test": 67520
+    },
+    "gaugeflow_split_node_counts": {
+      "train": 5161621,
+      "val": 673217,
+      "test": 644718
+    },
+    "minimum_atoms": 1,
+    "maximum_atoms": 20,
+    "formula_prototype_matcher_component_inheritance_required": true
+  },
+  "canonical_cell": {
+    "algorithm": "spglib.niggli_reduce",
+    "spglib_version": "2.7.0",
+    "epsilon": 1e-5,
+    "row_lattice_convention": "r=fL",
+    "basis_certificate": "L_reduced=B L_source with B in GL(3,Z)",
+    "coordinate_transform": "f_reduced=(f_source B^{-1}) mod 1",
+    "orientation_policy": "cell basis gauge is independent of Cartesian SO(3)/O(3) tensor parity and is not passed to the denoiser",
+    "failure_policy": "fail closed; no unreduced fallback"
+  },
+  "packed_schema": {
+    "schema": 1,
+    "per_split_tensor_file": "torch weights-only dictionary",
+    "atom_tokens": "uint8 concatenated zero-based 118-element tokens",
+    "fractional_coordinates": "float32 concatenated N x 3 Niggli-basis coordinates",
+    "lattice": "float32 structures x 3 x 3 row lattices",
+    "offsets": "int64 structures+1 ragged offsets",
+    "niggli_transform": "int16 structures x 3 x 3 GL(3,Z) certificates; audit metadata only",
+    "index": "Parquet material_id, source_split, source_row, gaugeflow_split, cache_row, node_start, node_stop",
+    "model_inputs": [
+      "atom_tokens",
+      "fractional_coordinates",
+      "lattice",
+      "batch"
+    ],
+    "forbidden_model_inputs": [
+      "material_id",
+      "source_split",
+      "gaugeflow_split",
+      "space_group",
+      "Wyckoff labels",
+      "prototype",
+      "Niggli transform",
+      "tensor condition"
+    ]
+  },
+  "thresholds": {
+    "source_rows": 675204,
+    "joined_rows": 675204,
+    "duplicate_material_ids": 0,
+    "missing_assignments": 0,
+    "unexpected_assignments": 0,
+    "processing_failures": 0,
+    "nonfinite_values": 0,
+    "invalid_atomic_numbers": 0,
+    "invalid_shapes": 0,
+    "nonpositive_volumes": 0,
+    "split_count_exact": true,
+    "split_node_count_exact": true,
+    "node_count_assignment_agreement_fraction": 1.0,
+    "niggli_success_fraction": 1.0,
+    "unimodular_transform_fraction": 1.0,
+    "source_cartesian_equivalence_max_error_angstrom": 1e-7,
+    "float32_cache_cartesian_equivalence_max_error_angstrom": 1e-5,
+    "atom_token_roundtrip_fraction": 1.0,
+    "independent_full_rebuild_match_fraction": 1.0
+  },
+  "required_outputs": {
+    "root": "processed/gaugeflow_h1a_v1/p1_structure_cache_v1",
+    "manifest": "processed/gaugeflow_h1a_v1/p1_structure_cache_v1/manifest.json",
+    "independent_audit": "processed/gaugeflow_h1a_v1/p1_structure_cache_v1/independent_audit.json",
+    "report": "reports/h1a_p1_structure_cache_v1/README.md"
+  },
+  "advancement_rule": "Cache qualification permits only a separately frozen H1a P1 real-data training protocol. Any failure freezes this result and stops H1a, H1b and H2-H6. Cache qualification is not a generation-quality result."
+}

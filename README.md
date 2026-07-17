@@ -213,6 +213,13 @@ passed. H0-v4 is qualified. H1a is the only permitted next Gate and has not
 started. See
 [`reports/h0_e_v4_occupational_order_o1_v1/`](reports/h0_e_v4_occupational_order_o1_v1/).
 
+The first H1a data-plane subprotocol is frozen but not run. It packs all
+675,204 H0-A-qualified Alex structures without filtering, preserves the exact
+formula/prototype/component split, and replaces arbitrary primitive-cell bases
+only by a certified Niggli `GL(3,Z)` change. The transform and all IDs remain
+audit metadata rather than model inputs. Passing this cache check would permit
+freezing the real-data training protocol; it would not itself qualify H1a.
+
 ## Repository layout
 
 ```text

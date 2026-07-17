@@ -115,6 +115,10 @@ its code/data/report surface.
   clean-universe coverage is `359/1023 = 0.350929 >= 0.15`. Every path and
   coloring certificate was independently reproduced. H0-E-v4 and H0-v4 are
   qualified. Only a separately frozen real-data H1a may run next.
+  The H1a P1 packed-structure cache v1 protocol is frozen but not run. It keeps
+  every one of the 675,204 H0-A rows, inherits the exact child split, applies
+  only a certified Niggli `GL(3,Z)` basis change, and exposes no metadata to the
+  denoiser. Cache success permits freezing H1a training but is not H1a evidence.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
