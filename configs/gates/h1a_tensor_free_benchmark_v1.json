@@ -1,0 +1,45 @@
+{
+  "protocol": "h1a_tensor_free_benchmark_v1",
+  "status_before_run": "frozen_not_run",
+  "checkpoint_protocol": "h1a_p1_scaled_score_sampler_v1",
+  "checkpoint_protocol_sha256": "c63bc3d723cf79338925d46ee9fbca9934fabbab76ab4152d8eb2a7d2cf059aa",
+  "checkpoint_step": 5000,
+  "seeds": [5201, 5202, 5203],
+  "reference": {
+    "split": "test",
+    "graphs": 8192,
+    "seed": 10201
+  },
+  "sampling": {
+    "samples_per_seed": 256,
+    "seed": 10202,
+    "batch_size": 8,
+    "steps": 100,
+    "time_grid": "uniform_time",
+    "stochastic": true
+  },
+  "metrics": {
+    "minimum_distance_angstrom": 0.5,
+    "reference_volume_envelope_quantiles": [0.005, 0.995],
+    "wasserstein_quantile_points": 1024,
+    "formula_novelty_scope": "fixed held-out reference subset only"
+  },
+  "acceptance": {
+    "sampling_failures": 0,
+    "terminal_masks": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "minimum_distance_each_seed_fraction_min": 0.95,
+    "minimum_distance_aggregate_fraction_min": 0.97,
+    "volume_reference_envelope_fraction_min": 0.98,
+    "element_marginal_jsd_max": 0.10,
+    "node_count_jsd_max": 0.01,
+    "normalized_volume_wasserstein_max": 0.50,
+    "normalized_minimum_distance_wasserstein_max": 0.75,
+    "formula_uniqueness_fraction_min": 0.50
+  },
+  "decision_rule": {
+    "pass": "H1a_tensor_free_qualified_freeze_before_H1b",
+    "fail": "H1a_tensor_free_failed_stop_before_H1b",
+    "boundary": "Passing freezes the tensor-free generator substrate and permits a separately frozen H1b blueprint experiment only. It does not authorize tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}
