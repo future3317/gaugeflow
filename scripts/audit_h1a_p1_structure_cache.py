@@ -22,7 +22,7 @@ import pyarrow.parquet as pq
 import spglib
 import torch
 
-from gaugeflow.file_utils import sha256_file
+from gaugeflow.file_utils import load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import (
     PACKED_ALEX_P1_PROTOCOL,
     PACKED_ALEX_P1_SCHEMA,
@@ -41,13 +41,6 @@ class IndependentRow:
     transform: np.ndarray
     source_error: float
     cache_error: float
-
-
-def _load_json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"expected one JSON object: {path}")
-    return value
 
 
 def _verify_hash(path: Path, expected: str, label: str) -> None:
@@ -308,11 +301,11 @@ def audit_cache(
     batch_size: int,
 ) -> dict[str, Any]:
     started = time.perf_counter()
-    protocol = _load_json(protocol_path)
+    protocol = load_json_object(protocol_path)
     if protocol.get("protocol") != PACKED_ALEX_P1_PROTOCOL:
         raise ValueError("auditor received the wrong protocol")
     manifest_path = output_root / "manifest.json"
-    manifest = _load_json(manifest_path)
+    manifest = load_json_object(manifest_path)
     if manifest.get("protocol") != PACKED_ALEX_P1_PROTOCOL:
         raise ValueError("cache manifest protocol mismatch")
     if not bool(manifest.get("builder_qualified")) or bool(manifest.get("qualified")):
@@ -479,7 +472,7 @@ def main() -> None:
     arguments = parser.parse_args()
     if arguments.batch_size < 1:
         parser.error("batch-size must be positive")
-    protocol = _load_json(arguments.protocol)
+    protocol = load_json_object(arguments.protocol)
     output_root = arguments.output_root or (
         arguments.data_root / protocol["required_outputs"]["root"]
     )

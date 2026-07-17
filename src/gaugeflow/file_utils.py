@@ -30,6 +30,14 @@ def canonical_json_hash(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def load_json_object(path: Path) -> dict[str, Any]:
+    """Read one UTF-8 JSON object and reject all other top-level values."""
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"expected one JSON object: {path}")
+    return value
+
+
 def load_gzip_json(path: Path) -> Any:
     """Read one UTF-8 JSON value from a gzip artifact."""
     with gzip.open(path, "rt", encoding="utf-8") as handle:
