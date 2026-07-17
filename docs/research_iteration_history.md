@@ -266,6 +266,28 @@ the unchanged Hungarian solves; on the 48-operation BaTiO3 control this was
 These are exact representation/vectorization changes, not candidate pruning or
 an approximate symmetry test.
 
+### H0-E-v2 E1a maximal-t parent occurrence
+
+E1a froze 64 deterministic, split/system/site-balanced rows from the 899 H0-E
+v1 materials with no candidate. It used every reverse-indexed E0 maximal-t
+embedding in the exact PyXtal/ITA Hall setting, transformed once to primitive
+coordinates. During qualification two implementation semantics were corrected
+before the run: a t edge is identified by `cell_index=1`, not by a unit point-
+group `subgroup_index`; and a raw orbit defect has the triangle bound twice the
+one-sided distance to the parent fixed set, so only the final projected source
+displacement is compared with the frozen 0.2 Angstrom threshold.
+
+The committed run found zero new candidate materials against the minimum of
+three and is frozen failed. All 64 joins and setting conversions succeeded,
+forward/reverse enumeration agreed, and the independent reverse-order rebuild
+reproduced the result. Seventeen rows have no incoming maximal-t edge. Among
+430 edges on the remaining rows, 236 have orbit defect at least 0.6476
+Angstrom, 191 fail the full species-permutation group law, and three projected
+embeddings are duplicate setting variants for one SG 12 material with Hencky
+norm 0.4898, above the frozen 0.15 bound. Thus a matcher-only patch cannot
+rescue the gate. E1b and H1a were not started; any multi-step or cell-changing
+successor requires a new H0-E-v3 proposal rather than changing E1a history.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

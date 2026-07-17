@@ -24,7 +24,7 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1 is frozen failed; H0-E-v2 E0 maximal embeddings qualified and only E1 may start |
+| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1 and H0-E-v2 E1a are frozen failed; stop before E1b/H1a |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
@@ -166,13 +166,15 @@ permits only a bounded parent-occurrence E1 pilot. It does not repair or
 reclassify H0-E-v1, qualify H0-E, or authorize H1a. See
 [`reports/h0_e_maximal_embedding_catalogue_v2/`](reports/h0_e_maximal_embedding_catalogue_v2/).
 
-The versioned E1a maximal-translationengleiche occurrence protocol is frozen
-but not run. It fixes 64 v1 no-candidate rows, the complete E0 `kind=t` fiber,
-setting-exact primitive affine transforms and a minimum of three newly
-certified candidate materials. The projector uses the one-sided 0.2 Angstrom
-source displacement as its scientific threshold; the raw orbit defect is only
-a triangle-safe `2x` prefilter. E1a failure stops E1b and H1a. E1a success may
-only authorize a separately frozen maximal-k E1b protocol.
+The versioned E1a maximal-translationengleiche occurrence protocol is now
+frozen failed. On 64 fixed v1 no-candidate rows, setting-exact primitive
+projection found `0/64` new candidate materials versus the preregistered
+minimum `3/64`; an independent reverse-order rebuild reproduced all rows and
+the negative decision. Of 430 evaluated t edges, 236 are well beyond the
+triangle-safe orbit-defect bound, 191 cannot form a full species-permutation
+group action, and three nonqualifying embeddings belong to one high-strain
+material. E1b and H1a remain prohibited. See
+[`reports/h0_e_maximal_t_parent_occurrence_e1a_v1/`](reports/h0_e_maximal_t_parent_occurrence_e1a_v1/).
 
 ## Repository layout
 
@@ -189,7 +191,7 @@ configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
 reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
 reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
-configs/gates/h0_e_maximal_t_parent_occurrence_e1a_v1.json frozen E1a protocol
+reports/h0_e_maximal_t_parent_occurrence_e1a_v1/ frozen failed E1a evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```
