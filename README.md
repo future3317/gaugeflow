@@ -199,6 +199,15 @@ O0-v2 is only a mechanism-panel qualification: H0-E/H0 remain unqualified and
 H1a is still prohibited until a separately frozen held-out O1 passes. See
 [`reports/h0_e_v4_occupational_order_o0_v2/`](reports/h0_e_v4_occupational_order_o0_v2/).
 
+The O1-v1 protocol is now frozen but not yet run. It is a full census of all
+835 clean v1 zero-candidate rows that are disjoint from the O0 source panel,
+not another mechanism-locating sample. Together with the 125 v1-positive and
+63 clean O0 rows, these form an exact disjoint partition of the 1,023-material
+clean universe. The original aggregate coverage threshold remains `>=0.15`,
+so O1 must identify at least 19 additional distinct materials while all exact
+geometry, coloring, path-canonicalization and independent-audit checks pass.
+H1a remains prohibited until that frozen run succeeds.
+
 ## Repository layout
 
 ```text

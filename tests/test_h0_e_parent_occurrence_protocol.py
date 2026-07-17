@@ -160,3 +160,39 @@ def test_h0_e_v4_o0_v2_uses_cleaned_panel_without_relaxing_physics():
     assert hashlib.sha256(cleaning_path.read_bytes()).hexdigest() == (
         config["dependencies"]["data_cleaning_sha256"]
     )
+
+
+def test_h0_e_v4_o1_freezes_the_complete_disjoint_held_out_census():
+    config = json.loads(
+        Path("configs/gates/h0_e_v4_occupational_order_o1_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    selection = config["selection"]
+    thresholds = config["thresholds"]
+    settings = config["setting_and_search"]
+    assert config["status_before_run"] == "frozen_not_run"
+    assert selection["sampling"] == "none; complete held-out census"
+    assert selection["clean_universe_size"] == 1023
+    assert (
+        selection["v1_qualified_partition_size"]
+        + selection["o0_clean_partition_size"]
+        + selection["o1_size"]
+        == selection["clean_universe_size"]
+    )
+    assert selection["o1_size"] == 835
+    assert selection["o0_material_id_disjoint_fraction"] == 1.0
+    assert sum(selection["gaugeflow_split_counts"].values()) == 835
+    assert sum(selection["child_crystal_system_counts"].values()) == 835
+    assert sum(selection["primitive_site_bin_counts"].values()) == 835
+    assert settings["expected_candidate_edges"] == 13370
+    assert settings["maximum_source_displacement_angstrom"] == 0.2
+    assert settings["source_hencky_norm_max"] == 0.15
+    assert thresholds["new_candidate_materials_min"] == 19
+    assert thresholds["aggregate_qualified_materials_min"] == 154
+    assert thresholds["aggregate_qualified_material_fraction_min"] == 0.15
+    assert thresholds["canonical_material_path_uniqueness_fraction"] == 1.0
+    assert config["advancement_rule"].startswith(
+        "O1 success qualifies H0-E-v4"
+    )

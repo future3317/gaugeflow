@@ -109,6 +109,11 @@ its code/data/report surface.
   yielded 13 exact species-free-parent/integer-coloring occurrences over 962
   edges. This permits only a separately frozen held-out O1 protocol. It does
   not qualify H0-E or H0 and does not authorize H1a.
+  H0-E-v4 O1-v1 is now frozen but not run. It is the complete 835-row clean,
+  O0-disjoint remainder of the v1 zero-candidate universe; no sampling or
+  outcome-dependent parent-space-group selection is used. It must find at
+  least 19 distinct additional materials so the exact clean-universe coverage
+  reaches `154/1023 >= 0.15`, while all path and coloring certificates pass.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 
