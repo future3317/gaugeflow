@@ -112,7 +112,7 @@ manifest dated 2026-07-17 reports:
 | structure | Alex-MP-20 | H0-A v2 assigns all 675,204 rows to a child-first 540,164/67,520/67,520 split; formula, exact-prototype, matcher-envelope and connected-component overlap are zero, and the complete cross-split StructureMatcher candidate universe is empty |
 | tensor | JARVIS/GMTNet | 5,000 source rows; 4,998 full-O(3)-audited targets; reserved for later oracle/tensor gates |
 | auxiliary tensor | Materials Project | 3,316 records; retained as a separate source, not a drop-in replacement for JARVIS |
-| nonzero-q modes | PhononDB | all 10,034 compact float64 force-constant caches were derived with phonopy 4.3.1 and the traditional solver; the source manifest records zero failures and ASR statistics, while translational-zero-mode, degenerate-subspace, and NAC attestations remain open |
+| nonzero-q modes | PhononDB | v2 re-derives all 10,034 compact float64 force constants from a full-supercell Hessian projected onto permutation symmetry and bilateral ASR; full-universe algebra passes, and a frozen 1,024-material audit covering all prior acoustic failures, large projection corrections, dielectric long tails and deterministic NAC/size strata qualifies acoustic modes, degenerate projectors and NAC semantics |
 | Gamma modes | JARVIS-DFPT | 4,995 complete schema-4 records among the 4,998-ID cohort; three named source failures are documented externally |
 | PES | MatPES-PBE 2025.2 | streaming JSONL and BSD-3-Clause card are present; this is a training dataset for a teacher, not itself a frozen teacher checkpoint |
 
@@ -123,8 +123,9 @@ High-confidence data conclusions:
    scale.
 2. PhononDB now stores compact force constants, not a dense q-grid or stored
    eigenvector corpus. Dynamical matrices, frequencies, and eigenvectors are
-   evaluated at requested q points; the remaining H0-B qualification gaps are
-   explicitly recorded rather than inferred from cache availability.
+   evaluated at requested q points. H0-B uses full-universe algebraic checks
+   and an explicitly labelled stratified numerical audit; it does not claim a
+   10,034-material eigendecomposition sweep.
 3. MatPES data availability does not establish availability or qualification of
    `TensorNet-PES-MatPES-PBE-2025.2`. A frozen checkpoint and independent
    disagreement teacher must be separately activated.

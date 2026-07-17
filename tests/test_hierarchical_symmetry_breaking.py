@@ -324,6 +324,18 @@ def test_phonon_and_mode_targets_are_basis_gauge_safe():
     assert torch.allclose(eigenspace_projector(basis), eigenspace_projector(transformed), atol=1e-12)
     assert subspace_projector_loss(basis, transformed) < 1e-20
 
+    complex_basis = torch.tensor(
+        [[1.0, 1.0j], [1.0j, 1.0], [0.0, 0.0]], dtype=torch.complex128
+    ) / 2**0.5
+    unitary = torch.tensor(
+        [[1.0, 1.0j], [1.0j, 1.0]], dtype=torch.complex128
+    ) / 2**0.5
+    rotated_complex_basis = complex_basis @ unitary
+    projector = eigenspace_projector(complex_basis)
+    assert torch.allclose(projector, projector.mH, atol=1e-12)
+    assert torch.allclose(projector, eigenspace_projector(rotated_complex_basis), atol=1e-12)
+    assert subspace_projector_loss(complex_basis, rotated_complex_basis) < 1e-20
+
 
 def test_mode_effective_charge_and_generalized_force_match_definitions():
     born = torch.zeros((1, 3, 3), dtype=torch.float64)

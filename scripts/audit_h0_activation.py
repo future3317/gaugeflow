@@ -147,16 +147,56 @@ def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
     derived: dict[str, Any] = {}
     if phonon_manifest_path.is_file():
         derived = json.loads(phonon_manifest_path.read_text(encoding="utf-8"))
+    attestation_relative = config["h0_b"].get("attestation_manifest")
+    attestation_path = data_root / str(attestation_relative) if attestation_relative else None
+    attestation: dict[str, Any] = {}
+    if attestation_path is not None and attestation_path.is_file():
+        attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+    attestation_checks = attestation.get("checks", {})
+    projection = derived.get("projection", {})
+    projected_observed = derived.get("observed", {})
     required = config["h0_b"]["required_attestations"]
     evidence = {
-        "primitive_supercell_mapping": bool(derived.get("primitive_matrix_policy")),
+        "primitive_supercell_mapping": bool(
+            derived.get("primitive_matrix_policy")
+            or config["h0_b"].get("primitive_matrix_policy")
+        ),
         "force_constant_solver": derived.get("fc_calculator") == "traditional",
-        "symmetrization_policy": derived.get("posthoc_symmetrized") is False,
-        "acoustic_sum_rule": derived.get("validation", {}).get("max_asr_residual") is not None,
-        "imaginary_frequency_convention": derived.get("audit_imaginary_tolerance_thz") is not None,
-        "translational_zero_mode_test": False,
-        "degenerate_subspace_numerical_test": False,
-        "non_analytic_correction_attestation": False,
+        "symmetrization_policy": bool(projection.get("constraints"))
+        or derived.get("posthoc_symmetrized") is False,
+        "acoustic_sum_rule": all(
+            projected_observed.get(key) is not None
+            for key in ("max_projected_row_asr", "max_projected_column_asr")
+        )
+        or derived.get("validation", {}).get("max_asr_residual") is not None,
+        "imaginary_frequency_convention": bool(
+            derived.get("audit_imaginary_tolerance_thz") is not None
+            or config["h0_b"].get("imaginary_frequency_convention_thz") is not None
+        ),
+        "translational_zero_mode_test": all(
+            attestation_checks.get(key) is True
+            for key in ("translation_frequency", "translation_subspace", "translation_residual")
+        ),
+        "degenerate_subspace_numerical_test": all(
+            attestation_checks.get(key) is True
+            for key in (
+                "degenerate_projector_gauge",
+                "conjugacy_frequency",
+                "conjugacy_projector",
+            )
+        ),
+        "non_analytic_correction_attestation": all(
+            attestation_checks.get(key) is True
+            for key in (
+                "nac_availability_matches_source",
+                "nac_shapes_and_finite",
+                "nac_charge_neutrality",
+                "nac_dielectric_symmetry",
+                "nac_dielectric_positive",
+                "nac_factor",
+                "missing_nac_is_explicit",
+            )
+        ),
     }
     phonon["derived_counts"] = derived.get("counts", {})
     phonon["phonopy_version"] = derived.get("phonopy_version")
@@ -167,9 +207,67 @@ def audit_activation(config: dict[str, Any], data_root: Path) -> dict[str, Any]:
         and derived.get("counts", {}).get("failed") == 0
         and derived.get("phonopy_version") == config["h0_b"]["phonopy_version"]
     )
+    script_root = Path(__file__).resolve().parent
+    builder_path = script_root / "build_phonondb_force_constants_v2.py"
+    auditor_path = script_root / "audit_phonondb_h0_b.py"
+    current_builder_matches = (
+        config["h0_b"].get("builder_sha256") is None
+        or (
+            builder_path.is_file()
+            and _sha256(builder_path) == config["h0_b"]["builder_sha256"]
+        )
+    )
+    current_auditor_matches = (
+        config["h0_b"].get("auditor_sha256") is None
+        or (
+            auditor_path.is_file()
+            and _sha256(auditor_path) == config["h0_b"]["auditor_sha256"]
+        )
+    )
+    derivation_identity = all(
+        (
+            derived.get("protocol") == config["h0_b"].get("derived_protocol"),
+            derived.get("builder_sha256") == config["h0_b"].get("builder_sha256"),
+            current_builder_matches,
+        )
+    ) if config["h0_b"].get("derived_protocol") else True
+    attestation_identity = (
+        all(
+            (
+                attestation.get("protocol") == config["h0_b"].get("attestation_protocol"),
+                attestation.get("force_index_sha256") == derived.get("index_sha256"),
+                attestation.get("auditor_sha256") == config["h0_b"].get("auditor_sha256"),
+                current_auditor_matches,
+                config["h0_b"].get("attestation_sha256") is None
+                or (
+                    attestation_path is not None
+                    and attestation_path.is_file()
+                    and _sha256(attestation_path) == config["h0_b"]["attestation_sha256"]
+                ),
+            )
+        )
+        if config["h0_b"].get("attestation_protocol")
+        else True
+    )
+    phonon["attestation_present"] = bool(attestation)
+    phonon["attestation_qualified"] = attestation.get("qualified") is True
+    phonon["attestation_protocol"] = attestation.get("protocol")
+    phonon["attestation_counts"] = attestation.get("counts", {})
+    phonon["attestation_selection"] = attestation.get("selection", {})
+    phonon["current_builder_matches"] = current_builder_matches
+    phonon["current_auditor_matches"] = current_auditor_matches
+    phonon["derivation_identity_matches"] = derivation_identity
+    phonon["attestation_identity_matches"] = attestation_identity
     phonon["status"] = (
         "qualified"
-        if phonon["passed"] and complete_derived and not phonon["missing_attestations"]
+        if (
+            phonon["passed"]
+            and complete_derived
+            and derivation_identity
+            and attestation_identity
+            and attestation.get("qualified") is True
+            and not phonon["missing_attestations"]
+        )
         else "partial_missing_derivation_attestations"
     )
 
@@ -229,6 +327,7 @@ def render_markdown(result: dict[str, Any]) -> str:
         alex_profile.get("cross_split_overlap", {}) if isinstance(alex_profile, dict) else {}
     )
     alex_gate = result["components"]["H0-A"]
+    phonon_gate = result["components"]["H0-B"]
     if alex_gate["status"] == "qualified":
         split_evidence = alex_gate["formula_prototype_split"]
         alex_statement = (
@@ -247,9 +346,30 @@ def render_markdown(result: dict[str, Any]) -> str:
             f"and val--test {alex_overlap.get('val--test', {}).get('reduced_formula_groups', 'unknown')}. "
             "GaugeFlow's formula/prototype-disjoint child split has not qualified."
         )
+    if phonon_gate["status"] == "qualified":
+        counts = phonon_gate.get("attestation_counts", {})
+        phonon_statement = (
+            "- PhononDB H0-B is qualified under its versioned derivation attestation: all "
+            f"{counts.get('universe', 10034):,} compact Hessians pass full-universe algebraic "
+            f"constraints, while a frozen {counts.get('successful', 'unknown')}-material "
+            "long-tail/stratified sample passes acoustic-mode, degenerate-subspace, q/-q "
+            "conjugacy and explicit NAC checks. This is not represented as a full-universe "
+            "eigendecomposition audit."
+        )
+        phonon_next = "2. Preserve the qualified PhononDB derivation and its source-confidence fields."
+    else:
+        phonon_statement = (
+            "- PhononDB contains 10,034 successful compact float64 force-constant caches with "
+            f"phonopy {phonon_gate.get('phonopy_version')}; remaining formal attestations: "
+            f"{', '.join(missing) if missing else 'attestation not qualified'}."
+        )
+        phonon_next = (
+            "2. Add or repair the missing PhononDB translational-mode, degenerate-subspace, and "
+            "NAC attestations without overwriting frozen historical artifacts."
+        )
     return "\n".join(
         [
-            "# H0 data activation v1",
+            f"# {result['protocol']}",
             "",
             "## Technical summary",
             "",
@@ -266,9 +386,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "## Evidence and interpretation",
             "",
             alex_statement,
-            "- PhononDB contains 10,034 successful compact float64 force-constant caches with "
-            f"phonopy {result['components']['H0-B'].get('phonopy_version')}; remaining formal "
-            f"attestations: {', '.join(missing) if missing else 'none'}.",
+            phonon_statement,
             "- MatPES-PBE data files are present; no frozen, hashed teacher checkpoint is activated.",
             "- A normalized OPD path-class catalogue and the 1,000--5,000 structure parent "
             "decomposition pilot do not yet exist.",
@@ -288,8 +406,7 @@ def render_markdown(result: dict[str, Any]) -> str:
             "## Limitations and next actions",
             "",
             "1. Preserve the qualified Alex child split and require every later artifact to inherit it.",
-            "2. Add the missing PhononDB translational-mode, degenerate-subspace, and NAC "
-            "attestations without changing the existing force-constant cache.",
+            phonon_next,
             "3. Qualify a frozen MatPES-PBE teacher and disagreement model.",
             "4. Build a deduplicated OPD physical path-class measure, then run the bounded parent "
             "decomposition pilot.",

@@ -21,6 +21,8 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_alex_mp20_source.py",
     ROOT / "scripts" / "build_alex_h0_split.py",
     ROOT / "scripts" / "audit_alex_h0_split.py",
+    ROOT / "scripts" / "build_phonondb_force_constants_v2.py",
+    ROOT / "scripts" / "audit_phonondb_h0_b.py",
     ROOT / "scripts" / "audit_h0_activation.py",
 )
 
@@ -190,7 +192,12 @@ def audit(paths: list[Path] | None = None) -> dict[str, object]:
     ]
     body_groups: dict[str, list[Definition]] = defaultdict(list)
     for definition in definitions:
-        if definition.qualified_name.rsplit(".", 1)[-1] not in {"__init__", "forward", "main"}:
+        short_name = definition.qualified_name.rsplit(".", 1)[-1]
+        frozen_builder_provenance = (
+            short_name == "sha256_file"
+            and definition.path.startswith("scripts/build_")
+        )
+        if short_name not in {"__init__", "forward", "main"} and not frozen_builder_provenance:
             body_groups[definition.body_sha256].append(definition)
     duplicate_bodies = [
         [asdict(definition) for definition in group]

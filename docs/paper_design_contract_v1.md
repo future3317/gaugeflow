@@ -35,9 +35,11 @@ low-index commensurate symmetry breaking:
 These are mathematical/software interfaces only. They do not authorize a mode
 catalogue build, parent-pair training, PES-teacher use, hierarchical generation,
 tensor conditioning, relaxation, DFT or DFPT. H0 v1 is frozen as
-`H0_not_passed_stop_before_H1`; H0-A has subsequently qualified in the
-versioned v2 repair, but H0-B--E remain open. H1a, H1b, H2, H3, H4, H5 and H6
-remain strictly ordered and unauthorized.
+`H0_not_passed_stop_before_H1`; H0-A and H0-B have subsequently qualified in
+the versioned v3 repair. H0-B uses full-universe force-constant algebra plus a
+frozen long-tail/stratified numerical audit rather than claiming a second
+10,034-material eigendecomposition sweep. H0-C--E remain open. H1a, H1b, H2,
+H3, H4, H5 and H6 remain strictly ordered and unauthorized.
 
 ## Production state spaces
 

@@ -72,10 +72,12 @@ its code/data/report surface.
   started.
 - The parent--distortion--child mathematical/code contracts are implemented.
   `h0_data_activation_v1` remains frozen as a failed historical audit.
-  `h0_data_activation_v2` has qualified H0-A: the Alex child-first split is
-  formula-, exact-prototype-, matcher-envelope- and component-disjoint. H0-B--E
-  still require the PhononDB attestations, frozen MatPES teacher, OPD physical
-  path measure and parent-decomposition pilot, so the overall decision remains
+  `h0_data_activation_v3` has qualified H0-A and H0-B: the Alex child-first split is
+  formula-, exact-prototype-, matcher-envelope- and component-disjoint, and
+  PhononDB v2 has a full-universe Hessian-algebra certificate plus a frozen
+  1,024-material long-tail/stratified mode audit. H0-C--E still require the
+  frozen MatPES teacher, OPD physical path measure and parent-decomposition pilot,
+  so the overall decision remains
   `H0_not_passed_stop_before_H1`.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.

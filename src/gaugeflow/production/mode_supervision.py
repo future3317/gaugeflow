@@ -51,14 +51,14 @@ def source_calibrated_frequency_loss(
 
 
 def eigenspace_projector(eigenvectors: torch.Tensor, *, tolerance: float = 2e-6) -> torch.Tensor:
-    """Return the basis-gauge-invariant projector for a degenerate mode space."""
+    """Return the Hermitian basis-gauge-invariant projector for a mode space."""
     if eigenvectors.ndim != 2 or eigenvectors.shape[1] < 1 or not torch.isfinite(eigenvectors).all():
         raise ValueError("eigenvectors must be a finite [dimension,multiplicity] matrix")
-    gram = eigenvectors.transpose(0, 1) @ eigenvectors
+    gram = eigenvectors.mH @ eigenvectors
     identity = torch.eye(eigenvectors.shape[1], dtype=eigenvectors.dtype, device=eigenvectors.device)
     if not torch.allclose(gram, identity, atol=tolerance, rtol=tolerance):
         raise ValueError("mode-space basis must have orthonormal columns")
-    return eigenvectors @ eigenvectors.transpose(0, 1)
+    return eigenvectors @ eigenvectors.mH
 
 
 def subspace_projector_loss(predicted_basis: torch.Tensor, target_basis: torch.Tensor) -> torch.Tensor:
@@ -67,7 +67,7 @@ def subspace_projector_loss(predicted_basis: torch.Tensor, target_basis: torch.T
     target = eigenspace_projector(target_basis)
     if predicted.shape != target.shape:
         raise ValueError("predicted and target mode subspaces must share an ambient dimension")
-    return (predicted - target).square().sum()
+    return (predicted - target).abs().square().sum().real
 
 
 def mode_effective_charge(
