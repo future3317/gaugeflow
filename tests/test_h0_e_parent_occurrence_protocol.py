@@ -64,3 +64,31 @@ def test_h0_e_v3_k0_is_a_new_frozen_cell_changing_mechanism_gate():
     assert config["advancement_rule"].startswith(
         "K0 success permits only a separately frozen H0-E-v3 occurrence protocol"
     )
+
+
+def test_h0_e_v4_o0_freezes_ordered_occupational_mechanism_without_h0_claim():
+    config = json.loads(
+        Path("configs/gates/h0_e_v4_occupational_order_o0_v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert config["status_before_run"] == "frozen_not_run"
+    assert config["selection"]["ordered_material_ids_sha256"] == (
+        "d3a9cb27338e1ec822f8194173b8d85d1b80ff5a1d8377e750b93b380dd615bf"
+    )
+    assert config["setting_and_search"]["expected_candidate_edges"] == 1008
+    assert config["setting_and_search"]["expected_quarantined_edges"] == 3
+    assert config["thresholds"]["new_candidate_materials_min"] == 3
+    assert config["thresholds"]["occupationally_nontrivial_materials_min"] == 3
+    assert config["mathematical_contract"]["terminal_subgroup"].startswith(
+        "H_child=H_a intersect"
+    )
+    assert config["rationale"]["physical_scope"].startswith(
+        "terminal structures remain fully ordered integer-element crystals"
+    )
+    assert config["rationale"]["not_h0_qualification"].endswith(
+        "a separately frozen held-out O1"
+    )
+    assert config["advancement_rule"].startswith(
+        "O0 success permits only a separately frozen held-out O1"
+    )

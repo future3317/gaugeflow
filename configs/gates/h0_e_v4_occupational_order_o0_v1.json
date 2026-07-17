@@ -1,0 +1,116 @@
+{
+  "protocol": "h0_e_v4_occupational_order_o0_v1",
+  "frozen_at_utc": "2026-07-17T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "gate_role": "bounded H0-E-v4 occupational-order mechanism gate only; O0 success permits a separately frozen held-out O1 but does not qualify H0-E, H0, or authorize H1a",
+  "supersedes_without_overwriting": "h0_e_v3_maximal_k_occurrence_k0_v1",
+  "historical_decisions_unchanged": [
+    "H0-E-v1_failed_stop_before_H1",
+    "H0-E-v2-E1a_failed_stop_before_E1b_and_H1a",
+    "H0-E-v3-K0_failed_stop_before_H1a"
+  ],
+  "rationale": {
+    "located_model_gap": "the current ordered ParentBlueprint fixes one species on each parent Wyckoff orbit and ChildReconstructor copies it into every translation coset, so parent operations are incorrectly required to preserve terminal element labels even when chemical ordering is itself the symmetry-breaking field",
+    "bounded_no_write_evidence": "with all geometric thresholds unchanged, a species-blind carrier projection found qualified parent geometry for 11 distinct materials on the frozen 64-row mechanism panel; all 14 surviving paths had an occupational stabilizer order equal to the observed child primitive operation order",
+    "new_state": "a parent geometry carrier has lattice, sites and affine action but no physical element token; an ordered occupational coloring is an integer categorical field on expanded sites whose stabilizer is intersected with geometric OPD stabilizers",
+    "physical_scope": "terminal structures remain fully ordered integer-element crystals; no partial occupancy, virtual atom, averaged element, vacancy, disorder probability or dummy physical species is introduced",
+    "not_h0_qualification": "the same panel located the mechanism and therefore O0 is only an implementation/causal closure; unbiased coverage requires a separately frozen held-out O1"
+  },
+  "mathematical_contract": {
+    "carrier": "X_geom=(L,F,G) without species labels",
+    "coloring": "a in {1,...,118}^N with every site assigned exactly one physical element",
+    "group_action": "(g.a)_{P_g(i)}=a_i for the exact parent-supercell node permutation P_g",
+    "occupational_stabilizer": "H_a={g in G^B : P_g a = a}",
+    "terminal_subgroup": "H_child=H_a intersect H_modes intersect H_strain intersect H_residual",
+    "ordered_composition": "the generated coloring determines composition; target composition and target species mapping are training outputs only and are forbidden model inputs",
+    "no_dummy_element": "carrier labels used by offline geometry assignment are internal equivalence-class identifiers and may not enter the 118-element model vocabulary"
+  },
+  "dependencies": {
+    "e0_protocol": "h0_e_maximal_embedding_catalogue_v2_e0",
+    "e0_records_sha256": "3a1bb3ad08ce576fe11bfa0515314da9d8ecb42346805f2cdfa3b975602c4747",
+    "e0_manifest_sha256": "acc80acd759efb9b2c117e695d8f14764a6bc420dbbb7831b2e2d13725007be7",
+    "e1a_panel_config": "configs/gates/h0_e_maximal_t_parent_occurrence_e1a_v1.json",
+    "e1a_panel_config_sha256": "b8ba705a9dbd2d6245fd99e3bf9d55dd0dc2c58771f1f0f7d038961deefcf5df",
+    "v1_decompositions_sha256": "4f3c22ef084a15e82ac0cdd5c8a5c26c3083af4a65a59a789e1f03946e205358",
+    "v1_selection_sha256": "9575768b609f758e70f94148720094b7cb9d5c13c12c455e78669b93b7d9e3b0",
+    "path_quarantine": "configs/data_quality/parent_occurrence_quarantine_v1.json",
+    "path_quarantine_sha256": "8cf970baa2a761c102a7147fb509593edc3796308f4a4f89c7dfea04a68e5581",
+    "k0_results_sha256": "d8060044d244401dd10c18c675cfc0f82ce55322dcf147166e9842934739eb4d",
+    "k0_manifest_sha256": "8aa795cc6fa05ab08d48a0b65005390ba2eb17daf65ae8eb89db6b8d36bf63b0",
+    "k0_independent_audit_sha256": "11f8fe4ce8a7d00c52911ad8739306fd1078d10fd9ff2f2ee13b7c7034bae815",
+    "raw_alex_sha256": {
+      "train": "81eca8a6dd1e3e99a30f3efb94d23fb733bc6d5e0d62c6e082e21e4727f76e0d",
+      "val": "001dee2a0f799fecf167f5d4b5d02e6b875e0b7f6aef88dea2e997f60973df76",
+      "test": "ed2d62a3102b40b2a91f94f8e351d1d875f35305026d439b1a755a0727846a03"
+    },
+    "pyxtal_version": "0.6.1"
+  },
+  "selection": {
+    "source": "the exact ordered 64-material E1a zero-candidate mechanism panel; no row is added, removed or reordered",
+    "size": 64,
+    "ordered_material_ids_sha256": "d3a9cb27338e1ec822f8194173b8d85d1b80ff5a1d8377e750b93b380dd615bf",
+    "split_counts": {
+      "train": 52,
+      "val": 6,
+      "test": 6
+    }
+  },
+  "setting_and_search": {
+    "child_symprec_angstrom": 0.01,
+    "angle_tolerance_degree": 5.0,
+    "candidate_scope": "all 430 maximal-t plus all 578 index-2..4 maximal-k E0 edges, before path quarantine",
+    "expected_candidate_edges": 1008,
+    "expected_quarantined_edges": 3,
+    "expected_eligible_edges": 1005,
+    "geometry_assignment": "one internal carrier label on every site; complete parent or parent-supercell permutation group law remains mandatory",
+    "occupational_assignment": "the observed ordered species are retained as terminal output labels and used only to calculate the exact coloring stabilizer",
+    "maximum_source_displacement_angstrom": 0.2,
+    "orbit_defect_prefilter_angstrom": 0.4,
+    "source_hencky_norm_max": 0.15,
+    "strict_parent_identification": "spglib on the unlabeled geometry carrier using one internal nonphysical equivalence label",
+    "spglib_tolerance_ladder_forbidden": true,
+    "target_composition_as_input_forbidden": true,
+    "target_species_mapping_as_input_forbidden": true,
+    "partial_occupancy_forbidden": true,
+    "dummy_physical_element_forbidden": true,
+    "dynamic_site_or_lift_reassignment_forbidden": true,
+    "dense_3n_by_3n_forbidden": true
+  },
+  "positive_controls": [
+    "binary rocksalt coloring lowers a one-species geometric carrier to the exact occupational stabilizer and reconstructs integer element labels",
+    "node relabeling conjugates the full occupational probability/state vector and leaves the stabilizer class unchanged",
+    "global element-name relabeling leaves the unlabeled coloring partition and stabilizer unchanged",
+    "uniform coloring recovers the full geometric parent group",
+    "t and off-diagonal k embeddings preserve enumeration-order and duplicate-expansion invariance"
+  ],
+  "thresholds": {
+    "selected_rows": 64,
+    "source_join_fraction": 1.0,
+    "v1_zero_candidate_fraction": 1.0,
+    "candidate_edges_evaluated": 1008,
+    "quarantined_edges": 3,
+    "eligible_edges_evaluated": 1005,
+    "processing_failures": 0,
+    "nonfinite_results": 0,
+    "new_candidate_materials_min": 3,
+    "new_candidate_material_fraction_min": 0.046875,
+    "occupationally_nontrivial_materials_min": 3,
+    "forward_reverse_embedding_set_agreement_fraction": 1.0,
+    "exact_coloring_reconstruction_fraction": 1.0,
+    "occupational_stabilizer_subgroup_fraction": 1.0,
+    "occupational_stabilizer_order_matches_child_fraction": 1.0,
+    "strict_geometry_parent_reidentification_fraction": 1.0,
+    "terminal_integer_element_fraction": 1.0,
+    "partial_occupancy_count": 0,
+    "projected_group_max_error_angstrom": 1e-7,
+    "source_max_displacement_angstrom": 0.2,
+    "source_hencky_norm_max": 0.15
+  },
+  "required_outputs": {
+    "results": "processed/gaugeflow_h0_v7/occupational_order_o0_v1/results.json.gz",
+    "manifest": "processed/gaugeflow_h0_v7/occupational_order_o0_v1/manifest.json",
+    "independent_audit": "processed/gaugeflow_h0_v7/occupational_order_o0_v1/independent_audit.json",
+    "report": "reports/h0_e_v4_occupational_order_o0_v1/README.md"
+  },
+  "advancement_rule": "O0 success permits only a separately frozen held-out O1 occupational-occurrence protocol. Any O0 failure freezes the negative result and stops H0-E-v4, H1a/H1b and H2-H6. O0 never changes H0-E-v1/v2/v3 history."
+}
