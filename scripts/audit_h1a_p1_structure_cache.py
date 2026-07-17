@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+# Hundreds of thousands of independent 3x3 solves are latency-bound. Spawning
+# a BLAS team for each one is dramatically slower than scalar kernels and can
+# occupy every host core without useful parallel work.
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 import numpy as np
 import pyarrow.parquet as pq
@@ -465,7 +473,7 @@ def main() -> None:
     parser.add_argument(
         "--report",
         type=Path,
-        default=repo_root / "reports/h1a_p1_structure_cache/README.md",
+        default=repo_root / "reports/h1a_p1_structure_cache_v1/README.md",
     )
     parser.add_argument("--batch-size", type=int, default=4096)
     arguments = parser.parse_args()
