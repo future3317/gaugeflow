@@ -218,6 +218,31 @@ The frozen H0-E-v1 runners were removed from the active tree after commit
 reproduction surface. No incomplete v2 runner is retained before its
 group--subgroup/Wyckoff compiler and protocol are frozen.
 
+### H0-E-v2 E0 maximal embedding catalogue
+
+The next version began with a separately frozen E0 prerequisite rather than
+silently rerunning the v1 occurrence pilot. PyXtal 0.6.1 contributes only its
+MIT-licensed, source-hashed maximal t/k subgroup and Wyckoff-splitting tables.
+The GaugeFlow compiler rationalizes each affine basis/origin transform, checks
+all Seitz operations in one broadcasted array, canonicalizes physically
+unordered child-orbit labels and removes source multiplicity from candidate
+measure.
+
+All 1,103 maximal t records and 2,641 k records with index at most four passed.
+The 3,744 raw rows reduce to 2,843 affine embeddings and 2,845 relation
+variants; 901 duplicate rows remain provenance only. An independent exhaustive
+audit reidentified every one of the 230 source settings with spglib and
+recomputed maximum rotation/periodic-translation errors of `2.22e-16` and
+`4.44e-16`. E0 is qualified and permits only the bounded parent-occurrence E1
+pilot. H0-E and H0 remain unqualified.
+
+A post-E0 no-write equivalence diagnostic also conjugated all source edges to
+primitive settings, `T_prim = P_G^-1 T_conv P_H`. Every edge still passed;
+every t determinant became exactly one and every k determinant became its
+subgroup index, with common rational denominator at most 12. This is the
+preferred compact coordinate system for E1 site/strain projection, but it does
+not rewrite the frozen E0 artifact.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

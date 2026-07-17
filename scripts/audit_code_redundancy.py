@@ -27,6 +27,8 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "build_h0_d_opd_catalogue_v2.py",
     ROOT / "scripts" / "diagnose_h0_d_opd_catalogue_v2.py",
     ROOT / "scripts" / "audit_h0_d_opd_catalogue_v2.py",
+    ROOT / "scripts" / "build_h0_e_maximal_embedding_catalogue_v2.py",
+    ROOT / "scripts" / "audit_h0_e_maximal_embedding_catalogue_v2.py",
 )
 
 

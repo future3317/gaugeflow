@@ -1,0 +1,67 @@
+{
+  "protocol": "h0_e_maximal_embedding_catalogue_v2_e0",
+  "frozen_at_utc": "2026-07-17T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "supersedes_without_overwriting": "h0_e_parent_decomposition_pilot_v1",
+  "gate_role": "E0 prerequisite only; qualification permits the bounded H0-E-v2 parent-occurrence E1 pilot but does not qualify H0-E or authorize H1a",
+  "source": {
+    "package": "PyXtal",
+    "version": "0.6.1",
+    "license": "MIT",
+    "origin": "PyXtal packaged maximal translationengleiche/klassengleiche subgroup and Wyckoff-splitting tables derived from crystallographic tables",
+    "sha256": {
+      "t_subgroup": "63009c9e6adc1b450f8aa8e24d64ba62d61aefbb6793ab9e65a2d342a0c83d15",
+      "k_subgroup": "602cdba12ad7f8b14603c6d0765d47ca91ac826741c9f3080860e08512f17013",
+      "wyckoff_list": "ca56602252b7896121253c910739ef2fccf0ba947f2940358feb941f30c5e13d",
+      "license": "8705ef28a8c214e2ee38a334b63a7412184ed70d05d752993d79f000d21496f3"
+    }
+  },
+  "scope": {
+    "space_groups": 230,
+    "maximal_translationengleiche_edges": "all packaged records",
+    "maximal_klassengleiche_edges": "all packaged records with subgroup index <= 4",
+    "maximum_k_subgroup_index": 4,
+    "defects_disorder_partial_occupancy_and_incommensurate_paths": "out_of_scope"
+  },
+  "representation": {
+    "affine_embedding": "exact rational 3x4 numerator plus one common denominator",
+    "source_integer_origin_shifts": "quotiented modulo the parent lattice",
+    "wyckoff_child_orbit_order": "physically unordered within each splitting relation",
+    "duplicate_source_rows": "aggregated as provenance multiplicity and forbidden from changing candidate measure",
+    "runtime_dependency": "none; PyXtal is an offline source/compiler dependency only",
+    "affine_inclusion_check": "vectorized T H T^-1 subset G modulo integer translations",
+    "future_occurrence_action": "frozen site permutation/lift plus Cartesian 3x3 and Kelvin-6D actions; dense 3N by 3N forbidden"
+  },
+  "expected_counts": {
+    "raw_records": 3744,
+    "raw_t_records": 1103,
+    "raw_k_records": 2641,
+    "unique_affine_embeddings": 2843,
+    "normalized_relation_variants": 2845,
+    "embeddings_with_multiple_relation_variants": 1
+  },
+  "required_checks": [
+    "source_hashes_match",
+    "source_license_is_mit",
+    "all_230_group_settings_identified_by_spglib",
+    "all_source_edges_affine_inclusion_certified",
+    "all_wyckoff_labels_resolve",
+    "raw_counts_match_frozen_source",
+    "enumeration_order_invariance",
+    "duplicate_expansion_does_not_create_embedding_records",
+    "compact_integer_affine_storage",
+    "reverse_child_index_covers_all_230_groups"
+  ],
+  "numerical_thresholds": {
+    "affine_rotation_max_abs_error_float64": 1e-9,
+    "periodic_translation_max_abs_error_float64": 1e-9,
+    "source_rationalization_max_abs_error_float64": 1e-10,
+    "maximum_rational_denominator": 48
+  },
+  "required_outputs": {
+    "catalogue_manifest": "processed/gaugeflow_h0_v5/maximal_subgroup_embeddings_v2/catalogue_manifest.json",
+    "catalogue_records": "processed/gaugeflow_h0_v5/maximal_subgroup_embeddings_v2/catalogue_records.json.gz",
+    "independent_audit": "processed/gaugeflow_h0_v5/maximal_subgroup_embeddings_v2/independent_audit.json"
+  },
+  "advancement_rule": "E0 passes only if every frozen check and the independent audit pass. E0 failure stops H0-E-v2 E1 and all H1+ work. E0 success permits only the bounded parent-occurrence E1 implementation/pilot."
+}

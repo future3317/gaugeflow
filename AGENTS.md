@@ -88,9 +88,13 @@ its code/data/report surface.
   The overall decision remains `H0-E-v1_failed_stop_before_H1`.
   Its active-tree runners were retired after commit
   `f6f0262bfe9bbd983213467b20e66bce5fcb8485`; use that commit to reproduce
-  the frozen v1 artifact. H0-E-v2 is not yet frozen or authorized. A successor
-  must add a complete group--subgroup/Wyckoff-splitting parent compiler rather
-  than relabel the old spglib tolerance ladder.
+  the frozen v1 artifact. The H0-E-v2 parent-occurrence E1 pilot is not yet
+  frozen or run and may not relabel the old spglib tolerance ladder.
+  H0-E-v2 E0 has qualified a source-hashed, independently certified
+  maximal t/k-subgroup and Wyckoff-splitting embedding catalogue: 3,744 raw
+  source rows reduce to 2,843 rational affine embeddings without multiplicity
+  bias. E0 authorizes only the bounded parent-occurrence E1 pilot; H0-E and H0
+  remain unqualified and H1a remains unauthorized.
   H1a/H1b and H2--H6 have not started. The P1 tensor-free substrate is named
   `ParentBlueprintBatch`.
 

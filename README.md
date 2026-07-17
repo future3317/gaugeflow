@@ -24,7 +24,7 @@ distributions.
 | Stratified Cartesian Gauge Atlas | Implemented and numerically qualified |
 | Equivariant hybrid denoiser | Implemented as a model primitive |
 | Symmetry compatibility router | Implemented; S1a uses leakage-free P1 blueprints, not a full 230-group/Wyckoff sampler |
-| Parent--distortion--child hierarchy | H0-D-v2 abstract catalogue qualified; the concrete H0-E-v1 pilot is frozen failed on parent-candidate coverage |
+| Parent--distortion--child hierarchy | H0-D-v2 qualified; H0-E-v1 is frozen failed; H0-E-v2 E0 maximal embeddings qualified and only E1 may start |
 | TensorOrbit-JARVIS-v2 data protocol | Built and audited for future external-oracle qualification |
 | Production trainer, EMA and checkpoints | Implemented; S1a-I0 closure passed |
 | Joint reverse sampler | Implemented; S1a-I0 closure passed |
@@ -156,6 +156,16 @@ allocation-free compact Reynolds reductions. External spglib/pymatgen
 certification remains explicit because replacing it by a learned or metric-only
 shortcut would change the physical acceptance set.
 
+H0-E-v2 E0 now supplies the missing maximal group--subgroup/Wyckoff source
+without putting PyXtal in generation runtime. Its source-hashed offline
+compiler aggregates 3,744 maximal t/k records into 2,843 unique rational
+affine embeddings and 2,845 normalized relation variants. All 230 settings and
+every edge pass an independent spglib/Seitz audit to float64 machine precision;
+901 duplicate source rows cannot modify candidate enumeration or measure. E0
+permits only a bounded parent-occurrence E1 pilot. It does not repair or
+reclassify H0-E-v1, qualify H0-E, or authorize H1a. See
+[`reports/h0_e_maximal_embedding_catalogue_v2/`](reports/h0_e_maximal_embedding_catalogue_v2/).
+
 ## Repository layout
 
 ```text
@@ -170,6 +180,7 @@ scripts/                    production train/sample, current data and audit entr
 configs/                    current generation and TensorOrbit-v2 protocols
 reports/tensororbit_*/      current data activation evidence
 reports/h0_d_opd_physical_path_catalogue_v2/ current H0-D qualification evidence
+reports/h0_e_maximal_embedding_catalogue_v2/ current H0-E-v2 E0 evidence
 docs/                       current design and condensed iteration history
 tests/                      active production, physics and data regressions
 ```

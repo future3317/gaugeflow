@@ -34,15 +34,25 @@ from .parent_decomposition import (
     translation_quotient_displacement,
 )
 from .path_measure import RealizedPathClass, allocate_reference_measure
+from .subgroup_embeddings import (
+    AffineInclusionCertificate,
+    RationalAffineTransform,
+    certify_affine_subgroup_inclusion,
+    normalized_relation_variant,
+    species_wyckoff_exact_cover,
+    wyckoff_multiset_has_exact_cover,
+)
 
 __all__ = [
     "AffineQuotient",
+    "AffineInclusionCertificate",
     "CompactDisplacementAction",
     "FiniteGroup",
     "OPDClass",
     "PrimitiveSpaceGroup",
     "RealIrrep",
     "RealizedPathClass",
+    "RationalAffineTransform",
     "DecompositionResult",
     "ParentCandidate",
     "StandardCrystal",
@@ -51,6 +61,7 @@ __all__ = [
     "allocate_reference_measure",
     "balanced_selection",
     "canonical_stabilizer_key",
+    "certify_affine_subgroup_inclusion",
     "canonical_supercell_orbits",
     "enumerate_fixed_space_projectors",
     "enumerate_opd_classes",
@@ -59,10 +70,13 @@ __all__ = [
     "decompose_parent_candidate",
     "find_parent_candidates",
     "intersect_stabilizer_bitsets",
+    "normalized_relation_variant",
     "real_irrep_multiplicity",
     "primitive_space_group_from_hall",
     "standard_hall_numbers",
     "stabilizer_bitset",
+    "species_wyckoff_exact_cover",
     "standardize_crystal",
     "translation_quotient_displacement",
+    "wyckoff_multiset_has_exact_cover",
 ]

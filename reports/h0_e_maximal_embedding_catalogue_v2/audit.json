@@ -1,0 +1,39 @@
+{
+  "audit_passed": true,
+  "checks": {
+    "all_230_settings_independently_identified": true,
+    "all_compiled_embeddings_independently_certified": true,
+    "all_parent_and_child_space_groups_covered": true,
+    "builder_manifest_was_qualified": true,
+    "embedding_keys_unique_and_recomputed": true,
+    "finite_representative_kernels_recomputed": true,
+    "frozen_counts_reproduced": true,
+    "manifest_protocol_matches": true,
+    "rational_denominators_within_frozen_bound": true,
+    "raw_multiplicity_does_not_duplicate_records": true,
+    "records_are_reverse_index_sorted": true,
+    "records_hash_matches_manifest": true,
+    "source_hashes_independently_match": true,
+    "wyckoff_relation_labels_and_lengths_valid": true
+  },
+  "counts": {
+    "child_space_groups": 230,
+    "embeddings_with_multiple_relation_variants": 1,
+    "normalized_relation_variants": 2845,
+    "parent_space_groups": 230,
+    "raw_records_from_multiplicity": 3744,
+    "unique_affine_embeddings": 2843
+  },
+  "decision": "H0-E-v2-E0_qualified_parent_occurrence_E1_may_start",
+  "manifest_sha256": "acc80acd759efb9b2c117e695d8f14764a6bc420dbbb7831b2e2d13725007be7",
+  "maximum_periodic_translation_error": 4.440892098500626e-16,
+  "maximum_rotation_error": 2.220446049250313e-16,
+  "protocol": "h0_e_maximal_embedding_catalogue_v2_e0_independent_audit",
+  "records_sha256": "3a1bb3ad08ce576fe11bfa0515314da9d8ecb42346805f2cdfa3b975602c4747",
+  "source_sha256": {
+    "k_subgroup": "602cdba12ad7f8b14603c6d0765d47ca91ac826741c9f3080860e08512f17013",
+    "license": "8705ef28a8c214e2ee38a334b63a7412184ed70d05d752993d79f000d21496f3",
+    "t_subgroup": "63009c9e6adc1b450f8aa8e24d64ba62d61aefbb6793ab9e65a2d342a0c83d15",
+    "wyckoff_list": "ca56602252b7896121253c910739ef2fccf0ba947f2940358feb941f30c5e13d"
+  }
+}

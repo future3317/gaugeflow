@@ -23,6 +23,7 @@ catalogue = [
   "spgrep==0.6.0",
   "spgrep-modulation==0.3.0",
   "hsnf==0.4.0",
+  "pyxtal==0.6.1",
 ]
 
 [tool.setuptools.packages.find]
