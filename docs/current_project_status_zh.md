@@ -112,9 +112,21 @@ projection 令 head norm 从 `9109` 膨胀到 `4.83e7`；screened quotient Lapla
 
 综合判断是：当前阻塞不是 cache 损坏、解析 probability path 不闭合、坐标 head
 缺少物理方向，或只需增加 seed/steps；而是严重各向异性的优化几何与随状态变化的
-feature learning。唯一仍有因果依据的后继是假设明确、单次冻结的 scaled variable
-projection，但在任何训练前必须先通过 16-state FP32/BF16 exact-solve stability
-审计；不得搜索 scale、ridge、solve frequency、steps 或 seeds。
+feature learning。
+
+预注册的 16-state FP32/BF16 stability audit 随后在训练前否决了 scaled variable
+projection。固定 `1024x` chart 保持函数到 `5.96e-7`，design 为满秩 `225/225`，
+scaled solution norm 为 `8.894`，FP32 exact MSE 为 `0.099467`、backbone gradient
+norm 为 `3.889`，说明代数和 FP32 路径正常。但 BF16 MSE 为 `10.9886`，是 FP32 的
+`110.47` 倍；BF16 gradient norm 为 `23468.3`，是 FP32 的 `6033.9` 倍，梯度余弦
+为 `-0.1572`。vector/edge 两个预测分量的范数为 `272.59/271.00`，合计仅
+`16.83`，即 `32.31` 倍相消。缩放只把存储解降到 `8.894`，等效未缩放权重仍为
+`9107.83`，没有改变数值病态。
+
+该审计执行了零个 optimizer step，参数精确恢复，没有改 production。现在没有 active
+scaled-variable-projection 候选；下一机制必须先证明一种紧凑、等变且不依赖 target 的
+basis decorrelation 能消除相消，再允许训练。不得搜索 scale、ridge、precision、
+solve frequency、steps 或 seeds。
 
 ## 现在能声称与不能声称的内容
 

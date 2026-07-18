@@ -404,6 +404,18 @@ same-state 1,024-step AdamW run ended at MSE `0.40491`, worse than the historica
 scale without decorrelating the basis. All four candidates were removed from
 active runtime/config/test dispatch and remain only in reports and Git history.
 
+The preregistered combination was then stopped before training. A fixed
+power-of-two `1024x` chart preserved the function to `5.96e-7`, retained design
+rank `225/225`, reduced the stored exact-solution norm to `8.894`, and achieved
+FP32 MSE `0.099467` with backbone-gradient norm `3.889`. It did not change the
+effective unscaled norm (`9107.83`) or cancellation geometry. In BF16 the MSE
+rose to `10.9886` (`110.47x` FP32), the gradient norm to `23468.3`
+(`6033.9x`), and gradient cosine became `-0.1572`. The vector and edge
+contributions had norms `272.59` and `271.00` but summed to only `16.83`, a
+`32.31x` cancellation ratio. No optimizer step ran and all parameters were
+restored exactly. Scaled variable projection was therefore rejected; commit
+`231126d` retains the frozen runner, protocol and tests.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

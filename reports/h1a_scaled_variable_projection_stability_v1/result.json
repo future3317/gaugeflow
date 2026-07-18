@@ -1,0 +1,83 @@
+{
+  "baseline": {
+    "backbone_gradient_norm": 0.3851485550403595,
+    "coordinate_mse": 0.7507772445678711,
+    "gradient_finite": true
+  },
+  "checks": {
+    "bf16_backbone_gradient": false,
+    "bf16_coordinate_mse": false,
+    "bf16_over_fp32_mse": false,
+    "bf16_prediction": false,
+    "design_rank": true,
+    "design_reconstruction": true,
+    "fp32_backbone_gradient": true,
+    "fp32_coordinate_mse": true,
+    "function_preservation": true,
+    "gradient_direction": false,
+    "gradient_norm_agreement": false,
+    "parameters_restored": true,
+    "sampling_failures": true,
+    "scaled_solution_norm": true,
+    "tensor_candidates": true
+  },
+  "decision": "scaled_variable_projection_stability_failed_reject_before_training",
+  "decision_boundary": "This no-training audit cannot qualify H1a, mutate production, initialize a checkpoint, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "design_reconstruction_max_abs": 2.980232238769531e-07,
+  "effective_unscaled_solution_norm": 9107.833798747999,
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "function_preservation_max_abs": 5.960464477539062e-07,
+  "optimizer_steps": 0,
+  "parameters_restored": true,
+  "protocol": "h1a_scaled_variable_projection_stability_v1",
+  "qualified": false,
+  "sampling_failures": 0,
+  "scaled_exact": {
+    "bf16_backbone_gradient_norm": 23468.30859375,
+    "bf16_coordinate_mse": 10.988554000854492,
+    "bf16_gradient_finite": true,
+    "bf16_over_fp32_mse_ratio": 110.47435805629203,
+    "bf16_prediction_relative_rmse": 4.489931583404541,
+    "component_cancellation": {
+      "component_to_total_norm_ratio": 32.307580304920535,
+      "edge_prediction_norm": 270.9958039162884,
+      "total_prediction_norm": 16.825421305630776,
+      "vector_prediction_norm": 272.5928460794988
+    },
+    "exact_over_baseline_fp32_gradient_norm": 10.098521593436299,
+    "fp32_backbone_gradient_norm": 3.8894309997558594,
+    "fp32_coordinate_mse": 0.09946700930595398,
+    "fp32_gradient_finite": true,
+    "gradient_agreement": {
+      "candidate_over_reference_norm": 6033.8666584094435,
+      "cosine": -0.15720850409444406
+    }
+  },
+  "scaled_solution_norm": 8.894368944089843,
+  "spectrum": {
+    "columns": 225,
+    "condition_number": 218702.0172587042,
+    "maximum_singular_value": 7699.758480751192,
+    "minimum_active_singular_value": 0.035206618472307424,
+    "rank": 225,
+    "rows": 417
+  },
+  "tensor_candidates": 0
+}

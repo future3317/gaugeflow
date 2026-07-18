@@ -116,6 +116,12 @@ graphwise unit scaling、未正则 variable projection、screened quotient Lapla
 production/runtime/config/test 入口删除。它们只保留在报告与 Git 历史中；当前唯一
 production 模型仍是简洁的原坐标 head。
 
+组合候选也已在训练前否决。固定 `1024x` 缩放后的 16-state exact solution 范数为
+`8.894`，FP32 MSE 为 `0.099467`；但 BF16 MSE 为 `10.9886`（FP32 的 `110.47x`），
+backbone gradient norm 为 `23468.3`（FP32 的 `6033.9x`），梯度方向余弦为
+`-0.1572`。vector/edge 分量存在 `32.31x` 相消，说明缩小存储参数没有缩小等效函数
+权重。该实验没有执行 optimizer step；scaled variable projection 不再是 active 候选。
+
 ## 环境
 
 所有报告测试和未来训练使用 WSL 2 Ubuntu-22.04：

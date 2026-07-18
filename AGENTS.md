@@ -49,10 +49,13 @@ causal or operator qualification first.
 
 Graphwise unit scaling, unregularized variable projection, screened quotient
 Laplacian preconditioning, and standalone `1024x` readout reparameterization
-are rejected candidates. Do not restore them as runtime/config fallbacks. A
-future scaled variable-projection candidate is permitted only after a frozen
-16-state FP32/BF16 exact-solve stability audit and must not search scale, ridge,
-solve frequency, steps, or seeds.
+are rejected candidates. The subsequent 16-state FP32/BF16 stability audit also
+rejects their scaled-variable-projection combination before training: BF16 MSE
+was `110.47x` FP32, gradient norm was `6033.9x`, gradient cosine was `-0.1572`,
+and vector/edge cancellation was `32.31x`. Do not restore any of them as
+runtime/config fallbacks or rerun them with searched scale, ridge, precision,
+solve frequency, steps, or seeds. A successor requires a separately frozen,
+compact equivariant basis-decorrelation qualification first.
 
 ## Required environment
 

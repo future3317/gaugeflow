@@ -1,6 +1,7 @@
 # H1a scaled variable-projection stability v1
 
-Status: **frozen before run; no training has been performed.**
+Status: **failed before training; scaled variable projection is rejected. H1a
+remains failed.**
 
 This audit asks whether the only remaining causally supported combination is
 numerically safe before spending a 1,024-step memorization budget. It uses the
@@ -16,8 +17,25 @@ head parameters does not change the effective function weights seen by the
 backbone. A small stored solution norm is insufficient if cancellation,
 forward loss or gradients remain unstable.
 
-All thresholds and the pass/fail boundary are frozen in
-`configs/gates/h1a_scaled_variable_projection_stability_v1.json`. A failure
-rejects the combination before training; it cannot be rescued by searching the
-scale, ridge, solve frequency, steps or seeds. H1a remains failed and H1b--H6,
-tensor conditioning, oracle work, relaxation, DFT and DFPT remain prohibited.
+The algebraic pieces pass. The power-of-two chart preserves the initialized
+function within `5.96e-7`, the captured design reconstructs production within
+`2.98e-7`, rank is `225/225`, and the scaled solution norm is `8.894`. FP32
+execution also reproduces the exact panel fit at MSE `0.099467` with a finite
+backbone gradient norm of `3.889`.
+
+BF16 execution fails decisively. Coordinate MSE is `10.9886`, or `110.47x` the
+FP32 value; BF16/FP32 prediction relative RMS is `4.4899`. The backbone gradient
+norm is `23,468.3`, `6,033.9x` FP32, and its cosine with the FP32 gradient is
+`-0.1572`. The solved vector and edge contributions have norms `272.59` and
+`271.00` while their sum has norm only `16.83`, a `32.31x` component-to-total
+cancellation ratio. Scaling changes the stored solution norm but leaves an
+effective unscaled norm of `9,107.83`; it cannot repair this cancellation.
+
+No optimizer step was executed, all model parameters were restored exactly,
+and no production file was changed. The frozen decision therefore rejects
+scaled variable projection before training. It cannot be rescued by searching
+scale, ridge, solve frequency, steps, seeds, or silently switching the failed
+protocol precision. A successor must first qualify a compact equivariant
+basis-decorrelation mechanism. H1b--H6, tensor conditioning, oracle work,
+relaxation, DFT and DFPT remain prohibited. Exact values are in `result.json`;
+the frozen runner, tests and protocol remain recoverable from commit `231126d`.
