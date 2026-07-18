@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .state_projection import graph_mean
+from .state_projection import graph_mean, sorted_segment_sum
 
 
 def _vector_rms_normalize(
@@ -123,10 +123,9 @@ class CompactCartesianKrylovCarrier(nn.Module):
                 * envelope[:, :, None]
                 * directions[:, None, :]
             )
-            first = vectors.new_zeros(
-                (vectors.shape[0], self.moment_channels, 3)
+            first = sorted_segment_sum(
+                first_messages, edge_target, vectors.shape[0]
             )
-            first.index_add_(0, edge_target, first_messages)
             first = first * degree_scale[:, None, None]
 
             identity = torch.eye(3, dtype=vectors.dtype, device=vectors.device)
@@ -137,10 +136,9 @@ class CompactCartesianKrylovCarrier(nn.Module):
                 * envelope[:, :, None, None]
                 * dyad[:, None, :, :]
             )
-            second = vectors.new_zeros(
-                (vectors.shape[0], self.moment_channels, 3, 3)
+            second = sorted_segment_sum(
+                second_messages, edge_target, vectors.shape[0]
             )
-            second.index_add_(0, edge_target, second_messages)
             second = second * degree_scale[:, None, None, None]
 
             vectors = _vector_rms_normalize(

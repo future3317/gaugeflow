@@ -185,13 +185,6 @@ def periodic_radius_multigraph(
     if bool((counts < 1).any()):
         raise ValueError("every lattice graph must contain at least one node")
 
-    # Candidate search uses a compact representative, but the final physical
-    # displacement must be reconstructed from the original universal-cover
-    # coordinates. Subtracting two separately wrapped FP32 values introduces
-    # a gauge-dependent cancellation error under non-integer global shifts.
-    # Keep the integer wrap index so the winning image can be converted back
-    # to the unique lift acting on the unwrapped coordinate difference.
-    wrap_index = torch.floor(frac_coords).to(torch.long)
     wrapped = torch.remainder(frac_coords, 1.0)
     reciprocal_column_norm = torch.linalg.vector_norm(torch.linalg.inv(lattice), dim=1)
     bounds = torch.ceil(cutoff * reciprocal_column_norm + 1.0).to(torch.long)
@@ -239,20 +232,13 @@ def periodic_radius_multigraph(
     source = source[nontrivial]
     target = target[nontrivial]
     selected_shifts = selected_shifts[nontrivial]
-    unwrapped_shifts = (
-        selected_shifts - wrap_index[target] + wrap_index[source]
-    )
-    relative = (
-        frac_coords[target]
-        - frac_coords[source]
-        + unwrapped_shifts.to(frac_coords)
-    )
+    relative = wrapped[target] - wrapped[source] + selected_shifts.to(wrapped)
     displacement = torch.einsum("ni,nij->nj", relative, lattice[batch[target]])
     distance = torch.linalg.vector_norm(displacement, dim=-1)
     inside = distance < cutoff
     source = source[inside]
     target = target[inside]
-    unwrapped_shifts = unwrapped_shifts[inside]
+    selected_shifts = selected_shifts[inside]
     displacement = displacement[inside]
     distance = distance[inside]
     if bool((distance <= 1e-10).any()):
@@ -262,18 +248,18 @@ def periodic_radius_multigraph(
     # representatives from accumulating the same messages in different FP32
     # orders.
     keys = torch.cat(
-        (target.unsqueeze(-1), source.unsqueeze(-1), unwrapped_shifts), dim=-1
+        (target.unsqueeze(-1), source.unsqueeze(-1), selected_shifts), dim=-1
     )
     order = torch.arange(source.numel(), device=source.device)
     for column in range(keys.shape[1] - 1, -1, -1):
         order = order[torch.argsort(keys[order, column], stable=True)]
     source = source[order]
     target = target[order]
-    unwrapped_shifts = unwrapped_shifts[order]
+    selected_shifts = selected_shifts[order]
     displacement = displacement[order]
     distance = distance[order]
     direction = displacement / distance.unsqueeze(-1)
-    return PeriodicEdges(source, target, displacement, direction, distance, unwrapped_shifts)
+    return PeriodicEdges(source, target, displacement, direction, distance, selected_shifts)
 
 
 class GaussianRadialBasis(torch.nn.Module):

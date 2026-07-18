@@ -17,7 +17,12 @@ from .cartesian_gauge_atlas import (
     StratifiedCartesianGaugeAtlas,
 )
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
-from .state_projection import cartesian_tangent_to_fractional, graph_mean, graph_sum
+from .state_projection import (
+    cartesian_tangent_to_fractional,
+    graph_mean,
+    graph_sum,
+    sorted_segment_sum,
+)
 
 
 class FourierTimeEmbedding(nn.Module):
@@ -107,8 +112,12 @@ class EquivariantDenoisingBlock(nn.Module):
             # Keep graph reductions in the FP32 residual-state dtype under
             # BF16 autocast; index_add_ requires an exact dtype match and FP32
             # accumulation is numerically preferable for neighbor sums.
-            scalar_aggregate.index_add_(0, target, scalar_message.to(scalar_aggregate.dtype))
-            vector_aggregate.index_add_(0, target, vector_message.to(vector_aggregate.dtype))
+            scalar_aggregate = sorted_segment_sum(
+                scalar_message.to(scalar_aggregate.dtype), target, nodes.shape[0]
+            )
+            vector_aggregate = sorted_segment_sum(
+                vector_message.to(vector_aggregate.dtype), target, nodes.shape[0]
+            )
             degree = torch.bincount(target, minlength=nodes.shape[0]).clamp_min(1).to(nodes)
             scalar_aggregate = scalar_aggregate / degree.unsqueeze(-1)
             vector_aggregate = vector_aggregate / degree[:, None, None]

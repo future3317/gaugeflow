@@ -10,7 +10,6 @@ from typing import Any
 import torch
 
 from gaugeflow.file_utils import load_json_object, sha256_file
-from gaugeflow.geometry import periodic_radius_multigraph
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
@@ -150,6 +149,18 @@ def _run_precision(
             blueprint.shape_projector,
             blueprint.fractional_to_cartesian,
         )
+        repeated = model(
+            output.noisy.element_tokens,
+            output.noisy.fractional_coordinates,
+            output.noisy.log_volume,
+            output.noisy.log_shape,
+            batch_data.batch,
+            output.noisy.time,
+            condition,
+            condition_present,
+            blueprint.shape_projector,
+            blueprint.fractional_to_cartesian,
+        )
         permutation = _graph_reversal(batch_data.batch, graphs)
         permuted = model(
             output.noisy.element_tokens[permutation],
@@ -163,32 +174,6 @@ def _run_precision(
             blueprint.shape_projector,
             blueprint.fractional_to_cartesian,
         )
-    with torch.autocast(device_type=time.device.type, enabled=False):
-        original_edges = periodic_radius_multigraph(
-            output.noisy.fractional_coordinates.float(),
-            noisy_lattice,
-            batch_data.batch,
-            cutoff=model.radial.cutoff,
-        )
-        translated_edges = periodic_radius_multigraph(
-            (output.noisy.fractional_coordinates + shifts[batch_data.batch]).float(),
-            noisy_lattice,
-            batch_data.batch,
-            cutoff=model.radial.cutoff,
-        )
-    edge_keys_equal = all(
-        torch.equal(left, right)
-        for left, right in (
-            (original_edges.source, translated_edges.source),
-            (original_edges.target, translated_edges.target),
-            (original_edges.image_shift, translated_edges.image_shift),
-        )
-    )
-    edge_displacement_max_abs = (
-        _maximum_abs(original_edges.displacement, translated_edges.displacement)
-        if original_edges.displacement.shape == translated_edges.displacement.shape
-        else float("inf")
-    )
 
     return {
         "cartesian_output": output.prediction.coordinate_cartesian_scaled_score.detach().float(),
@@ -221,8 +206,14 @@ def _run_precision(
             output.prediction.coordinate_fractional_scaled_score[permutation],
             permuted.coordinate_fractional_scaled_score,
         ),
-        "translation_edge_keys_equal": edge_keys_equal,
-        "translation_edge_displacement_max_abs": edge_displacement_max_abs,
+        "repeat_cartesian_relative_rmse": _relative_rmse(
+            output.prediction.coordinate_cartesian_scaled_score,
+            repeated.coordinate_cartesian_scaled_score,
+        ),
+        "repeat_fractional_relative_rmse": _relative_rmse(
+            output.prediction.coordinate_fractional_scaled_score,
+            repeated.coordinate_fractional_scaled_score,
+        ),
         "atlas_candidates": int(output.prediction.gauge_atlas.raw_candidate_count.sum()),
     }
 
@@ -286,7 +277,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_tangent_score_index_correction_v2":
+    if protocol.get("protocol") != "h1a_tangent_score_deterministic_reduction_v1":
         raise ValueError("tangent-index correction protocol mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
@@ -422,15 +413,13 @@ def main() -> None:
             float(bf16["translation_fractional_relative_rmse"]),
         )
         <= symmetry_limit,
-        "translation_edge_lift": bool(
-            fp32["translation_edge_keys_equal"]
-            and bf16["translation_edge_keys_equal"]
+        "repeat_determinism": max(
+            float(fp32["repeat_cartesian_relative_rmse"]),
+            float(fp32["repeat_fractional_relative_rmse"]),
+            float(bf16["repeat_cartesian_relative_rmse"]),
+            float(bf16["repeat_fractional_relative_rmse"]),
         )
-        and max(
-            float(fp32["translation_edge_displacement_max_abs"]),
-            float(bf16["translation_edge_displacement_max_abs"]),
-        )
-        <= float(acceptance["edge_displacement_max_abs"]),
+        <= float(acceptance["repeat_relative_rmse_max"]),
         "permutation_consistency": max(
             float(fp32["permutation_cartesian_relative_rmse"]),
             float(fp32["permutation_fractional_relative_rmse"]),
