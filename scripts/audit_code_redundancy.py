@@ -41,6 +41,7 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h1a_coordinate_memorization.py",
     ROOT / "scripts" / "audit_h1a_coordinate_memorization_scaling.py",
     ROOT / "scripts" / "audit_h1a_function_preserving_readout_scale.py",
+    ROOT / "scripts" / "train_h1a_scaled_readout_one_state.py",
     ROOT / "scripts" / "diagnose_h1a_coordinate_generator.py",
     ROOT / "scripts" / "benchmark_h1a_tensor_free.py",
 )

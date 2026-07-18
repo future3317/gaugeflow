@@ -1,0 +1,227 @@
+{
+  "checks": {
+    "coordinate_mse": false,
+    "explained_fraction": false,
+    "low_time_endpoint": false,
+    "sampling_failures": true,
+    "tensor_candidates": true
+  },
+  "curve": [
+    {
+      "coordinate_loss": 0.7453429698944092,
+      "gradient_norm": 78.71141815185547,
+      "graphs_per_second": 1.5557729060194323,
+      "step": 1.0
+    },
+    {
+      "coordinate_loss": 0.5105254650115967,
+      "gradient_norm": 57.2338752746582,
+      "graphs_per_second": 11.728669085203512,
+      "step": 32.0
+    },
+    {
+      "coordinate_loss": 0.3433164060115814,
+      "gradient_norm": 66.31573486328125,
+      "graphs_per_second": 13.221201595727138,
+      "step": 64.0
+    },
+    {
+      "coordinate_loss": 0.3910408616065979,
+      "gradient_norm": 188.72946166992188,
+      "graphs_per_second": 13.988908976868274,
+      "step": 96.0
+    },
+    {
+      "coordinate_loss": 0.3320816159248352,
+      "gradient_norm": 116.59644317626953,
+      "graphs_per_second": 15.465012973949156,
+      "step": 128.0
+    },
+    {
+      "coordinate_loss": 0.4080566167831421,
+      "gradient_norm": 209.1716766357422,
+      "graphs_per_second": 15.509096614945717,
+      "step": 160.0
+    },
+    {
+      "coordinate_loss": 0.43600746989250183,
+      "gradient_norm": 175.0651397705078,
+      "graphs_per_second": 15.302761289688778,
+      "step": 192.0
+    },
+    {
+      "coordinate_loss": 0.2883886992931366,
+      "gradient_norm": 54.0322151184082,
+      "graphs_per_second": 14.988745282726272,
+      "step": 224.0
+    },
+    {
+      "coordinate_loss": 0.332080602645874,
+      "gradient_norm": 104.44701385498047,
+      "graphs_per_second": 14.72376891395023,
+      "step": 256.0
+    },
+    {
+      "coordinate_loss": 0.5417314171791077,
+      "gradient_norm": 162.31272888183594,
+      "graphs_per_second": 14.495912327127694,
+      "step": 288.0
+    },
+    {
+      "coordinate_loss": 0.33697304129600525,
+      "gradient_norm": 125.60743713378906,
+      "graphs_per_second": 14.247093434651894,
+      "step": 320.0
+    },
+    {
+      "coordinate_loss": 0.3736341595649719,
+      "gradient_norm": 91.88932800292969,
+      "graphs_per_second": 14.398915017209847,
+      "step": 352.0
+    },
+    {
+      "coordinate_loss": 0.30875200033187866,
+      "gradient_norm": 39.10624694824219,
+      "graphs_per_second": 14.466965734239714,
+      "step": 384.0
+    },
+    {
+      "coordinate_loss": 0.2604982256889343,
+      "gradient_norm": 18.0031795501709,
+      "graphs_per_second": 14.514547031494908,
+      "step": 416.0
+    },
+    {
+      "coordinate_loss": 0.3027544915676117,
+      "gradient_norm": 79.5962905883789,
+      "graphs_per_second": 14.674562868003338,
+      "step": 448.0
+    },
+    {
+      "coordinate_loss": 0.3297557830810547,
+      "gradient_norm": 91.97197723388672,
+      "graphs_per_second": 14.705082609544768,
+      "step": 480.0
+    },
+    {
+      "coordinate_loss": 0.2289009392261505,
+      "gradient_norm": 24.8171443939209,
+      "graphs_per_second": 14.64146576545825,
+      "step": 512.0
+    },
+    {
+      "coordinate_loss": 0.2555660605430603,
+      "gradient_norm": 84.6513671875,
+      "graphs_per_second": 14.776377716807001,
+      "step": 544.0
+    },
+    {
+      "coordinate_loss": 0.2466275542974472,
+      "gradient_norm": 43.05188751220703,
+      "graphs_per_second": 14.961723530618633,
+      "step": 576.0
+    },
+    {
+      "coordinate_loss": 0.31454360485076904,
+      "gradient_norm": 59.98641586303711,
+      "graphs_per_second": 14.95923079736018,
+      "step": 608.0
+    },
+    {
+      "coordinate_loss": 0.2735057771205902,
+      "gradient_norm": 64.60328674316406,
+      "graphs_per_second": 15.055434532323527,
+      "step": 640.0
+    },
+    {
+      "coordinate_loss": 0.23066014051437378,
+      "gradient_norm": 40.378238677978516,
+      "graphs_per_second": 15.20299299344863,
+      "step": 672.0
+    },
+    {
+      "coordinate_loss": 0.5318678617477417,
+      "gradient_norm": 122.06387329101562,
+      "graphs_per_second": 15.389782620158838,
+      "step": 704.0
+    },
+    {
+      "coordinate_loss": 0.2604457437992096,
+      "gradient_norm": 34.62130355834961,
+      "graphs_per_second": 15.471203745542859,
+      "step": 736.0
+    },
+    {
+      "coordinate_loss": 0.23136311769485474,
+      "gradient_norm": 91.54035186767578,
+      "graphs_per_second": 15.650973824652935,
+      "step": 768.0
+    },
+    {
+      "coordinate_loss": 0.2381945252418518,
+      "gradient_norm": 62.232975006103516,
+      "graphs_per_second": 15.93626669545789,
+      "step": 800.0
+    },
+    {
+      "coordinate_loss": 0.23990267515182495,
+      "gradient_norm": 30.49895668029785,
+      "graphs_per_second": 15.989677825350611,
+      "step": 832.0
+    },
+    {
+      "coordinate_loss": 0.3367158770561218,
+      "gradient_norm": 134.59481811523438,
+      "graphs_per_second": 16.049521507167018,
+      "step": 864.0
+    },
+    {
+      "coordinate_loss": 0.29033809900283813,
+      "gradient_norm": 51.652565002441406,
+      "graphs_per_second": 16.0993064010031,
+      "step": 896.0
+    },
+    {
+      "coordinate_loss": 0.2743319869041443,
+      "gradient_norm": 45.00872802734375,
+      "graphs_per_second": 16.14806268538741,
+      "step": 928.0
+    },
+    {
+      "coordinate_loss": 0.3416324555873871,
+      "gradient_norm": 69.1394271850586,
+      "graphs_per_second": 16.162408134852054,
+      "step": 960.0
+    },
+    {
+      "coordinate_loss": 0.2966032326221466,
+      "gradient_norm": 43.99638366699219,
+      "graphs_per_second": 16.19196706871992,
+      "step": 992.0
+    },
+    {
+      "coordinate_loss": 0.49040961265563965,
+      "gradient_norm": 69.35333251953125,
+      "graphs_per_second": 16.198784253934765,
+      "step": 1024.0
+    }
+  ],
+  "decision": "scaled_readout_one_state_failed_remove_parameterization",
+  "decision_boundary": "This one-state test cannot qualify H1a, initialize production training, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "fixed_indices": [
+    521337
+  ],
+  "metrics": {
+    "coordinate_mse": 0.4049109220504761,
+    "endpoint_rms_angstrom": 0.03648900240659714,
+    "explained_fraction": 0.45615530014038086,
+    "low_time_endpoint_rms_angstrom": 0.03648900240659714,
+    "sampling_failures": 0.0,
+    "tensor_candidates": 0.0,
+    "zero_predictor_mse": 0.7445341348648071
+  },
+  "protocol": "h1a_scaled_readout_one_state_v1",
+  "qualified": false,
+  "readout_parameter_displacement_norm": 0.03935880363879005,
+  "seed": 5914
+}
