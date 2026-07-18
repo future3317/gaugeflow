@@ -1,0 +1,73 @@
+{
+  "protocol": "h1a_coordinate_vector_rms_preconditioner_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training qualification of one capacity-neutral O(3)-invariant latent-vector RMS preconditioner; no production training, tensor condition or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "full_rank_ill_conditioned_tangent": "h1a_coordinate_tangent_audit_v2",
+    "baseline_condition_number": 23153400.23565566,
+    "baseline_effective_rank": 2.269670208784417,
+    "baseline_vector_to_edge_gradient_norm_ratio": 0.006617495293338862,
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915
+  },
+  "mechanism": {
+    "definition": "V_hat_i = V_i / sqrt(mean_ca(V_ica^2) + epsilon_vector^2)",
+    "epsilon_vector": 0.01,
+    "placement": "after the final message block and before the existing condition gate and linear vector readout",
+    "equivariance": "the denominator is a nodewise O(3)-invariant scalar",
+    "parameter_change": 0,
+    "edge_head_change": false,
+    "probability_path_change": false,
+    "loss_change": false,
+    "optimizer_change": false,
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "gram_accumulation_dtype": "fp64"
+  },
+  "numeric": {
+    "rank_relative_eigenvalue_threshold": 1e-10,
+    "expected_translation_nullity": 3,
+    "condition_number_max": 5000000.0,
+    "effective_rank_min": 4.0,
+    "vector_to_edge_gradient_norm_ratio_min": 0.1,
+    "quotient_projected_target_residual_max": 0.000001,
+    "translation_invariance_max_fp32": 0.00001,
+    "o3_covariance_max_fp32": 0.00001,
+    "finite_forward_backward": true,
+    "tensor_candidates": 0
+  },
+  "cuda": {
+    "batch_graphs": 64,
+    "warmup_steps": 3,
+    "measured_steps": 10,
+    "graphs_per_second_min": 450.0,
+    "peak_allocated_mib_max": 2500.0,
+    "device": "RTX 4060 Ti 16GB",
+    "precision": "bf16"
+  },
+  "decision_rule": {
+    "pass": "freeze exactly one same-seed 1,024-step one-state memorization test of the qualified production model",
+    "fail": "remove the preconditioner from active production and return to the vector-output basis audit",
+    "boundary": "Qualification cannot authorize more states, resampled time, H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
+  }
+}
