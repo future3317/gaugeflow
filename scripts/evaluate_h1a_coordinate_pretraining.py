@@ -281,9 +281,13 @@ def main() -> None:
     score_by_time = {value["time"]: value for value in score}
     rollout_by_time = {value["start_time"]: value for value in rollout}
     acceptance = protocol["acceptance"]
+    initial_coordinate_validation = validation_curve["0"]["coordinate"]
+    coordinate_validation_ratio = (
+        validation["coordinate"] / initial_coordinate_validation
+    )
     checks = {
-        "coordinate_validation": validation["coordinate"]
-        <= float(acceptance["final_coordinate_validation_max"]),
+        "coordinate_validation_reduction": coordinate_validation_ratio
+        <= float(acceptance["final_over_initial_coordinate_validation_max"]),
         "t005_teacher_forced": score_by_time[0.005]["endpoint_rms_angstrom"]
         <= float(acceptance["t005_teacher_forced_endpoint_rms_angstrom_max"]),
         "t01_teacher_forced": score_by_time[0.1]["endpoint_rms_angstrom"]
@@ -331,6 +335,7 @@ def main() -> None:
         },
         "validation": validation,
         "validation_curve": validation_curve,
+        "final_over_initial_coordinate_validation": coordinate_validation_ratio,
         "score_calibration": score,
         "posthoc_high_noise_score_diagnostic": high_noise_score,
         "posthoc_fit_diagnostic": {
@@ -346,9 +351,9 @@ def main() -> None:
         "checks": checks,
         "qualified": all(checks.values()),
         "decision": (
-            "coordinate_pretraining_qualified_freeze_joint_initialization_protocol"
+            protocol["decision_rule"]["pass"]
             if all(checks.values())
-            else "coordinate_pretraining_failed_stop_before_joint_training"
+            else protocol["decision_rule"]["fail"]
         ),
         "decision_boundary": protocol["decision_rule"]["boundary"],
     }
