@@ -39,34 +39,6 @@ class FourierTimeEmbedding(nn.Module):
         return self.network(torch.cat((time.unsqueeze(-1), phase.sin(), phase.cos()), dim=-1))
 
 
-def invariant_graphwise_basis_unit_scale(
-    basis: torch.Tensor,
-    batch: torch.Tensor,
-    graphs: int,
-    *,
-    floor: float = 1.0e-4,
-) -> torch.Tensor:
-    """Unit-scale equivariant vector-field channels without choosing a frame.
-
-    Each ``basis[:, channel, :]`` is a Cartesian vector field. Its graphwise
-    Frobenius RMS is invariant under O(3) and node relabeling, so this operation
-    preserves both symmetries while preventing weak coordinate directions from
-    requiring enormous final-readout weights. The fixed floor is the only
-    behavior at the zero-field stratum; there is no data-dependent fallback.
-    """
-    if basis.ndim != 3 or basis.shape[-1] != 3:
-        raise ValueError("coordinate basis must have shape [nodes, channels, 3]")
-    if batch.shape != (basis.shape[0],):
-        raise ValueError("coordinate basis batch vector has the wrong shape")
-    if floor <= 0.0 or not math.isfinite(floor):
-        raise ValueError("coordinate basis floor must be finite and positive")
-    channel_energy = graph_mean(
-        basis.float().square().mean(dim=-1), batch, graphs
-    )
-    inverse_rms = (channel_energy + float(floor) ** 2).rsqrt().to(basis)
-    return basis * inverse_rms[batch, :, None]
-
-
 class EquivariantDenoisingBlock(nn.Module):
     """O(3)-typed scalar/vector message block with explicit time and condition FiLM."""
 
@@ -341,8 +313,7 @@ class HybridCrystalDenoiser(nn.Module):
         node_context = torch.cat((nodes, node_time, node_condition, node_state), dim=-1)
         element_logits = self.element_head(node_context)
         coordinate_control = torch.cat((node_time, node_condition, node_state), dim=-1)
-        unit_vectors = invariant_graphwise_basis_unit_scale(vectors, batch, graphs)
-        time_gated_vectors = unit_vectors * torch.sigmoid(
+        time_gated_vectors = vectors * torch.sigmoid(
             self.coordinate_control_gate(coordinate_control)
         ).unsqueeze(-1)
         cartesian_score = self.coordinate_vector_head(time_gated_vectors.transpose(-1, -2)).squeeze(-1)
@@ -358,47 +329,18 @@ class HybridCrystalDenoiser(nn.Module):
                 ),
                 dim=-1,
             )
-            edge_hidden = self.coordinate_edge_head[1](
-                self.coordinate_edge_head[0](edge_features)
+            edge_score = (
+                self.coordinate_edge_head(edge_features)
+                * edge_envelope
+                * edges.displacement
             )
-            edge_basis = (
-                edge_hidden[:, :, None]
-                * edge_envelope[:, :, None]
-                * edges.displacement[:, None, :]
-            )
-            edge_aggregate = vectors.new_zeros(
-                (vectors.shape[0], edge_hidden.shape[1], 3)
-            )
+            edge_aggregate = torch.zeros_like(cartesian_score)
             edge_aggregate.index_add_(
-                0, target, edge_basis.to(edge_aggregate.dtype)
+                0, target, edge_score.to(edge_aggregate.dtype)
             )
-            edge_aggregate = edge_aggregate / degree.clamp_min(1).sqrt()[:, None, None]
-            edge_aggregate = edge_aggregate - graph_mean(
-                edge_aggregate, batch, graphs
-            )[batch]
-            unit_edge_basis = invariant_graphwise_basis_unit_scale(
-                edge_aggregate, batch, graphs
-            )
-            edge_readout = torch.einsum(
-                "nhc,h->nc",
-                unit_edge_basis,
-                self.coordinate_edge_head[2].weight.squeeze(0),
-            )
-            if self.coordinate_edge_head[2].bias is not None:
-                bias_edges = edge_envelope * edges.displacement
-                bias_basis = vectors.new_zeros((vectors.shape[0], 1, 3))
-                bias_basis.index_add_(
-                    0, target, bias_edges[:, None, :].to(bias_basis.dtype)
-                )
-                bias_basis = bias_basis / degree.clamp_min(1).sqrt()[:, None, None]
-                bias_basis = bias_basis - graph_mean(bias_basis, batch, graphs)[batch]
-                unit_bias_basis = invariant_graphwise_basis_unit_scale(
-                    bias_basis, batch, graphs
-                )
-                edge_readout = edge_readout + (
-                    self.coordinate_edge_head[2].bias * unit_bias_basis[:, 0, :]
-                )
-            cartesian_score = cartesian_score + edge_readout
+            cartesian_score = cartesian_score + edge_aggregate / degree.clamp_min(
+                1
+            ).sqrt().unsqueeze(-1)
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
