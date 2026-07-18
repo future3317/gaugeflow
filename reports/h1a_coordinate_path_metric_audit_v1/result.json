@@ -1,0 +1,294 @@
+{
+  "checks": {
+    "cell_scale_correlation_detected": false,
+    "nonorthogonal_chart_dependence_detected": true,
+    "physical_noise_spread_detected": true
+  },
+  "decision": "retain_active_path_and_run_fixed_subset_memorization",
+  "decision_boundary": "This audit cannot change the frozen H1a result or authorize additional seeds, H1b, tensor conditioning or later Gates.",
+  "graphs": 4096,
+  "metric_mismatch_hypothesis_detected": false,
+  "noise_replicates": 4,
+  "protocol": "h1a_coordinate_path_metric_audit_v1",
+  "time_resolved": [
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.3791615736974846,
+      "log_target_energy_to_log_cell_scale_correlation": 0.01716316771438803,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.019171404469503273,
+        "median": 0.019323778338730335,
+        "p05": 0.009978800965473057,
+        "p95": 0.027990154642611734,
+        "p95_to_p05": 2.8049617122797104
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.7498069640063587e-07,
+        "median": 1.7324325085610326e-07,
+        "p05": 8.816473098249845e-08,
+        "p95": 2.6772001575636746e-07,
+        "p95_to_p05": 3.036588585627426
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.054799367124488185,
+        "median": 0.054123664274811745,
+        "p05": 0.027198774460703134,
+        "p95": 0.08426426239311695,
+        "p95_to_p05": 3.098090412671431
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.8636794681956417,
+        "median": 0.8562828600406647,
+        "p05": 0.41825956702232364,
+        "p95": 1.3337273597717285,
+        "p95_to_p05": 3.188755177237928
+      },
+      "sigma_fractional": 0.005116465035825968,
+      "time": 0.005
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.3841790200953014,
+      "log_target_energy_to_log_cell_scale_correlation": 0.021883124514102438,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.01963288071638658,
+        "median": 0.019785798154771328,
+        "p05": 0.010131897451356054,
+        "p95": 0.028583949431777,
+        "p95_to_p05": 2.8211842420445463
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.7487538668168288e-07,
+        "median": 1.727915517335532e-07,
+        "p05": 8.877070385437947e-08,
+        "p95": 2.68229271682685e-07,
+        "p95_to_p05": 3.0215967660084293
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.05612934153710114,
+        "median": 0.05553319677710533,
+        "p05": 0.027640725672245025,
+        "p95": 0.08630306422710418,
+        "p95_to_p05": 3.122315428706851
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.8684566959644258,
+        "median": 0.8595452904701233,
+        "p05": 0.41828677207231524,
+        "p95": 1.3479462623596186,
+        "p95_to_p05": 3.2225409751341116
+      },
+      "sigma_fractional": 0.005235642660409212,
+      "time": 0.01
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.386778309581487,
+      "log_target_energy_to_log_cell_scale_correlation": 0.022989968489365003,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.020566545033993577,
+        "median": 0.020747041329741478,
+        "p05": 0.010716744419187307,
+        "p95": 0.02992785461246967,
+        "p95_to_p05": 2.7926255812247147
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.753171213524432e-07,
+        "median": 1.7340899916007402e-07,
+        "p05": 8.890667331229452e-08,
+        "p95": 2.672949761972631e-07,
+        "p95_to_p05": 3.0064669640529678
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.058799247474979666,
+        "median": 0.05816181004047394,
+        "p05": 0.029177764803171156,
+        "p95": 0.08994848877191541,
+        "p95_to_p05": 3.0827751672787302
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.8646414725054683,
+        "median": 0.8538525104522705,
+        "p05": 0.42312235832214357,
+        "p95": 1.3355390906333922,
+        "p95_to_p05": 3.1563897874112845
+      },
+      "sigma_fractional": 0.0054823909886181355,
+      "time": 0.02
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.383475567641753,
+      "log_target_energy_to_log_cell_scale_correlation": 0.023279811143184014,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.023558104119473455,
+        "median": 0.023676837794482708,
+        "p05": 0.012257667863741517,
+        "p95": 0.034523203223943706,
+        "p95_to_p05": 2.8164577150980072
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.752291289462216e-07,
+        "median": 1.739102657438707e-07,
+        "p05": 8.941796920680645e-08,
+        "p95": 2.688329502120723e-07,
+        "p95_to_p05": 3.0064756848851455
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.06733888337110727,
+        "median": 0.06636839359998703,
+        "p05": 0.03360865171998739,
+        "p95": 0.10344487354159354,
+        "p95_to_p05": 3.0779239346895273
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.8621914952267957,
+        "median": 0.8509248197078705,
+        "p05": 0.41737629771232604,
+        "p95": 1.335762345790863,
+        "p95_to_p05": 3.200379017956426
+      },
+      "sigma_fractional": 0.006294627208262682,
+      "time": 0.05
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.3830546081899762,
+      "log_target_energy_to_log_cell_scale_correlation": 0.01187094723130931,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.029752935567771033,
+        "median": 0.029956226237118244,
+        "p05": 0.015295983059331775,
+        "p95": 0.04333518911153078,
+        "p95_to_p05": 2.8331091204427588
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.753170004533842e-07,
+        "median": 1.732661019104853e-07,
+        "p05": 8.798201953652551e-08,
+        "p95": 2.6790253144781656e-07,
+        "p95_to_p05": 3.044969106859357
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.08505427629131646,
+        "median": 0.08426810801029205,
+        "p05": 0.041445301659405236,
+        "p95": 0.12989950105547904,
+        "p95_to_p05": 3.1342394880603015
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.865322429195885,
+        "median": 0.8549467623233795,
+        "p05": 0.4143537238240242,
+        "p95": 1.341238713264465,
+        "p95_to_p05": 3.236941376769401
+      },
+      "sigma_fractional": 0.007924466393887997,
+      "time": 0.1
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.3922914911795132,
+      "log_target_energy_to_log_cell_scale_correlation": 0.02916896229679755,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.04699365829225144,
+        "median": 0.04727872088551521,
+        "p05": 0.02463286304846406,
+        "p95": 0.0690869316458702,
+        "p95_to_p05": 2.8046651138336918
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.7587068267780216e-07,
+        "median": 1.7413850628145155e-07,
+        "p05": 8.892668397209036e-08,
+        "p95": 2.682409586896028e-07,
+        "p95_to_p05": 3.0164282160098335
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.13437621699716829,
+        "median": 0.13253096491098404,
+        "p05": 0.06703424453735352,
+        "p95": 0.20727408006787296,
+        "p95_to_p05": 3.0920625942517117
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.8636715432149913,
+        "median": 0.8530418872833252,
+        "p05": 0.4194560021162033,
+        "p95": 1.3411665618419644,
+        "p95_to_p05": 3.197395090487742
+      },
+      "sigma_fractional": 0.012559431605041027,
+      "time": 0.2
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.3820830826333138,
+      "log_target_energy_to_log_cell_scale_correlation": 0.01460443135247306,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 0.1875620016150492,
+        "median": 0.18841838836669922,
+        "p05": 0.09730278551578522,
+        "p95": 0.27574412524700165,
+        "p95_to_p05": 2.8338769931953105
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 1.7341199488217973e-07,
+        "median": 1.7062725277128266e-07,
+        "p05": 8.029171603141095e-08,
+        "p95": 2.774258121007731e-07,
+        "p95_to_p05": 3.4552233507157983
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 0.5361603257304068,
+        "median": 0.5298968851566315,
+        "p05": 0.26741169989109037,
+        "p95": 0.8254822015762329,
+        "p95_to_p05": 3.0869337501404375
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.866820380667491,
+        "median": 0.8562259078025818,
+        "p05": 0.42422938644886016,
+        "p95": 1.337390965223312,
+        "p95_to_p05": 3.152518443897406
+      },
+      "sigma_fractional": 0.04999999701976776,
+      "time": 0.5
+    },
+    {
+      "log_physical_rms_to_log_cell_scale_correlation": 0.38257584879064693,
+      "log_target_energy_to_log_cell_scale_correlation": 0.030856779397543912,
+      "noise_rms_over_per_atom_cell_scale": {
+        "mean": 1.1838637909213503,
+        "median": 1.193650245666504,
+        "p05": 0.6117372810840607,
+        "p95": 1.7337398886680602,
+        "p95_to_p05": 2.8341249459174644
+      },
+      "oracle_endpoint_rms_angstrom": {
+        "mean": 3.31512213818678,
+        "median": 3.273154616355896,
+        "p05": 1.541622453927994,
+        "p95": 5.218916106224058,
+        "p95_to_p05": 3.385339966297496
+      },
+      "physical_noise_rms_angstrom": {
+        "mean": 3.384803962409933,
+        "median": 3.354166269302368,
+        "p05": 1.6841341972351074,
+        "p95": 5.205894637107848,
+        "p95_to_p05": 3.0911400324597165
+      },
+      "scaled_score_target_energy": {
+        "mean": 0.022379711220944287,
+        "median": 0.01982199400663376,
+        "p05": 0.005093511706218123,
+        "p95": 0.04841148313134906,
+        "p95_to_p05": 9.504539485449433
+      },
+      "sigma_fractional": 0.31547871232032776,
+      "time": 0.9
+    }
+  ],
+  "unimodular_shear_covariance_relative_difference": {
+    "mean": 0.6966915971004255,
+    "median": 0.7177405953407288,
+    "p05": 0.19353241473436356,
+    "p95": 1.105541706085205,
+    "p95_to_p05": 5.712436893853861
+  }
+}

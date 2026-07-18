@@ -1,0 +1,63 @@
+{
+  "protocol": "h1a_coordinate_memorization_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed fixed-subset causal audit of coordinate-score memorization and full-time resampling; no production checkpoint initialization, joint generation, H1b-H6, tensor, oracle, relaxation, DFT or DFPT",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_coordinate_pretraining": "h1a_coordinate_pretraining_v1",
+    "path_metric_audit": "h1a_coordinate_path_metric_audit_v1",
+    "path_metric_decision": "retain_active_path_and_run_fixed_subset_memorization",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 64,
+    "fixed_selection_seed": 5911,
+    "unseen_train_graphs": 64,
+    "unseen_train_selection_seed": 5912,
+    "validation_graphs": 64,
+    "validation_selection_seed": 5913
+  },
+  "training": {
+    "seed": 5914,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "precision": "bf16",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "exact_state_steps": 1024,
+    "resampled_state_steps": 4096,
+    "log_every": 64,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9],
+    "evaluation_noise_replicates": 4,
+    "independent_initialization": "both stages restore the same seed-5914 initial state"
+  },
+  "acceptance": {
+    "exact_state_coordinate_mse_max": 0.001,
+    "exact_state_explained_fraction_min": 0.995,
+    "exact_state_low_time_endpoint_rms_angstrom_max": 0.01,
+    "resampled_fixed_low_time_explained_fraction_min": 0.75,
+    "resampled_fixed_t005_endpoint_rms_angstrom_max": 0.04,
+    "sampling_failures": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "exact_fail": "the unchanged forward/head/loss cannot memorize visible finite states; stop and inspect the implementation chain",
+    "exact_pass_resampled_fail": "the finite states are representable but the active path over time/noise is not learned on fixed endpoints; inspect time conditioning and path representation",
+    "fixed_pass_unseen_gap": "the path is learnable on fixed endpoints but source coupling does not generalize; prioritize leakage-safe structural pretraining or sample-efficient representation",
+    "fixed_and_unseen_pass": "the substrate is learnable and prior failure is attributable to optimization budget or joint training allocation; freeze a separate production-pretraining proposal",
+    "boundary": "No result changes historical H1a failures or authorizes extra seeds, silent step extension, joint initialization, H1b, tensor conditioning or later Gates."
+  }
+}
