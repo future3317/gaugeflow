@@ -1,10 +1,12 @@
 {
-  "protocol": "h1a_tangent_score_index_correction_v1",
+  "protocol": "h1a_tangent_score_index_correction_v2",
   "status_before_run": "frozen_not_run",
-  "scope": "single-seed zero-training qualification of the sampler-consumed fractional scaled score as a tangent drift, a Cartesian-tangent loss, and the exact inverse tangent chart; no checkpoint, H1b-H6 or tensor conditioning",
+  "scope": "single-seed zero-training qualification of the sampler-consumed fractional scaled score as a tangent drift, Cartesian-tangent loss, exact inverse tangent chart, and gauge-stable direct-difference periodic lift; no checkpoint, H1b-H6 or tensor conditioning",
   "prerequisites": {
     "attribution_protocol": "h1a_primal_dual_metric_attribution_v1",
     "attribution": "primal_dual_metric_mismatch",
+    "failed_protocol": "h1a_tangent_score_index_correction_v1",
+    "failed_item": "BF16 translation consistency caused by separately wrapped endpoint subtraction",
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
     "tensor_condition_enabled": false
   },
@@ -35,6 +37,7 @@
   "audit": {
     "optimizer_steps": 0,
     "coordinate_targets_read_for_metric_only": true,
+    "only_change_from_v1": "reconstruct final periodic displacement from the original coordinate difference plus the converted integer lift",
     "forbidden_parameter_fragments": ["coordinate_vector_head", "coordinate_edge_head", "covector"]
   },
   "acceptance": {
@@ -43,6 +46,7 @@
     "legacy_readout_parameters": 0,
     "roundtrip_max_abs": 0.00002,
     "chart_covariance_max_abs": 0.00002,
+    "edge_displacement_max_abs": 0.00000075,
     "model_symmetry_relative_rmse_max": 0.0001,
     "gradient_norm_max": 100.0,
     "bf16_fp32_gradient_ratio_min": 0.5,
@@ -56,7 +60,7 @@
     "optimizer_steps": 0
   },
   "decision_rule": {
-    "pass": "retain the compact Cartesian tangent carrier and primal endpoint metric, then freeze exactly one same-seed one-pass coordinate-only pretraining protocol",
+    "pass": "retain the gauge-stable periodic lift and Cartesian tangent metric, then freeze exactly one same-seed one-pass coordinate-only pretraining protocol",
     "fail": "remove the candidate correction and return to the coordinate probability-path/index audit without fitting targets",
     "boundary": "This zero-training qualification cannot qualify H1a, add steps or seeds, initialize joint training, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
   }
