@@ -172,6 +172,19 @@ target-free probe-gradient norm 为 `9.448/9.459`，比值 `1.00121`、余弦 `0
 targets、执行零 optimizer steps，只授权另行冻结的 production 集成资格测试；H1a
 仍失败，尚未允许 fixed-state target fit 或真实训练。
 
+第一次 clean production 集成没有通过，所以没有保留在 active runtime。集成本身满足
+结构和性能合同：`4,479,161` 参数、80 carriers、零 legacy readout keys、零 atlas
+candidates；FP32/BF16 coordinate output 相对 RMS/余弦为 `0.08780/0.99623`，梯度
+norm 比/余弦为 `1.09185/0.98573`。64-graph RTX 4060 Ti forward 为
+`1066.85 graphs/s`，峰值 `506.24 MiB`。
+
+失败项是 absolute Jacobian scale：不读取 target 的 production output-energy 梯度
+norm 在 FP32/BF16 下为 `373.27/407.55`，都超过冻结上限 `100`。因此这不是 BF16
+方向失真，而是 RMS-balanced carrier 接到实际 fractional score 后梯度绝对尺度过大。
+没有 optimizer step。active production 按协议恢复原 combined head，失败实现只在
+Git `e25f432` 保留。下一步必须先按 carrier 阶次和参数组做只读梯度归因，不能直接
+搜索初始化、RMS epsilon、缩放或开始 target fit。
+
 ## 现在能声称与不能声称的内容
 
 可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。

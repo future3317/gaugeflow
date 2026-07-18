@@ -460,6 +460,17 @@ were `0.99598` and `0.99269`, with gradient-norm ratio `1.00121`. The 12,192-edg
 CUDA operator cost `3.043 ms` and `11.609 MiB`. This qualifies only a clean
 production integration replacing the old readouts, not target fitting or H1a.
 
+That first clean integration was then tested and rejected before training. It
+had the exact `4,479,161` parameters, no legacy readout keys, FP32/BF16 output
+cosine `0.99623`, gradient cosine `0.98573`, and strong CUDA performance
+(`1066.85 graphs/s`, `506.24 MiB`). However, the target-free production
+output-energy gradient norms were `373.27/407.55`, exceeding the frozen `100`
+bound in both precisions. The defect is therefore absolute Jacobian scale after
+coupling the normalized carrier to the fractional output, not BF16 direction
+loss. Zero optimizer steps ran. The integration was removed from active
+production and remains at commit `e25f432`; carrier-order and parameter-group
+gradient attribution is required before a successor.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

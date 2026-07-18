@@ -83,6 +83,14 @@ authorizes only a separately frozen production integration that replaces the
 old two-readout path without compatibility fallback. No target fitting or
 training is authorized until that integration passes.
 
+The first clean production integration failed and was removed from the active
+tree. It had correct size, no legacy keys, `1066.85 graphs/s`, output cosine
+`0.99623`, and gradient cosine `0.98573`, but target-free output-energy gradient
+norms were `373.27/407.55` in FP32/BF16, above the frozen `100` bound. Commit
+`e25f432` preserves it. Do not restore it, tune initialization/RMS epsilon, or
+train it. First attribute absolute gradient scale by carrier order and parameter
+group under a separately frozen read-only audit.
+
 ## Required environment
 
 Use WSL 2 Ubuntu-22.04 for reported tests, benchmarks, training, and sampling:

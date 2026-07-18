@@ -1,0 +1,62 @@
+{
+  "bf16_probe_gradient_norm": 407.5521545410156,
+  "carrier_channels": 80,
+  "checks": {
+    "atlas_bypass": true,
+    "bf16_gradient": false,
+    "carrier_channels": true,
+    "coordinate_targets_read": true,
+    "finite": true,
+    "fp32_gradient": false,
+    "gradient_direction": true,
+    "gradient_norm_agreement": true,
+    "legacy_readouts": true,
+    "memory": true,
+    "parameter_count": true,
+    "parameters_restored": true,
+    "prediction_cosine": true,
+    "prediction_rmse": true,
+    "sampling_failures": true,
+    "throughput": true
+  },
+  "coordinate_targets_read": 0,
+  "decision": "compact_cartesian_krylov_production_failed_revert_integration",
+  "decision_boundary": "This no-training integration audit cannot qualify H1a, fit a coordinate target, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "fp32_bf16_coordinate_cosine": 0.9962260127067566,
+  "fp32_bf16_coordinate_relative_rmse": 0.08780411630868912,
+  "fp32_probe_gradient_norm": 373.2662658691406,
+  "gradient_agreement": {
+    "candidate_over_reference_norm": 1.0918537383374742,
+    "cosine": 0.9857256332072427
+  },
+  "legacy_readout_parameters": 0,
+  "optimizer_steps": 0,
+  "parameter_count": 4479161,
+  "performance": {
+    "graphs_per_second": 1066.8471080652882,
+    "latency_ms": 59.98985188802083,
+    "peak_memory_mib": 506.244140625
+  },
+  "protocol": "h1a_compact_cartesian_krylov_production_v1",
+  "qualified": false,
+  "sampling_failures": 0,
+  "tensor_free_atlas_candidates": 0
+}

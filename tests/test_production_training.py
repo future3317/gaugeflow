@@ -223,10 +223,9 @@ def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
         for name, value in model.named_parameters()
         if name.startswith(
             (
+                "coordinate_vector_head.",
                 "coordinate_control_gate.",
-                "coordinate_edge_encoder.",
-                "coordinate_carrier.",
-                "coordinate_carrier_head.",
+                "coordinate_edge_head.",
             )
         )
     }
