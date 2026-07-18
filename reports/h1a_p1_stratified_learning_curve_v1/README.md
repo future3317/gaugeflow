@@ -1,6 +1,7 @@
 # H1a stratified-time learning curve v1
 
-**Status: seed-5301 screen passed; remaining two seeds authorized.**
+**Decision: qualified for the corrected full H1a benchmark.** This result does
+not itself qualify H1a or authorize H1b.
 
 The preceding full benchmark used checkpoints trained on only 80,000 graph
 presentations (0.148 of the 540,164-structure split). A read-only gradient
@@ -41,3 +42,21 @@ approximately one split pass, and `0.05093` at 20,000 steps. The later gain is
 real but small. Moreover, the generated median remains well below the roughly
 2.70 A training-reference median. This result authorizes seeds 5302 and 5303
 under the same protocol; it is not H1a qualification.
+
+## Three-seed result
+
+All three 20,000-step runs completed. Mean final-to-initial validation ratios
+were `0.56104` total and `0.23354` coordinate. Per-seed coordinate ratios were
+`0.22536 / 0.13358 / 0.34168`, all below the frozen `0.40` bound. Every one of
+384 reverse trajectories completed, no MASK remained, all lattices were finite
+with positive volume, and the per-seed fractions with minimum distance at least
+0.5 A were `1.00000 / 0.97656 / 1.00000`. Tensor-free validation enumerated
+zero atlas candidates.
+
+The final coordinate validation losses are nearly identical across seeds
+(`0.05093 / 0.05123 / 0.05082`) and improve only slightly after the one-pass
+checkpoint (`0.05383 / 0.05395 / 0.05354`). This supports stopping the learning
+curve at its frozen budget rather than adding steps. Generated median nearest
+distances are `1.6950 / 1.5569 / 1.7434 A`, still visibly below the roughly
+2.70 A training reference. The corrected distribution benchmark, not this
+bounded guardrail, therefore decides H1a.
