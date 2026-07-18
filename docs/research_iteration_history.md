@@ -485,3 +485,28 @@ passing coarse chemistry/lattice and sampler-safety checks. The production
 blueprint remains P1 rather than a full space-group/Wyckoff sampler, and the
 project does not claim tensor-conditioned sample separation. No tensor
 fine-tuning, learned oracle, relaxation, DFT, or DFPT is authorized.
+
+### Cartesian tangent correction and full-split pretraining
+
+The compact Cartesian carrier was ultimately retained after the apparent
+production-gradient failure was traced to a tensor index-type error.  The
+reverse sampler consumes a tangent drift, not a covector: for row coordinates
+`r=fL`, the physical chart is `v_r=v_f L` and its inverse is a batched solve
+for `v_f=v_r L^-1`.  The old `L^T` pullback was removed from active runtime.
+Successive no-training audits then repaired periodic-lift arithmetic, replaced
+atomic reductions by target-contiguous linear-time `segment_reduce`, and fixed
+the precision boundary of geometry-sensitive blocks.  The final qualification
+had exact repeat determinism, BF16/FP32 output cosine `0.999806`, loss-gradient
+cosine `0.997593`, `516.03 graphs/s`, and `185.73 MiB` on the RTX 4060 Ti.
+
+Commit `6591015` preregistered one seed-5705, 8,441-step, exact-one-pass
+coordinate-only experiment before its execution.  It then consumed all
+540,164 training structures with finite logs and checkpoints.  Fixed
+validation decreased monotonically from `34.43436` to `24.24037`, but its
+ratio `0.70396` missed the frozen `0.5` bound.  The `t=.005` endpoint RMS
+improved from the archived covector result `0.05672 A` to `0.04207 A`, but
+still missed `0.04 A`.  The `t=.1` teacher-forced RMS (`0.06143 A`), rollouts
+from `t=.1/.2` (`0.06589/0.09861 A`), zero sampling failures, and zero tensor
+candidates all passed.  The protocol is therefore failed without threshold,
+seed, or step changes.  Joint initialization and every later Gate remain
+closed.

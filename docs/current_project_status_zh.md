@@ -172,18 +172,31 @@ target-free probe-gradient norm 为 `9.448/9.459`，比值 `1.00121`、余弦 `0
 targets、执行零 optimizer steps，只授权另行冻结的 production 集成资格测试；H1a
 仍失败，尚未允许 fixed-state target fit 或真实训练。
 
-第一次 clean production 集成没有通过，所以没有保留在 active runtime。集成本身满足
-结构和性能合同：`4,479,161` 参数、80 carriers、零 legacy readout keys、零 atlas
-candidates；FP32/BF16 coordinate output 相对 RMS/余弦为 `0.08780/0.99623`，梯度
-norm 比/余弦为 `1.09185/0.98573`。64-graph RTX 4060 Ti forward 为
-`1066.85 graphs/s`，峰值 `506.24 MiB`。
+第一次 clean production 集成暴露的超大梯度最终被定位为 tensor index type 错误。
+旧实现把 Cartesian covector 经 `L^T` 拉回 fractional chart，却让 reverse sampler
+把它当作 tangent vector 直接加到坐标。当前唯一正确路径为
 
-失败项是 absolute Jacobian scale：不读取 target 的 production output-energy 梯度
-norm 在 FP32/BF16 下为 `373.27/407.55`，都超过冻结上限 `100`。因此这不是 BF16
-方向失真，而是 RMS-balanced carrier 接到实际 fractional score 后梯度绝对尺度过大。
-没有 optimizer step。active production 按协议恢复原 combined head，失败实现只在
-Git `e25f432` 保留。下一步必须先按 carrier 阶次和参数组做只读梯度归因，不能直接
-搜索初始化、RMS epsilon、缩放或开始 target fit。
+\[
+v_r=v_fL,\qquad v_f=v_rL^{-1}.
+\]
+
+随后逐项修复了 periodic-lift 数值重构、CUDA atomic reduction 的不确定性和 BF16
+geometry sensitivity。最终 geometry-sensitive message blocks、coordinate edge
+encoder 与 Cartesian carrier 固定为 FP32 typed path，terminal scalar heads 仍可
+BF16；graph/edge reduction 使用 target-contiguous `segment_reduce`，保持线性
+复杂度且无运行时排序或精度 fallback。零训练资格达到 `516.03 graphs/s`、
+`185.73 MiB`，重复误差为零，BF16/FP32 output 和 loss-gradient cosine 分别为
+`0.999806/0.997593`，平移、置换、GL(3,Z)、O(3) 与 round-trip 全部通过。
+
+在此基础上，seed 5705 使用全部 540,164 条 train split 完成 8,441 steps、恰好一个
+完整 pass 的 Cartesian-tangent coordinate-only 预训练。validation 曲线为
+`34.43436 -> 30.46289 -> 26.04380 -> 24.24037`，最终比值
+`0.70396 > 0.5`；`t=.005` teacher-forced endpoint RMS 为
+`0.04207 A > 0.04 A`，两项失败。`t=.1` teacher-forced RMS 为 `0.06143 A`，
+从 `t=.1/.2` 开始的 100-step rollout 为 `0.06589/0.09861 A`，且 sampling
+failure 与 tensor candidates 均为零。修正 tangent 将旧 covector 的低噪声 RMS
+从 `0.05672 A` 改善到 `0.04207 A`，但仍不能按冻结协议放行。该 checkpoint 不会
+初始化 joint model；不增加 seed、steps 或修改阈值。
 
 ## 现在能声称与不能声称的内容
 
@@ -193,4 +206,8 @@ Git `e25f432` 保留。下一步必须先按 carrier 阶次和参数组做只读
 
 ## 恢复任务时需要什么
 
-目前不需要用户补数据或修改阈值。继续工作应先审计 coordinate probability path、结构表示的可记忆性与是否需要严格无泄漏的结构预训练，而不是再堆叠 reciprocal 输出头、增加 seed 或延长已失败协议。任何 tensor、oracle 或物理计算仍必须等待 H1a/H1b 通过。
+目前不需要用户补数据或修改阈值。最新结果说明 tangent 类型修复是正确且有物理收益的，
+但一个 train pass 内仍未充分学习完整条件期望。下一项工作必须是单独预注册的 H1a
+因果诊断，区分时间/噪声分层下的欠拟合、状态特征不足与 objective variance；不能用
+同一 checkpoint 增加 seed、延长训练或直接初始化 joint model。任何 tensor、oracle
+或物理计算仍必须等待 H1a/H1b 通过。

@@ -38,6 +38,12 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
 - No external pretrained weights or failed H1a checkpoint initialize the active
   model. "Coordinate-only pretraining" denotes a from-scratch auxiliary
   objective on the qualified train split, not transfer learning.
+- The corrected Cartesian-tangent coordinate pretraining has now completed one
+  exact pass over all 540,164 train structures at seed 5705.  It passed the
+  `t=.1` teacher-forced check, both rollouts, zero-failure and atlas-bypass
+  checks, but failed final/initial validation (`0.70396 > 0.5`) and the
+  low-noise endpoint (`0.04207 A > 0.04 A`).  It must not initialize joint
+  training or be rescued with another seed, more steps, or a changed bound.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 
@@ -47,49 +53,15 @@ either failed reciprocal-score residual, or initialize joint training from a
 failed coordinate checkpoint. A new mechanism requires a separately frozen
 causal or operator qualification first.
 
-Graphwise unit scaling, unregularized variable projection, screened quotient
-Laplacian preconditioning, and standalone `1024x` readout reparameterization
-are rejected candidates. The subsequent 16-state FP32/BF16 stability audit also
-rejects their scaled-variable-projection combination before training: BF16 MSE
-was `110.47x` FP32, gradient norm was `6033.9x`, gradient cosine was `-0.1572`,
-and vector/edge cancellation was `32.31x`. Do not restore any of them as
-runtime/config fallbacks or rerun them with searched scale, ridge, precision,
-solve frequency, steps, or seeds. A successor requires a separately frozen,
-compact equivariant basis-decorrelation qualification first.
-
-The subsequent exact-Helmert branch-minimality audit also rejects deleting one
-branch. Vector-only and edge-only are each locally full quotient rank `30/30`,
-but vector-only 16-state MSE is `0.56437`; edge-only MSE is `0.13474 > 0.12`
-and its BF16 MSE is `10.2160` with gradient cosine `-0.1419`. Retain the compact
-combined head. The next candidate must preserve its cross-state span through a
-target-free equivariant orthogonal-residual basis; do not silently switch to a
-single branch or FP32-only training.
-
-The target-free block-orthogonal residual chart was then rejected before
-training. It made the graph-equal Gram condition number `1.000000004`, reduced
-the stored solution norm to `3.23`, preserved FP32 MSE `0.09946`, and cost only
-`0.0255 ms`; nevertheless its effective raw norm stayed `9108`, BF16 MSE was
-`9.77`, gradient norm was `14670.5`, and FP32/BF16 gradient cosine was `0.128`.
-Do not restore post-hoc whitening or search its calibration. The next candidate
-must form a compact scale-controlled Cartesian carrier before the readout and
-must be separately qualified without training or targets.
-
-The ensuing 80-channel compact Cartesian moment/Krylov carrier qualified in
-that target-free operator scope. All 16 real states had full translation-
-quotient rank, worst condition number was `1.47e4`, O(3) covariance error was
-`6.76e-6`, BF16/FP32 carrier cosine was `0.99598`, and probe-gradient cosine
-was `0.99269`; the 12,192-edge operator cost `3.04 ms / 11.61 MiB`. This
-authorizes only a separately frozen production integration that replaces the
-old two-readout path without compatibility fallback. No target fitting or
-training is authorized until that integration passes.
-
-The first clean production integration failed and was removed from the active
-tree. It had correct size, no legacy keys, `1066.85 graphs/s`, output cosine
-`0.99623`, and gradient cosine `0.98573`, but target-free output-energy gradient
-norms were `373.27/407.55` in FP32/BF16, above the frozen `100` bound. Commit
-`e25f432` preserves it. Do not restore it, tune initialization/RMS epsilon, or
-train it. First attribute absolute gradient scale by carrier order and parameter
-group under a separately frozen read-only audit.
+The first clean production integration exposed a Cartesian index-type defect.
+The reverse sampler adds a tangent drift to fractional coordinates, so the
+only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`
+covector pullback must never return as a fallback.  After deterministic linear
+reductions and a fixed FP32 geometry path, the no-training CUDA qualification
+passed at `516.03 graphs/s`, with exact repeat determinism, output cosine
+`0.999806`, and loss-gradient cosine `0.997593`.  The authorized one-pass
+learning experiment nevertheless failed as recorded above, so work remains
+inside H1a diagnosis and no joint initialization is allowed.
 
 ## Required environment
 
