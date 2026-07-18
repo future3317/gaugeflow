@@ -30,30 +30,50 @@ def graph_sum(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> tor
     return scatter(value, batch, dim=0, dim_size=graph_count, reduce="sum")
 
 
-def fractional_covector_to_cartesian(
-    fractional_covector: torch.Tensor,
+def fractional_tangent_to_cartesian(
+    fractional_tangent: torch.Tensor,
     lattice: torch.Tensor,
     batch: torch.Tensor,
 ) -> torch.Tensor:
-    """Express a fractional covector in the orthonormal Cartesian chart.
+    """Push a fractional tangent vector into the Cartesian row-basis chart.
 
-    For row coordinates ``r = f L``, covectors obey
-    ``s_f = s_r L^T``. Solving ``L s_r^T = s_f^T`` avoids an explicit inverse
-    and gives the unique Cartesian covector used by the equivalent physical
-    loss metric. The reverse process still consumes the exact fractional
-    covector; this function changes only the chart in which errors are
-    compared.
+    For row coordinates ``r = f L``, tangent vectors obey ``v_r = v_f L``.
+    The production coordinate path uses the fractional Brownian score through
+    its mobility as a reverse-drift tangent, so this is the physical chart in
+    which endpoint displacement errors are compared.
     """
-    if fractional_covector.ndim != 2 or fractional_covector.shape[-1] != 3:
-        raise ValueError("fractional covector must have shape [sites,3]")
-    if batch.shape != fractional_covector.shape[:1] or batch.dtype != torch.long:
-        raise ValueError("batch must provide one graph index per covector")
+    if fractional_tangent.ndim != 2 or fractional_tangent.shape[-1] != 3:
+        raise ValueError("fractional tangent must have shape [sites,3]")
+    if batch.shape != fractional_tangent.shape[:1] or batch.dtype != torch.long:
+        raise ValueError("batch must provide one graph index per tangent")
     if lattice.ndim != 3 or lattice.shape[-2:] != (3, 3):
         raise ValueError("lattice must have shape [graphs,3,3]")
     if batch.numel() and int(batch.max()) >= lattice.shape[0]:
-        raise ValueError("covector batch index exceeds the lattice batch")
+        raise ValueError("tangent batch index exceeds the lattice batch")
+    return torch.einsum("ni,nij->nj", fractional_tangent, lattice[batch])
+
+
+def cartesian_tangent_to_fractional(
+    cartesian_tangent: torch.Tensor,
+    lattice: torch.Tensor,
+    batch: torch.Tensor,
+) -> torch.Tensor:
+    """Pull a Cartesian tangent vector back to fractional row coordinates.
+
+    This is the inverse of :func:`fractional_tangent_to_cartesian`. Solving
+    ``L^T v_f^T = v_r^T`` is batched and avoids explicitly materializing
+    ``L^-1``.
+    """
+    if cartesian_tangent.ndim != 2 or cartesian_tangent.shape[-1] != 3:
+        raise ValueError("Cartesian tangent must have shape [sites,3]")
+    if batch.shape != cartesian_tangent.shape[:1] or batch.dtype != torch.long:
+        raise ValueError("batch must provide one graph index per tangent")
+    if lattice.ndim != 3 or lattice.shape[-2:] != (3, 3):
+        raise ValueError("lattice must have shape [graphs,3,3]")
+    if batch.numel() and int(batch.max()) >= lattice.shape[0]:
+        raise ValueError("tangent batch index exceeds the lattice batch")
     return torch.linalg.solve(
-        lattice[batch], fractional_covector.unsqueeze(-1)
+        lattice[batch].transpose(-1, -2), cartesian_tangent.unsqueeze(-1)
     ).squeeze(-1)
 
 

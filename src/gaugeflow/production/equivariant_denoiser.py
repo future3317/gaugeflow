@@ -17,7 +17,7 @@ from .cartesian_gauge_atlas import (
     StratifiedCartesianGaugeAtlas,
 )
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
-from .state_projection import graph_mean, graph_sum
+from .state_projection import cartesian_tangent_to_fractional, graph_mean, graph_sum
 
 
 class FourierTimeEmbedding(nn.Module):
@@ -356,17 +356,18 @@ class HybridCrystalDenoiser(nn.Module):
             cartesian_score = cartesian_score - graph_mean(
                 cartesian_score, batch, graphs
             )[batch]
-            # A score is a covector, not a displacement. With r=fL, the chain
-            # rule gives grad_f log p = grad_r log p @ L^T. A Cartesian
-            # velocity would instead use L^-1. Keep this physical chart change
-            # in FP32 under BF16 training and sampling.
-            fractional_score = torch.einsum(
-                "ni,nij->nj",
-                cartesian_score,
-                lattice[batch].transpose(-1, -2),
+            # The reverse sampler consumes a tangent drift because it adds the
+            # network output to fractional coordinates. For r=fL, a Cartesian
+            # tangent vector obeys v_r=v_f L and hence v_f=v_r L^-1. The prior
+            # L^T covector pullback was an index-type error: it produced a
+            # covector and then silently used it as a vector. Solve the
+            # transposed row-vector system without forming an inverse, and keep
+            # this physical chart change in FP32 under BF16 execution.
+            fractional_score = cartesian_tangent_to_fractional(
+                cartesian_score, lattice, batch
             )
-            # Fractional zero mean is the translation-horizontal chart used by
-            # the coordinate probability path.
+            # Fractional zero mean is the translation-horizontal tangent chart
+            # used by the coordinate probability path.
             fractional_score = fractional_score - graph_mean(
                 fractional_score, batch, graphs
             )[batch]

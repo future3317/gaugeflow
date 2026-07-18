@@ -12,7 +12,10 @@ from gaugeflow.production.space_group_router import (
     compatibility_record,
     orbit_compatibility_residual,
 )
-from gaugeflow.production.state_projection import fractional_covector_to_cartesian
+from gaugeflow.production.state_projection import (
+    cartesian_tangent_to_fractional,
+    fractional_tangent_to_cartesian,
+)
 from gaugeflow.production.symmetry_expand import expand_asymmetric_unit
 from gaugeflow.production.wrapped_coordinates import AdaptiveWrappedQuotient
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, response_field, rotate_rank3
@@ -221,11 +224,10 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
         selected = first.coordinate_fractional_scaled_score[batch == graph]
         assert torch.allclose(selected.mean(dim=0), torch.zeros(3), atol=2e-6)
     lattice = LatticeVolumeShape(values[2], values[3]).lattice(values[8])
-    expected_fractional = torch.einsum(
-        "ni,nij->nj",
-        first.coordinate_cartesian_scaled_score,
+    expected_fractional = torch.linalg.solve(
         lattice[batch].transpose(-1, -2),
-    )
+        first.coordinate_cartesian_scaled_score.unsqueeze(-1),
+    ).squeeze(-1)
     expected_fractional = (
         expected_fractional - torch.stack([expected_fractional[batch == graph].mean(0) for graph in range(2)])[batch]
     )
@@ -234,16 +236,14 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
     )
 
 
-def test_cartesian_covector_loss_chart_is_exact_and_cell_basis_invariant():
+def test_cartesian_tangent_loss_chart_is_exact_and_cell_basis_equivariant():
     generator = torch.Generator().manual_seed(171)
     lattice = torch.randn((2, 3, 3), generator=generator, dtype=torch.float64)
     lattice = lattice + 3.0 * torch.eye(3, dtype=torch.float64)
     batch = torch.tensor([0, 0, 1, 1], dtype=torch.long)
     cartesian = torch.randn((4, 3), generator=generator, dtype=torch.float64)
-    fractional = torch.einsum(
-        "ni,nij->nj", cartesian, lattice[batch].transpose(-1, -2)
-    )
-    recovered = fractional_covector_to_cartesian(fractional, lattice, batch)
+    fractional = cartesian_tangent_to_fractional(cartesian, lattice, batch)
+    recovered = fractional_tangent_to_cartesian(fractional, lattice, batch)
     torch.testing.assert_close(recovered, cartesian, atol=1e-12, rtol=1e-12)
 
     basis = torch.tensor(
@@ -251,8 +251,8 @@ def test_cartesian_covector_loss_chart_is_exact_and_cell_basis_invariant():
         dtype=torch.float64,
     )
     transformed_lattice = basis @ lattice
-    transformed_fractional = fractional @ basis.T
-    transformed = fractional_covector_to_cartesian(
+    transformed_fractional = fractional @ torch.linalg.inv(basis)
+    transformed = fractional_tangent_to_cartesian(
         transformed_fractional, transformed_lattice, batch
     )
     torch.testing.assert_close(transformed, cartesian, atol=1e-12, rtol=1e-12)

@@ -19,10 +19,7 @@ from .schedules import (
     ExponentialTorusNoiseSchedule,
     standard_normal,
 )
-from .state_projection import (
-    fractional_covector_to_cartesian,
-    project_translation_state,
-)
+from .state_projection import fractional_tangent_to_cartesian, project_translation_state
 
 
 @dataclass(frozen=True)
@@ -243,18 +240,15 @@ class TensorFreeHybridDiffusion(nn.Module):
         mask = noisy.element_was_masked.to(node_cross_entropy)
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
 
-        # The denoiser must return the exact fractional covector required by
-        # the torus reverse process.  Comparing that covector componentwise,
-        # however, multiplies Cartesian readout gradients by the cell metric.
-        # Conditional on the noisy state the lattice is fixed and invertible,
-        # so the Cartesian and fractional quadratic forms have the same
-        # pointwise minimizer.  Use the orthonormal Cartesian covector chart for
-        # optimization while leaving the runtime score unchanged.
+        # The analytic score components become a reverse-drift tangent under
+        # the fractional Brownian mobility. With r=fL, its Cartesian target is
+        # v_r=v_f L. This is the same tangent-vector chart used by the Cartesian
+        # carrier and is exactly inverted by the denoiser before sampling.
         with torch.autocast(device_type=clean_lattice.device.type, enabled=False):
             noisy_lattice = LatticeVolumeShape(
                 noisy.log_volume.float(), noisy.log_shape.float()
             ).lattice(fractional_to_cartesian.float())
-            coordinate_target_cartesian = fractional_covector_to_cartesian(
+            coordinate_target_cartesian = fractional_tangent_to_cartesian(
                 noisy.coordinate_scaled_score_target.float(),
                 noisy_lattice,
                 batch,

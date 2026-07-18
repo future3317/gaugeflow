@@ -1,0 +1,63 @@
+{
+  "protocol": "h1a_tangent_score_index_correction_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed zero-training qualification of the sampler-consumed fractional scaled score as a tangent drift, a Cartesian-tangent loss, and the exact inverse tangent chart; no checkpoint, H1b-H6 or tensor conditioning",
+  "prerequisites": {
+    "attribution_protocol": "h1a_primal_dual_metric_attribution_v1",
+    "attribution": "primal_dual_metric_mismatch",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "expected_parameter_count": 4479161,
+    "carrier_channels": 80
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 5911
+  },
+  "path": {
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "chart_seed": 6017,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "audit": {
+    "optimizer_steps": 0,
+    "coordinate_targets_read_for_metric_only": true,
+    "forbidden_parameter_fragments": ["coordinate_vector_head", "coordinate_edge_head", "covector"]
+  },
+  "acceptance": {
+    "parameter_count_exact": 4479161,
+    "carrier_channels_exact": 80,
+    "legacy_readout_parameters": 0,
+    "roundtrip_max_abs": 0.00002,
+    "chart_covariance_max_abs": 0.00002,
+    "model_symmetry_relative_rmse_max": 0.0001,
+    "gradient_norm_max": 100.0,
+    "bf16_fp32_gradient_ratio_min": 0.5,
+    "bf16_fp32_gradient_ratio_max": 2.0,
+    "bf16_fp32_gradient_cosine_min": 0.9,
+    "bf16_fp32_output_cosine_min": 0.95,
+    "bf16_fp32_output_relative_rmse_max": 0.15,
+    "finite_coordinate_loss_and_gradient": true,
+    "parameters_restored": true,
+    "tensor_free_atlas_candidates": 0,
+    "optimizer_steps": 0
+  },
+  "decision_rule": {
+    "pass": "retain the compact Cartesian tangent carrier and primal endpoint metric, then freeze exactly one same-seed one-pass coordinate-only pretraining protocol",
+    "fail": "remove the candidate correction and return to the coordinate probability-path/index audit without fitting targets",
+    "boundary": "This zero-training qualification cannot qualify H1a, add steps or seeds, initialize joint training, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

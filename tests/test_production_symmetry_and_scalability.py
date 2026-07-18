@@ -215,7 +215,7 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     )
     assert torch.allclose(
         transformed.coordinate_fractional_scaled_score,
-        original.coordinate_fractional_scaled_score @ basis.T,
+        original.coordinate_fractional_scaled_score @ torch.linalg.inv(basis),
         atol=4e-5,
         rtol=4e-5,
     )
