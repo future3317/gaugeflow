@@ -6,6 +6,7 @@ from torch import nn
 from scripts.audit_h1a_coordinate_branch_minimality import (
     assign_branch,
     branch_slices,
+    helmert_quotient_basis,
     weighted_fit,
 )
 
@@ -24,6 +25,25 @@ def test_branch_slices_partition_the_affine_columns() -> None:
     assert slices["vector_only"] == slice(0, 2)
     assert slices["edge_only"] == slice(2, 6)
     assert slices["combined"] == slice(0, 6)
+
+
+def test_helmert_basis_removes_exactly_three_translation_modes() -> None:
+    quotient = helmert_quotient_basis(
+        5, device=torch.device("cpu"), dtype=torch.float64
+    )
+    assert quotient.shape == (15, 12)
+    torch.testing.assert_close(
+        quotient.transpose(0, 1) @ quotient, torch.eye(12, dtype=torch.float64)
+    )
+    translations = torch.kron(
+        torch.ones((5, 1), dtype=torch.float64), torch.eye(3, dtype=torch.float64)
+    )
+    torch.testing.assert_close(
+        quotient.transpose(0, 1) @ translations,
+        torch.zeros((12, 3), dtype=torch.float64),
+        atol=1e-15,
+        rtol=0.0,
+    )
 
 
 def test_assign_branch_zeros_the_unselected_readout() -> None:

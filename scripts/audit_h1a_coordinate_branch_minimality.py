@@ -35,6 +35,21 @@ READOUT_NAMES = (
 )
 
 
+def helmert_quotient_basis(
+    node_count: int, *, device: torch.device, dtype: torch.dtype
+) -> torch.Tensor:
+    """Return an orthonormal basis for 3D node fields modulo translation."""
+    if node_count < 2:
+        raise ValueError("translation quotient needs at least two nodes")
+    helmert = torch.zeros((node_count, node_count - 1), device=device, dtype=dtype)
+    for column in range(node_count - 1):
+        prefix = column + 1
+        denominator = math.sqrt(prefix * (prefix + 1))
+        helmert[:prefix, column] = 1.0 / denominator
+        helmert[prefix, column] = -prefix / denominator
+    return torch.kron(helmert, torch.eye(3, device=device, dtype=dtype))
+
+
 def branch_slices(vector_columns: int, total_columns: int) -> dict[str, slice]:
     """Return the unique column interval owned by each candidate branch."""
     if vector_columns < 1 or total_columns <= vector_columns:
@@ -307,17 +322,27 @@ def _evaluate_branch(
         rcond=rcond,
     )
     first_rows = row_graph == 0
+    first_design = branch_design[first_rows].double()
+    first_target = target[first_rows].double()
+    first_nodes = int(first_rows.sum()) // 3
+    quotient = helmert_quotient_basis(
+        first_nodes, device=first_design.device, dtype=first_design.dtype
+    )
+    quotient_design = quotient.transpose(0, 1) @ first_design
+    quotient_target = quotient.transpose(0, 1) @ first_target
     first_solution, first_spectrum = weighted_fit(
-        branch_design[first_rows],
-        target[first_rows],
-        torch.zeros(int(first_rows.sum()), dtype=torch.long, device=row_graph.device),
+        quotient_design,
+        quotient_target,
+        torch.zeros(
+            quotient_design.shape[0], dtype=torch.long, device=row_graph.device
+        ),
         1,
         rcond=rcond,
     )
-    first_prediction = branch_design[first_rows].double() @ first_solution
+    first_prediction = quotient_design @ first_solution
     first_residual = float(
-        torch.linalg.vector_norm(first_prediction - target[first_rows].double())
-        / torch.linalg.vector_norm(target[first_rows].double()).clamp_min(1e-30)
+        torch.linalg.vector_norm(first_prediction - quotient_target)
+        / torch.linalg.vector_norm(quotient_target).clamp_min(1e-30)
     )
     assign_branch(model, branch, solution)
     fp32_prediction, fp32 = _prediction_metrics(
@@ -387,6 +412,7 @@ def _evaluate_branch(
         "one_state": {
             "rank": int(first_spectrum["rank"]),
             "projection_relative_residual": first_residual,
+            "quotient_rows": int(quotient_design.shape[0]),
         },
         "fp32": {**fp32, "backbone_gradient_norm": fp32_gradient_norm},
         "bf16": {**bf16, "backbone_gradient_norm": bf16_gradient_norm},
