@@ -1,0 +1,41 @@
+{
+  "protocol": "h1a_coordinate_tangent_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training FP32 quotient-tangent/NTK audit of the failed one-state coordinate panel; no optimizer or model change and no later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_scaling_protocol": "h1a_coordinate_memorization_scaling_audit_v1",
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "dtype": "fp32"
+  },
+  "numeric": {
+    "rank_relative_eigenvalue_threshold": 1e-7,
+    "target_projection_relative_residual_max": 0.0001,
+    "severe_ntk_condition_number_min": 1000000.0
+  },
+  "decision_rule": {
+    "rank_deficient": "repair the equivariant vector-output basis before any optimizer experiment",
+    "full_rank_ill_conditioned": "qualify one principled output/gradient preconditioner at unchanged model capacity and budget",
+    "full_rank_well_conditioned": "inspect optimizer update and nonlinear curvature without adding steps or capacity",
+    "boundary": "This no-training audit cannot change historical H1a failures, initialize production or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
+  }
+}

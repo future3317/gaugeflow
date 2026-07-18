@@ -1,0 +1,410 @@
+{
+  "decision": "one_state_failed_inspect_forward_vector_head_loss_basis",
+  "decision_boundary": "No panel may receive extra steps or a new seed. This audit cannot initialize production or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT.",
+  "panels": [
+    {
+      "checks": {
+        "coordinate_mse": false,
+        "explained_fraction": false,
+        "low_time_endpoint": false,
+        "tensor_candidates": true
+      },
+      "curve": [
+        {
+          "coordinate_loss": 0.7450627088546753,
+          "gradient_norm": 0.21885819733142853,
+          "graphs_per_second": 1.4861852003950795,
+          "step": 1.0
+        },
+        {
+          "coordinate_loss": 0.5586424469947815,
+          "gradient_norm": 0.7234143614768982,
+          "graphs_per_second": 13.791091209179731,
+          "step": 64.0
+        },
+        {
+          "coordinate_loss": 0.5261598229408264,
+          "gradient_norm": 2.5091700553894043,
+          "graphs_per_second": 14.92317372545393,
+          "step": 128.0
+        },
+        {
+          "coordinate_loss": 0.49404701590538025,
+          "gradient_norm": 1.8859411478042603,
+          "graphs_per_second": 15.36355549792571,
+          "step": 192.0
+        },
+        {
+          "coordinate_loss": 0.5457561612129211,
+          "gradient_norm": 0.9679346680641174,
+          "graphs_per_second": 15.547414677124955,
+          "step": 256.0
+        },
+        {
+          "coordinate_loss": 0.513156533241272,
+          "gradient_norm": 0.9617303609848022,
+          "graphs_per_second": 16.196018612266993,
+          "step": 320.0
+        },
+        {
+          "coordinate_loss": 0.4129716753959656,
+          "gradient_norm": 3.243497610092163,
+          "graphs_per_second": 15.999184972185683,
+          "step": 384.0
+        },
+        {
+          "coordinate_loss": 0.4998934864997864,
+          "gradient_norm": 1.3072199821472168,
+          "graphs_per_second": 15.515970251660116,
+          "step": 448.0
+        },
+        {
+          "coordinate_loss": 0.3757493197917938,
+          "gradient_norm": 2.215620517730713,
+          "graphs_per_second": 15.765314214011577,
+          "step": 512.0
+        },
+        {
+          "coordinate_loss": 0.42607545852661133,
+          "gradient_norm": 1.8056145906448364,
+          "graphs_per_second": 15.62047248672837,
+          "step": 576.0
+        },
+        {
+          "coordinate_loss": 0.5857003927230835,
+          "gradient_norm": 1.186339020729065,
+          "graphs_per_second": 15.757411202094952,
+          "step": 640.0
+        },
+        {
+          "coordinate_loss": 0.38328632712364197,
+          "gradient_norm": 2.8698439598083496,
+          "graphs_per_second": 15.389885744484824,
+          "step": 704.0
+        },
+        {
+          "coordinate_loss": 0.26957806944847107,
+          "gradient_norm": 1.256981611251831,
+          "graphs_per_second": 15.314595548385148,
+          "step": 768.0
+        },
+        {
+          "coordinate_loss": 0.42255067825317383,
+          "gradient_norm": 2.4360008239746094,
+          "graphs_per_second": 15.407797569078715,
+          "step": 832.0
+        },
+        {
+          "coordinate_loss": 0.32963448762893677,
+          "gradient_norm": 2.1860344409942627,
+          "graphs_per_second": 15.330922810248278,
+          "step": 896.0
+        },
+        {
+          "coordinate_loss": 0.3467990756034851,
+          "gradient_norm": 5.411950588226318,
+          "graphs_per_second": 15.351765459402014,
+          "step": 960.0
+        },
+        {
+          "coordinate_loss": 0.23146304488182068,
+          "gradient_norm": 2.130682945251465,
+          "graphs_per_second": 15.413778753297073,
+          "step": 1024.0
+        }
+      ],
+      "graphs": 1,
+      "indices": [
+        521337
+      ],
+      "metrics": {
+        "coordinate_mse": 0.34414392709732056,
+        "endpoint_rms_angstrom": 0.03335992619395256,
+        "explained_fraction": 0.5377727746963501,
+        "low_time_endpoint_rms_angstrom": 0.03335992619395256,
+        "sampling_failures": 0.0,
+        "tensor_candidates": 0.0,
+        "zero_predictor_mse": 0.7445341348648071
+      }
+    },
+    {
+      "checks": {
+        "coordinate_mse": false,
+        "explained_fraction": false,
+        "low_time_endpoint": false,
+        "tensor_candidates": true
+      },
+      "curve": [
+        {
+          "coordinate_loss": 0.8866044878959656,
+          "gradient_norm": 0.4772311747074127,
+          "graphs_per_second": 34.297071613996636,
+          "step": 1.0
+        },
+        {
+          "coordinate_loss": 0.6137403845787048,
+          "gradient_norm": 1.4719692468643188,
+          "graphs_per_second": 77.33366582379105,
+          "step": 64.0
+        },
+        {
+          "coordinate_loss": 0.4858717620372772,
+          "gradient_norm": 5.012635707855225,
+          "graphs_per_second": 67.29151795071434,
+          "step": 128.0
+        },
+        {
+          "coordinate_loss": 0.4866552948951721,
+          "gradient_norm": 3.5298752784729004,
+          "graphs_per_second": 64.80014828906432,
+          "step": 192.0
+        },
+        {
+          "coordinate_loss": 0.41893014311790466,
+          "gradient_norm": 2.124242067337036,
+          "graphs_per_second": 65.94784752817883,
+          "step": 256.0
+        },
+        {
+          "coordinate_loss": 0.38301342725753784,
+          "gradient_norm": 1.7265119552612305,
+          "graphs_per_second": 64.62796437594392,
+          "step": 320.0
+        },
+        {
+          "coordinate_loss": 0.3727186918258667,
+          "gradient_norm": 2.4923925399780273,
+          "graphs_per_second": 68.02144143144832,
+          "step": 384.0
+        },
+        {
+          "coordinate_loss": 0.32810813188552856,
+          "gradient_norm": 0.8272525668144226,
+          "graphs_per_second": 68.96614687066244,
+          "step": 448.0
+        },
+        {
+          "coordinate_loss": 0.35440492630004883,
+          "gradient_norm": 3.0239837169647217,
+          "graphs_per_second": 68.18358102081791,
+          "step": 512.0
+        },
+        {
+          "coordinate_loss": 0.32709062099456787,
+          "gradient_norm": 2.508756637573242,
+          "graphs_per_second": 67.35935241574613,
+          "step": 576.0
+        },
+        {
+          "coordinate_loss": 0.3301405608654022,
+          "gradient_norm": 1.2356857061386108,
+          "graphs_per_second": 67.14874314777529,
+          "step": 640.0
+        },
+        {
+          "coordinate_loss": 0.27262258529663086,
+          "gradient_norm": 1.022422194480896,
+          "graphs_per_second": 67.22456173208862,
+          "step": 704.0
+        },
+        {
+          "coordinate_loss": 0.2601222097873688,
+          "gradient_norm": 1.8463881015777588,
+          "graphs_per_second": 66.08986122554143,
+          "step": 768.0
+        },
+        {
+          "coordinate_loss": 0.23546646535396576,
+          "gradient_norm": 3.210519552230835,
+          "graphs_per_second": 65.05505187707246,
+          "step": 832.0
+        },
+        {
+          "coordinate_loss": 0.2512078285217285,
+          "gradient_norm": 2.641011953353882,
+          "graphs_per_second": 65.18934709902474,
+          "step": 896.0
+        },
+        {
+          "coordinate_loss": 0.21926060318946838,
+          "gradient_norm": 1.8949971199035645,
+          "graphs_per_second": 64.8720612146636,
+          "step": 960.0
+        },
+        {
+          "coordinate_loss": 0.21591627597808838,
+          "gradient_norm": 2.7745704650878906,
+          "graphs_per_second": 65.30652776074123,
+          "step": 1024.0
+        }
+      ],
+      "graphs": 4,
+      "indices": [
+        521337,
+        31933,
+        401562,
+        228873
+      ],
+      "metrics": {
+        "coordinate_mse": 0.18782487511634827,
+        "endpoint_rms_angstrom": 0.024724792689085007,
+        "explained_fraction": 0.7889750599861145,
+        "low_time_endpoint_rms_angstrom": 0.023803500458598137,
+        "sampling_failures": 0.0,
+        "tensor_candidates": 0.0,
+        "zero_predictor_mse": 0.8900600671768188
+      }
+    },
+    {
+      "checks": {
+        "coordinate_mse": false,
+        "explained_fraction": false,
+        "low_time_endpoint": false,
+        "tensor_candidates": true
+      },
+      "curve": [
+        {
+          "coordinate_loss": 0.750856876373291,
+          "gradient_norm": 0.4131968021392822,
+          "graphs_per_second": 182.2935079972183,
+          "step": 1.0
+        },
+        {
+          "coordinate_loss": 0.504051685333252,
+          "gradient_norm": 0.9911107420921326,
+          "graphs_per_second": 238.66867343451534,
+          "step": 64.0
+        },
+        {
+          "coordinate_loss": 0.4065539240837097,
+          "gradient_norm": 4.143371105194092,
+          "graphs_per_second": 250.56201120285166,
+          "step": 128.0
+        },
+        {
+          "coordinate_loss": 0.33304429054260254,
+          "gradient_norm": 1.6310251951217651,
+          "graphs_per_second": 242.2854942288325,
+          "step": 192.0
+        },
+        {
+          "coordinate_loss": 0.297681599855423,
+          "gradient_norm": 1.1677782535552979,
+          "graphs_per_second": 240.40107182287292,
+          "step": 256.0
+        },
+        {
+          "coordinate_loss": 0.2770073115825653,
+          "gradient_norm": 1.267829179763794,
+          "graphs_per_second": 244.09088979585326,
+          "step": 320.0
+        },
+        {
+          "coordinate_loss": 0.2678861618041992,
+          "gradient_norm": 2.1853976249694824,
+          "graphs_per_second": 240.67567613666682,
+          "step": 384.0
+        },
+        {
+          "coordinate_loss": 0.25327610969543457,
+          "gradient_norm": 1.86521577835083,
+          "graphs_per_second": 235.49052925580025,
+          "step": 448.0
+        },
+        {
+          "coordinate_loss": 0.2548067569732666,
+          "gradient_norm": 2.250525951385498,
+          "graphs_per_second": 229.95863066859596,
+          "step": 512.0
+        },
+        {
+          "coordinate_loss": 0.2314653992652893,
+          "gradient_norm": 2.529597520828247,
+          "graphs_per_second": 230.54947186820075,
+          "step": 576.0
+        },
+        {
+          "coordinate_loss": 0.21565723419189453,
+          "gradient_norm": 0.9722414016723633,
+          "graphs_per_second": 231.02364018522545,
+          "step": 640.0
+        },
+        {
+          "coordinate_loss": 0.20906203985214233,
+          "gradient_norm": 1.3085216283798218,
+          "graphs_per_second": 230.38824956884605,
+          "step": 704.0
+        },
+        {
+          "coordinate_loss": 0.19272255897521973,
+          "gradient_norm": 1.3099063634872437,
+          "graphs_per_second": 232.1273065769236,
+          "step": 768.0
+        },
+        {
+          "coordinate_loss": 0.19225525856018066,
+          "gradient_norm": 2.0743496417999268,
+          "graphs_per_second": 231.1461266272172,
+          "step": 832.0
+        },
+        {
+          "coordinate_loss": 0.19475328922271729,
+          "gradient_norm": 1.5095547437667847,
+          "graphs_per_second": 229.49712044679376,
+          "step": 896.0
+        },
+        {
+          "coordinate_loss": 0.16667231917381287,
+          "gradient_norm": 1.2649779319763184,
+          "graphs_per_second": 229.3244917152928,
+          "step": 960.0
+        },
+        {
+          "coordinate_loss": 0.15052640438079834,
+          "gradient_norm": 1.17156982421875,
+          "graphs_per_second": 228.49220901561807,
+          "step": 1024.0
+        }
+      ],
+      "graphs": 16,
+      "indices": [
+        521337,
+        31933,
+        401562,
+        228873,
+        504485,
+        190806,
+        55219,
+        524367,
+        123040,
+        195962,
+        358601,
+        517842,
+        112370,
+        387445,
+        437822,
+        397621
+      ],
+      "metrics": {
+        "coordinate_mse": 0.16264520585536957,
+        "endpoint_rms_angstrom": 0.9970234632492065,
+        "explained_fraction": 0.7835686802864075,
+        "low_time_endpoint_rms_angstrom": 0.02448575384914875,
+        "sampling_failures": 0.0,
+        "tensor_candidates": 0.0,
+        "zero_predictor_mse": 0.7514864802360535
+      }
+    }
+  ],
+  "protocol": "h1a_coordinate_memorization_scaling_audit_v1",
+  "qualified": false,
+  "referenced_64_state_result": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "failed_64_state_coordinate_mse": 0.28272679448127747,
+    "failed_64_state_explained_fraction": 0.6371248364448547,
+    "failed_64_state_low_time_endpoint_rms_angstrom": 0.03296521306037903,
+    "failed_64_state_protocol": "h1a_coordinate_memorization_audit_v1"
+  },
+  "seed": 5914
+}
