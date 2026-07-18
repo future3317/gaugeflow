@@ -17,6 +17,7 @@ from .blueprint import (
     ParentBlueprintBatch,
     SelectedMode,
 )
+from .cartesian_coordinate_carrier import CompactCartesianKrylovCarrier
 from .cartesian_gauge_atlas import CartesianSTFGeometryQueryEncoder, StratifiedCartesianGaugeAtlas
 from .categorical_mask import AbsorbingMaskDiffusion
 from .checkpointing import (
@@ -58,6 +59,7 @@ __all__ = [
     "AbsorbingMaskDiffusion",
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
+    "CompactCartesianKrylovCarrier",
     "ChildReconstructor",
     "CosineNoiseSchedule",
     "DistortionBlueprint",

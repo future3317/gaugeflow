@@ -12,6 +12,7 @@ from gaugeflow.production.space_group_router import (
     compatibility_record,
     orbit_compatibility_residual,
 )
+from gaugeflow.production.state_projection import fractional_covector_to_cartesian
 from gaugeflow.production.symmetry_expand import expand_asymmetric_unit
 from gaugeflow.production.wrapped_coordinates import AdaptiveWrappedQuotient
 from gaugeflow.tensor import piezo_from_irreps, piezo_to_irreps, response_field, rotate_rank3
@@ -231,6 +232,30 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
     assert torch.allclose(
         first.coordinate_fractional_scaled_score, expected_fractional, atol=2e-6
     )
+
+
+def test_cartesian_covector_loss_chart_is_exact_and_cell_basis_invariant():
+    generator = torch.Generator().manual_seed(171)
+    lattice = torch.randn((2, 3, 3), generator=generator, dtype=torch.float64)
+    lattice = lattice + 3.0 * torch.eye(3, dtype=torch.float64)
+    batch = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    cartesian = torch.randn((4, 3), generator=generator, dtype=torch.float64)
+    fractional = torch.einsum(
+        "ni,nij->nj", cartesian, lattice[batch].transpose(-1, -2)
+    )
+    recovered = fractional_covector_to_cartesian(fractional, lattice, batch)
+    torch.testing.assert_close(recovered, cartesian, atol=1e-12, rtol=1e-12)
+
+    basis = torch.tensor(
+        [[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        dtype=torch.float64,
+    )
+    transformed_lattice = basis @ lattice
+    transformed_fractional = fractional @ basis.T
+    transformed = fractional_covector_to_cartesian(
+        transformed_fractional, transformed_lattice, batch
+    )
+    torch.testing.assert_close(transformed, cartesian, atol=1e-12, rtol=1e-12)
 
 
 def test_no_target_metadata_in_model_signature():

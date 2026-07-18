@@ -10,6 +10,7 @@ from torch import nn
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
 
+from .cartesian_coordinate_carrier import CompactCartesianKrylovCarrier
 from .cartesian_gauge_atlas import (
     CartesianGaugeAtlasOutput,
     CartesianSTFGeometryQueryEncoder,
@@ -176,12 +177,16 @@ class HybridCrystalDenoiser(nn.Module):
         )
         head_inputs = 4 * hidden_dim
         self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
-        self.coordinate_vector_head = nn.Linear(vector_dim, 1, bias=False)
         self.coordinate_control_gate = nn.Linear(3 * hidden_dim, vector_dim)
-        self.coordinate_edge_head = nn.Sequential(
+        self.coordinate_edge_encoder = nn.Sequential(
             nn.Linear(5 * hidden_dim + radial_dim, hidden_dim),
             nn.SiLU(),
-            nn.Linear(hidden_dim, 1),
+        )
+        self.coordinate_carrier = CompactCartesianKrylovCarrier(
+            hidden_dim, vector_dim, moment_channels=16, rms_epsilon=1.0e-4
+        )
+        self.coordinate_carrier_head = nn.Linear(
+            self.coordinate_carrier.output_channels, 1, bias=False
         )
         self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(
@@ -290,7 +295,9 @@ class HybridCrystalDenoiser(nn.Module):
             )
         node_condition = gauge_atlas.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition + node_state
-        vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_vector_head.in_features, 3))
+        vectors = nodes.new_zeros(
+            (nodes.shape[0], self.coordinate_carrier.vector_channels, 3)
+        )
         for block in self.blocks:
             nodes, vectors = block(
                 nodes,
@@ -316,7 +323,6 @@ class HybridCrystalDenoiser(nn.Module):
         time_gated_vectors = vectors * torch.sigmoid(
             self.coordinate_control_gate(coordinate_control)
         ).unsqueeze(-1)
-        cartesian_score = self.coordinate_vector_head(time_gated_vectors.transpose(-1, -2)).squeeze(-1)
         if source.numel():
             edge_features = torch.cat(
                 (
@@ -329,18 +335,24 @@ class HybridCrystalDenoiser(nn.Module):
                 ),
                 dim=-1,
             )
-            edge_score = (
-                self.coordinate_edge_head(edge_features)
-                * edge_envelope
-                * edges.displacement
+            edge_hidden = self.coordinate_edge_encoder(edge_features)
+        else:
+            edge_hidden = nodes.new_empty(
+                (0, self.coordinate_carrier.moment_projection.in_features)
             )
-            edge_aggregate = torch.zeros_like(cartesian_score)
-            edge_aggregate.index_add_(
-                0, target, edge_score.to(edge_aggregate.dtype)
-            )
-            cartesian_score = cartesian_score + edge_aggregate / degree.clamp_min(
-                1
-            ).sqrt().unsqueeze(-1)
+        carrier = self.coordinate_carrier(
+            time_gated_vectors,
+            edge_hidden,
+            target,
+            edges.direction,
+            edge_envelope,
+            batch,
+            graphs,
+        )
+        with torch.autocast(device_type=carrier.device.type, enabled=False):
+            cartesian_score = self.coordinate_carrier_head(
+                carrier.transpose(-1, -2).float()
+            ).squeeze(-1)
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
