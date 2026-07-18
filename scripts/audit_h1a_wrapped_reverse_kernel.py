@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -191,9 +192,31 @@ def _score_step(
     quadrature_points: int,
     generator: torch.Generator,
 ) -> torch.Tensor:
-    score, _ = _mixture_score(
-        state, endpoints, weights, variance_from, quadrature_points
+    def score_function(value: torch.Tensor, variance: torch.Tensor) -> torch.Tensor:
+        return _mixture_score(
+            value, endpoints, weights, variance, quadrature_points
+        )[0]
+
+    return _integrate_score_step(
+        method,
+        state,
+        variance_from,
+        variance_to,
+        score_function,
+        generator,
     )
+
+
+def _integrate_score_step(
+    method: str,
+    state: torch.Tensor,
+    variance_from: torch.Tensor,
+    variance_to: torch.Tensor,
+    score_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+    generator: torch.Generator,
+) -> torch.Tensor:
+    """Apply one pre-registered score-only quotient integrator step."""
+    score = score_function(state, variance_from)
     variance_drop = variance_from - variance_to
     tangent_noise = _project_translation(
         _standard_normal(state.shape, state, generator)
@@ -209,13 +232,7 @@ def _score_step(
             updated = updated + variance_drop.sqrt() * tangent_noise
         if method == "predictor_corrector_grw" and float(variance_to) > 0.0:
             correction = 0.1 * torch.minimum(variance_drop, variance_to)
-            corrected_score, _ = _mixture_score(
-                updated,
-                endpoints,
-                weights,
-                variance_to,
-                quadrature_points,
-            )
+            corrected_score = score_function(updated, variance_to)
             correction_noise = _project_translation(
                 _standard_normal(state.shape, state, generator)
             )
@@ -231,13 +248,7 @@ def _score_step(
             predicted = _project_translation(
                 state + 0.5 * variance_drop * score
             )
-            predicted_score, _ = _mixture_score(
-                predicted,
-                endpoints,
-                weights,
-                variance_to,
-                quadrature_points,
-            )
+            predicted_score = score_function(predicted, variance_to)
             updated = state + 0.25 * variance_drop * (
                 score + predicted_score
             )

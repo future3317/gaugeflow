@@ -1,0 +1,656 @@
+{
+  "candidate_checks": {
+    "predictor_corrector_grw": {
+      "checks": {
+        "sampling_failures": true,
+        "step_refinement": true,
+        "t01_guardrail": true,
+        "t02_improvement": false
+      },
+      "max_100_to_200_mean_rms_increase_angstrom": 0.008564233779907227,
+      "qualified": false,
+      "t01_100step_rms_ratio_to_ancestral": 1.0105763972015553,
+      "t02_100step_rms_ratio_to_ancestral": 1.0097793733378744
+    },
+    "probability_flow_heun": {
+      "checks": {
+        "sampling_failures": true,
+        "step_refinement": true,
+        "t01_guardrail": true,
+        "t02_improvement": false
+      },
+      "max_100_to_200_mean_rms_increase_angstrom": 0.001366257667541504,
+      "qualified": false,
+      "t01_100step_rms_ratio_to_ancestral": 0.9943459959887913,
+      "t02_100step_rms_ratio_to_ancestral": 1.005785781849244
+    },
+    "reverse_sde_grw": {
+      "checks": {
+        "sampling_failures": true,
+        "step_refinement": false,
+        "t01_guardrail": true,
+        "t02_improvement": false
+      },
+      "max_100_to_200_mean_rms_increase_angstrom": 0.020933032035827637,
+      "qualified": false,
+      "t01_100step_rms_ratio_to_ancestral": 1.000008855500471,
+      "t02_100step_rms_ratio_to_ancestral": 1.0000057635319353
+    }
+  },
+  "decision": "no_unique_integrator_repair_retain_production_sampler",
+  "decision_boundary": "This read-only audit cannot change weights, qualify H1a, or authorize H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "protocol": "h1a_learned_score_integrator_audit_v1",
+  "qualified_candidates": [],
+  "records": [
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0384825468063354,
+        1.1427468001842498,
+        1.8514189720153809,
+        2.8577794194221493,
+        3.132408857345581
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7943000793457031,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.1,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.038686752319336,
+        1.1429186165332794,
+        1.8513272404670715,
+        2.857770216464996,
+        3.1335060596466064
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7943615913391113,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.1,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0343446731567383,
+        1.1386245250701905,
+        1.8691036701202393,
+        2.8213767051696776,
+        3.063377618789673
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8041315078735352,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.1,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.028601050376892,
+        1.151048344373703,
+        1.8147467374801636,
+        2.853007113933563,
+        3.0669567584991455
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7802608013153076,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.1,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0317308902740479,
+        1.1365365505218505,
+        1.864164650440216,
+        2.7753170132637024,
+        3.0641419887542725
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7903940677642822,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0317308902740479,
+        1.1365760385990142,
+        1.8641411662101746,
+        2.77559255361557,
+        3.0641186237335205
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7904099225997925,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0190070867538452,
+        1.1313198924064636,
+        1.8597896695137024,
+        2.873854613304138,
+        3.102281093597412
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8093299865722656,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.028387427330017,
+        1.1504845201969147,
+        1.814602792263031,
+        2.855125224590301,
+        3.0690395832061768
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7802711725234985,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0196329355239868,
+        1.13710355758667,
+        1.8415950536727905,
+        2.5685786843299865,
+        3.074932098388672
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7692756652832031,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.1,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0196118354797363,
+        1.1371218144893647,
+        1.8415446281433105,
+        2.5684451699256896,
+        3.074946880340576
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7692530155181885,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.1,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0183113813400269,
+        1.11728492975235,
+        1.8462903499603271,
+        2.852770471572876,
+        3.0772533416748047
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8178942203521729,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.1,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0283122062683105,
+        1.1511454105377197,
+        1.8151193857192993,
+        2.8550047755241392,
+        3.0696425437927246
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.780205488204956,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.1,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9280077815055847,
+        1.0812546849250793,
+        1.8524091839790344,
+        2.565557301044464,
+        3.093708038330078
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7926249504089355,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.2,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9274455904960632,
+        1.0819610059261322,
+        1.8519050478935242,
+        2.566899049282074,
+        3.0934150218963623
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7927910089492798,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.2,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9330482482910156,
+        1.0725112557411194,
+        1.8544942736625671,
+        2.5576248884201047,
+        3.0945539474487305
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7908802032470703,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.2,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0123746395111084,
+        1.1287625312805176,
+        1.8570080995559692,
+        2.699615025520324,
+        3.086392879486084
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7898201942443848,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.2,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9227068424224854,
+        1.0640512108802795,
+        1.886346161365509,
+        2.4097419381141663,
+        3.087829113006592
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7787702083587646,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.2,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9226077795028687,
+        1.0641242146492005,
+        1.886228084564209,
+        2.4086023211479186,
+        3.0876150131225586
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.778780460357666,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.2,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9354454278945923,
+        1.066777729988098,
+        1.8733128905296326,
+        2.553292381763458,
+        3.0940866470336914
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7961654663085938,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.2,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0088218450546265,
+        1.1291026055812836,
+        1.8568482398986816,
+        2.6925483822822565,
+        3.084210157394409
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7890617847442627,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.2,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9175096154212952,
+        1.079140293598175,
+        1.8941581845283508,
+        2.332617223262787,
+        3.115330934524536
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.769559383392334,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.2,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9174368977546692,
+        1.0792553126811981,
+        1.8941845893859863,
+        2.332583284378052,
+        3.115344762802124
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7695634365081787,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.2,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8942508697509766,
+        1.059935301542282,
+        1.8817086815834045,
+        2.3188763976097104,
+        3.1222267150878906
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7670602798461914,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.2,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        1.0081536769866943,
+        1.128500372171402,
+        1.8567714095115662,
+        2.698855638504028,
+        3.084160089492798
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.7904280424118042,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.2,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8505041003227234,
+        1.0161123067140578,
+        1.8315796256065369,
+        2.743106710910797,
+        3.558849811553955
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8741099834442139,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.5,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8547033667564392,
+        1.020822924375534,
+        1.8379769325256348,
+        2.7463650584220884,
+        3.5739073753356934
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8678078651428223,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 25,
+      "start_time": 0.5,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8904398083686829,
+        1.0387901812791824,
+        1.7687159776687622,
+        2.7440396070480344,
+        3.629014015197754
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8408658504486084,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.5,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9027593731880188,
+        1.0348330974578857,
+        1.787487804889679,
+        2.7263141751289366,
+        3.2880401611328125
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8207359313964844,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 49,
+      "start_time": 0.5,
+      "steps": 25
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8274469971656799,
+        1.0911362290382385,
+        1.8770149946212769,
+        2.555179274082184,
+        3.3806231021881104
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8699243068695068,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.5,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8278918862342834,
+        1.0950984954833984,
+        1.88559889793396,
+        2.5529812574386597,
+        3.373934745788574
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8712198734283447,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 100,
+      "start_time": 0.5,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8241682648658752,
+        1.094252821803093,
+        1.9240524768829346,
+        2.6011767387390137,
+        3.3429489135742188
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.890252709388733,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.5,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.9009683728218079,
+        1.0332522988319397,
+        1.7860679030418396,
+        2.714398097991943,
+        3.2857885360717773
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8233425617218018,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 199,
+      "start_time": 0.5,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8248242139816284,
+        1.0771308332681655,
+        1.8782837390899658,
+        2.6914396405220034,
+        3.4578428268432617
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.891560435295105,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.5,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8250258564949036,
+        1.0775988101959229,
+        1.882789671421051,
+        2.6923773884773254,
+        3.4546566009521484
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8921529054641724,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 200,
+      "start_time": 0.5,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.8175164461135864,
+        1.0777942150831223,
+        1.8512594103813171,
+        2.6914762973785398,
+        3.6323835849761963
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8769453763961792,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.5,
+      "steps": 200
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.90003901720047,
+        1.0329707175493241,
+        1.7476134300231934,
+        2.712143349647522,
+        3.2851474285125732
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 1.8104827404022217,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "score_evaluations": 399,
+      "start_time": 0.5,
+      "steps": 200
+    }
+  ],
+  "validation_indices": [
+    52087,
+    17508,
+    483,
+    66782,
+    27546,
+    1418,
+    43283,
+    5237,
+    53054,
+    5273,
+    34862,
+    42454,
+    48503,
+    44616,
+    64149,
+    4085,
+    9625,
+    20565,
+    40070,
+    4419,
+    51597,
+    24825,
+    29671,
+    52151,
+    64721,
+    18692,
+    33758,
+    26769,
+    5153,
+    26793,
+    36523,
+    45289
+  ]
+}

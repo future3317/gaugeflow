@@ -1,0 +1,2137 @@
+{
+  "decision": "multiple_kernels_pass_require_learned_score_robustness_audit",
+  "decision_boundary": "No result authorizes retraining, H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "protocol": "h1a_symmetric_endpoint_reverse_kernel_audit_v1",
+  "qualified_score_only_methods": [
+    "ancestral_gaussian",
+    "reverse_sde_grw",
+    "predictor_corrector_grw",
+    "probability_flow_heun"
+  ],
+  "records": [
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.50190622913125,
+        13.516007533609393,
+        13.517000245351705,
+        13.517106466172867,
+        13.517215221937251,
+        13.517288046745602
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.1955410167937274e-16,
+        5.357517676492568e-16,
+        6.198285473817613e-16,
+        8.603597897382528e-16,
+        1.125476861136058e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.441836871109431e-16,
+      "mean_full_permutation_rms_angstrom": 3.441836871109431e-16,
+      "mean_type_quotient_rms_angstrom": 3.441836871109431e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.1955410167937274e-16,
+        5.357517676492568e-16,
+        6.198285473817613e-16,
+        8.603597897382528e-16,
+        1.125476861136058e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.489914773194014,
+        13.514996046438892,
+        13.516782924876065,
+        13.51698211771224,
+        13.51715090729158,
+        13.5172884665079
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.2109398473423314e-16,
+        5.820523917073207e-16,
+        6.839935064618048e-16,
+        9.583540322899095e-16,
+        1.3239730960652323e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.596552847792397e-16,
+      "mean_full_permutation_rms_angstrom": 3.596552847792397e-16,
+      "mean_type_quotient_rms_angstrom": 3.596552847792397e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.2109398473423314e-16,
+        5.820523917073207e-16,
+        6.839935064618048e-16,
+        9.583540322899095e-16,
+        1.3239730960652323e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.488457092178308,
+        13.515235519786863,
+        13.516797304381676,
+        13.516997212273674,
+        13.5172056864361,
+        13.517285872357261
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.2310278790015645e-16,
+        5.88976743998275e-16,
+        7.094139960882323e-16,
+        1.0116282179296846e-15,
+        1.4971522791177353e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.5948524865888964e-16,
+      "mean_full_permutation_rms_angstrom": 3.5948524865888964e-16,
+      "mean_type_quotient_rms_angstrom": 3.5948524865888964e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.2310278790015645e-16,
+        5.88976743998275e-16,
+        7.094139960882323e-16,
+        1.0116282179296846e-15,
+        1.4971522791177353e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.497333605665926,
+        13.516193556523298,
+        13.51705034816447,
+        13.517151283573398,
+        13.51724251345884,
+        13.517276952362947
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.7807554778221862e-16,
+        4.816409771013497e-16,
+        5.5615109556443725e-16,
+        8.400141609657067e-16,
+        9.31230459286334e-16
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.018520683485593e-16,
+      "mean_full_permutation_rms_angstrom": 3.018520683485593e-16,
+      "mean_type_quotient_rms_angstrom": 3.018520683485593e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.7807554778221862e-16,
+        4.816409771013497e-16,
+        5.5615109556443725e-16,
+        8.400141609657067e-16,
+        9.31230459286334e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.494925975623206,
+        13.515969863217002,
+        13.517006332636273,
+        13.517104926169955,
+        13.517232713892087,
+        13.517296707116426
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.23365671306343,
+        16.247148103861313,
+        16.248088757488613,
+        16.248206765686156,
+        16.248319149967468,
+        16.24836845787592
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.1881110034887275e-16,
+        5.573095062371647e-16,
+        6.625842732736894e-16,
+        1.0102105648760808e-15,
+        1.3057097054372166e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.457775805550609e-16,
+      "mean_full_permutation_rms_angstrom": 3.457775805550609e-16,
+      "mean_type_quotient_rms_angstrom": 3.457775805550609e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.1881110034887275e-16,
+        5.573095062371647e-16,
+        6.625842732736894e-16,
+        1.0102105648760808e-15,
+        1.3057097054372166e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.229286522861315,
+        16.246749007103162,
+        16.247996913830544,
+        16.248156336866074,
+        16.24829556852627,
+        16.248359441937748
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.039152964520321e-16,
+        5.558020441851363e-16,
+        6.914271305267707e-16,
+        1.0200772724110245e-15,
+        1.5916646411557136e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.4070822518054856e-16,
+      "mean_full_permutation_rms_angstrom": 3.4070822518054856e-16,
+      "mean_type_quotient_rms_angstrom": 3.4070822518054856e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.039152964520321e-16,
+        5.558020441851363e-16,
+        6.914271305267707e-16,
+        1.0200772724110245e-15,
+        1.5916646411557136e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.227211317693666,
+        16.24678966936255,
+        16.248031440422203,
+        16.24815168023763,
+        16.24827446835942,
+        16.248353360354617
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.118142630724637e-16,
+        5.653352448959762e-16,
+        6.841958622690007e-16,
+        9.259825182669326e-16,
+        1.3895098642284453e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.521420217266596e-16,
+      "mean_full_permutation_rms_angstrom": 3.521420217266596e-16,
+      "mean_type_quotient_rms_angstrom": 3.521420217266596e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.118142630724637e-16,
+        5.653352448959762e-16,
+        6.841958622690007e-16,
+        9.259825182669326e-16,
+        1.3895098642284453e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.23183654413803,
+        16.247168507499666,
+        16.24810079056394,
+        16.248208234661877,
+        16.24831115089904,
+        16.248349632309225
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.7004856237371597e-16,
+        4.739842853685092e-16,
+        5.541339440892598e-16,
+        7.229967693640711e-16,
+        9.73683170894755e-16
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 2.9379481846629215e-16,
+      "mean_full_permutation_rms_angstrom": 2.9379481846629215e-16,
+      "mean_type_quotient_rms_angstrom": 2.9379481846629215e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.7004856237371597e-16,
+        4.739842853685092e-16,
+        5.541339440892598e-16,
+        7.229967693640711e-16,
+        9.73683170894755e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.223136935664634,
+        16.247166176203045,
+        16.248084374321518,
+        16.24820264838016,
+        16.24830422799695,
+        16.248351958992885
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.79337812668535,
+        17.81320293654111,
+        17.814079843107233,
+        17.814172472384417,
+        17.81426797153253,
+        17.814322086184042
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.0246941383174297e-16,
+        5.638588261758366e-16,
+        7.094110156361194e-16,
+        1.0202253497731978e-15,
+        1.3766395331929677e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.476659991597275e-16,
+      "mean_full_permutation_rms_angstrom": 3.476659991597275e-16,
+      "mean_type_quotient_rms_angstrom": 3.476659991597275e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.0246941383174297e-16,
+        5.638588261758366e-16,
+        7.094110156361194e-16,
+        1.0202253497731978e-15,
+        1.3766395331929677e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.79128270580635,
+        17.813042439735277,
+        17.814038008180564,
+        17.814143223103734,
+        17.814238037024147,
+        17.814322510928623
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.0246376625681127e-16,
+        5.576849362298602e-16,
+        7.1550848486566965e-16,
+        1.0408704277107856e-15,
+        1.830037690944563e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.4910426027549923e-16,
+      "mean_full_permutation_rms_angstrom": 3.4910426027549923e-16,
+      "mean_type_quotient_rms_angstrom": 3.4910426027549923e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.0246376625681127e-16,
+        5.576849362298602e-16,
+        7.1550848486566965e-16,
+        1.0408704277107856e-15,
+        1.830037690944563e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.788059648013515,
+        17.81305880503536,
+        17.814067731795323,
+        17.81418067828634,
+        17.81428662612549,
+        17.81434484496977
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.188217931136681e-16,
+        5.853374586607246e-16,
+        7.109675565824431e-16,
+        9.951523262313292e-16,
+        1.1470972144109082e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.5668791715401597e-16,
+      "mean_full_permutation_rms_angstrom": 3.5668791715401597e-16,
+      "mean_type_quotient_rms_angstrom": 3.5668791715401597e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.188217931136681e-16,
+        5.853374586607246e-16,
+        7.109675565824431e-16,
+        9.951523262313292e-16,
+        1.1470972144109082e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.79878543835344,
+        17.813146018611498,
+        17.81407374983447,
+        17.814181057431732,
+        17.814284369179216,
+        17.814322914727352
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.788976052582376e-16,
+        4.816409771013497e-16,
+        5.44651505423978e-16,
+        7.964044841145249e-16,
+        1.1535436203131454e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 2.9704277816424936e-16,
+      "mean_full_permutation_rms_angstrom": 2.9704277816424936e-16,
+      "mean_type_quotient_rms_angstrom": 2.9704277816424936e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.788976052582376e-16,
+        4.816409771013497e-16,
+        5.44651505423978e-16,
+        7.964044841145249e-16,
+        1.1535436203131454e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.79880902781862,
+        17.813173102097736,
+        17.814076141652453,
+        17.81418830487543,
+        17.814294166701448,
+        17.814332399885792
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.631991079410806,
+        18.651932464601575,
+        18.652773274679593,
+        18.652892203495707,
+        18.652998547551,
+        18.65302834707127
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.1882450195211894e-16,
+        5.573170780493152e-16,
+        6.755812719846202e-16,
+        9.28754533025648e-16,
+        1.527519924192298e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.5258416068235684e-16,
+      "mean_full_permutation_rms_angstrom": 3.5258416068235684e-16,
+      "mean_type_quotient_rms_angstrom": 3.5258416068235684e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.1882450195211894e-16,
+        5.573170780493152e-16,
+        6.755812719846202e-16,
+        9.28754533025648e-16,
+        1.527519924192298e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.630496231312993,
+        18.65184678675939,
+        18.652770675913338,
+        18.652877640622222,
+        18.652989463362974,
+        18.653028539393798
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.1091438485850918e-16,
+        5.573121563804187e-16,
+        7.08762099333693e-16,
+        9.844202254903718e-16,
+        1.3996162308353141e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.463565944088085e-16,
+      "mean_full_permutation_rms_angstrom": 3.463565944088085e-16,
+      "mean_type_quotient_rms_angstrom": 3.463565944088085e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.1091438485850918e-16,
+        5.573121563804187e-16,
+        7.08762099333693e-16,
+        9.844202254903718e-16,
+        1.3996162308353141e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.636261336476426,
+        18.65187140828603,
+        18.65278753321912,
+        18.652904893671515,
+        18.653004770117533,
+        18.65304751626656
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.1882181703260794e-16,
+        5.713295534306921e-16,
+        7.023310714285772e-16,
+        9.793782350515273e-16,
+        1.8379042853230292e-15
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 3.551644298495552e-16,
+      "mean_full_permutation_rms_angstrom": 3.551644298495552e-16,
+      "mean_type_quotient_rms_angstrom": 3.551644298495552e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.1882181703260794e-16,
+        5.713295534306921e-16,
+        7.023310714285772e-16,
+        9.793782350515273e-16,
+        1.8379042853230292e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.63796373334735,
+        18.651866794034518,
+        18.652782501101015,
+        18.652888460086796,
+        18.65299065144683,
+        18.653028759345435
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.788976052582376e-16,
+        4.816409771013497e-16,
+        5.559995476378224e-16,
+        7.35423744077032e-16,
+        9.683698467658713e-16
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 2.95900471298241e-16,
+      "mean_full_permutation_rms_angstrom": 2.95900471298241e-16,
+      "mean_type_quotient_rms_angstrom": 2.95900471298241e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.788976052582376e-16,
+        4.816409771013497e-16,
+        5.559995476378224e-16,
+        7.35423744077032e-16,
+        9.683698467658713e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.634484613692862,
+        18.651916360403703,
+        18.65278871375912,
+        18.652891346418738,
+        18.65300083005311,
+        18.653052545741584
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "exact_forward",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.497571149805838,
+        13.515948881251136,
+        13.516997536840579,
+        13.517124073620643,
+        13.517219741485038,
+        13.517284583159073
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.9585455869586046e-16,
+        5.113305940561659e-16,
+        5.660608875827408e-16,
+        8.232370242479695e-16,
+        1.023531887929988e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.192058233134195e-16,
+      "mean_full_permutation_rms_angstrom": 3.192058233134195e-16,
+      "mean_type_quotient_rms_angstrom": 3.192058233134195e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.9585455869586046e-16,
+        5.113305940561659e-16,
+        5.660608875827408e-16,
+        8.232370242479695e-16,
+        1.023531887929988e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.4837213550463,
+        13.514944494832038,
+        13.51678104075823,
+        13.516999615029384,
+        13.517166943121007,
+        13.517226004067822
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.0319728717715377e-16,
+        5.208511863121055e-16,
+        5.6491682835831685e-16,
+        8.603660353990646e-16,
+        1.7330526981728478e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.2888423486741665e-16,
+      "mean_full_permutation_rms_angstrom": 3.2888423486741665e-16,
+      "mean_type_quotient_rms_angstrom": 3.2888423486741665e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.0319728717715377e-16,
+        5.208511863121055e-16,
+        5.6491682835831685e-16,
+        8.603660353990646e-16,
+        1.7330526981728478e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.481767509944572,
+        13.515171577886264,
+        13.51678740209356,
+        13.516968278401832,
+        13.517198488018776,
+        13.517274462755655
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.170110734673102e-16,
+        5.259513623449496e-16,
+        6.06829409839648e-16,
+        9.188401070197124e-16,
+        1.7971804624740525e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.438906298955286e-16,
+      "mean_full_permutation_rms_angstrom": 3.438906298955286e-16,
+      "mean_type_quotient_rms_angstrom": 3.438906298955286e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.170110734673102e-16,
+        5.259513623449496e-16,
+        6.06829409839648e-16,
+        9.188401070197124e-16,
+        1.7971804624740525e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.499815395381487,
+        13.516270491070198,
+        13.517100527951078,
+        13.517180151818497,
+        13.517258649286433,
+        13.517294334490563
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.5512248840364656e-16,
+        4.2628300687650845e-16,
+        4.816409771013497e-16,
+        5.847574712326235e-16,
+        8.364446791665246e-16
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 2.7232586814811755e-16,
+      "mean_full_permutation_rms_angstrom": 2.7232586814811755e-16,
+      "mean_type_quotient_rms_angstrom": 2.7232586814811755e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.5512248840364656e-16,
+        4.2628300687650845e-16,
+        4.816409771013497e-16,
+        5.847574712326235e-16,
+        8.364446791665246e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        13.486303095651602,
+        13.516075194140704,
+        13.516988775927569,
+        13.51710466344732,
+        13.517232929769598,
+        13.517298336328414
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 25,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.23115031369052,
+        16.247265539692872,
+        16.248101739005694,
+        16.248198983474218,
+        16.248295243507556,
+        16.248360675339363
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.014346132482618e-16,
+        5.208533130482677e-16,
+        5.988194579054145e-16,
+        9.222740668649614e-16,
+        1.5060642863819509e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.2958742054224555e-16,
+      "mean_full_permutation_rms_angstrom": 3.2958742054224555e-16,
+      "mean_type_quotient_rms_angstrom": 3.2958742054224555e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.014346132482618e-16,
+        5.208533130482677e-16,
+        5.988194579054145e-16,
+        9.222740668649614e-16,
+        1.5060642863819509e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.225259573138736,
+        16.246896177173447,
+        16.24801607834004,
+        16.24814648936384,
+        16.248283680057185,
+        16.248354069925277
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.0751894820232475e-16,
+        5.208511863121055e-16,
+        5.913618339398804e-16,
+        8.777351991264898e-16,
+        1.6004956656884007e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.3414918457772134e-16,
+      "mean_full_permutation_rms_angstrom": 3.3414918457772134e-16,
+      "mean_type_quotient_rms_angstrom": 3.3414918457772134e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.0751894820232475e-16,
+        5.208511863121055e-16,
+        5.913618339398804e-16,
+        8.777351991264898e-16,
+        1.6004956656884007e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.225807307437073,
+        16.246853878934655,
+        16.248037157377063,
+        16.248150951681666,
+        16.248275607720593,
+        16.248345241866552
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.2109398473423314e-16,
+        5.334352145015145e-16,
+        6.418177092273347e-16,
+        9.299878591644355e-16,
+        1.541171286573374e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.4615782810000887e-16,
+      "mean_full_permutation_rms_angstrom": 3.4615782810000887e-16,
+      "mean_type_quotient_rms_angstrom": 3.4615782810000887e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.2109398473423314e-16,
+        5.334352145015145e-16,
+        6.418177092273347e-16,
+        9.299878591644355e-16,
+        1.541171286573374e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.22911487705411,
+        16.24724843653276,
+        16.24815257218206,
+        16.248242428816635,
+        16.24832881699043,
+        16.248369422653532
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.5512248840364656e-16,
+        4.341091086083087e-16,
+        5.012722777755091e-16,
+        6.298964895911885e-16,
+        8.709797972112733e-16
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 2.7706110764358423e-16,
+      "mean_full_permutation_rms_angstrom": 2.7706110764358423e-16,
+      "mean_type_quotient_rms_angstrom": 2.7706110764358423e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.5512248840364656e-16,
+        4.341091086083087e-16,
+        5.012722777755091e-16,
+        6.298964895911885e-16,
+        8.709797972112733e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        16.21761488337596,
+        16.247075246310803,
+        16.248083402358308,
+        16.248191674686453,
+        16.24830419574495,
+        16.248340313451223
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 50,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.78291599396827,
+        17.813200682426718,
+        17.814079303959474,
+        17.814178092519025,
+        17.814292886045788,
+        17.814331854443186
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.014346045950859e-16,
+        5.208552372341904e-16,
+        5.977861129478726e-16,
+        8.447255625920378e-16,
+        1.116710860632685e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.2485065842147417e-16,
+      "mean_full_permutation_rms_angstrom": 3.2485065842147417e-16,
+      "mean_type_quotient_rms_angstrom": 3.2485065842147417e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.014346045950859e-16,
+        5.208552372341904e-16,
+        5.977861129478726e-16,
+        8.447255625920378e-16,
+        1.116710860632685e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.778266249558435,
+        17.81302607807052,
+        17.814014527076754,
+        17.81415710381383,
+        17.814281539144318,
+        17.814330890939345
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.9918459908988557e-16,
+        5.130012814957299e-16,
+        5.817410987074057e-16,
+        8.373959893305159e-16,
+        1.1598780882311628e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.202246650872289e-16,
+      "mean_full_permutation_rms_angstrom": 3.202246650872289e-16,
+      "mean_type_quotient_rms_angstrom": 3.202246650872289e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.9918459908988557e-16,
+        5.130012814957299e-16,
+        5.817410987074057e-16,
+        8.373959893305159e-16,
+        1.1598780882311628e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.790929612102143,
+        17.8131138671391,
+        17.81405446450314,
+        17.814149889146442,
+        17.81425597459306,
+        17.81434142530132
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.014346045950859e-16,
+        5.302008488748616e-16,
+        6.218209400339095e-16,
+        1.0511107821183368e-15,
+        1.4760301820273467e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.382010229140222e-16,
+      "mean_full_permutation_rms_angstrom": 3.382010229140222e-16,
+      "mean_type_quotient_rms_angstrom": 3.382010229140222e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.014346045950859e-16,
+        5.302008488748616e-16,
+        6.218209400339095e-16,
+        1.0511107821183368e-15,
+        1.4760301820273467e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.797661028465914,
+        17.813224823329328,
+        17.814125336526015,
+        17.814215751455983,
+        17.814301984094186,
+        17.814342819469047
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.6089955322915837e-16,
+        4.369187301369656e-16,
+        4.882500194236447e-16,
+        6.661471825185982e-16,
+        9.447082776007376e-16
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 2.792167540195538e-16,
+      "mean_full_permutation_rms_angstrom": 2.792167540195538e-16,
+      "mean_type_quotient_rms_angstrom": 2.792167540195538e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.6089955322915837e-16,
+        4.369187301369656e-16,
+        4.882500194236447e-16,
+        6.661471825185982e-16,
+        9.447082776007376e-16
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        17.794690721991845,
+        17.81315161177124,
+        17.81407756285217,
+        17.814176018081007,
+        17.814296334503137,
+        17.814344227840124
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 100,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.635351730949246,
+        18.65190702922904,
+        18.652788023251688,
+        18.652891659683885,
+        18.652979189983782,
+        18.653026958818685
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.014346132482618e-16,
+        5.208552407396879e-16,
+        6.019491757516588e-16,
+        8.402887740141104e-16,
+        1.3336034779164166e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.289639801679195e-16,
+      "mean_full_permutation_rms_angstrom": 3.289639801679195e-16,
+      "mean_type_quotient_rms_angstrom": 3.289639801679195e-16,
+      "method": "ancestral_gaussian",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.014346132482618e-16,
+        5.208552407396879e-16,
+        6.019491757516588e-16,
+        8.402887740141104e-16,
+        1.3336034779164166e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.63403241277782,
+        18.651829553387774,
+        18.652772047756788,
+        18.652876426702967,
+        18.652972995132334,
+        18.653023767808936
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.0245247001971384e-16,
+        5.250545928856781e-16,
+        5.90437285771034e-16,
+        9.313813691390653e-16,
+        1.2748098996628266e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.3286219873723426e-16,
+      "mean_full_permutation_rms_angstrom": 3.3286219873723426e-16,
+      "mean_type_quotient_rms_angstrom": 3.3286219873723426e-16,
+      "method": "reverse_sde_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.0245247001971384e-16,
+        5.250545928856781e-16,
+        5.90437285771034e-16,
+        9.313813691390653e-16,
+        1.2748098996628266e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.639065991124966,
+        18.65186313477889,
+        18.652799436244756,
+        18.652888829888695,
+        18.6530006526823,
+        18.65302697541018
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        3.173132448891837e-16,
+        5.307513278103015e-16,
+        6.228379161487261e-16,
+        9.649234487820353e-16,
+        1.3627628300526272e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 3.4266078230495403e-16,
+      "mean_full_permutation_rms_angstrom": 3.4266078230495403e-16,
+      "mean_type_quotient_rms_angstrom": 3.4266078230495403e-16,
+      "method": "predictor_corrector_grw",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        3.173132448891837e-16,
+        5.307513278103015e-16,
+        6.228379161487261e-16,
+        9.649234487820353e-16,
+        1.3627628300526272e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.63682406376131,
+        18.651945704650856,
+        18.6528333810723,
+        18.652922864695572,
+        18.653008047706503,
+        18.653048456905626
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        2.5628164358820186e-16,
+        4.369163842302838e-16,
+        4.816409771013497e-16,
+        5.930334638740501e-16,
+        1.0391647276901986e-15
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 2.765720114296481e-16,
+      "mean_full_permutation_rms_angstrom": 2.765720114296481e-16,
+      "mean_type_quotient_rms_angstrom": 2.765720114296481e-16,
+      "method": "probability_flow_heun",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        2.5628164358820186e-16,
+        4.369163842302838e-16,
+        4.816409771013497e-16,
+        5.930334638740501e-16,
+        1.0391647276901986e-15
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    },
+    {
+      "by_endpoint": [
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "InN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-1180",
+          "type_quotient_recovery_fraction": 1.0
+        },
+        {
+          "fixed_cif_recovery_fraction": 1.0,
+          "formula": "BN",
+          "full_permutation_recovery_fraction": 1.0,
+          "material_id": "JVASP-22673",
+          "type_quotient_recovery_fraction": 1.0
+        }
+      ],
+      "final_step_translation_log_margin_quantiles": [
+        18.63443930815709,
+        18.65185736415028,
+        18.652826250931255,
+        18.65291596294872,
+        18.653005233793966,
+        18.653045747829182
+      ],
+      "fixed_cif_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initialization": "uniform_quotient",
+      "mean_fixed_cif_rms_angstrom": 0.0,
+      "mean_full_permutation_rms_angstrom": 0.0,
+      "mean_type_quotient_rms_angstrom": 0.0,
+      "method": "endpoint_aware_wrapped_bridge_reference",
+      "sampling_failures": 0,
+      "species_invalid_branch_fraction": 0.0,
+      "steps": 200,
+      "type_quotient_recovery_fraction": 1.0,
+      "type_quotient_rms_quantiles_angstrom": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "unrecovered_even_full_permutation_fraction": 0.0
+    }
+  ],
+  "reference_qualified": true,
+  "score_only_method_checks": {
+    "ancestral_gaussian": {
+      "checks": {
+        "sampling_failures": true,
+        "species_invalid_branch": true,
+        "step_refinement": true,
+        "type_quotient_recovery": true
+      },
+      "max_100_to_200_type_quotient_rms_increase_angstrom": 4.918161522629318e-18,
+      "qualified": true
+    },
+    "predictor_corrector_grw": {
+      "checks": {
+        "sampling_failures": true,
+        "species_invalid_branch": true,
+        "step_refinement": true,
+        "type_quotient_recovery": true
+      },
+      "max_100_to_200_type_quotient_rms_increase_angstrom": 4.459759390931807e-18,
+      "qualified": true
+    },
+    "probability_flow_heun": {
+      "checks": {
+        "sampling_failures": true,
+        "species_invalid_branch": true,
+        "step_refinement": true,
+        "type_quotient_recovery": true
+      },
+      "max_100_to_200_type_quotient_rms_increase_angstrom": -1.14230686600835e-18,
+      "qualified": true
+    },
+    "reverse_sde_grw": {
+      "checks": {
+        "sampling_failures": true,
+        "species_invalid_branch": true,
+        "step_refinement": true,
+        "type_quotient_recovery": true
+      },
+      "max_100_to_200_type_quotient_rms_increase_angstrom": 1.2637533650005367e-17,
+      "qualified": true
+    }
+  },
+  "source_csv_sha256": "96f6676b53af6a79e4d324f47250bab5a2b6d6f886a405382f1d2825b528d15e"
+}

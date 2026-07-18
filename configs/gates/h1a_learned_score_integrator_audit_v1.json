@@ -1,0 +1,36 @@
+{
+  "protocol": "h1a_learned_score_integrator_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only oracle-context robustness comparison of score-only coordinate integrators on the failed seed-5601 EMA checkpoint",
+  "source_protocol": "h1a_p1_rao_blackwell_quotient_target_v1",
+  "source_protocol_sha256": "4d8d28d87d787032c26102ec26d1ecae4a7fd20c87327b0f98e4861f17a6e47c",
+  "source_checkpoint_step": 20000,
+  "source_seed": 5601,
+  "source_checkpoint_sha256": "2968a19c13cb6633bb51968a7d31da46ea7415e72a21d6c00a821f957feb9cb9",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "seed": 8401,
+  "validation_graphs": 32,
+  "validation_seed": 8402,
+  "noise_seed": 8403,
+  "start_times": [0.1, 0.2, 0.5],
+  "step_counts": [25, 100, 200],
+  "methods": [
+    "ancestral_gaussian",
+    "reverse_sde_grw",
+    "predictor_corrector_grw",
+    "probability_flow_heun"
+  ],
+  "common_random_numbers": true,
+  "stochastic": true,
+  "acceptance": {
+    "candidate_t02_100step_mean_rms_ratio_to_ancestral_max": 0.8,
+    "candidate_t01_100step_mean_rms_ratio_to_ancestral_max": 1.05,
+    "candidate_100_to_200_mean_rms_increase_angstrom_max": 0.01,
+    "sampling_failures": 0
+  },
+  "decision_rule": {
+    "pass": "a unique non-ancestral candidate passing every relative robustness check may enter a separately frozen free-generation diagnostic on the same checkpoint",
+    "fail": "if no candidate passes, retain the production sampler and attribute H1a primarily to learned-field off-path robustness/capacity rather than finite analytic integration",
+    "boundary": "This read-only audit cannot change weights, qualify H1a, or authorize H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
