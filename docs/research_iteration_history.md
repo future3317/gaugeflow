@@ -448,6 +448,18 @@ production unchanged. The causal boundary moves upstream: a successor must
 generate compact, scale-controlled Cartesian carriers before quantization and
 readout rather than reparameterize an already ill-scaled feature family.
 
+The next operator therefore formed Cartesian moments before the readout. Sixteen
+bounded scalar channels generate a polar first moment `m`, an even symmetric-
+traceless second moment `Q`, and the Cayley--Hamilton-closed polar family
+`(m,Qm,Q^2m)`. Together with the existing 32 vector channels this yields 80
+RMS-balanced carriers. The audit used no coordinate target and no optimizer
+step. Every one of 16 real states reached full translation-quotient rank; the
+worst condition number was `14657.96`, O(3) covariance error `6.76e-6`, and
+translation mean error `1.54e-7`. BF16/FP32 carrier and probe-gradient cosines
+were `0.99598` and `0.99269`, with gradient-norm ratio `1.00121`. The 12,192-edge
+CUDA operator cost `3.043 ms` and `11.609 MiB`. This qualifies only a clean
+production integration replacing the old readouts, not target fitting or H1a.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

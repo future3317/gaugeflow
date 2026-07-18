@@ -74,6 +74,15 @@ Do not restore post-hoc whitening or search its calibration. The next candidate
 must form a compact scale-controlled Cartesian carrier before the readout and
 must be separately qualified without training or targets.
 
+The ensuing 80-channel compact Cartesian moment/Krylov carrier qualified in
+that target-free operator scope. All 16 real states had full translation-
+quotient rank, worst condition number was `1.47e4`, O(3) covariance error was
+`6.76e-6`, BF16/FP32 carrier cosine was `0.99598`, and probe-gradient cosine
+was `0.99269`; the 12,192-edge operator cost `3.04 ms / 11.61 MiB`. This
+authorizes only a separately frozen production integration that replaces the
+old two-readout path without compatibility fallback. No target fitting or
+training is authorized until that integration passes.
+
 ## Required environment
 
 Use WSL 2 Ubuntu-22.04 for reported tests, benchmarks, training, and sampling:

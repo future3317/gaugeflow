@@ -158,6 +158,20 @@ FP32 MSE/endpoint RMS 为 `0.099464/0.020287 A`。CUDA chart 算子只需 `0.025
 形成紧凑、尺度受控的 Cartesian coordinate carrier，而不是再加后验 whitening、
 scale、ridge、precision 或 solve-frequency 变体。
 
+上移到 feature formation 后，紧凑 Cartesian moment/Krylov carrier 在无 target、
+零训练范围内通过。它以 16 个 scalar moment channels 构造一阶向量矩 `m`、二阶
+对称无迹矩 `Q` 与三维 Cayley--Hamilton 截断 `(m,Qm,Q^2m)`，再与原 32-channel
+vector stream 合成 80 个 RMS-balanced 极向量 carrier。16 个固定真实状态全部达到
+完整 translation-quotient rank，最坏条件数为 `14657.96`；含 improper reflection
+的 `O(3)` covariance error 为 `6.76e-6`，translation-horizontal error 为
+`1.54e-7`。
+
+真实 BF16 backbone 下 carrier 相对 RMS 为 `0.08966`、与 FP32 余弦为 `0.99598`；
+target-free probe-gradient norm 为 `9.448/9.459`，比值 `1.00121`、余弦 `0.99269`。
+12,192-edge 面板的向量化算子为 `3.043 ms / 11.609 MiB`。该实验读取零 coordinate
+targets、执行零 optimizer steps，只授权另行冻结的 production 集成资格测试；H1a
+仍失败，尚未允许 fixed-state target fit 或真实训练。
+
 ## 现在能声称与不能声称的内容
 
 可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。

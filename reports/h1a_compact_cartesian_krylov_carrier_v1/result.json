@@ -1,0 +1,194 @@
+{
+  "bf16_carrier_cosine": 0.9959815740585327,
+  "bf16_carrier_relative_rmse": 0.0896596685051918,
+  "bf16_probe_gradient_norm": 9.45947265625,
+  "carrier_channels": 80,
+  "carrier_o3_covariance_error": 6.763716100977035e-06,
+  "checks": {
+    "all_graphs_full_quotient_rank": true,
+    "bf16_carrier_cosine": true,
+    "bf16_carrier_rmse": true,
+    "bf16_gradient": true,
+    "coordinate_targets_read": true,
+    "finite": true,
+    "fp32_gradient": true,
+    "gradient_direction": true,
+    "gradient_norm_agreement": true,
+    "o3_covariance": true,
+    "operator_latency": true,
+    "operator_memory": true,
+    "parameters_restored": true,
+    "quotient_condition": true,
+    "sampling_failures": true,
+    "tensor_candidates": true,
+    "translation_horizontal": true
+  },
+  "coordinate_targets_read": 0,
+  "decision": "compact_cartesian_krylov_carrier_qualified_freeze_production_integration",
+  "decision_boundary": "This target-free no-training audit cannot qualify H1a, mutate production, fit a coordinate target, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "edge_count": 12192,
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "fp32_probe_gradient_norm": 9.448020935058594,
+  "gradient_agreement": {
+    "candidate_over_reference_norm": 1.0012120425186875,
+    "cosine": 0.9926886451851664
+  },
+  "maximum_quotient_condition_number": 14657.962280085034,
+  "operator_benchmark": {
+    "latency_ms": 3.0426422119140626,
+    "peak_memory_mib": 11.609375
+  },
+  "optimizer_steps": 0,
+  "protocol": "h1a_compact_cartesian_krylov_carrier_v1",
+  "qualified": true,
+  "rank_rows": [
+    {
+      "condition_number": 598.4158326736144,
+      "expected_rank": 30,
+      "full_rank": true,
+      "graph": 0,
+      "nodes": 11,
+      "rank": 30
+    },
+    {
+      "condition_number": 14657.962280085034,
+      "expected_rank": 39,
+      "full_rank": true,
+      "graph": 1,
+      "nodes": 14,
+      "rank": 39
+    },
+    {
+      "condition_number": 132.37066990973057,
+      "expected_rank": 12,
+      "full_rank": true,
+      "graph": 2,
+      "nodes": 5,
+      "rank": 12
+    },
+    {
+      "condition_number": 827.9636132447986,
+      "expected_rank": 33,
+      "full_rank": true,
+      "graph": 3,
+      "nodes": 12,
+      "rank": 33
+    },
+    {
+      "condition_number": 1464.5763033793585,
+      "expected_rank": 27,
+      "full_rank": true,
+      "graph": 4,
+      "nodes": 10,
+      "rank": 27
+    },
+    {
+      "condition_number": 198.11848566753213,
+      "expected_rank": 27,
+      "full_rank": true,
+      "graph": 5,
+      "nodes": 10,
+      "rank": 27
+    },
+    {
+      "condition_number": 68.44691021068518,
+      "expected_rank": 24,
+      "full_rank": true,
+      "graph": 6,
+      "nodes": 9,
+      "rank": 24
+    },
+    {
+      "condition_number": 1140.9519993805739,
+      "expected_rank": 33,
+      "full_rank": true,
+      "graph": 7,
+      "nodes": 12,
+      "rank": 33
+    },
+    {
+      "condition_number": 3659.040347220246,
+      "expected_rank": 33,
+      "full_rank": true,
+      "graph": 8,
+      "nodes": 12,
+      "rank": 33
+    },
+    {
+      "condition_number": 775.8978990046527,
+      "expected_rank": 27,
+      "full_rank": true,
+      "graph": 9,
+      "nodes": 10,
+      "rank": 27
+    },
+    {
+      "condition_number": 18.042424458024836,
+      "expected_rank": 9,
+      "full_rank": true,
+      "graph": 10,
+      "nodes": 4,
+      "rank": 9
+    },
+    {
+      "condition_number": 4762.330235518049,
+      "expected_rank": 33,
+      "full_rank": true,
+      "graph": 11,
+      "nodes": 12,
+      "rank": 33
+    },
+    {
+      "condition_number": 446.53263290169775,
+      "expected_rank": 15,
+      "full_rank": true,
+      "graph": 12,
+      "nodes": 6,
+      "rank": 15
+    },
+    {
+      "condition_number": 7.103545169668252,
+      "expected_rank": 9,
+      "full_rank": true,
+      "graph": 13,
+      "nodes": 4,
+      "rank": 9
+    },
+    {
+      "condition_number": 10.445630638837562,
+      "expected_rank": 9,
+      "full_rank": true,
+      "graph": 14,
+      "nodes": 4,
+      "rank": 9
+    },
+    {
+      "condition_number": 463.89559343113433,
+      "expected_rank": 9,
+      "full_rank": true,
+      "graph": 15,
+      "nodes": 4,
+      "rank": 9
+    }
+  ],
+  "sampling_failures": 0,
+  "tensor_candidates": 0,
+  "translation_horizontal_error": 1.5397866093280754e-07
+}
