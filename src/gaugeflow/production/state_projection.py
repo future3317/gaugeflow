@@ -5,36 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
+from torch_geometric.utils import scatter
 
 from .lattice_volume_shape import project_lattice_state
-
-
-def _sorted_segment_sum(
-    value: torch.Tensor,
-    index: torch.Tensor,
-    segment_count: int,
-) -> torch.Tensor:
-    """Deterministically sum a contiguous sorted segment vector on device."""
-    if index.shape != value.shape[:1] or index.dtype != torch.long:
-        raise ValueError("segment index must provide one int64 value per row")
-    if segment_count < 0:
-        raise ValueError("segment count must be nonnegative")
-    if index.numel():
-        if int(index.min()) < 0 or int(index.max()) >= segment_count:
-            raise ValueError("segment index is outside the declared range")
-        if not torch.equal(index, torch.sort(index).values):
-            raise ValueError("deterministic segment reduction requires sorted indices")
-    lengths = torch.bincount(index, minlength=segment_count)
-    return torch.segment_reduce(value, "sum", lengths=lengths)
-
-
-def sorted_segment_sum(
-    value: torch.Tensor,
-    index: torch.Tensor,
-    segment_count: int,
-) -> torch.Tensor:
-    """Public typed edge reduction for target-sorted periodic multigraphs."""
-    return _sorted_segment_sum(value, index, segment_count)
 
 
 @dataclass(frozen=True)
@@ -47,18 +20,14 @@ def graph_mean(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> to
     """Return one mean per graph for a node-leading tensor."""
     if value.shape[:1] != batch.shape:
         raise ValueError("batch must provide one graph index per node")
-    counts = torch.bincount(batch, minlength=graph_count).clamp_min(1)
-    total = _sorted_segment_sum(value, batch, graph_count)
-    return total / counts.to(value).reshape(
-        (graph_count,) + (1,) * (value.ndim - 1)
-    )
+    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="mean")
 
 
 def graph_sum(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> torch.Tensor:
     """Return one sum per graph for a node-leading tensor."""
     if value.shape[:1] != batch.shape:
         raise ValueError("batch must provide one graph index per node")
-    return _sorted_segment_sum(value, batch, graph_count)
+    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="sum")
 
 
 def fractional_tangent_to_cartesian(

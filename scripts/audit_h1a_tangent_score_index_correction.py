@@ -332,7 +332,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_geometry_precision_boundary_v1":
+    if protocol.get("protocol") != "h1a_geometry_precision_boundary_v2":
         raise ValueError("tangent-index correction protocol mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]

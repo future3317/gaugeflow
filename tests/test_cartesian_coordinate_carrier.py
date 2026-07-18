@@ -27,11 +27,6 @@ def _inputs() -> tuple[
         directions, dim=-1, keepdim=True
     )
     envelope = torch.rand((edges, 1), generator=generator)
-    edge_order = torch.argsort(target, stable=True)
-    hidden = hidden[edge_order]
-    target = target[edge_order]
-    directions = directions[edge_order]
-    envelope = envelope[edge_order]
     batch = torch.zeros(nodes, dtype=torch.long)
     return module, vectors, hidden, target, directions, envelope, batch
 
@@ -65,14 +60,12 @@ def test_compact_carrier_is_node_permutation_equivariant_and_horizontal() -> Non
     )
     inverse = torch.empty_like(order)
     inverse[order] = torch.arange(order.numel())
-    permuted_target = inverse[target]
-    edge_order = torch.argsort(permuted_target, stable=True)
     permuted = module(
         vectors[order],
-        hidden[edge_order],
-        permuted_target[edge_order],
-        directions[edge_order],
-        envelope[edge_order],
+        hidden,
+        inverse[target],
+        directions,
+        envelope,
         batch,
         1,
     )
