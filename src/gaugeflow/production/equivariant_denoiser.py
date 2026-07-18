@@ -178,11 +178,21 @@ class HybridCrystalDenoiser(nn.Module):
         self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
         self.coordinate_vector_head = nn.Linear(vector_dim, 1, bias=False)
         self.coordinate_control_gate = nn.Linear(3 * hidden_dim, vector_dim)
-        self.coordinate_edge_head = nn.Sequential(
-            nn.Linear(5 * hidden_dim + radial_dim, hidden_dim),
-            nn.SiLU(),
-            nn.Linear(hidden_dim, 1),
+        self.coordinate_edge_encoder = nn.Sequential(
+            nn.Linear(5 * hidden_dim + radial_dim, hidden_dim), nn.SiLU()
         )
+        self.coordinate_edge_scalar = nn.Linear(hidden_dim, 1)
+        # Compact Cartesian tensor readout.  The rank-one and symmetric
+        # trace-free rank-two moments share the central edge trunk; Q@m is a
+        # polar vector under full O(3), including improper operations.
+        self.coordinate_moment_channels = 8
+        self.coordinate_moment_coefficients = nn.Linear(
+            hidden_dim, 2 * self.coordinate_moment_channels
+        )
+        self.coordinate_moment_readout = nn.Linear(
+            self.coordinate_moment_channels, 1, bias=False
+        )
+        self.coordinate_moment_scale = 0.1
         self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(
             nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
@@ -329,8 +339,9 @@ class HybridCrystalDenoiser(nn.Module):
                 ),
                 dim=-1,
             )
+            edge_hidden = self.coordinate_edge_encoder(edge_features)
             edge_score = (
-                self.coordinate_edge_head(edge_features)
+                self.coordinate_edge_scalar(edge_hidden)
                 * edge_envelope
                 * edges.displacement
             )
@@ -341,6 +352,49 @@ class HybridCrystalDenoiser(nn.Module):
             cartesian_score = cartesian_score + edge_aggregate / degree.clamp_min(
                 1
             ).sqrt().unsqueeze(-1)
+            moment_coefficients = self.coordinate_moment_coefficients(
+                edge_hidden
+            ).reshape(
+                source.numel(), 2, self.coordinate_moment_channels
+            )
+            vector_coefficient = moment_coefficients[:, 0] * edge_envelope
+            tensor_coefficient = moment_coefficients[:, 1] * edge_envelope
+            vector_edge = (
+                vector_coefficient.unsqueeze(-1) * edges.direction[:, None, :]
+            )
+            identity = torch.eye(
+                3, dtype=edges.direction.dtype, device=edges.direction.device
+            )
+            dyadic = torch.einsum(
+                "ei,ej->eij", edges.direction, edges.direction
+            ) - identity.unsqueeze(0) / 3.0
+            tensor_edge = (
+                tensor_coefficient[:, :, None, None] * dyadic[:, None, :, :]
+            )
+            vector_moment = vectors.new_zeros(
+                (vectors.shape[0], self.coordinate_moment_channels, 3)
+            )
+            tensor_moment = vectors.new_zeros(
+                (vectors.shape[0], self.coordinate_moment_channels, 3, 3)
+            )
+            vector_moment.index_add_(
+                0, target, vector_edge.to(vector_moment.dtype)
+            )
+            tensor_moment.index_add_(
+                0, target, tensor_edge.to(tensor_moment.dtype)
+            )
+            moment_normalizer = degree.clamp_min(1).sqrt()
+            vector_moment = vector_moment / moment_normalizer[:, None, None]
+            tensor_moment = tensor_moment / moment_normalizer[:, None, None, None]
+            polar_moment = torch.einsum(
+                "ncij,ncj->nci", tensor_moment, vector_moment
+            )
+            moment_score = self.coordinate_moment_readout(
+                polar_moment.transpose(1, 2)
+            ).squeeze(-1)
+            cartesian_score = (
+                cartesian_score + self.coordinate_moment_scale * moment_score
+            )
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would

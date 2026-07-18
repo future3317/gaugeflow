@@ -225,7 +225,10 @@ def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
             (
                 "coordinate_vector_head.",
                 "coordinate_control_gate.",
-                "coordinate_edge_head.",
+                "coordinate_edge_encoder.",
+                "coordinate_edge_scalar.",
+                "coordinate_moment_coefficients.",
+                "coordinate_moment_readout.",
             )
         )
     }
