@@ -65,6 +65,15 @@ combined head. The next candidate must preserve its cross-state span through a
 target-free equivariant orthogonal-residual basis; do not silently switch to a
 single branch or FP32-only training.
 
+The target-free block-orthogonal residual chart was then rejected before
+training. It made the graph-equal Gram condition number `1.000000004`, reduced
+the stored solution norm to `3.23`, preserved FP32 MSE `0.09946`, and cost only
+`0.0255 ms`; nevertheless its effective raw norm stayed `9108`, BF16 MSE was
+`9.77`, gradient norm was `14670.5`, and FP32/BF16 gradient cosine was `0.128`.
+Do not restore post-hoc whitening or search its calibration. The next candidate
+must form a compact scale-controlled Cartesian carrier before the readout and
+must be separately qualified without training or targets.
+
 ## Required environment
 
 Use WSL 2 Ubuntu-22.04 for reported tests, benchmarks, training, and sampling:

@@ -1,0 +1,87 @@
+{
+  "bf16": {
+    "backbone_gradient_norm": 14670.5361328125,
+    "coordinate_mse": 9.767868041992188,
+    "finite": true,
+    "low_time_endpoint_rms_angstrom": 0.300357848405838
+  },
+  "bf16_over_fp32_mse_ratio": 98.20466302109247,
+  "bf16_prediction_relative_rmse": 4.260371685028076,
+  "chart_shape": [
+    225,
+    225
+  ],
+  "checks": {
+    "bf16_endpoint": false,
+    "bf16_gradient": false,
+    "bf16_mse": false,
+    "bf16_mse_ratio": false,
+    "bf16_prediction": false,
+    "design_reconstruction": true,
+    "fp32_endpoint": true,
+    "fp32_gradient": true,
+    "fp32_mse": true,
+    "gradient_direction": false,
+    "gradient_norm_agreement": false,
+    "operator_latency": true,
+    "operator_memory": true,
+    "orthogonal_block_cancellation": true,
+    "orthogonal_solution_norm": true,
+    "parameters_restored": true,
+    "sampling_failures": true,
+    "span_prediction": true,
+    "tensor_candidates": true,
+    "weighted_gram_condition": true,
+    "weighted_gram_error": true
+  },
+  "decision": "orthogonal_residual_basis_failed_retain_combined_head",
+  "decision_boundary": "This no-training audit cannot qualify H1a, mutate production, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "design_reconstruction_max_abs": 2.980232238769531e-07,
+  "design_shape": [
+    417,
+    225
+  ],
+  "effective_raw_solution_norm": 9108.383090089957,
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "fp32": {
+    "backbone_gradient_norm": 4.809215068817139,
+    "coordinate_mse": 0.09946440160274506,
+    "finite": true,
+    "low_time_endpoint_rms_angstrom": 0.02028714492917061
+  },
+  "gradient_agreement": {
+    "candidate_over_reference_norm": 3050.5049282239415,
+    "cosine": 0.12778210022321165
+  },
+  "operator_benchmark": {
+    "latency_ms": 0.025458240509033205,
+    "peak_memory_mib": 0.3603515625
+  },
+  "optimizer_steps": 0,
+  "orthogonal_block_cancellation_ratio": 1.3801124764309456,
+  "orthogonal_solution_norm": 3.2299045894080627,
+  "protocol": "h1a_coordinate_orthogonal_residual_basis_v1",
+  "qualified": false,
+  "sampling_failures": 0,
+  "span_prediction_relative_error": 1.3456077380307838e-10,
+  "tensor_candidates": 0,
+  "weighted_gram_condition_number": 1.0000000035528185,
+  "weighted_gram_max_abs_error": 4.958488589215282e-10
+}

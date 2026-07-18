@@ -144,6 +144,20 @@ vector-only 的 BF16/FP32 MSE 比为 `0.9988`，数值相对稳定，但 16-stat
 必须是 target-free、等变、紧凑的 orthogonal-residual basis，在保持联合跨状态 span 的
 同时消除相消，而不是恢复单分支、改成 FP32-only 或增加训练预算。
 
+随后执行的固定 block-orthogonal residual chart 在代数上完整通过：graph-equal Gram
+条件数为 `1.000000004`，最大 Gram 误差为 `4.96e-10`，与原 combined span 投影的
+相对差为 `1.35e-10`；正交参数范数为 `3.2299`，block cancellation 为 `1.3801`，
+FP32 MSE/endpoint RMS 为 `0.099464/0.020287 A`。CUDA chart 算子只需 `0.0255 ms`
+和 `0.360 MiB`。
+
+但它仍在训练前失败：等效 raw solution norm 仍为 `9108.38`，BF16 MSE 为 `9.7679`
+（FP32 的 `98.20x`），endpoint RMS 为 `0.30036 A`，backbone gradient norm 为
+`14670.5`（FP32 的 `3050.5x`），梯度余弦仅 `0.1278`。这证明固定可逆 readout
+换坐标只能改善存储参数几何，不能消除 BF16 对已形成高相关 feature 的扰动放大。
+实验执行零 optimizer step，production 未改变。下一机制必须在最终 readout 之前
+形成紧凑、尺度受控的 Cartesian coordinate carrier，而不是再加后验 whitening、
+scale、ridge、precision 或 solve-frequency 变体。
+
 ## 现在能声称与不能声称的内容
 
 可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。

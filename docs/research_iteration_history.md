@@ -432,6 +432,22 @@ matrix and counted three roundoff translation modes. Commit `7c9cacb` replaced
 that diagnostic with the exact Helmert basis without changing any threshold,
 state, seed or model setting; only the corrected result is retained as evidence.
 
+A fixed target-free block Gram--Schmidt chart then tested whether the full
+combined span could be retained while removing its parameter anisotropy. The
+graph-equal weighted Gram condition number became `1.000000004`, maximum Gram
+error was `4.96e-10`, span-prediction error was `1.35e-10`, and the orthogonal
+solution norm was only `3.2299`. FP32 MSE and low-time endpoint RMS remained
+`0.099464` and `0.020287` Angstrom, while the chart operator cost `0.0255 ms`
+and `0.360 MiB` on the fixed CUDA panel.
+
+This exact algebraic success did not stabilize the feature path. The equivalent
+raw norm remained `9108.38`; BF16 MSE was `9.7679`, gradient norm `14670.5`,
+and FP32/BF16 gradient cosine `0.1278`. The audit therefore rejected post-hoc
+orthogonalization before training. It performed zero optimizer steps and left
+production unchanged. The causal boundary moves upstream: a successor must
+generate compact, scale-controlled Cartesian carriers before quantization and
+readout rather than reparameterize an already ill-scaled feature family.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
