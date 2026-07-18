@@ -1,6 +1,7 @@
 # H1a pairwise reciprocal-torus operator v1
 
-Status: **frozen, not run**.
+Status: **completed; qualified for one separately frozen coordinate-only
+experiment**.
 
 The one-pass coordinate-only run reduced validation loss monotonically but
 stopped at `0.54928 > 0.35`; raw training loss was still `0.49768`, so EMA lag
@@ -57,3 +58,32 @@ zero graph mean, cutoff continuity, finite gradients, an explicit pair oracle,
 and a real 64-graph RTX 4060 Ti BF16 training-step capacity measurement.  Only
 a complete pass permits a separately frozen one-seed, one-pass coordinate
 experiment.  No result here can authorize joint initialization or H1b--H6.
+
+## Result
+
+Every frozen numerical and capacity check passed.  On the FP64 reference
+panel, maximum errors were `2.78e-17` for common translation, `1.19e-16` for
+integer coordinate representatives, `6.94e-18` for node permutations,
+`3.47e-17` for physical `O(3)`, and `4.86e-17` for a nontrivial unimodular cell
+change.  The projective `k~-k` calculation agreed with the explicitly doubled
+ball to `1.04e-17`; an independent scalar pair/mode loop agreed with the
+production tensor reductions to `1.30e-17`.  Graphwise residual sums were at
+most `8.67e-19`, cutoff value and radial derivative were exactly zero, and all
+forward/backward gradients were finite and nonzero where expected.
+
+The production module has no graph, pair, or reciprocal-mode Python loop.  It
+adds only 9,072 parameters to the 4.47M model, for 4,482,234 total parameters.
+On the frozen first 64 train graphs (596 nodes, 3,062 unordered pairs), the
+complete projective reciprocal ball contained 46/107/277 minimum/median/maximum
+modes.  Ten complete coordinate-only BF16 optimizer steps on the RTX 4060 Ti
+ran at `490.77 graphs/s` with `1,734.19 MiB` peak allocated memory.  The FP32
+relative deviation from FP64 was `6.76e-7`; BF16 differed from FP32 by
+`0.01944`, below the frozen `0.05` bound.  The tensor-free bypass constructed
+zero atlas candidates.
+
+This is an operator qualification, not evidence that the added residual
+improves learned coordinates or generated structures.  It authorizes only one
+versioned, single-seed, exactly one-pass coordinate-pretraining experiment
+with the old local field unchanged.  Failure of that experiment requires
+removing this residual from production rather than retaining it as a dormant
+fallback.

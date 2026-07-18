@@ -22,6 +22,7 @@ _HEAD_PREFIXES = {
         "coordinate_vector_head.",
         "coordinate_control_gate.",
         "coordinate_edge_head.",
+        "coordinate_pair_reciprocal_head.",
     ),
     "element": ("element_head.",),
     "lattice": ("volume_head.", "shape_head."),
