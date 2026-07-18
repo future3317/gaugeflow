@@ -307,20 +307,26 @@ class HybridCrystalDenoiser(nn.Module):
         vectors = nodes.new_zeros(
             (nodes.shape[0], self.coordinate_carrier.vector_channels, 3)
         )
-        for block in self.blocks:
-            nodes, vectors = block(
-                nodes,
-                vectors,
-                source,
-                target,
-                edges.direction,
-                gauge_atlas.edge_response,
-                radial,
-                edge_envelope,
-                node_time,
-                node_condition,
-                node_state,
-            )
+        # BF16 has only seven mantissa bits and turns sub-microangstrom changes
+        # in periodic directions into percent-level coordinate-field jumps.
+        # Geometry-dependent message propagation is therefore one fixed FP32
+        # typed path. Scalar terminal heads remain AMP eligible; this is not a
+        # runtime precision fallback.
+        with torch.autocast(device_type=nodes.device.type, enabled=False):
+            for block in self.blocks:
+                nodes, vectors = block(
+                    nodes.float(),
+                    vectors.float(),
+                    source,
+                    target,
+                    edges.direction.float(),
+                    gauge_atlas.edge_response.float(),
+                    radial.float(),
+                    edge_envelope.float(),
+                    node_time.float(),
+                    node_condition.float(),
+                    node_state.float(),
+                )
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_time = self.time_embedding(time)
         graph_context = torch.cat(
@@ -344,7 +350,8 @@ class HybridCrystalDenoiser(nn.Module):
                 ),
                 dim=-1,
             )
-            edge_hidden = self.coordinate_edge_encoder(edge_features)
+            with torch.autocast(device_type=edge_features.device.type, enabled=False):
+                edge_hidden = self.coordinate_edge_encoder(edge_features.float())
         else:
             edge_hidden = nodes.new_empty(
                 (0, self.coordinate_carrier.moment_projection.in_features)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time as wall_time
 from pathlib import Path
 from typing import Any
 
@@ -176,6 +177,7 @@ def _run_precision(
         )
 
     return {
+        "_noisy": output.noisy,
         "cartesian_output": output.prediction.coordinate_cartesian_scaled_score.detach().float(),
         "output_gradient": output_gradient,
         "loss_gradient": loss_gradient,
@@ -268,6 +270,59 @@ def _chart_covariance_audit(
     }
 
 
+def _benchmark_forward(
+    model: HybridCrystalDenoiser,
+    noisy: Any,
+    batch_data: Any,
+    blueprint: Any,
+    *,
+    warmup: int,
+    iterations: int,
+) -> dict[str, float]:
+    graphs = int(batch_data.num_graphs)
+    condition = noisy.log_volume.new_zeros((graphs, 18))
+    present = torch.zeros((graphs, 1), dtype=torch.bool, device=noisy.log_volume.device)
+
+    def forward() -> None:
+        with torch.no_grad(), torch.autocast(
+            device_type=noisy.log_volume.device.type,
+            dtype=torch.bfloat16,
+            enabled=True,
+        ):
+            model(
+                noisy.element_tokens,
+                noisy.fractional_coordinates,
+                noisy.log_volume,
+                noisy.log_shape,
+                batch_data.batch,
+                noisy.time,
+                condition,
+                present,
+                blueprint.shape_projector,
+                blueprint.fractional_to_cartesian,
+            )
+
+    for _ in range(warmup):
+        forward()
+    torch.cuda.synchronize()
+    torch.cuda.reset_peak_memory_stats()
+    start_event = torch.cuda.Event(enable_timing=True)
+    end_event = torch.cuda.Event(enable_timing=True)
+    wall_start = wall_time.perf_counter()
+    start_event.record()
+    for _ in range(iterations):
+        forward()
+    end_event.record()
+    torch.cuda.synchronize()
+    elapsed_ms = float(start_event.elapsed_time(end_event)) / iterations
+    return {
+        "milliseconds_per_batch": elapsed_ms,
+        "graphs_per_second": graphs * 1000.0 / elapsed_ms,
+        "peak_cuda_memory_mib": torch.cuda.max_memory_allocated() / (1024.0**2),
+        "wall_seconds": wall_time.perf_counter() - wall_start,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", type=Path, required=True)
@@ -277,7 +332,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_tangent_score_deterministic_reduction_v1":
+    if protocol.get("protocol") != "h1a_geometry_precision_boundary_v1":
         raise ValueError("tangent-index correction protocol mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
@@ -363,6 +418,14 @@ def main() -> None:
         tangent, batch_data.batch, int(batch_data.num_graphs)
     )
     chart = _chart_covariance_audit(noisy_lattice, tangent, batch_data.batch)
+    benchmark = _benchmark_forward(
+        model,
+        fp32["_noisy"],
+        batch_data,
+        blueprint,
+        warmup=int(protocol["benchmark"]["warmup"]),
+        iterations=int(protocol["benchmark"]["iterations"]),
+    )
 
     output_relative_rmse = _relative_rmse(
         fp32["cartesian_output"], bf16["cartesian_output"]
@@ -457,6 +520,10 @@ def main() -> None:
         "parameters_restored": parameters_restored,
         "optimizer_steps": int(protocol["audit"]["optimizer_steps"])
         == int(acceptance["optimizer_steps"]),
+        "throughput": benchmark["graphs_per_second"]
+        >= float(acceptance["forward_graphs_per_second_min"]),
+        "memory": benchmark["peak_cuda_memory_mib"]
+        <= float(acceptance["peak_cuda_memory_mib_max"]),
     }
     result = {
         "protocol": protocol["protocol"],
@@ -464,12 +531,17 @@ def main() -> None:
         "parameter_count": sum(parameter.numel() for parameter in model.parameters()),
         "legacy_readout_parameters": legacy_count,
         "fp32": {
-            key: value for key, value in fp32.items() if not isinstance(value, torch.Tensor)
+            key: value
+            for key, value in fp32.items()
+            if not key.startswith("_") and not isinstance(value, torch.Tensor)
         },
         "bf16": {
-            key: value for key, value in bf16.items() if not isinstance(value, torch.Tensor)
+            key: value
+            for key, value in bf16.items()
+            if not key.startswith("_") and not isinstance(value, torch.Tensor)
         },
         "chart_covariance": chart,
+        "benchmark": benchmark,
         "fp32_bf16_cartesian_output_relative_rmse": output_relative_rmse,
         "fp32_bf16_cartesian_output_cosine": output_cosine,
         "bf16_fp32_output_gradient_cosine": output_gradient_cosine,
