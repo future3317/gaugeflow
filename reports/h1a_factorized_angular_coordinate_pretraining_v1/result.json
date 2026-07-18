@@ -1,0 +1,191 @@
+{
+  "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_factorized_angular_coordinate_pretraining_v1/seed_5705/checkpoint_step_00008441.pt",
+  "checks": {
+    "coordinate_validation_reduction": false,
+    "sampling_failures": true,
+    "t005_teacher_forced": true,
+    "t01_rollout": true,
+    "t01_teacher_forced": true,
+    "t02_rollout": true,
+    "tensor_candidates": true
+  },
+  "decision": "stop before joint training and diagnose distance/time/degree/self-image/element-pair errors without adding steps, seeds or a simultaneous mechanism",
+  "decision_boundary": "No extra seed or step may rescue failure. No result authorizes H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "final_over_initial_coordinate_validation": 0.6386386564283588,
+  "posthoc_fit_diagnostic": {
+    "ema_train_coordinate": 19.361018300056458,
+    "ema_validation_coordinate": 21.562582314014435,
+    "graphs_per_split": 256,
+    "noise_seed": 8612,
+    "raw_train_coordinate": 19.5554062128067,
+    "raw_validation_coordinate": 21.811502754688263,
+    "train_index_seed": 8610
+  },
+  "posthoc_high_noise_score_diagnostic": [
+    {
+      "endpoint_rms_angstrom": 0.08762774260445985,
+      "oracle_endpoint_rms_angstrom": 2.3751524858919156e-07,
+      "prediction_target_cosine": 0.7348610313854972,
+      "prediction_to_target_norm": 0.7949829742177273,
+      "score_explained_fraction": 0.5364060759885596,
+      "score_mse_per_component": 2774.59375,
+      "time": 0.2,
+      "zero_score_mse_per_component": 5984.965734649123
+    },
+    {
+      "endpoint_rms_angstrom": 0.4157822697708314,
+      "oracle_endpoint_rms_angstrom": 2.4126738505371383e-07,
+      "prediction_target_cosine": 0.5704666413446495,
+      "prediction_to_target_norm": 0.697294011547112,
+      "score_explained_fraction": 0.30934698230754754,
+      "score_mse_per_component": 239.0738675301535,
+      "time": 0.5,
+      "zero_score_mse_per_component": 346.15626284950656
+    },
+    {
+      "endpoint_rms_angstrom": 2.589525090977153,
+      "oracle_endpoint_rms_angstrom": 2.176956407293655,
+      "prediction_target_cosine": 0.058556688858347784,
+      "prediction_to_target_norm": 0.13317999908118053,
+      "score_explained_fraction": -0.0021397387204280527,
+      "score_mse_per_component": 0.27450676549944963,
+      "time": 0.9,
+      "zero_score_mse_per_component": 0.27392064688498513
+    }
+  ],
+  "protocol": "h1a_factorized_angular_coordinate_pretraining_v1",
+  "qualified": false,
+  "rollout_closure": [
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.007463396061211824,
+        0.06395373120903969,
+        0.08941884413361549,
+        0.09651030898094176,
+        0.11619557440280914
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.05915461480617523,
+      "sampling_failures": 0,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.0027654527220875025,
+        0.08115583285689354,
+        0.14121587872505187,
+        0.1640476435422897,
+        0.18783938884735107
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.0857359915971756,
+      "sampling_failures": 0,
+      "start_time": 0.2,
+      "steps": 100
+    }
+  ],
+  "score_calibration": [
+    {
+      "endpoint_rms_angstrom": 0.039155791497516815,
+      "oracle_endpoint_rms_angstrom": 2.3806235505245897e-07,
+      "prediction_target_cosine": 0.6645767135976656,
+      "prediction_to_target_norm": 0.7182600276676842,
+      "score_explained_fraction": 0.4387803384520894,
+      "score_mse_per_component": 18955.963130482458,
+      "time": 0.005,
+      "zero_score_mse_per_component": 33776.37033991228
+    },
+    {
+      "endpoint_rms_angstrom": 0.03874598453616953,
+      "oracle_endpoint_rms_angstrom": 2.2878272233138143e-07,
+      "prediction_target_cosine": 0.6962560838678534,
+      "prediction_to_target_norm": 0.7185256113610511,
+      "score_explained_fraction": 0.4842766147127563,
+      "score_mse_per_component": 17318.538103070176,
+      "time": 0.01,
+      "zero_score_mse_per_component": 33581.06030701754
+    },
+    {
+      "endpoint_rms_angstrom": 0.043530584089247926,
+      "oracle_endpoint_rms_angstrom": 2.1436235816538202e-07,
+      "prediction_target_cosine": 0.6759438341306276,
+      "prediction_to_target_norm": 0.7293745379922647,
+      "score_explained_fraction": 0.4540451952783441,
+      "score_mse_per_component": 16625.721765350878,
+      "time": 0.02,
+      "zero_score_mse_per_component": 30452.56058114035
+    },
+    {
+      "endpoint_rms_angstrom": 0.045233797588157015,
+      "oracle_endpoint_rms_angstrom": 2.2198310556081214e-07,
+      "prediction_target_cosine": 0.7059094247223799,
+      "prediction_to_target_norm": 0.7534576383194909,
+      "score_explained_fraction": 0.496047261460114,
+      "score_mse_per_component": 11071.591899671053,
+      "time": 0.05,
+      "zero_score_mse_per_component": 21969.504385964912
+    },
+    {
+      "endpoint_rms_angstrom": 0.05559552123180555,
+      "oracle_endpoint_rms_angstrom": 2.2569455229788711e-07,
+      "prediction_target_cosine": 0.7100290943780889,
+      "prediction_to_target_norm": 0.7988217679747923,
+      "score_explained_fraction": 0.49625719085237685,
+      "score_mse_per_component": 6963.111156798245,
+      "time": 0.1,
+      "zero_score_mse_per_component": 13822.750479714912
+    }
+  ],
+  "seed": 5705,
+  "training": {
+    "data_passes": 1.0,
+    "final_logged_coordinate_loss": 10.142786026000977,
+    "graph_presentations": 540164,
+    "peak_cuda_memory_mib": 4587.08984375,
+    "steps": 8441,
+    "training_log_finite": true
+  },
+  "validation": {
+    "coordinate": 21.562582314014435,
+    "element": 4.763843268156052,
+    "shape": 1.2277798019349575,
+    "tensor_candidate_count": 0.0,
+    "total": 28.60347878932953,
+    "volume": 1.0492735132575035
+  },
+  "validation_curve": {
+    "0": {
+      "coordinate": 33.76335287094116,
+      "element": 4.777792394161224,
+      "shape": 1.2231094874441624,
+      "tensor_candidate_count": 0.0,
+      "total": 40.8036972284317,
+      "volume": 1.0394428186118603
+    },
+    "1250": {
+      "coordinate": 29.907060980796814,
+      "element": 4.778236567974091,
+      "shape": 1.2458814457058907,
+      "tensor_candidate_count": 0.0,
+      "total": 36.97722005844116,
+      "volume": 1.0460407622158527
+    },
+    "5000": {
+      "coordinate": 23.07358980178833,
+      "element": 4.765247672796249,
+      "shape": 1.2386176995933056,
+      "tensor_candidate_count": 0.0,
+      "total": 30.12406075000763,
+      "volume": 1.0466058030724525
+    },
+    "8441": {
+      "coordinate": 21.562582314014435,
+      "element": 4.763843268156052,
+      "shape": 1.2277798019349575,
+      "tensor_candidate_count": 0.0,
+      "total": 28.60347878932953,
+      "volume": 1.0492735132575035
+    }
+  }
+}

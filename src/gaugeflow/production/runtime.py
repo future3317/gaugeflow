@@ -47,6 +47,8 @@ def load_tensor_free_ema_runtime(
     ):
         raise ValueError("tensor-free checkpoint metadata is incomplete")
     model = HybridCrystalDenoiser(**model_config).to(device)
+    if metadata.get("coordinate_chart") != model.coordinate_chart:
+        raise ValueError("checkpoint coordinate chart does not match the active runtime")
     ema = ExponentialMovingAverage(model, float(training_config["ema_decay"]))
     _, node_prior, _ = load_production_checkpoint(
         checkpoint, model=model, ema=ema, map_location=device

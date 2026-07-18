@@ -1,0 +1,3271 @@
+{
+  "decision_rule": {
+    "anisotropic_cell_chart": "if volume-normalized graph error retains absolute log-correlation at least 0.30 with lattice condition at two or more informative times, qualify one GL(3,Z)-covariant metric-whitened tangent chart",
+    "boundary": "No result changes the failed training conclusion or authorizes extra steps, seeds, simultaneous mechanisms, joint training, H1b-H6, tensor conditioning, oracle, relaxation, DFT or DFPT.",
+    "element_pair": "otherwise, if the same chemically meaningful element-pair family remains a high-error outlier at two or more informative times, qualify one compact pair-conditioned angular mechanism",
+    "remaining": "otherwise retain the active volume-normalized chart and classify the failure as diffuse backbone-span limitation rather than adding another mechanism",
+    "short_range": "otherwise, if d<2A explained fraction trails 2-4A by at least 0.10 at two or more informative times, qualify one short-range radial-resolution mechanism"
+  },
+  "local_error": {
+    "0.005": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 75.0,
+          "explained_fraction": 0.32912000853448964,
+          "lower": 16.0,
+          "mse": 73.49038248697917,
+          "prediction_target_cosine": 0.580666885269448,
+          "prediction_to_target_norm": 0.6704113843619519,
+          "upper": 32.0
+        },
+        {
+          "count": 1260.0,
+          "explained_fraction": 0.4145419947973583,
+          "lower": 32.0,
+          "mse": 39.288005041697666,
+          "prediction_target_cosine": 0.643898455093318,
+          "prediction_to_target_norm": 0.6359469523390886,
+          "upper": 64.0
+        },
+        {
+          "count": 4305.0,
+          "explained_fraction": 0.43424461812015747,
+          "lower": 64.0,
+          "mse": 25.682308679950637,
+          "prediction_target_cosine": 0.6595874683232578,
+          "prediction_to_target_norm": 0.6880649203628407,
+          "upper": 128.0
+        },
+        {
+          "count": 2079.0,
+          "explained_fraction": 0.48689183444342654,
+          "lower": 128.0,
+          "mse": 17.27183115098154,
+          "prediction_target_cosine": 0.6986076904127231,
+          "prediction_to_target_norm": 0.6645359335614707,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 30.0,
+          "explained_fraction": 0.4091801130071797,
+          "lower": -Infinity,
+          "mse": 76.42812668482462,
+          "prediction_target_cosine": 0.6914670735344769,
+          "prediction_to_target_norm": 0.4288903599958882,
+          "upper": 1.5
+        },
+        {
+          "count": 806.0,
+          "explained_fraction": 0.5440494023915199,
+          "lower": 1.5,
+          "mse": 36.218524033615076,
+          "prediction_target_cosine": 0.7442887875297352,
+          "prediction_to_target_norm": 0.6447076902052306,
+          "upper": 2.0
+        },
+        {
+          "count": 2892.0,
+          "explained_fraction": 0.5942074573850902,
+          "lower": 2.0,
+          "mse": 37.140106665478044,
+          "prediction_target_cosine": 0.7720725801201721,
+          "prediction_to_target_norm": 0.7286144635149785,
+          "upper": 2.5
+        },
+        {
+          "count": 8242.0,
+          "explained_fraction": 0.5258334300245262,
+          "lower": 2.5,
+          "mse": 39.67003230405241,
+          "prediction_target_cosine": 0.7270698162260406,
+          "prediction_to_target_norm": 0.7799577445463414,
+          "upper": 3.0
+        },
+        {
+          "count": 19506.0,
+          "explained_fraction": 0.4513344117616025,
+          "lower": 3.0,
+          "mse": 52.85796918255921,
+          "prediction_target_cosine": 0.6719141877238267,
+          "prediction_to_target_norm": 0.6835012384958585,
+          "upper": 4.0
+        },
+        {
+          "count": 71828.0,
+          "explained_fraction": 0.4371052688835847,
+          "lower": 4.0,
+          "mse": 53.17186499345659,
+          "prediction_target_cosine": 0.661297792272614,
+          "prediction_to_target_norm": 0.6757705158997106,
+          "upper": 6.0
+        },
+        {
+          "count": 141880.0,
+          "explained_fraction": 0.45509378547445456,
+          "lower": 6.0,
+          "mse": 51.343449129546094,
+          "prediction_target_cosine": 0.6746091616274404,
+          "prediction_to_target_norm": 0.6726727983676488,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.03470071597529739,
+        "mean_degree": -0.17888465079534982,
+        "nearest_cross_site_distance": -0.22134728405954607,
+        "node_count": 0.6356609576141116,
+        "self_image_fraction": -0.6157790720477853,
+        "volume_per_atom": 0.19695558659425424
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7247441813531172,
+          "lower": -Infinity,
+          "mse": 5.027807396269005,
+          "prediction_target_cosine": 0.856672933244028,
+          "prediction_to_target_norm": 0.7610469189688653,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.3626072459656223,
+          "lower": 4.0,
+          "mse": 19.208436511811755,
+          "prediction_target_cosine": 0.6125784941287099,
+          "prediction_to_target_norm": 0.7250293931193795,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.35978831096589414,
+          "lower": 8.0,
+          "mse": 23.160393503526194,
+          "prediction_target_cosine": 0.6069217023840451,
+          "prediction_to_target_norm": 0.6994724027906452,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.390244711152926,
+          "lower": 12.0,
+          "mse": 29.54377905937053,
+          "prediction_target_cosine": 0.6317777667244934,
+          "prediction_to_target_norm": 0.726109157818412,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.512925227841354,
+          "lower": 16.0,
+          "mse": 32.08236765054033,
+          "prediction_target_cosine": 0.7282258973154933,
+          "prediction_to_target_norm": 0.5963634378861805,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.14544180996953682,
+        "mean_degree": -0.3324836546056773,
+        "nearest_cross_site_distance": 0.04629693701508905,
+        "self_image_fraction": -0.155614457606977,
+        "volume_per_atom": 0.3387039133837214
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 336.0,
+          "elements": [
+            28,
+            34
+          ],
+          "explained_fraction": -0.28343497803945494,
+          "mse": 200.88341703869048,
+          "prediction_target_cosine": 0.4831271516470265,
+          "prediction_to_target_norm": 1.2020481604573174
+        },
+        {
+          "count": 264.0,
+          "elements": [
+            65,
+            79
+          ],
+          "explained_fraction": -0.03929117614021993,
+          "mse": 148.6777195785985,
+          "prediction_target_cosine": 0.3772126383172362,
+          "prediction_to_target_norm": 0.8033349079074247
+        },
+        {
+          "count": 1486.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.3967942944327154,
+          "mse": 137.77518271116358,
+          "prediction_target_cosine": 0.6580053305272661,
+          "prediction_to_target_norm": 0.46780325382127325
+        },
+        {
+          "count": 472.0,
+          "elements": [
+            6,
+            56
+          ],
+          "explained_fraction": -0.8341666144296607,
+          "mse": 130.91620933403402,
+          "prediction_target_cosine": 0.2390804875499577,
+          "prediction_to_target_norm": 1.1831809967523994
+        },
+        {
+          "count": 288.0,
+          "elements": [
+            34,
+            48
+          ],
+          "explained_fraction": 0.4128473077794893,
+          "mse": 124.7061055501302,
+          "prediction_target_cosine": 0.6836697492366217,
+          "prediction_to_target_norm": 0.4500951571153847
+        },
+        {
+          "count": 300.0,
+          "elements": [
+            18,
+            33
+          ],
+          "explained_fraction": 0.1521570300235937,
+          "mse": 122.47981770833333,
+          "prediction_target_cosine": 0.39227861447423557,
+          "prediction_to_target_norm": 0.3507403788791973
+        },
+        {
+          "count": 308.0,
+          "elements": [
+            8,
+            51
+          ],
+          "explained_fraction": -0.7327254332942938,
+          "mse": 116.42250596083603,
+          "prediction_target_cosine": -0.4318268720917012,
+          "prediction_to_target_norm": 0.5269218940155382
+        },
+        {
+          "count": 772.0,
+          "elements": [
+            27,
+            48
+          ],
+          "explained_fraction": -0.1763556194818625,
+          "mse": 113.91840390220207,
+          "prediction_target_cosine": 0.38144743077336757,
+          "prediction_to_target_norm": 0.9487710969208908
+        },
+        {
+          "count": 426.0,
+          "elements": [
+            79,
+            79
+          ],
+          "explained_fraction": -0.011222231236527325,
+          "mse": 108.40578569940558,
+          "prediction_target_cosine": 0.5097235593962867,
+          "prediction_to_target_norm": 1.030338292413761
+        },
+        {
+          "count": 286.0,
+          "elements": [
+            8,
+            57
+          ],
+          "explained_fraction": 0.7461993685557848,
+          "mse": 107.56155758304196,
+          "prediction_target_cosine": 0.978069462997368,
+          "prediction_to_target_norm": 0.5193532958460061
+        },
+        {
+          "count": 574.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.42053673058192687,
+          "mse": 106.60277597247931,
+          "prediction_target_cosine": 0.7201174033931632,
+          "prediction_to_target_norm": 1.0332184284589832
+        },
+        {
+          "count": 528.0,
+          "elements": [
+            27,
+            27
+          ],
+          "explained_fraction": -0.1776162051523007,
+          "mse": 106.05926190000592,
+          "prediction_target_cosine": 0.37981802325572206,
+          "prediction_to_target_norm": 0.9471611191632797
+        },
+        {
+          "count": 316.0,
+          "elements": [
+            10,
+            36
+          ],
+          "explained_fraction": 0.43308610763695854,
+          "mse": 106.03277587890625,
+          "prediction_target_cosine": 0.6627181294509117,
+          "prediction_to_target_norm": 0.7408801953064862
+        },
+        {
+          "count": 318.0,
+          "elements": [
+            19,
+            19
+          ],
+          "explained_fraction": 0.21945715514910757,
+          "mse": 105.40989147642124,
+          "prediction_target_cosine": 0.49398906232889406,
+          "prediction_to_target_norm": 0.6507312764710471
+        },
+        {
+          "count": 310.0,
+          "elements": [
+            52,
+            80
+          ],
+          "explained_fraction": 0.28280362423138894,
+          "mse": 102.82753276209678,
+          "prediction_target_cosine": 0.5318305524395298,
+          "prediction_to_target_norm": 0.5254914921523995
+        },
+        {
+          "count": 410.0,
+          "elements": [
+            14,
+            33
+          ],
+          "explained_fraction": -0.2638454726313417,
+          "mse": 101.77345655487805,
+          "prediction_target_cosine": 0.4344289575150368,
+          "prediction_to_target_norm": 1.1071664303154896
+        },
+        {
+          "count": 1234.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.21012225486931524,
+          "mse": 101.17276634080291,
+          "prediction_target_cosine": 0.4620675148342459,
+          "prediction_to_target_norm": 0.5202387120682994
+        },
+        {
+          "count": 316.0,
+          "elements": [
+            15,
+            41
+          ],
+          "explained_fraction": -0.7223154010805275,
+          "mse": 100.83415125593355,
+          "prediction_target_cosine": 0.37252112819160677,
+          "prediction_to_target_norm": 1.3004685630624222
+        },
+        {
+          "count": 384.0,
+          "elements": [
+            80,
+            80
+          ],
+          "explained_fraction": 0.10814187621507254,
+          "mse": 93.94750646750133,
+          "prediction_target_cosine": 0.5159843811011827,
+          "prediction_to_target_norm": 0.9135996522516148
+        },
+        {
+          "count": 2582.0,
+          "elements": [
+            34,
+            34
+          ],
+          "explained_fraction": 0.44495151024563084,
+          "mse": 91.92779526832398,
+          "prediction_target_cosine": 0.6749755098396742,
+          "prediction_to_target_norm": 0.5718231823754929
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.15064761100789786,
+        "mean_degree": -0.030788300689727113,
+        "nearest_cross_site_distance": -0.22791278054793457,
+        "node_count": 0.22336304643168176,
+        "self_image_fraction": -0.24717861229983698,
+        "volume_per_atom": 0.04064641643516186
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7235049906503543,
+          "lower": -Infinity,
+          "mse": 0.2716394971918177,
+          "prediction_target_cosine": 0.8547197247884668,
+          "prediction_to_target_norm": 0.7708100736826649,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.3822183417814148,
+          "lower": 4.0,
+          "mse": 0.6963999441691807,
+          "prediction_target_cosine": 0.6279209401147168,
+          "prediction_to_target_norm": 0.7377679026651994,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.3623606216796038,
+          "lower": 8.0,
+          "mse": 0.6148746909941485,
+          "prediction_target_cosine": 0.6083331178043003,
+          "prediction_to_target_norm": 0.6961314387740789,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.39696536615985023,
+          "lower": 12.0,
+          "mse": 0.6141168378794484,
+          "prediction_target_cosine": 0.6361440310875162,
+          "prediction_to_target_norm": 0.7239727787891198,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5226462177270184,
+          "lower": 16.0,
+          "mse": 0.5542376224157431,
+          "prediction_target_cosine": 0.7361318378294928,
+          "prediction_to_target_norm": 0.5974095478973134,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.01": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 75.0,
+          "explained_fraction": 0.4619345981081868,
+          "lower": 16.0,
+          "mse": 48.09249186197917,
+          "prediction_target_cosine": 0.6857376930167012,
+          "prediction_to_target_norm": 0.7768509299002544,
+          "upper": 32.0
+        },
+        {
+          "count": 1242.0,
+          "explained_fraction": 0.42923481141196806,
+          "lower": 32.0,
+          "mse": 35.28856144166415,
+          "prediction_target_cosine": 0.6554393024261546,
+          "prediction_to_target_norm": 0.6745673046852158,
+          "upper": 64.0
+        },
+        {
+          "count": 4332.0,
+          "explained_fraction": 0.44348665563306333,
+          "lower": 64.0,
+          "mse": 24.112347293758656,
+          "prediction_target_cosine": 0.6674801021554594,
+          "prediction_to_target_norm": 0.71268029192311,
+          "upper": 128.0
+        },
+        {
+          "count": 2070.0,
+          "explained_fraction": 0.4354642814618741,
+          "lower": 128.0,
+          "mse": 18.454186598920593,
+          "prediction_target_cosine": 0.659951373076471,
+          "prediction_to_target_norm": 0.6514942731212362,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 34.0,
+          "explained_fraction": -0.11911106901831281,
+          "lower": -Infinity,
+          "mse": 32.84166044347427,
+          "prediction_target_cosine": 0.27327203259849325,
+          "prediction_to_target_norm": 0.7134864225716188,
+          "upper": 1.5
+        },
+        {
+          "count": 750.0,
+          "explained_fraction": 0.5103432656448254,
+          "lower": 1.5,
+          "mse": 35.814555908203126,
+          "prediction_target_cosine": 0.7162394558567162,
+          "prediction_to_target_norm": 0.6647061632958464,
+          "upper": 2.0
+        },
+        {
+          "count": 2888.0,
+          "explained_fraction": 0.548132337098145,
+          "lower": 2.0,
+          "mse": 37.58428025179622,
+          "prediction_target_cosine": 0.7403630902142231,
+          "prediction_to_target_norm": 0.7426333378567391,
+          "upper": 2.5
+        },
+        {
+          "count": 8262.0,
+          "explained_fraction": 0.5250663948562904,
+          "lower": 2.5,
+          "mse": 40.15767170101065,
+          "prediction_target_cosine": 0.7267481665510459,
+          "prediction_to_target_norm": 0.7823941436816106,
+          "upper": 3.0
+        },
+        {
+          "count": 19554.0,
+          "explained_fraction": 0.45220221442324293,
+          "lower": 3.0,
+          "mse": 50.74160178224404,
+          "prediction_target_cosine": 0.6731105179488949,
+          "prediction_to_target_norm": 0.7026997126611343,
+          "upper": 4.0
+        },
+        {
+          "count": 71758.0,
+          "explained_fraction": 0.42476199632744505,
+          "lower": 4.0,
+          "mse": 51.96586617519998,
+          "prediction_target_cosine": 0.6528516240678398,
+          "prediction_to_target_norm": 0.6909733502004034,
+          "upper": 6.0
+        },
+        {
+          "count": 141842.0,
+          "explained_fraction": 0.4357299130192793,
+          "lower": 6.0,
+          "mse": 50.27947293467379,
+          "prediction_target_cosine": 0.6606949022126479,
+          "prediction_to_target_norm": 0.6887629635138094,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.025799293394549568,
+        "mean_degree": -0.1020428227348511,
+        "nearest_cross_site_distance": -0.3034573625064304,
+        "node_count": 0.6409904188531145,
+        "self_image_fraction": -0.6141074243131548,
+        "volume_per_atom": 0.11283922281680432
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7047828022434126,
+          "lower": -Infinity,
+          "mse": 4.0908442667437726,
+          "prediction_target_cosine": 0.8398361483560365,
+          "prediction_to_target_norm": 0.8165558680061823,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.3590463464601835,
+          "lower": 4.0,
+          "mse": 18.168167295910063,
+          "prediction_target_cosine": 0.6132284296844713,
+          "prediction_to_target_norm": 0.7436230634433003,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.38166289400224673,
+          "lower": 8.0,
+          "mse": 23.293710799758024,
+          "prediction_target_cosine": 0.6254363475864609,
+          "prediction_to_target_norm": 0.722943917632475,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.37837684009339356,
+          "lower": 12.0,
+          "mse": 28.849988101491714,
+          "prediction_target_cosine": 0.6247774222755539,
+          "prediction_to_target_norm": 0.7341846988715789,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5257233451502177,
+          "lower": 16.0,
+          "mse": 28.296607576802028,
+          "prediction_target_cosine": 0.7327999106224921,
+          "prediction_to_target_norm": 0.6266285473106092,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.13815034758029715,
+        "mean_degree": -0.23095970551625966,
+        "nearest_cross_site_distance": -0.058493814232726746,
+        "self_image_fraction": -0.13882807808513575,
+        "volume_per_atom": 0.23185312409944125
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 332.0,
+          "elements": [
+            28,
+            34
+          ],
+          "explained_fraction": -0.11056086596061121,
+          "mse": 166.35539815512047,
+          "prediction_target_cosine": 0.50505225082554,
+          "prediction_to_target_norm": 1.1097331546783722
+        },
+        {
+          "count": 312.0,
+          "elements": [
+            15,
+            41
+          ],
+          "explained_fraction": -1.2541913565207503,
+          "mse": 158.35031049679486,
+          "prediction_target_cosine": -0.06842358485887184,
+          "prediction_to_target_norm": 1.053571547327529
+        },
+        {
+          "count": 422.0,
+          "elements": [
+            79,
+            79
+          ],
+          "explained_fraction": 0.19608237267507977,
+          "mse": 127.56599505817721,
+          "prediction_target_cosine": 0.5865213938524846,
+          "prediction_to_target_norm": 0.9711315827208724
+        },
+        {
+          "count": 418.0,
+          "elements": [
+            14,
+            33
+          ],
+          "explained_fraction": -0.8841081083666615,
+          "mse": 117.79246411483254,
+          "prediction_target_cosine": 0.25458227172716963,
+          "prediction_to_target_norm": 1.2287076059148836
+        },
+        {
+          "count": 526.0,
+          "elements": [
+            14,
+            14
+          ],
+          "explained_fraction": -0.6484501598184635,
+          "mse": 116.416881894884,
+          "prediction_target_cosine": 0.12411318266071027,
+          "prediction_to_target_norm": 0.9388858433418623
+        },
+        {
+          "count": 1238.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.15571449762958112,
+          "mse": 110.19517425882219,
+          "prediction_target_cosine": 0.41127327015213366,
+          "prediction_to_target_norm": 0.5271655021860121
+        },
+        {
+          "count": 314.0,
+          "elements": [
+            52,
+            80
+          ],
+          "explained_fraction": 0.36411368711090286,
+          "mse": 107.40521901124602,
+          "prediction_target_cosine": 0.6147141935734138,
+          "prediction_to_target_norm": 0.4974121483601176
+        },
+        {
+          "count": 288.0,
+          "elements": [
+            34,
+            48
+          ],
+          "explained_fraction": 0.4040769824209518,
+          "mse": 107.0069342719184,
+          "prediction_target_cosine": 0.6738987576523079,
+          "prediction_to_target_norm": 0.45015242593071914
+        },
+        {
+          "count": 264.0,
+          "elements": [
+            65,
+            79
+          ],
+          "explained_fraction": -0.49159418161934454,
+          "mse": 104.6192294034091,
+          "prediction_target_cosine": 0.46071093581056977,
+          "prediction_to_target_norm": 1.2996681277519038
+        },
+        {
+          "count": 392.0,
+          "elements": [
+            28,
+            28
+          ],
+          "explained_fraction": 0.27317146112300617,
+          "mse": 101.764562645737,
+          "prediction_target_cosine": 0.5566586025563753,
+          "prediction_to_target_norm": 0.7482234845982454
+        },
+        {
+          "count": 1506.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.40905478878223767,
+          "mse": 99.69037635266227,
+          "prediction_target_cosine": 0.6464553849730198,
+          "prediction_to_target_norm": 0.5523814218165222
+        },
+        {
+          "count": 394.0,
+          "elements": [
+            49,
+            49
+          ],
+          "explained_fraction": 0.021235727940305815,
+          "mse": 96.14835043970098,
+          "prediction_target_cosine": 0.36184708703520074,
+          "prediction_to_target_norm": 0.6930528774400806
+        },
+        {
+          "count": 472.0,
+          "elements": [
+            6,
+            56
+          ],
+          "explained_fraction": 0.0422157690870153,
+          "mse": 93.71132026284428,
+          "prediction_target_cosine": 0.5517228508159594,
+          "prediction_to_target_norm": 1.0637599865831138
+        },
+        {
+          "count": 314.0,
+          "elements": [
+            8,
+            51
+          ],
+          "explained_fraction": 0.4066318056211473,
+          "mse": 92.82959139878582,
+          "prediction_target_cosine": 0.6524515524897899,
+          "prediction_to_target_norm": 0.5143888414360485
+        },
+        {
+          "count": 550.0,
+          "elements": [
+            0,
+            45
+          ],
+          "explained_fraction": -0.6243730037852107,
+          "mse": 92.70100319602273,
+          "prediction_target_cosine": -0.01659086326396621,
+          "prediction_to_target_norm": 0.7737562774087434
+        },
+        {
+          "count": 402.0,
+          "elements": [
+            15,
+            50
+          ],
+          "explained_fraction": 0.03511230061506598,
+          "mse": 91.83233733675372,
+          "prediction_target_cosine": 0.3468774082888202,
+          "prediction_to_target_norm": 0.638787787115688
+        },
+        {
+          "count": 356.0,
+          "elements": [
+            32,
+            32
+          ],
+          "explained_fraction": -0.40308880931991276,
+          "mse": 91.78881235872761,
+          "prediction_target_cosine": 0.17864538241388522,
+          "prediction_to_target_norm": 0.8381925632188385
+        },
+        {
+          "count": 576.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.4213108460334495,
+          "mse": 91.67806816101074,
+          "prediction_target_cosine": 0.7195207097620749,
+          "prediction_to_target_norm": 1.0300029267742532
+        },
+        {
+          "count": 316.0,
+          "elements": [
+            7,
+            82
+          ],
+          "explained_fraction": 0.11166925328578081,
+          "mse": 90.03360487539557,
+          "prediction_target_cosine": 0.3341717742813356,
+          "prediction_to_target_norm": 0.3327759498980569
+        },
+        {
+          "count": 1164.0,
+          "elements": [
+            6,
+            6
+          ],
+          "explained_fraction": -0.317732657770867,
+          "mse": 89.82816768266082,
+          "prediction_target_cosine": 0.13756177336048417,
+          "prediction_to_target_norm": 0.7177824369770556
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.11726928353955338,
+        "mean_degree": 0.1094528729735357,
+        "nearest_cross_site_distance": -0.35637165400324833,
+        "node_count": 0.23229424983340694,
+        "self_image_fraction": -0.2609175389437703,
+        "volume_per_atom": -0.11075900717220884
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.706735604754065,
+          "lower": -Infinity,
+          "mse": 0.22679571671919388,
+          "prediction_target_cosine": 0.840948118431401,
+          "prediction_to_target_norm": 0.8195447524688425,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.35943909220101733,
+          "lower": 4.0,
+          "mse": 0.673211517788115,
+          "prediction_target_cosine": 0.615456014116663,
+          "prediction_to_target_norm": 0.7545494967368078,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.3791897173317649,
+          "lower": 8.0,
+          "mse": 0.6338359215647994,
+          "prediction_target_cosine": 0.6226456421719885,
+          "prediction_to_target_norm": 0.7148295303640851,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.3792909476176668,
+          "lower": 12.0,
+          "mse": 0.6101471878655707,
+          "prediction_target_cosine": 0.6247572737646316,
+          "prediction_to_target_norm": 0.7297844209863725,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5210987364899655,
+          "lower": 16.0,
+          "mse": 0.5072181484066016,
+          "prediction_target_cosine": 0.7305348851138965,
+          "prediction_to_target_norm": 0.6183633012663626,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.02": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 75.0,
+          "explained_fraction": 0.2628117513690533,
+          "lower": 16.0,
+          "mse": 90.24251790364583,
+          "prediction_target_cosine": 0.5152851324808426,
+          "prediction_to_target_norm": 0.5673144794911988,
+          "upper": 32.0
+        },
+        {
+          "count": 1308.0,
+          "explained_fraction": 0.4406840370840446,
+          "lower": 32.0,
+          "mse": 40.38451280506379,
+          "prediction_target_cosine": 0.6649129868480268,
+          "prediction_to_target_norm": 0.6271600570253759,
+          "upper": 64.0
+        },
+        {
+          "count": 4233.0,
+          "explained_fraction": 0.4124930501266929,
+          "lower": 64.0,
+          "mse": 25.608591765960902,
+          "prediction_target_cosine": 0.6452125815971458,
+          "prediction_to_target_norm": 0.7069073665910873,
+          "upper": 128.0
+        },
+        {
+          "count": 2103.0,
+          "explained_fraction": 0.49352266768692465,
+          "lower": 128.0,
+          "mse": 18.4226348194915,
+          "prediction_target_cosine": 0.704023308474226,
+          "prediction_to_target_norm": 0.6579129976654331,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 26.0,
+          "explained_fraction": 0.3068959973837837,
+          "lower": -Infinity,
+          "mse": 65.9562507042518,
+          "prediction_target_cosine": 0.5568001414068977,
+          "prediction_to_target_norm": 0.5008497168967729,
+          "upper": 1.5
+        },
+        {
+          "count": 820.0,
+          "explained_fraction": 0.5913597547460796,
+          "lower": 1.5,
+          "mse": 30.149734422637195,
+          "prediction_target_cosine": 0.772366771200582,
+          "prediction_to_target_norm": 0.7003204283539388,
+          "upper": 2.0
+        },
+        {
+          "count": 2828.0,
+          "explained_fraction": 0.5988512557162797,
+          "lower": 2.0,
+          "mse": 36.73901919698108,
+          "prediction_target_cosine": 0.7742826913330874,
+          "prediction_to_target_norm": 0.7485459206483734,
+          "upper": 2.5
+        },
+        {
+          "count": 8314.0,
+          "explained_fraction": 0.5019240225677014,
+          "lower": 2.5,
+          "mse": 42.162224955647105,
+          "prediction_target_cosine": 0.7118057259101489,
+          "prediction_to_target_norm": 0.7806777650118666,
+          "upper": 3.0
+        },
+        {
+          "count": 19544.0,
+          "explained_fraction": 0.4691316685806961,
+          "lower": 3.0,
+          "mse": 53.28717013533565,
+          "prediction_target_cosine": 0.684931854693605,
+          "prediction_to_target_norm": 0.6849616455923178,
+          "upper": 4.0
+        },
+        {
+          "count": 71682.0,
+          "explained_fraction": 0.4231692846159988,
+          "lower": 4.0,
+          "mse": 56.18550159035741,
+          "prediction_target_cosine": 0.6508890755632905,
+          "prediction_to_target_norm": 0.6729634321167048,
+          "upper": 6.0
+        },
+        {
+          "count": 142494.0,
+          "explained_fraction": 0.44572143681703325,
+          "lower": 6.0,
+          "mse": 52.982223812932475,
+          "prediction_target_cosine": 0.667656137008253,
+          "prediction_to_target_norm": 0.6742345774874042,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.0529155402497156,
+        "mean_degree": -0.16285194607490683,
+        "nearest_cross_site_distance": -0.2678021271788084,
+        "node_count": 0.6422250451960081,
+        "self_image_fraction": -0.6155539462450498,
+        "volume_per_atom": 0.17494262458195042
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7228037412279963,
+          "lower": -Infinity,
+          "mse": 4.336491132023359,
+          "prediction_target_cosine": 0.8528118922345306,
+          "prediction_to_target_norm": 0.7858465331288836,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.3439790196056609,
+          "lower": 4.0,
+          "mse": 18.29895074026925,
+          "prediction_target_cosine": 0.6055360705491191,
+          "prediction_to_target_norm": 0.7561844448092264,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.37228575871076874,
+          "lower": 8.0,
+          "mse": 24.47716835386532,
+          "prediction_target_cosine": 0.6149983040063209,
+          "prediction_to_target_norm": 0.6920511599186636,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.3739316351910833,
+          "lower": 12.0,
+          "mse": 31.64870969875119,
+          "prediction_target_cosine": 0.6193184121176666,
+          "prediction_to_target_norm": 0.7174185046449781,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5161840184945037,
+          "lower": 16.0,
+          "mse": 32.07183185108205,
+          "prediction_target_cosine": 0.7294884338323326,
+          "prediction_to_target_norm": 0.6031185401247636,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.1737116954720825,
+        "mean_degree": -0.3099286022480228,
+        "nearest_cross_site_distance": -0.013915401971096739,
+        "self_image_fraction": -0.13792893833154027,
+        "volume_per_atom": 0.31186036472182577
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 354.0,
+          "elements": [
+            28,
+            34
+          ],
+          "explained_fraction": -1.2558985268747938,
+          "mse": 313.741084039548,
+          "prediction_target_cosine": -0.05645960511128845,
+          "prediction_to_target_norm": 1.0656306237315059
+        },
+        {
+          "count": 304.0,
+          "elements": [
+            15,
+            41
+          ],
+          "explained_fraction": -0.23725825120523214,
+          "mse": 169.76752672697367,
+          "prediction_target_cosine": 0.2791596852309804,
+          "prediction_to_target_norm": 0.840576383260816
+        },
+        {
+          "count": 572.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.24025363215879836,
+          "mse": 145.43588512927502,
+          "prediction_target_cosine": 0.551122156724998,
+          "prediction_to_target_norm": 0.8030784104003706
+        },
+        {
+          "count": 1472.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.4258928414827453,
+          "mse": 141.08640952732253,
+          "prediction_target_cosine": 0.6787117342914445,
+          "prediction_to_target_norm": 0.49228016382367473
+        },
+        {
+          "count": 392.0,
+          "elements": [
+            28,
+            28
+          ],
+          "explained_fraction": -0.6674108243718508,
+          "mse": 138.14109593994763,
+          "prediction_target_cosine": 0.11359434221098483,
+          "prediction_to_target_norm": 0.9384061746062967
+        },
+        {
+          "count": 320.0,
+          "elements": [
+            10,
+            36
+          ],
+          "explained_fraction": 0.4002608202933471,
+          "mse": 136.4457679748535,
+          "prediction_target_cosine": 0.6334212504141479,
+          "prediction_to_target_norm": 0.6644330862010811
+        },
+        {
+          "count": 292.0,
+          "elements": [
+            45,
+            65
+          ],
+          "explained_fraction": -0.1452205668119806,
+          "mse": 128.82698790667808,
+          "prediction_target_cosine": 0.35922140179224593,
+          "prediction_to_target_norm": 0.8829207983954603
+        },
+        {
+          "count": 468.0,
+          "elements": [
+            6,
+            56
+          ],
+          "explained_fraction": -0.7288035221699307,
+          "mse": 117.43851516593216,
+          "prediction_target_cosine": 0.26348519607906457,
+          "prediction_to_target_norm": 1.1569217699071
+        },
+        {
+          "count": 420.0,
+          "elements": [
+            14,
+            33
+          ],
+          "explained_fraction": -1.591366340200652,
+          "mse": 112.92469308035714,
+          "prediction_target_cosine": 0.1449416283715278,
+          "prediction_to_target_norm": 1.4147347306324654
+        },
+        {
+          "count": 1248.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.14537208075792374,
+          "mse": 109.00344467163086,
+          "prediction_target_cosine": 0.39769281476241825,
+          "prediction_to_target_norm": 0.5107740259942473
+        },
+        {
+          "count": 390.0,
+          "elements": [
+            58,
+            77
+          ],
+          "explained_fraction": -1.4208483737218627,
+          "mse": 106.13536408253205,
+          "prediction_target_cosine": 0.2755137902774823,
+          "prediction_to_target_norm": 1.4989335849100325
+        },
+        {
+          "count": 304.0,
+          "elements": [
+            52,
+            80
+          ],
+          "explained_fraction": 0.24728612310900067,
+          "mse": 102.53145719829358,
+          "prediction_target_cosine": 0.4979448518420714,
+          "prediction_to_target_norm": 0.47219739115393355
+        },
+        {
+          "count": 782.0,
+          "elements": [
+            27,
+            48
+          ],
+          "explained_fraction": -0.05468365280293086,
+          "mse": 101.29297874040921,
+          "prediction_target_cosine": 0.45430916999256526,
+          "prediction_to_target_norm": 0.9652690066051186
+        },
+        {
+          "count": 2568.0,
+          "elements": [
+            34,
+            34
+          ],
+          "explained_fraction": 0.4220994208077251,
+          "mse": 97.37517074632495,
+          "prediction_target_cosine": 0.6593582014365424,
+          "prediction_to_target_norm": 0.5468673112156884
+        },
+        {
+          "count": 270.0,
+          "elements": [
+            12,
+            45
+          ],
+          "explained_fraction": 0.02686419100778925,
+          "mse": 95.07299623842593,
+          "prediction_target_cosine": 0.48755475485397276,
+          "prediction_to_target_norm": 0.9467335346357952
+        },
+        {
+          "count": 346.0,
+          "elements": [
+            6,
+            65
+          ],
+          "explained_fraction": 0.2113619010497314,
+          "mse": 93.38024972904624,
+          "prediction_target_cosine": 0.48383552701299254,
+          "prediction_to_target_norm": 0.6346168637132841
+        },
+        {
+          "count": 482.0,
+          "elements": [
+            16,
+            54
+          ],
+          "explained_fraction": 0.4900572147470703,
+          "mse": 91.83726051932054,
+          "prediction_target_cosine": 0.7041706618013944,
+          "prediction_to_target_norm": 0.7803222567499605
+        },
+        {
+          "count": 854.0,
+          "elements": [
+            38,
+            38
+          ],
+          "explained_fraction": 0.12315304571531216,
+          "mse": 91.5241275045855,
+          "prediction_target_cosine": 0.44887699300103345,
+          "prediction_to_target_norm": 0.7287650722832667
+        },
+        {
+          "count": 388.0,
+          "elements": [
+            18,
+            52
+          ],
+          "explained_fraction": 0.6264803379605273,
+          "mse": 90.21234445473583,
+          "prediction_target_cosine": 0.839466575468842,
+          "prediction_to_target_norm": 0.5597813140147782
+        },
+        {
+          "count": 306.0,
+          "elements": [
+            18,
+            33
+          ],
+          "explained_fraction": 0.30948878225205556,
+          "mse": 88.63447201797386,
+          "prediction_target_cosine": 0.5704192977395622,
+          "prediction_to_target_norm": 0.4443647568700943
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.17009876201019467,
+        "mean_degree": 0.0028737507292405417,
+        "nearest_cross_site_distance": -0.3203297160500917,
+        "node_count": 0.2668098403596149,
+        "self_image_fraction": -0.2926857273706217,
+        "volume_per_atom": 0.00036445653944142104
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7291748811303116,
+          "lower": -Infinity,
+          "mse": 0.24477365763500483,
+          "prediction_target_cosine": 0.857026790191846,
+          "prediction_to_target_norm": 0.7840884311148218,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.3610675460490076,
+          "lower": 4.0,
+          "mse": 0.6692153953370594,
+          "prediction_target_cosine": 0.618707175211058,
+          "prediction_to_target_norm": 0.7661215786775027,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.3669344609767049,
+          "lower": 8.0,
+          "mse": 0.6464453539631458,
+          "prediction_target_cosine": 0.6115348411742825,
+          "prediction_to_target_norm": 0.6954419834254212,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.3832638831163627,
+          "lower": 12.0,
+          "mse": 0.6566760509310874,
+          "prediction_target_cosine": 0.6258345960868342,
+          "prediction_to_target_norm": 0.717513823576194,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.526634972940023,
+          "lower": 16.0,
+          "mse": 0.5586886907431319,
+          "prediction_target_cosine": 0.7387813413382559,
+          "prediction_to_target_norm": 0.6003511720366207,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.05": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 72.0,
+          "explained_fraction": 0.5784859031312054,
+          "lower": 16.0,
+          "mse": 41.273715549045136,
+          "prediction_target_cosine": 0.7607472721381833,
+          "prediction_to_target_norm": 0.7449200715926225,
+          "upper": 32.0
+        },
+        {
+          "count": 1287.0,
+          "explained_fraction": 0.44938343600593955,
+          "lower": 32.0,
+          "mse": 37.06678317884373,
+          "prediction_target_cosine": 0.6706570087323007,
+          "prediction_to_target_norm": 0.6507224318414375,
+          "upper": 64.0
+        },
+        {
+          "count": 4230.0,
+          "explained_fraction": 0.4776646955140098,
+          "lower": 64.0,
+          "mse": 24.020612394725177,
+          "prediction_target_cosine": 0.6914900756893712,
+          "prediction_to_target_norm": 0.7137118933895333,
+          "upper": 128.0
+        },
+        {
+          "count": 2130.0,
+          "explained_fraction": 0.5087395857634205,
+          "lower": 128.0,
+          "mse": 16.95173620662779,
+          "prediction_target_cosine": 0.7152305631720363,
+          "prediction_to_target_norm": 0.6621725496219926,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 30.0,
+          "explained_fraction": 0.39503691600157764,
+          "lower": -Infinity,
+          "mse": 48.58571275075277,
+          "prediction_target_cosine": 0.6300428878784394,
+          "prediction_to_target_norm": 0.5862582526247472,
+          "upper": 1.5
+        },
+        {
+          "count": 822.0,
+          "explained_fraction": 0.61256934533257,
+          "lower": 1.5,
+          "mse": 30.704400649616026,
+          "prediction_target_cosine": 0.7890355509878832,
+          "prediction_to_target_norm": 0.688996903304533,
+          "upper": 2.0
+        },
+        {
+          "count": 2860.0,
+          "explained_fraction": 0.606563087020152,
+          "lower": 2.0,
+          "mse": 34.0897600934222,
+          "prediction_target_cosine": 0.7788454706914277,
+          "prediction_to_target_norm": 0.7849443197326457,
+          "upper": 2.5
+        },
+        {
+          "count": 8164.0,
+          "explained_fraction": 0.5528148956145075,
+          "lower": 2.5,
+          "mse": 37.3088104980708,
+          "prediction_target_cosine": 0.7446062371373106,
+          "prediction_to_target_norm": 0.78489957119243,
+          "upper": 3.0
+        },
+        {
+          "count": 19622.0,
+          "explained_fraction": 0.5027393558141748,
+          "lower": 3.0,
+          "mse": 49.556221173937416,
+          "prediction_target_cosine": 0.7090444761445877,
+          "prediction_to_target_norm": 0.706880827418664,
+          "upper": 4.0
+        },
+        {
+          "count": 72088.0,
+          "explained_fraction": 0.4672387939285856,
+          "lower": 4.0,
+          "mse": 51.94203048704361,
+          "prediction_target_cosine": 0.6835619088538061,
+          "prediction_to_target_norm": 0.6793082335496086,
+          "upper": 6.0
+        },
+        {
+          "count": 141236.0,
+          "explained_fraction": 0.48737026044775533,
+          "lower": 6.0,
+          "mse": 48.97412840918746,
+          "prediction_target_cosine": 0.698244028250684,
+          "prediction_to_target_norm": 0.6850352507124914,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.05875319571073543,
+        "mean_degree": -0.18576380188595523,
+        "nearest_cross_site_distance": -0.2540545624393895,
+        "node_count": 0.6134151883785977,
+        "self_image_fraction": -0.5798658391311401,
+        "volume_per_atom": 0.19183706587687155
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7112441483984062,
+          "lower": -Infinity,
+          "mse": 4.329248216417101,
+          "prediction_target_cosine": 0.8449790997490271,
+          "prediction_to_target_norm": 0.7925813703382524,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.43149420222101587,
+          "lower": 4.0,
+          "mse": 18.33091118222191,
+          "prediction_target_cosine": 0.6611825256058511,
+          "prediction_to_target_norm": 0.7364694346815354,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.448257790658368,
+          "lower": 8.0,
+          "mse": 22.82459697822215,
+          "prediction_target_cosine": 0.6698850280764469,
+          "prediction_to_target_norm": 0.6919792119875163,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.43651157925310835,
+          "lower": 12.0,
+          "mse": 27.129214423693075,
+          "prediction_target_cosine": 0.6653613966388291,
+          "prediction_to_target_norm": 0.7440645779448132,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5327515839946289,
+          "lower": 16.0,
+          "mse": 29.38156329204267,
+          "prediction_target_cosine": 0.7385073652618699,
+          "prediction_to_target_norm": 0.6260726648657987,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.1768408023690168,
+        "mean_degree": -0.32606393954126495,
+        "nearest_cross_site_distance": -0.0023797789137152215,
+        "self_image_fraction": -0.11841238052905972,
+        "volume_per_atom": 0.3231454075172301
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 302.0,
+          "elements": [
+            15,
+            41
+          ],
+          "explained_fraction": -0.20110503485203401,
+          "mse": 235.20343543046357,
+          "prediction_target_cosine": 0.11799667481798479,
+          "prediction_to_target_norm": 0.5817080258692581
+        },
+        {
+          "count": 448.0,
+          "elements": [
+            19,
+            77
+          ],
+          "explained_fraction": 0.39561260428728984,
+          "mse": 156.55934361049108,
+          "prediction_target_cosine": 0.6669313396760973,
+          "prediction_to_target_norm": 0.4451552001043239
+        },
+        {
+          "count": 762.0,
+          "elements": [
+            27,
+            48
+          ],
+          "explained_fraction": -0.1430715340790587,
+          "mse": 142.32945784120736,
+          "prediction_target_cosine": 0.29221746418746025,
+          "prediction_to_target_norm": 0.770196393360566
+        },
+        {
+          "count": 324.0,
+          "elements": [
+            52,
+            80
+          ],
+          "explained_fraction": 0.34403558090022524,
+          "mse": 141.59629689911264,
+          "prediction_target_cosine": 0.5973850807581266,
+          "prediction_to_target_norm": 0.4841003097760337
+        },
+        {
+          "count": 1498.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.39746968279764927,
+          "mse": 127.08359070231663,
+          "prediction_target_cosine": 0.6397140232351506,
+          "prediction_to_target_norm": 0.531249859128118
+        },
+        {
+          "count": 380.0,
+          "elements": [
+            14,
+            33
+          ],
+          "explained_fraction": -0.48991136411446545,
+          "mse": 125.15256990131579,
+          "prediction_target_cosine": 0.36482618404479344,
+          "prediction_to_target_norm": 1.1541355041079455
+        },
+        {
+          "count": 498.0,
+          "elements": [
+            27,
+            27
+          ],
+          "explained_fraction": -0.4467525797582561,
+          "mse": 124.53593463208301,
+          "prediction_target_cosine": 0.16530275989913176,
+          "prediction_to_target_norm": 0.8538357323054233
+        },
+        {
+          "count": 256.0,
+          "elements": [
+            65,
+            79
+          ],
+          "explained_fraction": 0.4965555466343302,
+          "mse": 121.03058624267578,
+          "prediction_target_cosine": 0.7050313795900419,
+          "prediction_to_target_norm": 0.7276942206642552
+        },
+        {
+          "count": 288.0,
+          "elements": [
+            34,
+            48
+          ],
+          "explained_fraction": 0.3098711651692444,
+          "mse": 114.80950927734375,
+          "prediction_target_cosine": 0.568588712649811,
+          "prediction_to_target_norm": 0.4527354021341196
+        },
+        {
+          "count": 488.0,
+          "elements": [
+            16,
+            54
+          ],
+          "explained_fraction": 0.4407339688384452,
+          "mse": 110.43065205558402,
+          "prediction_target_cosine": 0.6667194368331255,
+          "prediction_to_target_norm": 0.6052317161099147
+        },
+        {
+          "count": 490.0,
+          "elements": [
+            6,
+            56
+          ],
+          "explained_fraction": -0.722440883691073,
+          "mse": 108.50028649154974,
+          "prediction_target_cosine": 0.35674997623722804,
+          "prediction_to_target_norm": 1.2785482009549352
+        },
+        {
+          "count": 776.0,
+          "elements": [
+            8,
+            18
+          ],
+          "explained_fraction": 0.11039093144365475,
+          "mse": 107.51129527927674,
+          "prediction_target_cosine": 0.387026512373648,
+          "prediction_to_target_norm": 0.5855170696412768
+        },
+        {
+          "count": 390.0,
+          "elements": [
+            58,
+            77
+          ],
+          "explained_fraction": 0.3144299769564426,
+          "mse": 104.81478991386219,
+          "prediction_target_cosine": 0.580480329449276,
+          "prediction_to_target_norm": 0.730571590975939
+        },
+        {
+          "count": 548.0,
+          "elements": [
+            64,
+            64
+          ],
+          "explained_fraction": -0.04816601615853067,
+          "mse": 103.65511677038931,
+          "prediction_target_cosine": 0.374737962774376,
+          "prediction_to_target_norm": 0.8090125496709355
+        },
+        {
+          "count": 424.0,
+          "elements": [
+            79,
+            79
+          ],
+          "explained_fraction": -0.09778755012936546,
+          "mse": 102.34508535996923,
+          "prediction_target_cosine": 0.3725238434811859,
+          "prediction_to_target_norm": 0.8588991795163685
+        },
+        {
+          "count": 330.0,
+          "elements": [
+            8,
+            24
+          ],
+          "explained_fraction": 0.17924411272349683,
+          "mse": 99.77647964015152,
+          "prediction_target_cosine": 0.4253524161600748,
+          "prediction_to_target_norm": 0.4663506761751026
+        },
+        {
+          "count": 478.0,
+          "elements": [
+            15,
+            50
+          ],
+          "explained_fraction": -0.44045569768423376,
+          "mse": 99.2570095940115,
+          "prediction_target_cosine": 0.03668200380923753,
+          "prediction_to_target_norm": 0.7013632080891454
+        },
+        {
+          "count": 330.0,
+          "elements": [
+            27,
+            50
+          ],
+          "explained_fraction": -0.5179081487505539,
+          "mse": 97.38908025568182,
+          "prediction_target_cosine": 0.15148369340848666,
+          "prediction_to_target_norm": 0.8869125455005404
+        },
+        {
+          "count": 580.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.36134561451129843,
+          "mse": 93.80725450186894,
+          "prediction_target_cosine": 0.6688858780565269,
+          "prediction_to_target_norm": 0.962249600228262
+        },
+        {
+          "count": 2530.0,
+          "elements": [
+            34,
+            34
+          ],
+          "explained_fraction": 0.4295264931538163,
+          "mse": 90.96929849617095,
+          "prediction_target_cosine": 0.6606369330925819,
+          "prediction_to_target_norm": 0.5774811086308802
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.2027423925025257,
+        "mean_degree": -0.0055964099009247715,
+        "nearest_cross_site_distance": -0.28437930415439505,
+        "node_count": 0.2109127751841924,
+        "self_image_fraction": -0.21592810666422166,
+        "volume_per_atom": 0.005568010901636275
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7166247579560482,
+          "lower": -Infinity,
+          "mse": 0.23476357251305371,
+          "prediction_target_cosine": 0.8480298793330624,
+          "prediction_to_target_norm": 0.7977314321474759,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.44275365991119964,
+          "lower": 4.0,
+          "mse": 0.6635862021219163,
+          "prediction_target_cosine": 0.670051649935664,
+          "prediction_to_target_norm": 0.7488902966707951,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.4521739107065059,
+          "lower": 8.0,
+          "mse": 0.5909156338126754,
+          "prediction_target_cosine": 0.6727099558889524,
+          "prediction_to_target_norm": 0.6918086415405827,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.432497741967923,
+          "lower": 12.0,
+          "mse": 0.5834325427490583,
+          "prediction_target_cosine": 0.6618518978201211,
+          "prediction_to_target_norm": 0.7363516793801355,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5339506916967258,
+          "lower": 16.0,
+          "mse": 0.525902365618211,
+          "prediction_target_cosine": 0.7408042603050348,
+          "prediction_to_target_norm": 0.6189835354158625,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.1": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 81.0,
+          "explained_fraction": 0.4708108645891794,
+          "lower": 16.0,
+          "mse": 94.6366554542824,
+          "prediction_target_cosine": 0.6944985252609392,
+          "prediction_to_target_norm": 0.5871798256221425,
+          "upper": 32.0
+        },
+        {
+          "count": 1206.0,
+          "explained_fraction": 0.4754187797976883,
+          "lower": 32.0,
+          "mse": 33.362225534113286,
+          "prediction_target_cosine": 0.689514656057816,
+          "prediction_to_target_norm": 0.6929310242370087,
+          "upper": 64.0
+        },
+        {
+          "count": 4284.0,
+          "explained_fraction": 0.5374441060527166,
+          "lower": 64.0,
+          "mse": 20.60412517871732,
+          "prediction_target_cosine": 0.7332786861108057,
+          "prediction_to_target_norm": 0.7492011686959053,
+          "upper": 128.0
+        },
+        {
+          "count": 2148.0,
+          "explained_fraction": 0.5229877365612922,
+          "lower": 128.0,
+          "mse": 16.3868241123647,
+          "prediction_target_cosine": 0.7231842353522416,
+          "prediction_to_target_norm": 0.7204126204285605,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 34.0,
+          "explained_fraction": 0.64127400570151,
+          "lower": -Infinity,
+          "mse": 35.38823649111916,
+          "prediction_target_cosine": 0.80341149215524,
+          "prediction_to_target_norm": 0.868188566198351,
+          "upper": 1.5
+        },
+        {
+          "count": 748.0,
+          "explained_fraction": 0.6424464469387465,
+          "lower": 1.5,
+          "mse": 27.55156883198947,
+          "prediction_target_cosine": 0.8041814998646216,
+          "prediction_to_target_norm": 0.7389016811694148,
+          "upper": 2.0
+        },
+        {
+          "count": 2962.0,
+          "explained_fraction": 0.6886558375625519,
+          "lower": 2.0,
+          "mse": 28.72068087045282,
+          "prediction_target_cosine": 0.8299108063989578,
+          "prediction_to_target_norm": 0.8201051898030662,
+          "upper": 2.5
+        },
+        {
+          "count": 7978.0,
+          "explained_fraction": 0.6023234261651452,
+          "lower": 2.5,
+          "mse": 34.42256488546628,
+          "prediction_target_cosine": 0.7767608039666195,
+          "prediction_to_target_norm": 0.8089155247753702,
+          "upper": 3.0
+        },
+        {
+          "count": 19572.0,
+          "explained_fraction": 0.5227848424421427,
+          "lower": 3.0,
+          "mse": 44.50080871270182,
+          "prediction_target_cosine": 0.7233927611457576,
+          "prediction_to_target_norm": 0.7460257679515574,
+          "upper": 4.0
+        },
+        {
+          "count": 71930.0,
+          "explained_fraction": 0.5219182613616422,
+          "lower": 4.0,
+          "mse": 45.4995181947727,
+          "prediction_target_cosine": 0.7224391009125533,
+          "prediction_to_target_norm": 0.7224870131364727,
+          "upper": 6.0
+        },
+        {
+          "count": 140416.0,
+          "explained_fraction": 0.5306066385748296,
+          "lower": 6.0,
+          "mse": 43.71397000697926,
+          "prediction_target_cosine": 0.7284296535173781,
+          "prediction_to_target_norm": 0.7302045409680221,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.015113132176792745,
+        "mean_degree": -0.1917007736436571,
+        "nearest_cross_site_distance": -0.30875751585553846,
+        "node_count": 0.6142654483474489,
+        "self_image_fraction": -0.5992472165696946,
+        "volume_per_atom": 0.20099571762822196
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.7446219513200956,
+          "lower": -Infinity,
+          "mse": 3.763760557078352,
+          "prediction_target_cosine": 0.8629149733865874,
+          "prediction_to_target_norm": 0.8623581997531897,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.4605296311193564,
+          "lower": 4.0,
+          "mse": 15.971674147106352,
+          "prediction_target_cosine": 0.6848415422485644,
+          "prediction_to_target_norm": 0.776919514028633,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.47431349900048536,
+          "lower": 8.0,
+          "mse": 19.22123638322179,
+          "prediction_target_cosine": 0.6906129232577881,
+          "prediction_to_target_norm": 0.7419230773434758,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.4856373759964898,
+          "lower": 12.0,
+          "mse": 25.492079284114954,
+          "prediction_target_cosine": 0.7000867467039589,
+          "prediction_to_target_norm": 0.7670500059481502,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5704422865416631,
+          "lower": 16.0,
+          "mse": 27.602245528005238,
+          "prediction_target_cosine": 0.761341445386089,
+          "prediction_to_target_norm": 0.6654325121938108,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.11571581024607054,
+        "mean_degree": -0.34568136613798556,
+        "nearest_cross_site_distance": -0.06741064159148838,
+        "self_image_fraction": -0.14395422714558662,
+        "volume_per_atom": 0.3447911276585808
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 380.0,
+          "elements": [
+            28,
+            34
+          ],
+          "explained_fraction": -0.14202057160010706,
+          "mse": 152.67494346217106,
+          "prediction_target_cosine": 0.47160912022217555,
+          "prediction_to_target_norm": 1.0752939935690415
+        },
+        {
+          "count": 320.0,
+          "elements": [
+            10,
+            36
+          ],
+          "explained_fraction": 0.5574098153048426,
+          "mse": 147.75280570983887,
+          "prediction_target_cosine": 0.7488919433654828,
+          "prediction_to_target_norm": 0.6903323316916937
+        },
+        {
+          "count": 462.0,
+          "elements": [
+            6,
+            56
+          ],
+          "explained_fraction": 0.09358146008842161,
+          "mse": 138.28391123850108,
+          "prediction_target_cosine": 0.5128601229413224,
+          "prediction_to_target_norm": 0.924497025174702
+        },
+        {
+          "count": 558.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.3809473481878649,
+          "mse": 129.39875864555333,
+          "prediction_target_cosine": 0.6220709014084662,
+          "prediction_to_target_norm": 0.699690362526123
+        },
+        {
+          "count": 266.0,
+          "elements": [
+            65,
+            79
+          ],
+          "explained_fraction": -0.324928662504369,
+          "mse": 115.53719014332707,
+          "prediction_target_cosine": 0.4463256431925648,
+          "prediction_to_target_norm": 1.170297204283769
+        },
+        {
+          "count": 434.0,
+          "elements": [
+            79,
+            79
+          ],
+          "explained_fraction": 0.055442862019580263,
+          "mse": 110.5182710847547,
+          "prediction_target_cosine": 0.5381908101753955,
+          "prediction_to_target_norm": 1.0221398815263867
+        },
+        {
+          "count": 294.0,
+          "elements": [
+            52,
+            80
+          ],
+          "explained_fraction": 0.5247826909932086,
+          "mse": 104.92104542012117,
+          "prediction_target_cosine": 0.7581425411077459,
+          "prediction_to_target_norm": 0.5345412018304132
+        },
+        {
+          "count": 382.0,
+          "elements": [
+            10,
+            10
+          ],
+          "explained_fraction": 0.5033914378587192,
+          "mse": 101.0918911439586,
+          "prediction_target_cosine": 0.7156638569875421,
+          "prediction_to_target_norm": 0.809384639675308
+        },
+        {
+          "count": 1430.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.3906448699790892,
+          "mse": 96.00187392868362,
+          "prediction_target_cosine": 0.625351400196848,
+          "prediction_to_target_norm": 0.6458256954786142
+        },
+        {
+          "count": 288.0,
+          "elements": [
+            34,
+            48
+          ],
+          "explained_fraction": 0.5147230296960932,
+          "mse": 95.38647121853299,
+          "prediction_target_cosine": 0.769165419612987,
+          "prediction_to_target_norm": 0.4918703271754118
+        },
+        {
+          "count": 412.0,
+          "elements": [
+            49,
+            49
+          ],
+          "explained_fraction": 0.26706027990643777,
+          "mse": 92.51385098059201,
+          "prediction_target_cosine": 0.5534913216068272,
+          "prediction_to_target_norm": 0.7517136407748854
+        },
+        {
+          "count": 2536.0,
+          "elements": [
+            34,
+            34
+          ],
+          "explained_fraction": 0.4919136340327369,
+          "mse": 89.04307888283715,
+          "prediction_target_cosine": 0.7019838812772695,
+          "prediction_to_target_norm": 0.67252502893293
+        },
+        {
+          "count": 344.0,
+          "elements": [
+            6,
+            65
+          ],
+          "explained_fraction": -0.7773676115293606,
+          "mse": 86.34850222565407,
+          "prediction_target_cosine": 0.03897886045530297,
+          "prediction_to_target_norm": 0.921524750455636
+        },
+        {
+          "count": 290.0,
+          "elements": [
+            18,
+            33
+          ],
+          "explained_fraction": 0.40764869449744856,
+          "mse": 84.40717268318966,
+          "prediction_target_cosine": 0.6473116756770315,
+          "prediction_to_target_norm": 0.5407107181646837
+        },
+        {
+          "count": 1136.0,
+          "elements": [
+            6,
+            6
+          ],
+          "explained_fraction": 0.12023228564661059,
+          "mse": 82.32150676888479,
+          "prediction_target_cosine": 0.398420235520885,
+          "prediction_to_target_norm": 0.5946505224381706
+        },
+        {
+          "count": 686.0,
+          "elements": [
+            81,
+            81
+          ],
+          "explained_fraction": 0.13581651447018384,
+          "mse": 82.2603005389778,
+          "prediction_target_cosine": 0.4728862514728974,
+          "prediction_to_target_norm": 0.769204750662895
+        },
+        {
+          "count": 766.0,
+          "elements": [
+            7,
+            25
+          ],
+          "explained_fraction": 0.01581306619911793,
+          "mse": 81.77116055401436,
+          "prediction_target_cosine": 0.26844886605837365,
+          "prediction_to_target_norm": 0.5056240925920673
+        },
+        {
+          "count": 1222.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.27607426953522907,
+          "mse": 81.56340493859324,
+          "prediction_target_cosine": 0.53464884214713,
+          "prediction_to_target_norm": 0.6335184375057955
+        },
+        {
+          "count": 422.0,
+          "elements": [
+            28,
+            28
+          ],
+          "explained_fraction": 0.0896398886571953,
+          "mse": 78.38465490838362,
+          "prediction_target_cosine": 0.5648278005109092,
+          "prediction_to_target_norm": 1.0437749923623583
+        },
+        {
+          "count": 262.0,
+          "elements": [
+            16,
+            56
+          ],
+          "explained_fraction": 0.6355490772557405,
+          "mse": 78.19462666984732,
+          "prediction_target_cosine": 0.8134605797316735,
+          "prediction_to_target_norm": 0.6516925672697398
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.1386460272941644,
+        "mean_degree": -0.00782148056587336,
+        "nearest_cross_site_distance": -0.3622371650919181,
+        "node_count": 0.21822822053853932,
+        "self_image_fraction": -0.2372753651099147,
+        "volume_per_atom": 0.011783876844477518
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.74127458375496,
+          "lower": -Infinity,
+          "mse": 0.20493649713920825,
+          "prediction_target_cosine": 0.8609732130686009,
+          "prediction_to_target_norm": 0.8604245650131379,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.46711573103160564,
+          "lower": 4.0,
+          "mse": 0.5842000501496452,
+          "prediction_target_cosine": 0.6900085476912724,
+          "prediction_to_target_norm": 0.7848561488439301,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.4791276687605449,
+          "lower": 8.0,
+          "mse": 0.5023925355198607,
+          "prediction_target_cosine": 0.6938639190945829,
+          "prediction_to_target_norm": 0.7420249788434491,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.48876548327402636,
+          "lower": 12.0,
+          "mse": 0.5411813760520051,
+          "prediction_target_cosine": 0.7018752751903793,
+          "prediction_to_target_norm": 0.764031887279661,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5837619690687366,
+          "lower": 16.0,
+          "mse": 0.46717170640534045,
+          "prediction_target_cosine": 0.7709859041184339,
+          "prediction_to_target_norm": 0.6677517712316401,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.2": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 57.0,
+          "explained_fraction": 0.45284277755299673,
+          "lower": 16.0,
+          "mse": 97.47148266173245,
+          "prediction_target_cosine": 0.6782636329108229,
+          "prediction_to_target_norm": 0.5934181608290664,
+          "upper": 32.0
+        },
+        {
+          "count": 1260.0,
+          "explained_fraction": 0.49607027971885886,
+          "lower": 32.0,
+          "mse": 36.330440266927084,
+          "prediction_target_cosine": 0.7043835486187334,
+          "prediction_to_target_norm": 0.6951165658518541,
+          "upper": 64.0
+        },
+        {
+          "count": 4266.0,
+          "explained_fraction": 0.5478373825025501,
+          "lower": 64.0,
+          "mse": 21.835130565444796,
+          "prediction_target_cosine": 0.7401636450816574,
+          "prediction_to_target_norm": 0.7423655712571946,
+          "upper": 128.0
+        },
+        {
+          "count": 2136.0,
+          "explained_fraction": 0.5911120766512065,
+          "lower": 128.0,
+          "mse": 15.524580766199234,
+          "prediction_target_cosine": 0.768883421234867,
+          "prediction_to_target_norm": 0.7605383446130457,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 40.0,
+          "explained_fraction": 0.6018289897901895,
+          "lower": -Infinity,
+          "mse": 25.739110338687897,
+          "prediction_target_cosine": 0.8189858724266642,
+          "prediction_to_target_norm": 1.0814910142401815,
+          "upper": 1.5
+        },
+        {
+          "count": 802.0,
+          "explained_fraction": 0.7081903319663532,
+          "lower": 1.5,
+          "mse": 23.649622282185163,
+          "prediction_target_cosine": 0.8426218437486999,
+          "prediction_to_target_norm": 0.8852974315114173,
+          "upper": 2.0
+        },
+        {
+          "count": 3046.0,
+          "explained_fraction": 0.6687525244802884,
+          "lower": 2.0,
+          "mse": 30.73269759520683,
+          "prediction_target_cosine": 0.8189336261616683,
+          "prediction_to_target_norm": 0.8625196991168683,
+          "upper": 2.5
+        },
+        {
+          "count": 7718.0,
+          "explained_fraction": 0.5979911815518886,
+          "lower": 2.5,
+          "mse": 34.71289771070873,
+          "prediction_target_cosine": 0.7742366636757143,
+          "prediction_to_target_norm": 0.8123316742126944,
+          "upper": 3.0
+        },
+        {
+          "count": 19396.0,
+          "explained_fraction": 0.5779397688029047,
+          "lower": 3.0,
+          "mse": 43.92086279065271,
+          "prediction_target_cosine": 0.7602239951249017,
+          "prediction_to_target_norm": 0.7610810876650002,
+          "upper": 4.0
+        },
+        {
+          "count": 72200.0,
+          "explained_fraction": 0.5466998877297833,
+          "lower": 4.0,
+          "mse": 46.863133656509696,
+          "prediction_target_cosine": 0.7394084192064051,
+          "prediction_to_target_norm": 0.7344144818662464,
+          "upper": 6.0
+        },
+        {
+          "count": 140108.0,
+          "explained_fraction": 0.5544305061803604,
+          "lower": 6.0,
+          "mse": 45.6774207218717,
+          "prediction_target_cosine": 0.7446142441382885,
+          "prediction_to_target_norm": 0.7401512171039845,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.07683453752820023,
+        "mean_degree": -0.2393416664444821,
+        "nearest_cross_site_distance": -0.27190596636328807,
+        "node_count": 0.6084650209801937,
+        "self_image_fraction": -0.5817961276215251,
+        "volume_per_atom": 0.24381509003064042
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.6898446797346001,
+          "lower": -Infinity,
+          "mse": 5.11530296248619,
+          "prediction_target_cosine": 0.8308896972305457,
+          "prediction_to_target_norm": 0.8539761501520462,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.4762401197505197,
+          "lower": 4.0,
+          "mse": 15.427915754772368,
+          "prediction_target_cosine": 0.6960715040784943,
+          "prediction_to_target_norm": 0.7870409020832341,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.5479548803469421,
+          "lower": 8.0,
+          "mse": 18.53249972732711,
+          "prediction_target_cosine": 0.7402486156843997,
+          "prediction_to_target_norm": 0.736625421904143,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.46829821244932013,
+          "lower": 12.0,
+          "mse": 25.79653425676003,
+          "prediction_target_cosine": 0.6873322219425577,
+          "prediction_to_target_norm": 0.7515767039911487,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.5950969411457561,
+          "lower": 16.0,
+          "mse": 30.793560823654747,
+          "prediction_target_cosine": 0.775033296526235,
+          "prediction_to_target_norm": 0.7003357850692885,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.1706060037017878,
+        "mean_degree": -0.381614866213289,
+        "nearest_cross_site_distance": -0.0063257579624201275,
+        "self_image_fraction": -0.08793075783814103,
+        "volume_per_atom": 0.3781652497654202
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 524.0,
+          "elements": [
+            45,
+            81
+          ],
+          "explained_fraction": -0.15093049740806097,
+          "mse": 169.1772423664122,
+          "prediction_target_cosine": 0.26850800861359964,
+          "prediction_to_target_norm": 0.7407661026595398
+        },
+        {
+          "count": 364.0,
+          "elements": [
+            28,
+            34
+          ],
+          "explained_fraction": -0.06363062513317708,
+          "mse": 139.5696793440934,
+          "prediction_target_cosine": 0.4952097518970133,
+          "prediction_to_target_norm": 1.050964135633186
+        },
+        {
+          "count": 732.0,
+          "elements": [
+            2,
+            16
+          ],
+          "explained_fraction": 0.39807798568828656,
+          "mse": 129.55762986146686,
+          "prediction_target_cosine": 0.6350348127253921,
+          "prediction_to_target_norm": 0.5629813045105846
+        },
+        {
+          "count": 300.0,
+          "elements": [
+            10,
+            36
+          ],
+          "explained_fraction": 0.5329365269817606,
+          "mse": 125.22591878255209,
+          "prediction_target_cosine": 0.7301787691846672,
+          "prediction_to_target_norm": 0.715190216366532
+        },
+        {
+          "count": 398.0,
+          "elements": [
+            18,
+            52
+          ],
+          "explained_fraction": 0.6105674081652043,
+          "mse": 108.69914145924938,
+          "prediction_target_cosine": 0.8287508221993519,
+          "prediction_to_target_norm": 0.5525973559921679
+        },
+        {
+          "count": 1676.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.5381656609121592,
+          "mse": 107.01026596032919,
+          "prediction_target_cosine": 0.7426971736480343,
+          "prediction_to_target_norm": 0.6267922015856914
+        },
+        {
+          "count": 758.0,
+          "elements": [
+            81,
+            81
+          ],
+          "explained_fraction": 0.47237561264453476,
+          "mse": 95.8892900069345,
+          "prediction_target_cosine": 0.692922194923312,
+          "prediction_to_target_norm": 0.6047943682436236
+        },
+        {
+          "count": 582.0,
+          "elements": [
+            36,
+            36
+          ],
+          "explained_fraction": 0.5727120660948382,
+          "mse": 94.65210401397391,
+          "prediction_target_cosine": 0.7568048398241607,
+          "prediction_to_target_norm": 0.7632465553618135
+        },
+        {
+          "count": 2670.0,
+          "elements": [
+            34,
+            34
+          ],
+          "explained_fraction": 0.4410181319603196,
+          "mse": 92.27569054307116,
+          "prediction_target_cosine": 0.6642823792563145,
+          "prediction_to_target_norm": 0.6801944302288171
+        },
+        {
+          "count": 1294.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.34441118057975506,
+          "mse": 91.64307904722517,
+          "prediction_target_cosine": 0.5868919775685157,
+          "prediction_to_target_norm": 0.5813298127563657
+        },
+        {
+          "count": 790.0,
+          "elements": [
+            16,
+            80
+          ],
+          "explained_fraction": 0.4687695113903324,
+          "mse": 91.34821653728244,
+          "prediction_target_cosine": 0.6847690586967246,
+          "prediction_to_target_norm": 0.6965823196003492
+        },
+        {
+          "count": 610.0,
+          "elements": [
+            8,
+            54
+          ],
+          "explained_fraction": 0.4013476116422702,
+          "mse": 90.7907946977459,
+          "prediction_target_cosine": 0.6698489692593526,
+          "prediction_to_target_norm": 0.4522491341902223
+        },
+        {
+          "count": 516.0,
+          "elements": [
+            19,
+            77
+          ],
+          "explained_fraction": 0.042171105036326484,
+          "mse": 90.63846747819767,
+          "prediction_target_cosine": 0.4261084462593059,
+          "prediction_to_target_norm": 0.7994685176821399
+        },
+        {
+          "count": 506.0,
+          "elements": [
+            16,
+            38
+          ],
+          "explained_fraction": 0.7894571099561113,
+          "mse": 89.80990226655139,
+          "prediction_target_cosine": 0.8976815327564481,
+          "prediction_to_target_norm": 0.7697157856965509
+        },
+        {
+          "count": 310.0,
+          "elements": [
+            6,
+            18
+          ],
+          "explained_fraction": 0.07509512230075932,
+          "mse": 88.52040700604839,
+          "prediction_target_cosine": 0.3733895024772742,
+          "prediction_to_target_norm": 0.6270116039713713
+        },
+        {
+          "count": 322.0,
+          "elements": [
+            18,
+            33
+          ],
+          "explained_fraction": 0.43461478874634396,
+          "mse": 88.12246154406056,
+          "prediction_target_cosine": 0.6616817740653509,
+          "prediction_to_target_norm": 0.60504144108432
+        },
+        {
+          "count": 604.0,
+          "elements": [
+            16,
+            19
+          ],
+          "explained_fraction": 0.5910089101003771,
+          "mse": 87.61249506868273,
+          "prediction_target_cosine": 0.7866344676540021,
+          "prediction_to_target_norm": 0.6199459315586353
+        },
+        {
+          "count": 300.0,
+          "elements": [
+            7,
+            47
+          ],
+          "explained_fraction": 0.2539042961739725,
+          "mse": 87.20749348958333,
+          "prediction_target_cosine": 0.5385356474930255,
+          "prediction_to_target_norm": 0.3484931456695976
+        },
+        {
+          "count": 988.0,
+          "elements": [
+            47,
+            47
+          ],
+          "explained_fraction": 0.3870517589886294,
+          "mse": 84.7896263184335,
+          "prediction_target_cosine": 0.6234341213477805,
+          "prediction_to_target_norm": 0.6636580121393871
+        },
+        {
+          "count": 406.0,
+          "elements": [
+            34,
+            54
+          ],
+          "explained_fraction": 0.497689080507542,
+          "mse": 82.48792285637315,
+          "prediction_target_cosine": 0.7188284739644422,
+          "prediction_to_target_norm": 0.5808966890254312
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.2194747440494931,
+        "mean_degree": -0.06867341576061095,
+        "nearest_cross_site_distance": -0.2830007360469563,
+        "node_count": 0.20806675675485994,
+        "self_image_fraction": -0.22315574194896876,
+        "volume_per_atom": 0.06331066195079775
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.6884282108278681,
+          "lower": -Infinity,
+          "mse": 0.280342009733823,
+          "prediction_target_cosine": 0.830497029721508,
+          "prediction_to_target_norm": 0.8665122698114844,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.4967643646453389,
+          "lower": 4.0,
+          "mse": 0.5629475797925677,
+          "prediction_target_cosine": 0.7095628381734654,
+          "prediction_to_target_norm": 0.7915083804254933,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.5483771791809726,
+          "lower": 8.0,
+          "mse": 0.4857301552815896,
+          "prediction_target_cosine": 0.7405353527423403,
+          "prediction_to_target_norm": 0.7366082248489251,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.47671567300072304,
+          "lower": 12.0,
+          "mse": 0.5540265604946008,
+          "prediction_target_cosine": 0.6929497170567863,
+          "prediction_to_target_norm": 0.7518024505623702,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.6057174758410788,
+          "lower": 16.0,
+          "mse": 0.5140758079216017,
+          "prediction_target_cosine": 0.7816433404857094,
+          "prediction_to_target_norm": 0.709194544348984,
+          "upper": Infinity
+        }
+      ]
+    },
+    "0.5": {
+      "degree_bins": [
+        {
+          "count": 0.0,
+          "explained_fraction": 1.0,
+          "lower": -Infinity,
+          "mse": 0.0,
+          "prediction_target_cosine": 0.0,
+          "prediction_to_target_norm": 0.0,
+          "upper": 16.0
+        },
+        {
+          "count": 21.0,
+          "explained_fraction": 0.4802046705592504,
+          "lower": 16.0,
+          "mse": 93.79021926153274,
+          "prediction_target_cosine": 0.6935330717574246,
+          "prediction_to_target_norm": 0.6655428759374841,
+          "upper": 32.0
+        },
+        {
+          "count": 1107.0,
+          "explained_fraction": 0.2832851341879403,
+          "lower": 32.0,
+          "mse": 47.32913133574695,
+          "prediction_target_cosine": 0.5327670447551625,
+          "prediction_to_target_norm": 0.5563371291337773,
+          "upper": 64.0
+        },
+        {
+          "count": 4686.0,
+          "explained_fraction": 0.32836013160907895,
+          "lower": 64.0,
+          "mse": 33.15021077578158,
+          "prediction_target_cosine": 0.5730611686633973,
+          "prediction_to_target_norm": 0.5793065829082542,
+          "upper": 128.0
+        },
+        {
+          "count": 1905.0,
+          "explained_fraction": 0.35484339084410566,
+          "lower": 128.0,
+          "mse": 22.238500095477566,
+          "prediction_target_cosine": 0.5957033631155659,
+          "prediction_to_target_norm": 0.5913341318605864,
+          "upper": Infinity
+        }
+      ],
+      "distance_bins": [
+        {
+          "count": 290.0,
+          "explained_fraction": 0.7496224727401319,
+          "lower": -Infinity,
+          "mse": 37.34698570514547,
+          "prediction_target_cosine": 0.8658257683423017,
+          "prediction_to_target_norm": 0.8601848972184086,
+          "upper": 1.5
+        },
+        {
+          "count": 1348.0,
+          "explained_fraction": 0.5934001562963891,
+          "lower": 1.5,
+          "mse": 38.53448105990356,
+          "prediction_target_cosine": 0.7711301688915472,
+          "prediction_to_target_norm": 0.8063662995017625,
+          "upper": 2.0
+        },
+        {
+          "count": 3494.0,
+          "explained_fraction": 0.447562100870576,
+          "lower": 2.0,
+          "mse": 44.92847448304236,
+          "prediction_target_cosine": 0.6704275971608677,
+          "prediction_to_target_norm": 0.7141433334694045,
+          "upper": 2.5
+        },
+        {
+          "count": 6618.0,
+          "explained_fraction": 0.40052692484341657,
+          "lower": 2.5,
+          "mse": 47.86509478175053,
+          "prediction_target_cosine": 0.6328914778728171,
+          "prediction_to_target_norm": 0.6279221495043096,
+          "upper": 3.0
+        },
+        {
+          "count": 19750.0,
+          "explained_fraction": 0.3602268323171617,
+          "lower": 3.0,
+          "mse": 59.0319375,
+          "prediction_target_cosine": 0.6003403939755368,
+          "prediction_to_target_norm": 0.6138224151781412,
+          "upper": 4.0
+        },
+        {
+          "count": 74380.0,
+          "explained_fraction": 0.33297781483526345,
+          "lower": 4.0,
+          "mse": 66.52872874092498,
+          "prediction_target_cosine": 0.5770666503711402,
+          "prediction_to_target_norm": 0.5823657981663221,
+          "upper": 6.0
+        },
+        {
+          "count": 144310.0,
+          "explained_fraction": 0.3348939658924317,
+          "lower": 6.0,
+          "mse": 65.7476643164022,
+          "prediction_target_cosine": 0.5787002579895916,
+          "prediction_to_target_norm": 0.5785052220289658,
+          "upper": Infinity
+        }
+      ],
+      "graph_error_correlations": {
+        "lattice_condition": 0.11229200367978964,
+        "mean_degree": -0.22046280327870957,
+        "nearest_cross_site_distance": -0.38979560411728115,
+        "node_count": 0.6279140394753726,
+        "self_image_fraction": -0.6278137090800312,
+        "volume_per_atom": 0.22137460906543424
+      },
+      "node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.6426643856207626,
+          "lower": -Infinity,
+          "mse": 6.684257995399963,
+          "prediction_target_cosine": 0.8024141837317648,
+          "prediction_to_target_norm": 0.8371150139715702,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.2780447862812977,
+          "lower": 4.0,
+          "mse": 22.08870706104097,
+          "prediction_target_cosine": 0.541430995329048,
+          "prediction_to_target_norm": 0.6643241985190518,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.33773456725136886,
+          "lower": 8.0,
+          "mse": 29.39055458292854,
+          "prediction_target_cosine": 0.5811888612387635,
+          "prediction_to_target_norm": 0.5879625760467275,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.3739454436426263,
+          "lower": 12.0,
+          "mse": 29.693242951239867,
+          "prediction_target_cosine": 0.6117922376206617,
+          "prediction_to_target_norm": 0.5932364296951618,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.28909414010715717,
+          "lower": 16.0,
+          "mse": 47.71773840484347,
+          "prediction_target_cosine": 0.5378818591223641,
+          "prediction_to_target_norm": 0.5229580178660951,
+          "upper": Infinity
+        }
+      ],
+      "partial_graph_error_correlations_controlling_node_count": {
+        "lattice_condition": 0.28246053080789757,
+        "mean_degree": -0.41848794613973317,
+        "nearest_cross_site_distance": 0.008614348065604654,
+        "self_image_fraction": -0.16266821095607792,
+        "volume_per_atom": 0.4185590541945814
+      },
+      "top_element_pairs_by_mse": [
+        {
+          "count": 316.0,
+          "elements": [
+            34,
+            48
+          ],
+          "explained_fraction": 0.21984285803545822,
+          "mse": 215.77781348892404,
+          "prediction_target_cosine": 0.47585395083278204,
+          "prediction_to_target_norm": 0.3946499769118766
+        },
+        {
+          "count": 260.0,
+          "elements": [
+            12,
+            66
+          ],
+          "explained_fraction": 0.3144023761610458,
+          "mse": 179.41673677884614,
+          "prediction_target_cosine": 0.5857866266296267,
+          "prediction_to_target_norm": 0.41624603560543116
+        },
+        {
+          "count": 416.0,
+          "elements": [
+            30,
+            66
+          ],
+          "explained_fraction": 0.17592917855281232,
+          "mse": 177.36870868389423,
+          "prediction_target_cosine": 0.4196976710524189,
+          "prediction_to_target_norm": 0.43442341269050233
+        },
+        {
+          "count": 294.0,
+          "elements": [
+            8,
+            24
+          ],
+          "explained_fraction": 0.009654156665438896,
+          "mse": 172.12224968112244,
+          "prediction_target_cosine": 0.19465183411622292,
+          "prediction_to_target_norm": 0.36268490517045954
+        },
+        {
+          "count": 538.0,
+          "elements": [
+            0,
+            44
+          ],
+          "explained_fraction": 0.10280867230935087,
+          "mse": 172.1046410315985,
+          "prediction_target_cosine": 0.35909533716922964,
+          "prediction_to_target_norm": 0.19741309918282207
+        },
+        {
+          "count": 744.0,
+          "elements": [
+            16,
+            79
+          ],
+          "explained_fraction": 0.11761036149866277,
+          "mse": 168.4930216471354,
+          "prediction_target_cosine": 0.34335250921582816,
+          "prediction_to_target_norm": 0.36010707725562724
+        },
+        {
+          "count": 282.0,
+          "elements": [
+            7,
+            77
+          ],
+          "explained_fraction": 0.09710766487083,
+          "mse": 161.52165059840425,
+          "prediction_target_cosine": 0.3282756259267283,
+          "prediction_to_target_norm": 0.4315100090245979
+        },
+        {
+          "count": 290.0,
+          "elements": [
+            8,
+            37
+          ],
+          "explained_fraction": 0.2450773990422761,
+          "mse": 148.79428879310345,
+          "prediction_target_cosine": 0.49536485515440376,
+          "prediction_to_target_norm": 0.5129517669792248
+        },
+        {
+          "count": 336.0,
+          "elements": [
+            10,
+            36
+          ],
+          "explained_fraction": 0.3250907926877632,
+          "mse": 146.53853716169084,
+          "prediction_target_cosine": 0.5704976799558469,
+          "prediction_to_target_norm": 0.5899163883496019
+        },
+        {
+          "count": 800.0,
+          "elements": [
+            78,
+            81
+          ],
+          "explained_fraction": 0.13608966579126458,
+          "mse": 130.83985029220582,
+          "prediction_target_cosine": 0.4176737745384386,
+          "prediction_to_target_norm": 0.6135351965322696
+        },
+        {
+          "count": 558.0,
+          "elements": [
+            16,
+            19
+          ],
+          "explained_fraction": 0.26352077109137984,
+          "mse": 123.13204157566084,
+          "prediction_target_cosine": 0.5138057863819021,
+          "prediction_to_target_norm": 0.4919959865862367
+        },
+        {
+          "count": 322.0,
+          "elements": [
+            67,
+            67
+          ],
+          "explained_fraction": -0.04128163657931627,
+          "mse": 119.91728712757181,
+          "prediction_target_cosine": 0.23595638084889337,
+          "prediction_to_target_norm": 0.5473354956477566
+        },
+        {
+          "count": 416.0,
+          "elements": [
+            0,
+            54
+          ],
+          "explained_fraction": 0.42686462164159567,
+          "mse": 119.85973182091347,
+          "prediction_target_cosine": 0.6932591832493742,
+          "prediction_to_target_norm": 0.46143222004479517
+        },
+        {
+          "count": 308.0,
+          "elements": [
+            7,
+            39
+          ],
+          "explained_fraction": 0.32778165456499764,
+          "mse": 118.93540736607143,
+          "prediction_target_cosine": 0.5806020745143481,
+          "prediction_to_target_norm": 0.4840791017309158
+        },
+        {
+          "count": 480.0,
+          "elements": [
+            8,
+            82
+          ],
+          "explained_fraction": 0.3502797433331635,
+          "mse": 117.80539143880209,
+          "prediction_target_cosine": 0.6397680906035147,
+          "prediction_to_target_norm": 0.39682095781230664
+        },
+        {
+          "count": 262.0,
+          "elements": [
+            18,
+            18
+          ],
+          "explained_fraction": 0.3626296328702098,
+          "mse": 117.5490449330279,
+          "prediction_target_cosine": 0.632357696379749,
+          "prediction_to_target_norm": 0.43936309364556714
+        },
+        {
+          "count": 470.0,
+          "elements": [
+            8,
+            26
+          ],
+          "explained_fraction": 0.07422256168223695,
+          "mse": 117.49818920378989,
+          "prediction_target_cosine": 0.29307456948280036,
+          "prediction_to_target_norm": 0.4011009531853633
+        },
+        {
+          "count": 1830.0,
+          "elements": [
+            52,
+            52
+          ],
+          "explained_fraction": 0.3029350413532923,
+          "mse": 113.83402833365352,
+          "prediction_target_cosine": 0.5503973388187957,
+          "prediction_to_target_norm": 0.5516625959524908
+        },
+        {
+          "count": 434.0,
+          "elements": [
+            51,
+            51
+          ],
+          "explained_fraction": 0.23668025060726738,
+          "mse": 111.84110727617818,
+          "prediction_target_cosine": 0.4870638381158357,
+          "prediction_to_target_norm": 0.5105462712683156
+        },
+        {
+          "count": 1510.0,
+          "elements": [
+            33,
+            33
+          ],
+          "explained_fraction": 0.16510178487490645,
+          "mse": 110.54149937913907,
+          "prediction_target_cosine": 0.42096403080440936,
+          "prediction_to_target_norm": 0.5310052447500664
+        }
+      ],
+      "volume_normalized_error_correlations": {
+        "lattice_condition": 0.3123396535384907,
+        "mean_degree": -0.016948694078719972,
+        "nearest_cross_site_distance": -0.2973781075364429,
+        "node_count": 0.264449969891466,
+        "self_image_fraction": -0.2833895967214115,
+        "volume_per_atom": 0.01829222586340898
+      },
+      "volume_normalized_node_count_bins": [
+        {
+          "count": 297.0,
+          "explained_fraction": 0.645340147536355,
+          "lower": -Infinity,
+          "mse": 0.36458472531251235,
+          "prediction_target_cosine": 0.8038373045230148,
+          "prediction_to_target_norm": 0.8323728729022958,
+          "upper": 4.0
+        },
+        {
+          "count": 1344.0,
+          "explained_fraction": 0.285042884338901,
+          "lower": 4.0,
+          "mse": 0.794137370018732,
+          "prediction_target_cosine": 0.5485554842653871,
+          "prediction_to_target_norm": 0.6745325442676624,
+          "upper": 8.0
+        },
+        {
+          "count": 1737.0,
+          "explained_fraction": 0.3266574855333293,
+          "lower": 8.0,
+          "mse": 0.7933696819298831,
+          "prediction_target_cosine": 0.5717036095604309,
+          "prediction_to_target_norm": 0.5853966041578157,
+          "upper": 12.0
+        },
+        {
+          "count": 2097.0,
+          "explained_fraction": 0.37844231963585184,
+          "lower": 12.0,
+          "mse": 0.6617686008349679,
+          "prediction_target_cosine": 0.6155812098317684,
+          "prediction_to_target_norm": 0.5932672817183468,
+          "upper": 16.0
+        },
+        {
+          "count": 2244.0,
+          "explained_fraction": 0.29579107140171335,
+          "lower": 16.0,
+          "mse": 0.8471901463527306,
+          "prediction_target_cosine": 0.5442058072983796,
+          "prediction_to_target_norm": 0.5249994266811325,
+          "upper": Infinity
+        }
+      ]
+    }
+  },
+  "optimizer_steps": 0,
+  "protocol": "h1a_volume_normalized_residual_causal_audit_v1",
+  "rollout_by_start_time": [
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.002122819423675537,
+        0.06114459969103336,
+        0.0900420069694519,
+        0.11297926865518092,
+        0.12928926944732666
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.05990884453058243,
+      "sampling_failures": 0,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.004667205270379782,
+        0.08650678023695946,
+        0.13685023635625843,
+        0.14286457896232604,
+        0.21049420535564423
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.08085428178310394,
+      "sampling_failures": 0,
+      "start_time": 0.2,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.0042389919981360435,
+        0.12393448129296303,
+        0.31448270380496984,
+        0.35924307256937027,
+        0.44463735818862915
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.1501910388469696,
+      "sampling_failures": 0,
+      "start_time": 0.4,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.0019013471901416779,
+        0.37889452278614044,
+        1.1388100802898413,
+        1.6324140667915341,
+        1.9511555433273315
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.527959942817688,
+      "sampling_failures": 0,
+      "start_time": 0.6,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.5594905018806458,
+        2.616945505142212,
+        3.658655095100403,
+        3.765987408161163,
+        4.702811241149902
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 2.6136667728424072,
+      "sampling_failures": 0,
+      "start_time": 0.8,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.6596723794937134,
+        2.8500183820724487,
+        3.600294089317322,
+        4.471521091461181,
+        5.007400035858154
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 2.831608772277832,
+      "sampling_failures": 0,
+      "start_time": 0.95,
+      "steps": 100
+    }
+  ],
+  "source_protocol": "h1a_volume_normalized_coordinate_pretraining_v1"
+}

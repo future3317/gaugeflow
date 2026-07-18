@@ -19,6 +19,7 @@ from .cartesian_gauge_atlas import (
     CartesianSTFGeometryQueryEncoder,
     StratifiedCartesianGaugeAtlas,
 )
+from .factorized_angular_moments import FactorizedCartesianAngularMoments
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 from .state_projection import (
     cartesian_tangent_to_fractional,
@@ -51,7 +52,14 @@ class FourierTimeEmbedding(nn.Module):
 class EquivariantDenoisingBlock(nn.Module):
     """O(3)-typed scalar/vector message block with explicit time and condition FiLM."""
 
-    def __init__(self, hidden_dim: int, vector_dim: int, radial_dim: int) -> None:
+    def __init__(
+        self,
+        hidden_dim: int,
+        vector_dim: int,
+        radial_dim: int,
+        edge_dim: int,
+        angular_channels: int,
+    ) -> None:
         super().__init__()
         scalar_inputs = 2 * hidden_dim + 2 * vector_dim + radial_dim + 2
         self.scalar_message = nn.Sequential(
@@ -69,6 +77,32 @@ class EquivariantDenoisingBlock(nn.Module):
         self.vector_gate = nn.Sequential(
             nn.Linear(3 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim)
         )
+        self.angular_moments = FactorizedCartesianAngularMoments(
+            edge_dim, angular_channels
+        )
+        angular_dim = self.angular_moments.output_dim
+        self.edge_update = nn.Sequential(
+            nn.Linear(edge_dim + angular_dim, edge_dim),
+            nn.SiLU(),
+            nn.Linear(edge_dim, edge_dim),
+        )
+        self.edge_norm = nn.LayerNorm(edge_dim)
+        self.angular_scalar_residual = nn.Sequential(
+            nn.Linear(edge_dim + angular_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim, bias=False),
+        )
+        self.angular_vector_residual = nn.Sequential(
+            nn.Linear(edge_dim + angular_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 3 * vector_dim, bias=False),
+        )
+        # The angular operator is a strict residual mechanism.  A fresh model
+        # starts at the preceding function while gradients immediately reach
+        # these two output projections; no checkpoint compatibility branch is
+        # required.
+        nn.init.zeros_(self.angular_scalar_residual[-1].weight)
+        nn.init.zeros_(self.angular_vector_residual[-1].weight)
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(
@@ -84,10 +118,25 @@ class EquivariantDenoisingBlock(nn.Module):
         node_time: torch.Tensor,
         node_condition: torch.Tensor,
         node_state: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+        edge_state: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         scalar_aggregate = torch.zeros_like(nodes)
         vector_aggregate = torch.zeros_like(vectors)
         if source.numel():
+            angular = self.angular_moments(
+                edge_state,
+                target,
+                directions,
+                edge_envelope,
+                nodes.shape[0],
+            )
+            edge_context = torch.cat((edge_state, angular), dim=-1)
+            edge_state = self.edge_norm(edge_state + self.edge_update(edge_context))
+            # Keep the unnormalized angular contractions in the residual
+            # context.  Layer-normalizing the persistent state stabilizes
+            # depth, while the raw contractions retain local coordination
+            # amplitude instead of silently quotienting it out.
+            edge_context = torch.cat((edge_state, angular), dim=-1)
             source_projection = torch.einsum("evc,ec->ev", vectors[source], directions)
             target_projection = torch.einsum("evc,ec->ev", vectors[target], directions)
             response_norm = torch.linalg.vector_norm(edge_response, dim=-1, keepdim=True)
@@ -104,8 +153,14 @@ class EquivariantDenoisingBlock(nn.Module):
                 ),
                 dim=-1,
             )
-            scalar_message = self.scalar_message(features) * edge_envelope
-            coefficients = self.vector_coefficients(features).reshape(source.numel(), 3, vectors.shape[1])
+            scalar_message = (
+                self.scalar_message(features)
+                + self.angular_scalar_residual(edge_context)
+            ) * edge_envelope
+            coefficients = (
+                self.vector_coefficients(features)
+                + self.angular_vector_residual(edge_context)
+            ).reshape(source.numel(), 3, vectors.shape[1])
             vector_message = (
                 coefficients[:, 0, :, None] * directions[:, None, :]
                 + coefficients[:, 1, :, None] * edge_response[:, None, :]
@@ -136,7 +191,7 @@ class EquivariantDenoisingBlock(nn.Module):
             self.vector_gate(torch.cat((node_time, node_condition, node_state), dim=-1))
         ).unsqueeze(-1)
         vectors = vectors + vector_scale * vector_aggregate
-        return nodes, vectors
+        return nodes, vectors, edge_state
 
 
 @dataclass(frozen=True)
@@ -152,6 +207,8 @@ class HybridDenoiserOutput:
 class HybridCrystalDenoiser(nn.Module):
     """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
 
+    coordinate_chart = "volume_normalized_cartesian_tangent_v1"
+
     def __init__(
         self,
         *,
@@ -161,10 +218,15 @@ class HybridCrystalDenoiser(nn.Module):
         radial_dim: int = 16,
         radial_cutoff: float = 8.0,
         atlas_residual_circle_samples: int = 8,
+        edge_dim: int = 64,
+        angular_channels: int = 8,
     ) -> None:
         super().__init__()
         if layers < 1:
             raise ValueError("production denoiser needs at least one message block")
+        if edge_dim < 1 or angular_channels < 1:
+            raise ValueError("edge and angular dimensions must be positive")
+        self.edge_dim = int(edge_dim)
         self.element_embedding = nn.Embedding(119, hidden_dim)
         self.degree_embedding = nn.Sequential(
             nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
@@ -185,7 +247,16 @@ class HybridCrystalDenoiser(nn.Module):
             hidden_dim, radial_dim, query_channels=2, layers=3
         )
         self.blocks = nn.ModuleList(
-            [EquivariantDenoisingBlock(hidden_dim, vector_dim, radial_dim) for _ in range(layers)]
+            [
+                EquivariantDenoisingBlock(
+                    hidden_dim,
+                    vector_dim,
+                    radial_dim,
+                    edge_dim,
+                    angular_channels,
+                )
+                for _ in range(layers)
+            ]
         )
         head_inputs = 4 * hidden_dim
         self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
@@ -194,6 +265,18 @@ class HybridCrystalDenoiser(nn.Module):
             nn.Linear(5 * hidden_dim + radial_dim, hidden_dim),
             nn.SiLU(),
         )
+        self.edge_state_initializer = nn.Sequential(
+            nn.Linear(2 * hidden_dim + radial_dim + 1, edge_dim),
+            nn.SiLU(),
+            nn.Linear(edge_dim, edge_dim),
+            nn.LayerNorm(edge_dim),
+        )
+        self.coordinate_edge_residual = nn.Sequential(
+            nn.Linear(edge_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim, bias=False),
+        )
+        nn.init.zeros_(self.coordinate_edge_residual[-1].weight)
         self.coordinate_carrier = CompactCartesianKrylovCarrier(
             hidden_dim, vector_dim, moment_channels=16, rms_epsilon=1.0e-4
         )
@@ -206,6 +289,10 @@ class HybridCrystalDenoiser(nn.Module):
         self.shape_head = nn.Sequential(
             nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
         )
+
+    @property
+    def angular_channels(self) -> int:
+        return self.blocks[0].angular_moments.channels
 
     def forward(
         self,
@@ -309,6 +396,16 @@ class HybridCrystalDenoiser(nn.Module):
             )
         node_condition = gauge_atlas.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition + node_state
+        if source.numel():
+            self_image = (
+                (source == target)
+                & edges.image_shift.ne(0).any(dim=-1)
+            ).to(nodes).unsqueeze(-1)
+            edge_state = self.edge_state_initializer(
+                torch.cat((nodes[source], nodes[target], radial, self_image), dim=-1)
+            )
+        else:
+            edge_state = nodes.new_empty((0, self.edge_dim))
         vectors = nodes.new_zeros(
             (nodes.shape[0], self.coordinate_carrier.vector_channels, 3)
         )
@@ -319,7 +416,7 @@ class HybridCrystalDenoiser(nn.Module):
         # runtime precision fallback.
         with torch.autocast(device_type=nodes.device.type, enabled=False):
             for block in self.blocks:
-                nodes, vectors = block(
+                nodes, vectors, edge_state = block(
                     nodes.float(),
                     vectors.float(),
                     source,
@@ -331,6 +428,7 @@ class HybridCrystalDenoiser(nn.Module):
                     node_time.float(),
                     node_condition.float(),
                     node_state.float(),
+                    edge_state.float(),
                 )
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_time = self.time_embedding(time)
@@ -357,6 +455,9 @@ class HybridCrystalDenoiser(nn.Module):
             )
             with torch.autocast(device_type=edge_features.device.type, enabled=False):
                 edge_hidden = self.coordinate_edge_encoder(edge_features.float())
+                edge_hidden = edge_hidden + self.coordinate_edge_residual(
+                    edge_state.float()
+                )
         else:
             edge_hidden = nodes.new_empty(
                 (0, self.coordinate_carrier.moment_projection.in_features)
@@ -371,10 +472,18 @@ class HybridCrystalDenoiser(nn.Module):
             graphs,
         )
         with torch.autocast(device_type=carrier.device.type, enabled=False):
-            cartesian_score = self.coordinate_carrier_mixer(carrier, nodes)
-            cartesian_score = cartesian_score - graph_mean(
-                cartesian_score, batch, graphs
+            normalized_cartesian_score = self.coordinate_carrier_mixer(carrier, nodes)
+            normalized_cartesian_score = normalized_cartesian_score - graph_mean(
+                normalized_cartesian_score, batch, graphs
             )[batch]
+            # The fractional torus path is unchanged.  Only the learned output
+            # chart is made dimensionless with the O(3)- and GL(3,Z)-invariant
+            # cell scale V^(1/3).  The physical Cartesian tangent is restored
+            # before the exact fractional pullback consumed by the sampler.
+            cell_scale = torch.exp(log_volume.float() / 3.0)
+            cartesian_score = normalized_cartesian_score * cell_scale[
+                batch, None
+            ]
             # The reverse sampler consumes a tangent drift because it adds the
             # network output to fractional coordinates. For r=fL, a Cartesian
             # tangent vector obeys v_r=v_f L and hence v_f=v_r L^-1. The prior

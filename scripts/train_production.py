@@ -44,6 +44,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     protocol = load_json_object(args.protocol)
+    if protocol.get("status_before_run") != "frozen_not_run":
+        raise ValueError("training protocol was not frozen before execution")
     model_spec = protocol.get("model")
     training_spec = protocol.get("training")
     prerequisites = protocol.get("prerequisites")
@@ -83,6 +85,12 @@ def main() -> None:
     observed_manifest_hash = sha256_file(args.cache_root / "manifest.json")
     if observed_manifest_hash != str(prerequisites["cache_manifest_sha256"]):
         raise ValueError("production protocol cache manifest mismatch")
+    qualification_name = str(prerequisites["qualified_mechanism"])
+    qualification_result = Path("reports") / qualification_name / "result.json"
+    if sha256_file(qualification_result) != str(
+        prerequisites["qualification_result_sha256"]
+    ):
+        raise ValueError("production protocol mechanism qualification mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
     if objective == "coordinate":
         graph_presentations = int(training_spec["graph_presentations"])
@@ -137,6 +145,8 @@ def main() -> None:
             "radial_dim": int(model_spec["radial_dim"]),
             "radial_cutoff": float(model_spec["radial_cutoff_angstrom"]),
             "atlas_residual_circle_samples": 8,
+            "edge_dim": int(model_spec["edge_dim"]),
+            "angular_channels": int(model_spec["angular_channels"]),
         }
     )
     model = HybridCrystalDenoiser(**model_config).to(device)
@@ -189,6 +199,7 @@ def main() -> None:
         "lattice_standardization": standardization_value,
         "seed": args.seed,
         "tensor_condition_enabled": False,
+        "coordinate_chart": model.coordinate_chart,
         "blueprint": "P1_empirical_node_count",
         "training_stage": training_config.objective,
     }

@@ -1,0 +1,89 @@
+{
+  "protocol": "h1a_factorized_angular_coordinate_pretraining_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed exact-one-pass coordinate-only test of the qualified factorized Cartesian angular-moment backbone; no radial, aggregation, loss, sampler, joint, tensor or later-Gate change",
+  "prerequisites": {
+    "qualified_cache": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_factorized_cartesian_angular_moments_v1",
+    "qualification_result_sha256": "c7006ea579e59ff667de26b8a973c822c48aaaa8d9f0b15b000b62157481c3ed",
+    "failed_predecessor": "h1a_cartesian_tangent_coordinate_pretraining_v1",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "objective": "coordinate-only translation-quotient DSM in the Cartesian tangent metric",
+    "backbone_change": "64-dimensional persistent scalar edge state with eight factorized first/second Cartesian angular-moment channels",
+    "complexity": "O(E*C), no explicit triplet index",
+    "self_image_flag": true,
+    "unchanged": [
+      "probability path",
+      "16 Gaussian RBF",
+      "degree aggregation",
+      "compact 80-channel Cartesian carrier",
+      "rank-8 adaptive carrier mixer",
+      "loss and optimizer",
+      "reverse sampler"
+    ],
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "parameter_count": 4948281
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 8441,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "coordinate",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1250, 5000, 8441],
+    "graph_presentations": 540164,
+    "data_passes": 1.0
+  },
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "score_graphs": 128,
+    "score_seed": 8503,
+    "score_noise_seed": 8504,
+    "score_times": [0.005, 0.01, 0.02, 0.05, 0.1],
+    "rollout_graphs": 32,
+    "rollout_seed": 8505,
+    "rollout_noise_seed": 8506,
+    "rollout_start_times": [0.1, 0.2],
+    "rollout_steps": 100,
+    "rollout_stochastic": true
+  },
+  "acceptance": {
+    "final_over_initial_coordinate_validation_max": 0.5,
+    "t005_teacher_forced_endpoint_rms_angstrom_max": 0.04,
+    "t01_teacher_forced_endpoint_rms_angstrom_max": 0.08,
+    "t01_rollout_endpoint_rms_angstrom_max": 0.5,
+    "t02_rollout_endpoint_rms_angstrom_max": 1.0,
+    "sampling_failures": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "perform the preregistered radial/angular causal diagnostics before any joint initialization; this result alone does not qualify H1a generation",
+    "fail": "stop before joint training and diagnose distance/time/degree/self-image/element-pair errors without adding steps, seeds or a simultaneous mechanism",
+    "boundary": "No extra seed or step may rescue failure. No result authorizes H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

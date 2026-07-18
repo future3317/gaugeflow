@@ -1,0 +1,84 @@
+{
+  "protocol": "h1a_volume_normalized_cartesian_chart_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-optimizer qualification of the GL(3,Z)-invariant V^(1/3)-normalized Cartesian tangent output/loss chart on the qualified factorized-angular backbone; probability path and sampler unchanged",
+  "prerequisites": {
+    "failed_learning_protocol": "h1a_factorized_angular_coordinate_pretraining_v1",
+    "causal_audit": "h1a_local_geometry_causal_audit_v1",
+    "causal_audit_sha256": "5f6eba96a28292f3731db92bf13fe007042864f1b1b25c792d4252c731aaf54c",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "learned_chart": "v_tilde=V^(-1/3) v_r",
+    "physical_output": "v_r=V^(1/3) v_tilde",
+    "fractional_pullback": "v_f=v_r L^-1",
+    "invariance": "V^(1/3) is O(3)-invariant and unchanged by GL(3,Z) matrices with abs(det)=1",
+    "probability_path_change": false,
+    "sampler_change": false,
+    "parameter_change": false,
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "carrier_channels": 80,
+    "adaptive_rank": 8,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "added_parameter_count": 466944,
+    "expected_parameter_count": 4948281
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 6401,
+    "noise_seed": 6402,
+    "model_seed": 6403,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "benchmark": {
+    "hardware": "RTX 4060 Ti 16 GB",
+    "precision": "mixed BF16/fixed-FP32 geometry",
+    "warmup": 5,
+    "iterations": 20
+  },
+  "acceptance": {
+    "function_preserving_max_abs": 0.0,
+    "parameter_count_exact": 4948281,
+    "added_parameter_count_exact": 466944,
+    "adaptive_rank_exact": 8,
+    "edge_dim_exact": 64,
+    "angular_channels_exact": 8,
+    "coordinate_chart_exact": "volume_normalized_cartesian_tangent_v1",
+    "explicit_triplet_indices": 0,
+    "initial_angular_residual_nonzero": 0,
+    "angular_output_gradient_norm_min": 1e-8,
+    "initial_angular_internal_gradient_norm": 0.0,
+    "active_angular_internal_gradient_norm_min": 1e-8,
+    "legacy_global_head_parameters": 0,
+    "carrier_projection_initial_nonzero": 0,
+    "carrier_projection_gradient_norm_min": 1e-8,
+    "finite_coordinate_output_and_gradient": true,
+    "bf16_fp32_output_relative_rmse_max": 0.05,
+    "bf16_fp32_output_cosine_min": 0.99,
+    "bf16_fp32_gradient_ratio_min": 0.5,
+    "bf16_fp32_gradient_ratio_max": 2.0,
+    "bf16_fp32_gradient_cosine_min": 0.9,
+    "translation_permutation_o3_gl3z_tests": true,
+    "explicit_triplet_reference_max_abs": 1e-10,
+    "forward_graphs_per_second_min": 300.0,
+    "peak_cuda_memory_mib_max": 1536.0,
+    "tensor_free_atlas_candidates": 0,
+    "optimizer_steps": 0,
+    "parameters_unchanged": true
+  },
+  "decision_rule": {
+    "pass": "retain the volume-normalized chart and freeze one same-seed, same-budget, exact-one-pass coordinate-only learning protocol",
+    "fail": "remove the chart and retain the failed factorized-angular checkpoint only as evidence; do not add another mechanism",
+    "boundary": "No result authorizes extra seeds or steps, joint training, H1b-H6, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}

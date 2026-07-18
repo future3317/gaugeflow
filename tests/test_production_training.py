@@ -7,10 +7,12 @@ from gaugeflow.production.checkpointing import load_production_checkpoint, save_
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
+from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.reverse_sampler import (
     TensorFreeReverseSampler,
     quotient_coordinate_reverse_step,
 )
+from gaugeflow.production.state_projection import fractional_tangent_to_cartesian
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
 
@@ -78,6 +80,40 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
         parameter.grad is None or torch.isfinite(parameter.grad).all()
         for parameter in diffusion.denoiser.parameters()
     )
+
+
+def test_coordinate_loss_uses_volume_normalized_cartesian_chart() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(
+        _small_model(), _standardizer(), coordinate_sigma_min=0.005, coordinate_sigma_max=0.5
+    )
+    output = diffusion(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=torch.tensor([0.2, 0.2]),
+        generator=torch.Generator().manual_seed(108),
+    )
+    noisy_lattice = LatticeVolumeShape(
+        output.noisy.log_volume, output.noisy.log_shape
+    ).lattice(blueprint.fractional_to_cartesian)
+    target = fractional_tangent_to_cartesian(
+        output.noisy.coordinate_scaled_score_target,
+        noisy_lattice,
+        blueprint.batch,
+    )
+    scale = torch.exp(output.noisy.log_volume / 3.0)[blueprint.batch, None]
+    error = (output.prediction.coordinate_cartesian_scaled_score - target) / scale
+    graph_loss = torch.stack(
+        [
+            error[blueprint.batch == graph].square().sum(-1).mean() / 3.0
+            for graph in range(2)
+        ]
+    ).mean()
+    torch.testing.assert_close(output.coordinate_loss, graph_loss)
 
 
 def test_tensor_free_path_skips_geometry_query_encoder():

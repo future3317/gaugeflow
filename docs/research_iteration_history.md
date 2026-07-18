@@ -531,3 +531,35 @@ but its cross-state Cartesian carrier family remains insufficient. The
 classification is `backbone_span_limited`, not a disconnected or unoptimized
 global head. Any successor must alter one feature-formation mechanism rather
 than add steps, seeds, harmonic branches, or joint objectives.
+
+### Factorized angular moments and the volume-normalized tangent chart
+
+The bounded successor maintains a 64-dimensional scalar state per periodic
+edge and forms eight first- and second-order Cartesian moment channels at each
+message block. Expanding the contractions gives the explicit degree-one/two
+triplet kernels, but the implementation concatenates the 3 vector and 6 STF
+components into one target-sorted segment reduction. It therefore retains
+`O(E*C)` time and edge/node-linear storage and never creates a triplet index.
+The active implementation qualifies at `489.10 graphs/s` and `182.86 MiB` on
+the RTX 4060 Ti, with BF16/FP32 output and gradient cosines
+`0.999916/0.999038`.
+
+One exact pass over all 540,164 train structures improves the validation ratio
+from `0.70396` to `0.63864` and reaches `0.03916 A` at `t=.005`, but the ratio
+still fails. A fixed 256-graph causal audit rejects short-range RBF, degree,
+self-image, and element-pair attributions. Raw Cartesian graph error correlates
+with atom count by `0.579--0.643`; dividing the tangent by `V^(1/3)` reduces
+this to `0.163--0.231`. The resulting dimensionless chart learns
+`V^(-1/3)v_r` and restores `v_r` before the exact `v_f=v_rL^-1` pullback,
+leaving the torus path and sampler unchanged. Its exact-one-pass run reaches
+ratio `0.58940`, `t=.005/.1` RMS `0.040084/0.05675 A`, and rollout `.1/.2`
+RMS `0.05963/0.08444 A`, with zero failures and zero tensor candidates. It
+remains a failed H1a result.
+
+A single degree-three STF extension was then tested under the same seed, steps,
+data, chart, and sampler. It improves the ratio only to `0.57240` and
+`t=.005` to `0.03938 A`, while reducing measured training throughput. This is
+useful negative evidence that angular order alone does not pay for its added
+complexity. The cubic parameter and runtime path were removed; production
+retains only the vectorized degree-one/two operator. No joint initialization,
+later Gate, tensor condition, oracle, relaxation, DFT, or DFPT was run.

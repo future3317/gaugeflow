@@ -1,0 +1,37 @@
+{
+  "protocol": "h1a_volume_normalized_residual_causal_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only residual attribution of the failed volume-normalized factorized-angular checkpoint by distance, time, degree, periodic self images, element pair, cell shape and rollout start time; no optimizer or model mutation",
+  "source_protocol": "h1a_volume_normalized_coordinate_pretraining_v1",
+  "source_protocol_sha256": "eb669a4e39bdf4e5d3b0c7e05ac8dadda67826c398c475f2e47823ae8efb5624",
+  "source_checkpoint_step": 8441,
+  "seed": 5705,
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "local_error": {
+    "graphs": 256,
+    "selection_seed": 8501,
+    "noise_seed": 8702,
+    "batch_size": 32,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5],
+    "distance_bins_angstrom": [1.5, 2.0, 2.5, 3.0, 4.0, 6.0],
+    "degree_bins": [16, 32, 64, 128],
+    "node_count_bins": [4, 8, 12, 16],
+    "minimum_element_pair_edges": 256,
+    "reported_element_pairs": 20
+  },
+  "rollout": {
+    "graphs": 32,
+    "selection_seed": 8505,
+    "noise_seed": 8806,
+    "start_times": [0.1, 0.2, 0.4, 0.6, 0.8, 0.95],
+    "steps": 100,
+    "stochastic": true
+  },
+  "decision_rule": {
+    "anisotropic_cell_chart": "if volume-normalized graph error retains absolute log-correlation at least 0.30 with lattice condition at two or more informative times, qualify one GL(3,Z)-covariant metric-whitened tangent chart",
+    "short_range": "otherwise, if d<2A explained fraction trails 2-4A by at least 0.10 at two or more informative times, qualify one short-range radial-resolution mechanism",
+    "element_pair": "otherwise, if the same chemically meaningful element-pair family remains a high-error outlier at two or more informative times, qualify one compact pair-conditioned angular mechanism",
+    "remaining": "otherwise retain the active volume-normalized chart and classify the failure as diffuse backbone-span limitation rather than adding another mechanism",
+    "boundary": "No result changes the failed training conclusion or authorizes extra steps, seeds, simultaneous mechanisms, joint training, H1b-H6, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}

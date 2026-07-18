@@ -38,20 +38,27 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
 - No external pretrained weights or failed H1a checkpoint initialize the active
   model. "Coordinate-only pretraining" denotes a from-scratch auxiliary
   objective on the qualified train split, not transfer learning.
-- The corrected Cartesian-tangent coordinate pretraining has now completed one
-  exact pass over all 540,164 train structures at seed 5705.  It passed the
-  `t=.1` teacher-forced check, both rollouts, zero-failure and atlas-bypass
-  checks, but failed final/initial validation (`0.70396 > 0.5`) and the
-  low-noise endpoint (`0.04207 A > 0.04 A`).  It must not initialize joint
-  training or be rescued with another seed, more steps, or a changed bound.
+- The corrected Cartesian-tangent baseline completed one exact pass over all
+  540,164 train structures at seed 5705 but failed final/initial validation
+  (`0.70396 > 0.5`) and the low-noise endpoint (`0.04207 A > 0.04 A`).
 - A zero-step readout-span audit rules out the final global linear head as the
   main limitation. At step 8441 a train-fitted minimum-norm head changes train
   loss by only `-5.23%` and validation loss by `+3.46%`; a validation-label
   oracle head explains only `49.61% < 75%`. All designs are rank `80/80`, but
   validation effective rank is `21.32`. The classification is
-  `backbone_span_limited`. A successor may test exactly one compact
-  state-adaptive scalar mixing of the existing Cartesian carriers; do not tune
-  the global head, add harmonic channels, seeds, steps, or joint objectives.
+  `backbone_span_limited`. Production now retains one compact factorized
+  Cartesian angular-moment mechanism: 64-dimensional persistent scalar edge
+  state, eight first/second-moment channels, one concatenated linear-time
+  segment reduction, and no explicit triplet index. It adds 466,944 parameters
+  and is qualified at `489.10 graphs/s / 182.86 MiB` on the RTX 4060 Ti.
+- Its exact-one-pass run improves validation ratio to `0.63864`. A causal audit
+  then qualifies the equivalent chart `v_tilde=V^(-1/3)v_r`, which reduces the
+  ratio to `0.58940` while preserving the fractional path and sampler. The
+  low-noise endpoint is `0.040084 A`; the run still fails.
+- A degree-three STF extension improves the ratio only to `0.57240` and the
+  low-noise endpoint to `0.03938 A`, at lower training throughput. It is not in
+  active runtime. The only active operator is the vectorized degree-one/two
+  implementation; do not restore cubic, harmonic, or compatibility branches.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 

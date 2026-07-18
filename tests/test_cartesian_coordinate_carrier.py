@@ -149,9 +149,16 @@ def test_production_model_contains_only_the_adaptive_compact_coordinate_readout(
 
     model = HybridCrystalDenoiser()
     names = tuple(name for name, _ in model.named_parameters())
-    assert sum(parameter.numel() for parameter in model.parameters()) == 4_481_337
+    assert sum(parameter.numel() for parameter in model.parameters()) == 4_948_281
     assert not any("coordinate_vector_head" in name for name in names)
     assert not any("coordinate_edge_head" in name for name in names)
     assert not any("coordinate_carrier_head" in name for name in names)
     assert model.coordinate_carrier.output_channels == 80
     assert model.coordinate_carrier_mixer.rank == 8
+    assert model.edge_dim == 64
+    assert model.angular_channels == 8
+    for block in model.blocks:
+        assert block.angular_moments.channels == 8
+        assert torch.count_nonzero(block.angular_scalar_residual[-1].weight) == 0
+        assert torch.count_nonzero(block.angular_vector_residual[-1].weight) == 0
+    assert torch.count_nonzero(model.coordinate_edge_residual[-1].weight) == 0

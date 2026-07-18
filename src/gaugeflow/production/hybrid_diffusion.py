@@ -253,10 +253,15 @@ class TensorFreeHybridDiffusion(nn.Module):
                 noisy_lattice,
                 batch,
             )
+        # Optimize the equivalent dimensionless Cartesian chart.  Returning
+        # the physical tangent from the denoiser keeps the probability path
+        # and reverse sampler unchanged, while V^(-1/3) removes a purely
+        # representational cell-size heteroscedasticity from the objective.
+        cell_scale = torch.exp(noisy.log_volume.float() / 3.0)
         coordinate_error = (
             prediction.coordinate_cartesian_scaled_score.float()
             - coordinate_target_cartesian
-        )
+        ) / cell_scale[batch, None]
         coordinate_quadratic = coordinate_error.square().sum(dim=-1)
         graph_coordinate = scatter(
             coordinate_quadratic,

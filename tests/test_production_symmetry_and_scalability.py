@@ -152,11 +152,27 @@ def _denoiser_input() -> tuple[torch.Tensor, ...]:
     )
 
 
+def _activate_factorized_angular_path(model: HybridCrystalDenoiser) -> None:
+    generator = torch.Generator().manual_seed(99)
+    with torch.no_grad():
+        for block in model.blocks:
+            block.angular_scalar_residual[-1].weight.normal_(
+                std=0.02, generator=generator
+            )
+            block.angular_vector_residual[-1].weight.normal_(
+                std=0.02, generator=generator
+            )
+        model.coordinate_edge_residual[-1].weight.normal_(
+            std=0.02, generator=generator
+        )
+
+
 def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     torch.manual_seed(101)
     model = HybridCrystalDenoiser(
         hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, atlas_residual_circle_samples=8
     ).eval()
+    _activate_factorized_angular_path(model)
     values = _denoiser_input()
     projected_shape = torch.einsum("bij,bj->bi", values[8], values[3])
     projected_values = (*values[:3], projected_shape, *values[4:])
@@ -192,6 +208,7 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     model = HybridCrystalDenoiser(
         hidden_dim=24, vector_dim=6, layers=2, radial_dim=5, atlas_residual_circle_samples=8
     ).eval()
+    _activate_factorized_angular_path(model)
     values = list(_denoiser_input())
     values[3] = torch.zeros_like(values[3])
     original = model(*values)

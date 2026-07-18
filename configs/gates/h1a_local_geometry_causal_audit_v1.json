@@ -1,0 +1,39 @@
+{
+  "protocol": "h1a_local_geometry_causal_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only attribution of the failed factorized-angular one-pass checkpoint by distance, time, degree, periodic self images, element pair and rollout start time; no optimizer or model mutation",
+  "source_protocol": "h1a_factorized_angular_coordinate_pretraining_v1",
+  "source_protocol_sha256": "dfeb0016373fab89a2bc7f76da3091ee398abfc3a365697b066e31c42747167b",
+  "source_checkpoint_step": 8441,
+  "seed": 5705,
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "local_error": {
+    "graphs": 256,
+    "selection_seed": 8501,
+    "noise_seed": 8702,
+    "batch_size": 32,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5],
+    "distance_bins_angstrom": [1.5, 2.0, 2.5, 3.0, 4.0, 6.0],
+    "degree_bins": [16, 32, 64, 128],
+    "node_count_bins": [4, 8, 12, 16],
+    "minimum_element_pair_edges": 256,
+    "reported_element_pairs": 20
+  },
+  "rollout": {
+    "graphs": 32,
+    "selection_seed": 8505,
+    "noise_seed": 8806,
+    "start_times": [0.1, 0.2, 0.4, 0.6, 0.8, 0.95],
+    "steps": 100,
+    "stochastic": true
+  },
+  "decision_rule": {
+    "short_range": "if d<2A explained fraction trails 2-4A by at least 0.10 at two or more informative times, qualify one short-range radial-resolution mechanism",
+    "degree": "otherwise, if abs correlation of graph error with mean degree is at least 0.30 at two or more informative times, qualify one degree aggregation mechanism",
+    "self_image": "otherwise, if abs correlation with periodic self-image fraction is at least 0.30 at two or more informative times, qualify one self-image separation mechanism",
+    "volume_normalized_chart": "if raw graph MSE correlates with node count by at least 0.50 while dividing Cartesian tangent error by V^(1/3) reduces that correlation below 0.30 at two or more informative times, qualify one GL(3,Z)-invariant volume-normalized Cartesian output/loss chart",
+    "high_noise": "otherwise, if teacher-forced low/mid time is controlled but rollout deteriorates sharply only from t>=0.4, diagnose high-noise reconstruction before sampler tuning",
+    "remaining": "otherwise retain the current path and attribute the remaining failure to state-dependent representation/optimization rather than a localized radial or degree mechanism",
+    "boundary": "No result changes the failed training conclusion or authorizes extra steps, seeds, simultaneous mechanisms, joint training, H1b-H6, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}
