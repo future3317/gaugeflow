@@ -1,19 +1,21 @@
 {
-  "protocol": "h1a_cartesian_covector_coordinate_pretraining_v1",
+  "protocol": "h1a_cartesian_tangent_coordinate_pretraining_v1",
   "status_before_run": "frozen_not_run",
-  "scope": "single-seed exact-one-pass coordinate-only learning qualification of the compact Cartesian carrier and equivalent Cartesian-covector loss; no joint initialization, H1b-H6 or tensor conditioning",
+  "scope": "single-seed exact-one-pass coordinate-only qualification of the compact Cartesian carrier and corrected Cartesian tangent metric; no joint initialization, H1b-H6 or tensor conditioning",
   "prerequisites": {
     "qualified_cache": "h1a_p1_structure_cache_v1",
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
-    "qualified_integration": "h1a_cartesian_covector_loss_integration_v1",
-    "integration_decision": "retain the compact Cartesian carrier and Cartesian-covector loss in production, then freeze exactly one same-seed one-pass coordinate-only pretraining protocol",
+    "qualified_numerics": "h1a_geometry_precision_boundary_v3",
+    "qualification_decision": "retain linear deterministic reductions, the fixed geometry precision boundary and Cartesian tangent metric, then freeze exactly one same-seed one-pass coordinate-only pretraining protocol",
     "tensor_condition_enabled": false
   },
   "mechanism": {
-    "objective": "coordinate-only translation-quotient DSM in the orthonormal Cartesian covector metric",
-    "pointwise_minimizer": "identical to fractional-covector DSM because the noisy-state lattice is fixed and invertible",
-    "reverse_score": "unchanged exact fractional covector",
-    "model_change": "qualified compact Cartesian moment/Krylov carrier",
+    "objective": "coordinate-only translation-quotient DSM in the Cartesian tangent metric",
+    "fractional_to_cartesian": "v_r = v_f L",
+    "cartesian_to_fractional": "solve L^T v_f^T = v_r^T without forming an inverse",
+    "reverse_target": "the exact fractional reverse-drift tangent pushed into the noisy-state Cartesian lattice chart",
+    "model_change": "qualified compact Cartesian moment/Krylov carrier with one fixed FP32 geometry path",
+    "reduction": "target-contiguous linear-time segment_reduce without runtime sorting or CUDA atomic index_add",
     "probability_path_change": false,
     "sampler_change": false,
     "loss_weight_search": false,
@@ -38,6 +40,7 @@
     "gradient_clip_norm": 1.0,
     "ema_decay": 0.999,
     "precision": "bf16",
+    "geometry_precision": "fp32",
     "objective": "coordinate",
     "coordinate_sigma_min": 0.005,
     "coordinate_sigma_max": 0.5,
@@ -72,8 +75,8 @@
     "tensor_candidates": 0
   },
   "decision_rule": {
-    "pass": "coordinate representation is qualified for a separately frozen single-seed joint-initialization protocol; this alone is not H1a generation qualification",
-    "fail": "stop before joint training and diagnose the learned Cartesian carrier without adding steps, seeds or another simultaneous mechanism",
+    "pass": "the corrected coordinate representation is qualified for a separately frozen single-seed joint-initialization protocol; this alone is not H1a generation qualification",
+    "fail": "stop before joint training without adding steps, seeds or another simultaneous mechanism",
     "boundary": "No extra seed or step may rescue failure. No result authorizes H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
   }
 }
