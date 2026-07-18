@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -167,21 +168,26 @@ def main() -> None:
         / f"seed_{seed}"
         / f"checkpoint_step_{int(protocol['training']['steps']):08d}.pt"
     )
+    run = args.run_root / f"seed_{seed}"
     dataset = PackedAlexP1Dataset(args.cache_root, "val")
     specification = protocol["evaluation"]
     validation_indices = torch.randperm(
         len(dataset),
         generator=torch.Generator().manual_seed(int(specification["validation_seed"])),
     )[: int(specification["validation_graphs"])]
-    validation = _validation_losses(
-        checkpoint,
-        dataset,
-        validation_indices,
-        device=device,
-        seed=int(specification["validation_noise_seed"]),
-        protocol_name=str(protocol["protocol"]),
-        protocol_sha256=protocol_sha256,
-    )
+    validation_curve = {
+        str(step): _validation_losses(
+            run / f"checkpoint_step_{int(step):08d}.pt",
+            dataset,
+            validation_indices,
+            device=device,
+            seed=int(specification["validation_noise_seed"]),
+            protocol_name=str(protocol["protocol"]),
+            protocol_sha256=protocol_sha256,
+        )
+        for step in protocol["training"]["checkpoint_steps"]
+    }
+    validation = validation_curve[str(int(protocol["training"]["steps"]))]
     runtime = load_tensor_free_ema_runtime(
         checkpoint,
         device,
@@ -200,6 +206,20 @@ def main() -> None:
             "batch_size": 16,
             "noise_seed": int(specification["score_noise_seed"]),
             "times": specification["score_times"],
+        },
+        device=device,
+    )
+    # Post-hoc attribution only: acceptance remains bound to ``score_times``
+    # above.  These high-noise points test whether a learned score fails to
+    # vanish as the wrapped heat kernel approaches the uniform torus law.
+    high_noise_score = _score_calibration(
+        runtime,
+        dataset,
+        score_indices,
+        {
+            "batch_size": 16,
+            "noise_seed": int(specification["score_noise_seed"]),
+            "times": [0.2, 0.5, 0.9],
         },
         device=device,
     )
@@ -235,12 +255,42 @@ def main() -> None:
         "tensor_candidates": validation["tensor_candidate_count"]
         == float(acceptance["tensor_candidates"]),
     }
+    training_records = [
+        json.loads(line)
+        for line in (run / "training_metrics.jsonl").read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+    training_log_finite = bool(training_records) and all(
+        math.isfinite(float(value))
+        for record in training_records
+        for key, value in record.items()
+        if key != "step"
+    )
+    if not training_log_finite or int(training_records[-1]["step"]) != int(
+        protocol["training"]["steps"]
+    ):
+        raise ValueError("coordinate-pretraining log is incomplete or non-finite")
     result = {
         "protocol": protocol["protocol"],
         "seed": seed,
         "checkpoint": str(checkpoint),
+        "training": {
+            "steps": int(protocol["training"]["steps"]),
+            "graph_presentations": int(protocol["training"]["graph_presentations"]),
+            "data_passes": float(protocol["training"]["data_passes"]),
+            "final_logged_coordinate_loss": float(
+                training_records[-1]["coordinate_loss"]
+            ),
+            "peak_cuda_memory_mib": max(
+                float(record["peak_cuda_memory_mib"]) for record in training_records
+            ),
+            "training_log_finite": training_log_finite,
+        },
         "validation": validation,
+        "validation_curve": validation_curve,
         "score_calibration": score,
+        "posthoc_high_noise_score_diagnostic": high_noise_score,
         "rollout_closure": rollout,
         "checks": checks,
         "qualified": all(checks.values()),

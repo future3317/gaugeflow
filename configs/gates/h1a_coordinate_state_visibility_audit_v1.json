@@ -1,0 +1,23 @@
+{
+  "protocol": "h1a_coordinate_state_visibility_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "source_protocol": "h1a_coordinate_pretraining_v1",
+  "source_protocol_sha256": "fc486b78071d23365dd865fc8e861831b234e1b89f6f6ceabd477df827cb5033",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "validation_graphs": 128,
+  "validation_seed": 8601,
+  "noise_seed": 8602,
+  "batch_size": 32,
+  "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5],
+  "representative": "one vectorized cyclic permutation inside every repeated-species block",
+  "acceptance": {
+    "visible_state_max_abs_difference": 0.0,
+    "endpoint_set_difference": 0.0,
+    "target_relative_difference_max": 0.00001
+  },
+  "decision_rule": {
+    "fail": "same visible noisy state and same unlabeled endpoint produce different translation-only DSM targets; repair the target on the joint translation-permutation quotient before more training",
+    "pass": "row-label nuisance is not a measured cause; inspect coordinate representation without changing the target",
+    "boundary": "Read-only H1a attribution. It cannot change the failed pretraining result, add steps or seeds, initialize joint training, or authorize H1b-H6."
+  }
+}

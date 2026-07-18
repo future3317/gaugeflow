@@ -1,0 +1,97 @@
+{
+  "checks": {
+    "endpoint_set_identity": true,
+    "translation_only_target_representative_invariance": false,
+    "visible_state_identity": true
+  },
+  "decision": "translation_only_target_is_not_state_visible_repair_joint_quotient",
+  "decision_boundary": "Read-only H1a attribution. It cannot change the failed pretraining result, add steps or seeds, initialize joint training, or authorize H1b-H6.",
+  "endpoint_set_difference": 0.0,
+  "graphs": 128,
+  "graphs_with_repeated_species": 111,
+  "maximum_target_relative_difference": 1.4160977357343731,
+  "protocol": "h1a_coordinate_state_visibility_audit_v1",
+  "qualified": false,
+  "representative": "one vectorized cyclic permutation inside every repeated-species block",
+  "source_protocol": "h1a_coordinate_pretraining_v1",
+  "time_resolved": [
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.048360393628344496,
+      "target_difference_mse_per_component": 1757.9967863291097,
+      "target_left_mse_per_component": 0.9203442119322944,
+      "target_relative_difference": 1.4157788606720905,
+      "target_right_mse_per_component": 1753.1912757911498,
+      "time": 0.005
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.010168855814236908,
+      "target_difference_mse_per_component": 1679.3423138981866,
+      "target_left_mse_per_component": 0.9151730265987228,
+      "target_relative_difference": 1.414549224377145,
+      "target_right_mse_per_component": 1677.6302445643153,
+      "time": 0.01
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.03880142615917814,
+      "target_difference_mse_per_component": 1531.4059294113504,
+      "target_left_mse_per_component": 0.8726274994391637,
+      "target_relative_difference": 1.4155236760946237,
+      "target_right_mse_per_component": 1527.6998806141532,
+      "time": 0.02
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.029071507686453637,
+      "target_difference_mse_per_component": 1160.4683635922472,
+      "target_left_mse_per_component": 0.896846779744847,
+      "target_relative_difference": 1.4153565256157878,
+      "target_right_mse_per_component": 1157.6980141190415,
+      "time": 0.05
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.03781646850847301,
+      "target_difference_mse_per_component": 733.4617108164113,
+      "target_left_mse_per_component": 0.9103113891431258,
+      "target_relative_difference": 1.4160977357343731,
+      "target_right_mse_per_component": 730.6008989776113,
+      "time": 0.1
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": -0.023789271392753567,
+      "target_difference_mse_per_component": 291.9143940726302,
+      "target_left_mse_per_component": 0.8702292079468256,
+      "target_relative_difference": 1.4160489033202277,
+      "target_right_mse_per_component": 290.28795476713543,
+      "time": 0.2
+    },
+    {
+      "graphs": 128.0,
+      "graphs_with_repeated_species": 111.0,
+      "repeated_species_graph_fraction": 0.8671875,
+      "target_cosine": 0.04074915892980137,
+      "target_difference_mse_per_component": 18.28877072812027,
+      "target_left_mse_per_component": 0.9333912556435121,
+      "target_relative_difference": 1.401582117101794,
+      "target_right_mse_per_component": 17.68651181630968,
+      "time": 0.5
+    }
+  ],
+  "visible_state_max_abs_difference": 0.0
+}
