@@ -206,7 +206,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     arguments = parser.parse_args()
     protocol = load_json_object(arguments.protocol)
-    if protocol.get("protocol") != "h1a_tensor_free_benchmark_v2":
+    if not str(protocol.get("protocol", "")).startswith("h1a_tensor_free_"):
         raise ValueError("unexpected tensor-free benchmark protocol")
     device = torch.device(arguments.device)
     if device.type == "cuda" and not torch.cuda.is_available():

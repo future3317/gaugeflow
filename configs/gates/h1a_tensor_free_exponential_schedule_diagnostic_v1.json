@@ -1,0 +1,53 @@
+{
+  "protocol": "h1a_tensor_free_exponential_schedule_diagnostic_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "diagnostic-only train-reference distribution evaluation of the failed seed-5401 schedule screen; no additional training and no authorization of H1b-H6",
+  "checkpoint_protocol": "h1a_p1_exponential_torus_schedule_v1",
+  "checkpoint_protocol_sha256": "6464a69b15c96b74a392701e9afe68a9791e249989aae0cfe5372adee8ef8ebf",
+  "checkpoint_step": 20000,
+  "seeds": [5401],
+  "distribution_reference": {
+    "split": "train",
+    "graphs": 8192,
+    "seed": 10301,
+    "rationale": "identical reference subset to the corrected H1a benchmark"
+  },
+  "novelty_reference": {
+    "split": "test",
+    "graphs": 8192,
+    "seed": 10302,
+    "rationale": "identical novelty-only subset to the corrected H1a benchmark"
+  },
+  "sampling": {
+    "samples_per_seed": 256,
+    "seed": 10303,
+    "batch_size": 8,
+    "steps": 100,
+    "time_grid": "uniform_time",
+    "stochastic": true
+  },
+  "metrics": {
+    "minimum_distance_angstrom": 0.5,
+    "reference_volume_envelope_quantiles": [0.005, 0.995],
+    "wasserstein_quantile_points": 1024,
+    "formula_novelty_scope": "fixed held-out test subset only"
+  },
+  "acceptance": {
+    "sampling_failures": 0,
+    "terminal_masks": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "minimum_distance_each_seed_fraction_min": 0.97,
+    "minimum_distance_aggregate_fraction_min": 0.98,
+    "volume_reference_envelope_fraction_min": 0.98,
+    "element_marginal_jsd_max": 0.10,
+    "node_count_jsd_max": 0.01,
+    "normalized_volume_wasserstein_max": 0.50,
+    "normalized_minimum_distance_wasserstein_max": 0.75,
+    "formula_uniqueness_fraction_min": 0.50
+  },
+  "decision_rule": {
+    "pass": "diagnostic_evidence_supports_a_new_separately_frozen_confirmation_protocol",
+    "fail": "schedule_did_not_repair_train_reference_distribution_stop_before_confirmation",
+    "boundary": "This post-screen diagnostic cannot reverse the frozen screen failure or authorize more seeds, H1b, tensor conditioning, oracle, relaxation, DFT or DFPT."
+  }
+}

@@ -30,3 +30,23 @@ two seeds, then a separately frozen train-reference distribution benchmark.
 Reference: Jiao et al., *Crystal Structure Prediction by Joint Equivariant
 Diffusion*, NeurIPS 2023, arXiv:2309.04475, Appendix D (fractional-coordinate
 noise schedule `sigma_min=0.005`, `sigma_max=0.5`).
+
+## Frozen result
+
+Seed 5401 formally **failed** the screen.  Its coordinate validation ratio was
+0.68663 against the preregistered maximum 0.30.  It therefore does not permit
+training seeds 5402/5403.
+
+The causal generation metric nevertheless improved: the 128-sample generated
+nearest-neighbour median was 2.15772 Å, above the frozen 2.0 Å screen bound and
+the previous corrected-benchmark value of 1.6031 Å.  Total validation ratio was
+0.53571; sampling had zero failures and masks, all lattices were finite with
+positive volume, and every sample exceeded the 0.5 Å guardrail.
+
+The coordinate MSE ratio is not directly comparable between the two schedules:
+the old linear-variance path assigns near-zero targets after torus mixing,
+whereas the log-uniform path retains nonzero targets over much more of model
+time.  This explains the metric conflict but does not retroactively change the
+failed decision.  A separately frozen, no-training single-seed distribution
+diagnostic measures whether the observed distance improvement also reduces the
+train-reference Wasserstein discrepancy.
