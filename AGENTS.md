@@ -44,6 +44,14 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   checks, but failed final/initial validation (`0.70396 > 0.5`) and the
   low-noise endpoint (`0.04207 A > 0.04 A`).  It must not initialize joint
   training or be rescued with another seed, more steps, or a changed bound.
+- A zero-step readout-span audit rules out the final global linear head as the
+  main limitation. At step 8441 a train-fitted minimum-norm head changes train
+  loss by only `-5.23%` and validation loss by `+3.46%`; a validation-label
+  oracle head explains only `49.61% < 75%`. All designs are rank `80/80`, but
+  validation effective rank is `21.32`. The classification is
+  `backbone_span_limited`. A successor may test exactly one compact
+  state-adaptive scalar mixing of the existing Cartesian carriers; do not tune
+  the global head, add harmonic channels, seeds, steps, or joint objectives.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 

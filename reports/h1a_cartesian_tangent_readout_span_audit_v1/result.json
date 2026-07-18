@@ -1,0 +1,417 @@
+{
+  "carrier_head_reconstruction_max_abs": 9.5367431640625e-07,
+  "checkpoint_results": {
+    "0": {
+      "current_head_norm": 0.5388749828543781,
+      "current_to_train_optimum_distance": 43.91215599564678,
+      "current_train": {
+        "explained_fraction": -5.017540397012077e-05,
+        "loss": 43.3729319730188,
+        "target_energy": 43.37075582782465
+      },
+      "current_validation": {
+        "explained_fraction": 0.00033476437395629777,
+        "loss": 43.8920837605296,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_head_norm": 43.89525135743833,
+      "train_optimum_train": {
+        "explained_fraction": 0.08227974825185225,
+        "loss": 39.80222095681869,
+        "target_energy": 43.37075582782465
+      },
+      "train_optimum_train_relative_to_current": 0.9176742070740949,
+      "train_optimum_validation": {
+        "explained_fraction": -0.046743833998511564,
+        "loss": 45.959153524937896,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_validation_relative_to_current": 1.0470943638877115,
+      "train_span": {
+        "condition_number": 206.2598058723873,
+        "effective_rank": 31.98683157414833,
+        "largest_singular_value": 72.13253157405647,
+        "rank": 80,
+        "smallest_retained_singular_value": 0.34971685961289417
+      },
+      "validation_oracle": {
+        "explained_fraction": 0.046734676661130625,
+        "loss": 41.85481291824162,
+        "target_energy": 43.90678218698086
+      },
+      "validation_oracle_head_norm": 33.94707211544189,
+      "validation_span": {
+        "condition_number": 213.6229811815602,
+        "effective_rank": 30.315765011817057,
+        "largest_singular_value": 78.9105763234007,
+        "rank": 80,
+        "smallest_retained_singular_value": 0.3693917943048171
+      }
+    },
+    "1250": {
+      "current_head_norm": 0.773420534236279,
+      "current_to_train_optimum_distance": 31.29537340779052,
+      "current_train": {
+        "explained_fraction": 0.14098878477175691,
+        "loss": 37.25596566902706,
+        "target_energy": 43.37075582782465
+      },
+      "current_validation": {
+        "explained_fraction": 0.07846789219173156,
+        "loss": 40.46150953584701,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_head_norm": 31.320788195116016,
+      "train_optimum_train": {
+        "explained_fraction": 0.22866477427636855,
+        "loss": 33.45339173625963,
+        "target_energy": 43.37075582782465
+      },
+      "train_optimum_train_relative_to_current": 0.8979338244363716,
+      "train_optimum_validation": {
+        "explained_fraction": 0.05318668537499727,
+        "loss": 41.571525976973376,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_validation_relative_to_current": 1.027433886027978,
+      "train_span": {
+        "condition_number": 272.6149658870212,
+        "effective_rank": 9.395399882534218,
+        "largest_singular_value": 148.75415296340194,
+        "rank": 80,
+        "smallest_retained_singular_value": 0.5456565910803649
+      },
+      "validation_oracle": {
+        "explained_fraction": 0.14321917135573825,
+        "loss": 37.618489225264575,
+        "target_energy": 43.90678218698086
+      },
+      "validation_oracle_head_norm": 24.61278068145079,
+      "validation_span": {
+        "condition_number": 262.71575631784657,
+        "effective_rank": 8.838239091995137,
+        "largest_singular_value": 161.55373822658368,
+        "rank": 80,
+        "smallest_retained_singular_value": 0.6149373775325754
+      }
+    },
+    "5000": {
+      "current_head_norm": 1.437234214032701,
+      "current_to_train_optimum_distance": 11.610482462208452,
+      "current_train": {
+        "explained_fraction": 0.4825822666509393,
+        "loss": 22.440798174068597,
+        "target_energy": 43.37075582782465
+      },
+      "current_validation": {
+        "explained_fraction": 0.3744819514300145,
+        "loss": 27.46448471258767,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_head_norm": 11.742588191120003,
+      "train_optimum_train": {
+        "explained_fraction": 0.5141676480452224,
+        "loss": 21.07091630988843,
+        "target_energy": 43.37075582782465
+      },
+      "train_optimum_train_relative_to_current": 0.9389557424136931,
+      "train_optimum_validation": {
+        "explained_fraction": 0.3666986944276388,
+        "loss": 27.806222482496274,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_validation_relative_to_current": 1.0124428975633386,
+      "train_span": {
+        "condition_number": 96.34640717473943,
+        "effective_rank": 18.713225273398958,
+        "largest_singular_value": 129.86608825322133,
+        "rank": 80,
+        "smallest_retained_singular_value": 1.3479079507104885
+      },
+      "validation_oracle": {
+        "explained_fraction": 0.4300999799175672,
+        "loss": 25.022476050115397,
+        "target_energy": 43.90678218698086
+      },
+      "validation_oracle_head_norm": 12.837502289008189,
+      "validation_span": {
+        "condition_number": 102.2988901650733,
+        "effective_rank": 17.67839878417652,
+        "largest_singular_value": 135.04002155229023,
+        "rank": 80,
+        "smallest_retained_singular_value": 1.3200536323941015
+      }
+    },
+    "8441": {
+      "current_head_norm": 1.800971176404233,
+      "current_to_train_optimum_distance": 6.995192928828327,
+      "current_train": {
+        "explained_fraction": 0.572815639115968,
+        "loss": 18.52730860936668,
+        "target_energy": 43.37075582782465
+      },
+      "current_validation": {
+        "explained_fraction": 0.4546912594342388,
+        "loss": 23.94275209667773,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_head_norm": 7.3711800620732495,
+      "train_optimum_train": {
+        "explained_fraction": 0.5951637477209091,
+        "loss": 17.558054247848077,
+        "target_energy": 43.37075582782465
+      },
+      "train_optimum_train_relative_to_current": 0.9476850965267245,
+      "train_optimum_validation": {
+        "explained_fraction": 0.4358294184153846,
+        "loss": 24.770914841938026,
+        "target_energy": 43.90678218698086
+      },
+      "train_optimum_validation_relative_to_current": 1.0345892878945697,
+      "train_span": {
+        "condition_number": 66.12110104538725,
+        "effective_rank": 22.864722515741736,
+        "largest_singular_value": 120.14278849132728,
+        "rank": 80,
+        "smallest_retained_singular_value": 1.8170113109407862
+      },
+      "validation_oracle": {
+        "explained_fraction": 0.49608486307293564,
+        "loss": 22.12529215777925,
+        "target_energy": 43.90678218698086
+      },
+      "validation_oracle_head_norm": 8.792581278203066,
+      "validation_span": {
+        "condition_number": 68.84416037983655,
+        "effective_rank": 21.317739493021637,
+        "largest_singular_value": 127.51374970735908,
+        "rank": 80,
+        "smallest_retained_singular_value": 1.8522086550816006
+      }
+    }
+  },
+  "checks": {
+    "carrier_head_reconstruction": true,
+    "finite_all_metrics": true,
+    "minimum_design_rank": true,
+    "optimizer_steps": true,
+    "parameters_unchanged": true,
+    "tensor_candidates": true
+  },
+  "classification": "backbone_span_limited",
+  "decision_boundary": "This audit cannot change the failed source result, update a model, add a seed or step, initialize joint training, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT. Any successor is one separately frozen mechanism chosen from the classification.",
+  "final_time_resolved_validation": [
+    {
+      "replicates": [
+        {
+          "current": {
+            "explained_fraction": 0.4185009385874917,
+            "loss": 24.255775632595885,
+            "target_energy": 41.71249317871063
+          },
+          "replicate": 0,
+          "train_optimum": {
+            "explained_fraction": 0.3984897319118885,
+            "loss": 25.090492954549752,
+            "target_energy": 41.71249317871063
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.46956038958920554,
+            "loss": 22.12595863097819,
+            "target_energy": 41.71249317871063
+          }
+        },
+        {
+          "current": {
+            "explained_fraction": 0.44282562267401604,
+            "loss": 23.8671341869971,
+            "target_energy": 42.83602254206539
+          },
+          "replicate": 1,
+          "train_optimum": {
+            "explained_fraction": 0.4127538395257929,
+            "loss": 25.155289767814484,
+            "target_energy": 42.83602254206539
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.4958385091351525,
+            "loss": 21.596272987527904,
+            "target_energy": 42.83602254206539
+          }
+        }
+      ],
+      "time": 0.005
+    },
+    {
+      "replicates": [
+        {
+          "current": {
+            "explained_fraction": 0.44656763751102957,
+            "loss": 24.177026479410173,
+            "target_energy": 43.685603007886996
+          },
+          "replicate": 0,
+          "train_optimum": {
+            "explained_fraction": 0.43547459354739326,
+            "loss": 24.661632794154627,
+            "target_energy": 43.685603007886996
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.4887603567283252,
+            "loss": 22.333812097860154,
+            "target_energy": 43.685603007886996
+          }
+        },
+        {
+          "current": {
+            "explained_fraction": 0.426903176287873,
+            "loss": 26.07171326312505,
+            "target_energy": 45.49268497816901
+          },
+          "replicate": 1,
+          "train_optimum": {
+            "explained_fraction": 0.4049707152511882,
+            "loss": 27.06947980386292,
+            "target_energy": 45.49268497816901
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.47216779789649976,
+            "loss": 24.012504091627775,
+            "target_energy": 45.49268497816901
+          }
+        }
+      ],
+      "time": 0.01
+    },
+    {
+      "replicates": [
+        {
+          "current": {
+            "explained_fraction": 0.45544155829757704,
+            "loss": 24.352793622768147,
+            "target_energy": 44.72025729072412
+          },
+          "replicate": 0,
+          "train_optimum": {
+            "explained_fraction": 0.4392802246621933,
+            "loss": 25.07553262110374,
+            "target_energy": 44.72025729072412
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.5104331176740289,
+            "loss": 21.89355693863509,
+            "target_energy": 44.72025729072412
+          }
+        },
+        {
+          "current": {
+            "explained_fraction": 0.45983645493003233,
+            "loss": 24.278634985276096,
+            "target_energy": 44.946822507489415
+          },
+          "replicate": 1,
+          "train_optimum": {
+            "explained_fraction": 0.4385162090878211,
+            "loss": 25.236912290962003,
+            "target_energy": 44.946822507489415
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.5016206572230186,
+            "loss": 22.40056786119621,
+            "target_energy": 44.946822507489415
+          }
+        }
+      ],
+      "time": 0.02
+    },
+    {
+      "replicates": [
+        {
+          "current": {
+            "explained_fraction": 0.4848579113962589,
+            "loss": 22.752942054623134,
+            "target_energy": 44.16828397053227
+          },
+          "replicate": 0,
+          "train_optimum": {
+            "explained_fraction": 0.4727109661659158,
+            "loss": 23.28945178093143,
+            "target_energy": 44.16828397053227
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.5302438213867484,
+            "loss": 20.748324293902172,
+            "target_energy": 44.16828397053227
+          }
+        },
+        {
+          "current": {
+            "explained_fraction": 0.45297496022309913,
+            "loss": 24.09713176066435,
+            "target_energy": 44.05124081795624
+          },
+          "replicate": 1,
+          "train_optimum": {
+            "explained_fraction": 0.43123069388267987,
+            "loss": 25.05499367363594,
+            "target_energy": 44.05124081795624
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.49254353389477534,
+            "loss": 22.3540869930303,
+            "target_energy": 44.05124081795624
+          }
+        }
+      ],
+      "time": 0.05
+    },
+    {
+      "replicates": [
+        {
+          "current": {
+            "explained_fraction": 0.49464374936300515,
+            "loss": 21.85441051650004,
+            "target_energy": 43.245552991484416
+          },
+          "replicate": 0,
+          "train_optimum": {
+            "explained_fraction": 0.4707073011401729,
+            "loss": 22.889555456548457,
+            "target_energy": 43.245552991484416
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.514364986335142,
+            "loss": 21.00155471796387,
+            "target_energy": 43.245552991484416
+          }
+        },
+        {
+          "current": {
+            "explained_fraction": 0.46345691449514415,
+            "loss": 23.719958464817317,
+            "target_energy": 44.20886058479016
+          },
+          "replicate": 1,
+          "train_optimum": {
+            "explained_fraction": 0.4529194610336117,
+            "loss": 24.18580727581692,
+            "target_energy": 44.20886058479016
+          },
+          "validation_oracle": {
+            "explained_fraction": 0.48457656081481637,
+            "loss": 22.786282965070853,
+            "target_energy": 44.20886058479016
+          }
+        }
+      ],
+      "time": 0.1
+    }
+  ],
+  "optimizer_steps": 0,
+  "parameters_unchanged": true,
+  "protocol": "h1a_cartesian_tangent_readout_span_audit_v1",
+  "qualified_diagnostic": true,
+  "source_protocol": "h1a_cartesian_tangent_coordinate_pretraining_v1",
+  "tensor_candidates": 0,
+  "validation_oracle_explained_gain_step0_to_final": 0.449350186411805
+}

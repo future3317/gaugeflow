@@ -510,3 +510,24 @@ from `t=.1/.2` (`0.06589/0.09861 A`), zero sampling failures, and zero tensor
 candidates all passed.  The protocol is therefore failed without threshold,
 seed, or step changes.  Joint initialization and every later Gate remain
 closed.
+
+### Tangent readout-span attribution
+
+A separately committed zero-step audit then asks whether the corrected model
+merely failed to optimize its final 80-to-1 global carrier readout. It captures
+the exact centered Cartesian carrier at steps 0/1250/5000/8441 on fixed,
+disjoint 128-graph train and validation panels, five times, and two noise
+replicates. Graph-equal float64 minimum-norm fits are rank 80/80 throughout;
+the carrier/head reconstruction error is `9.54e-7`, parameters are bitwise
+unchanged, and no tensor candidate or optimizer step occurs.
+
+At step 8441 the current head explains `57.28%/45.47%` on train/validation. A
+train-optimal global head reduces train loss only `5.23%` and increases
+validation loss `3.46%`. A validation-label oracle head, used only as an
+offline span ceiling, explains `49.61%`, below the frozen `75%` threshold and
+consistently about `47--53%` at every audited time/replicate. The oracle span
+gains `44.94` percentage points from initialization, so the backbone learns,
+but its cross-state Cartesian carrier family remains insufficient. The
+classification is `backbone_span_limited`, not a disconnected or unoptimized
+global head. Any successor must alter one feature-formation mechanism rather
+than add steps, seeds, harmonic branches, or joint objectives.
