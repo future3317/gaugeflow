@@ -1,0 +1,54 @@
+{
+  "protocol": "h1a_coordinate_memorization_scaling_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed 1/4/16-state exact memorization scaling audit; the completed 64-state failure is referenced without retraining; no production change or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_64_state_protocol": "h1a_coordinate_memorization_audit_v1",
+    "failed_64_state_coordinate_mse": 0.28272679448127747,
+    "failed_64_state_explained_fraction": 0.6371248364448547,
+    "failed_64_state_low_time_endpoint_rms_angstrom": 0.03296521306037903
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "data": {
+    "split": "train",
+    "selection_seed": 5911,
+    "panel_graphs": [1, 4, 16],
+    "referenced_graphs": 64
+  },
+  "training": {
+    "seed": 5914,
+    "steps": 1024,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "precision": "bf16",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "log_every": 64,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9],
+    "independent_initialization": "each panel restores the same seed-5914 initial state"
+  },
+  "acceptance": {
+    "coordinate_mse_max": 0.001,
+    "explained_fraction_min": 0.995,
+    "low_time_endpoint_rms_angstrom_max": 0.01,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "one_state_fail": "inspect the forward/vector-head/loss basis; do not change training budget",
+    "one_state_pass_larger_fail": "the implementation chain works but shared structural memorization scales poorly; qualify one compact representation or preconditioning change before training",
+    "all_pass": "return to full-time resampling on fixed endpoints under a separately frozen protocol",
+    "boundary": "No panel may receive extra steps or a new seed. This audit cannot initialize production or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
+  }
+}

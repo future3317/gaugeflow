@@ -1,0 +1,194 @@
+{
+  "decision": "exact_state_memorization_failed_inspect_forward_head_loss",
+  "decision_boundary": "No result changes historical H1a failures or authorizes extra seeds, silent step extension, joint initialization, H1b, tensor conditioning or later Gates.",
+  "exact_state": {
+    "checks": {
+      "coordinate_mse": false,
+      "explained_fraction": false,
+      "low_time_endpoint": false
+    },
+    "curve": [
+      {
+        "coordinate_loss": 0.7890247106552124,
+        "gradient_norm": 0.5167353749275208,
+        "graphs_per_second": 78.31400902529771,
+        "step": 1.0
+      },
+      {
+        "coordinate_loss": 0.758056640625,
+        "gradient_norm": 6.160081386566162,
+        "graphs_per_second": 457.1687064615768,
+        "step": 64.0
+      },
+      {
+        "coordinate_loss": 0.7160987854003906,
+        "gradient_norm": 9.502047538757324,
+        "graphs_per_second": 496.07556296514423,
+        "step": 128.0
+      },
+      {
+        "coordinate_loss": 0.5070919990539551,
+        "gradient_norm": 1.051522970199585,
+        "graphs_per_second": 497.88618161120723,
+        "step": 192.0
+      },
+      {
+        "coordinate_loss": 0.46580737829208374,
+        "gradient_norm": 3.1600589752197266,
+        "graphs_per_second": 506.34332683589656,
+        "step": 256.0
+      },
+      {
+        "coordinate_loss": 0.44254612922668457,
+        "gradient_norm": 3.487027168273926,
+        "graphs_per_second": 490.7248520897556,
+        "step": 320.0
+      },
+      {
+        "coordinate_loss": 0.40335628390312195,
+        "gradient_norm": 2.6360690593719482,
+        "graphs_per_second": 495.6757342928288,
+        "step": 384.0
+      },
+      {
+        "coordinate_loss": 0.3869393765926361,
+        "gradient_norm": 2.394960641860962,
+        "graphs_per_second": 496.5907804218244,
+        "step": 448.0
+      },
+      {
+        "coordinate_loss": 0.3688618838787079,
+        "gradient_norm": 2.247727155685425,
+        "graphs_per_second": 497.83299853647657,
+        "step": 512.0
+      },
+      {
+        "coordinate_loss": 0.35604262351989746,
+        "gradient_norm": 1.8343569040298462,
+        "graphs_per_second": 498.12119691052607,
+        "step": 576.0
+      },
+      {
+        "coordinate_loss": 0.3389032781124115,
+        "gradient_norm": 1.8729057312011719,
+        "graphs_per_second": 498.1549619104514,
+        "step": 640.0
+      },
+      {
+        "coordinate_loss": 0.3262086510658264,
+        "gradient_norm": 2.465989589691162,
+        "graphs_per_second": 500.9162342378366,
+        "step": 704.0
+      },
+      {
+        "coordinate_loss": 0.3185390830039978,
+        "gradient_norm": 1.4524753093719482,
+        "graphs_per_second": 500.4301154997674,
+        "step": 768.0
+      },
+      {
+        "coordinate_loss": 0.30828505754470825,
+        "gradient_norm": 2.587519884109497,
+        "graphs_per_second": 502.32364281656226,
+        "step": 832.0
+      },
+      {
+        "coordinate_loss": 0.2872563302516937,
+        "gradient_norm": 1.8142130374908447,
+        "graphs_per_second": 499.06242458875994,
+        "step": 896.0
+      },
+      {
+        "coordinate_loss": 0.2926686704158783,
+        "gradient_norm": 1.71930992603302,
+        "graphs_per_second": 500.91405501263216,
+        "step": 960.0
+      },
+      {
+        "coordinate_loss": 0.28820809721946716,
+        "gradient_norm": 2.7667319774627686,
+        "graphs_per_second": 500.6661626935832,
+        "step": 1024.0
+      }
+    ],
+    "metrics": {
+      "coordinate_mse": 0.28272679448127747,
+      "endpoint_rms_angstrom": 0.9083728194236755,
+      "explained_fraction": 0.6371248364448547,
+      "low_time_endpoint_rms_angstrom": 0.03296521306037903,
+      "sampling_failures": 0.0,
+      "tensor_candidates": 0.0,
+      "zero_predictor_mse": 0.7791296243667603
+    }
+  },
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621,
+    354002,
+    77825,
+    34230,
+    171240,
+    201854,
+    499134,
+    424896,
+    513473,
+    363090,
+    409731,
+    419944,
+    347071,
+    473766,
+    118459,
+    173450,
+    171233,
+    570,
+    410794,
+    504201,
+    434462,
+    513391,
+    27815,
+    480287,
+    363110,
+    496812,
+    343802,
+    95458,
+    180417,
+    11708,
+    326891,
+    78767,
+    246763,
+    466015,
+    271742,
+    225712,
+    28135,
+    239399,
+    137739,
+    196097,
+    494137,
+    393710,
+    477617,
+    93723,
+    167502,
+    203894,
+    204617,
+    419338,
+    211022
+  ],
+  "protocol": "h1a_coordinate_memorization_audit_v1",
+  "qualified": false,
+  "resampled_state": null,
+  "seed": 5914
+}
