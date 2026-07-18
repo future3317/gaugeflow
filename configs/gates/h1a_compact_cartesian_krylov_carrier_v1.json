@@ -1,0 +1,74 @@
+{
+  "protocol": "h1a_compact_cartesian_krylov_carrier_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed no-training and target-free qualification of a compact Cartesian moment/Krylov coordinate carrier; no optimizer step, production mutation, target fit, search, checkpoint or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "orthogonal_residual_decision": "orthogonal_residual_basis_failed_retain_combined_head",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 5911
+  },
+  "path": {
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "carrier": {
+    "moment_channels": 16,
+    "projection_seed": 5921,
+    "probe_seed": 5923,
+    "rms_epsilon": 0.0001,
+    "coefficient_nonlinearity": "tanh",
+    "degree_normalization": "inverse_sqrt",
+    "krylov_order": 2,
+    "accumulation_precision": "fp32"
+  },
+  "audit": {
+    "rank_relative_tolerance": 1e-6,
+    "latency_repeats": 100,
+    "optimizer_steps": 0,
+    "coordinate_targets_read": 0
+  },
+  "acceptance": {
+    "all_graphs_full_quotient_rank": true,
+    "maximum_quotient_condition_number_max": 100000.0,
+    "carrier_o3_covariance_error_max": 1e-5,
+    "translation_horizontal_error_max": 1e-6,
+    "bf16_carrier_relative_rmse_max": 0.15,
+    "bf16_carrier_cosine_min": 0.95,
+    "fp32_probe_gradient_norm_max": 100.0,
+    "bf16_probe_gradient_norm_max": 100.0,
+    "bf16_over_fp32_gradient_norm_min": 0.5,
+    "bf16_over_fp32_gradient_norm_max": 2.0,
+    "bf16_fp32_gradient_cosine_min": 0.95,
+    "carrier_operator_latency_ms_max": 5.0,
+    "carrier_operator_peak_memory_mib_max": 64.0,
+    "finite_forward_and_backward": true,
+    "parameters_restored": true,
+    "sampling_failures": 0,
+    "tensor_candidates": 0,
+    "coordinate_targets_read": 0
+  },
+  "decision_rule": {
+    "pass": "authorize a separately frozen production integration qualification of the exact carrier, followed only then by one same-seed bounded fixed-state memorization test",
+    "fail": "reject this carrier before training and retain the current production head; diagnose which carrier criterion failed before proposing another mechanism",
+    "boundary": "This target-free no-training audit cannot qualify H1a, mutate production, fit a coordinate target, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
