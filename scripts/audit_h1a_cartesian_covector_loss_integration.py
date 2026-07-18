@@ -222,9 +222,15 @@ def main() -> None:
         "carrier_channels": model.coordinate_carrier.output_channels
         == int(acceptance["carrier_channels_exact"]),
         "legacy_readouts": legacy_count == int(acceptance["legacy_readout_parameters"]),
-        "prediction_roundtrip": fp32["fractional_prediction_reconstruction_max_abs"]
+        "prediction_roundtrip": max(
+            fp32["fractional_prediction_reconstruction_max_abs"],
+            bf16["fractional_prediction_reconstruction_max_abs"],
+        )
         <= float(acceptance["fractional_prediction_reconstruction_max_abs"]),
-        "target_roundtrip": fp32["fractional_target_roundtrip_max_abs"]
+        "target_roundtrip": max(
+            fp32["fractional_target_roundtrip_max_abs"],
+            bf16["fractional_target_roundtrip_max_abs"],
+        )
         <= float(acceptance["fractional_target_roundtrip_max_abs"]),
         "fp32_gradient": fp32["output_gradient_norm"]
         <= float(acceptance["fp32_cartesian_output_gradient_norm_max"]),

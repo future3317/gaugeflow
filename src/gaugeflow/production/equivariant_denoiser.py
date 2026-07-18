@@ -353,14 +353,23 @@ class HybridCrystalDenoiser(nn.Module):
             cartesian_score = self.coordinate_carrier_head(
                 carrier.transpose(-1, -2).float()
             ).squeeze(-1)
-        cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
-        # A score is a covector, not a displacement. With r=fL, the chain rule
-        # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
-        # instead use L^-1; mixing these two transformations is incorrect.)
-        fractional_score = torch.einsum("ni,nij->nj", cartesian_score, lattice[batch].transpose(-1, -2))
-        # Fractional zero mean is the translation-horizontal chart used by the
-        # coordinate probability path.
-        fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
+            cartesian_score = cartesian_score - graph_mean(
+                cartesian_score, batch, graphs
+            )[batch]
+            # A score is a covector, not a displacement. With r=fL, the chain
+            # rule gives grad_f log p = grad_r log p @ L^T. A Cartesian
+            # velocity would instead use L^-1. Keep this physical chart change
+            # in FP32 under BF16 training and sampling.
+            fractional_score = torch.einsum(
+                "ni,nij->nj",
+                cartesian_score,
+                lattice[batch].transpose(-1, -2),
+            )
+            # Fractional zero mean is the translation-horizontal chart used by
+            # the coordinate probability path.
+            fractional_score = fractional_score - graph_mean(
+                fractional_score, batch, graphs
+            )[batch]
         clean_volume_latent = self.volume_head(graph_context).squeeze(-1)
         clean_shape_latent = self.shape_head(graph_context)
         return HybridDenoiserOutput(
