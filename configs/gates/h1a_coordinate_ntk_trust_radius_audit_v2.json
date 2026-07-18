@@ -1,0 +1,48 @@
+{
+  "protocol": "h1a_coordinate_ntk_trust_radius_audit_v2",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-state no-training output-space Gauss-Newton/NTK relative-parameter trust-radius audit; no optimizer, checkpoint, architecture, probability-path or later-Gate change",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "nonlocal_predecessor": "h1a_coordinate_ntk_trust_step_audit_v1",
+    "predecessor_full_step_relative_parameter_norm": 3.1575754023409974,
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "gram_accumulation_dtype": "fp64"
+  },
+  "trust_radius": {
+    "damping_relative_to_max_gram_eigenvalue": 1e-8,
+    "relative_parameter_norm_radii": [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1],
+    "full_linear_loss_reduction_min": 0.95,
+    "smallest_radius_linearization_relative_error_max": 0.25,
+    "useful_actual_loss_reduction_min": 0.005
+  },
+  "decision_rule": {
+    "linear_fail": "the damped output tangent cannot fit the visible target direction; repair the output parameterization rather than the optimizer",
+    "local_mismatch": "the FP32 autograd tangent and nonlinear forward disagree even at a 1e-4 relative parameter radius; inspect derivative/numeric implementation",
+    "bounded_success": "a bounded natural-gradient direction lowers the nonlinear loss; ordinary optimization is limited by severe anisotropy and curvature, motivating a scalable trust-region preconditioner qualification",
+    "bounded_fail": "the linear tangent is reachable but no preregistered local radius gives a useful nonlinear decrease; prioritize a curvature-aware coordinate parameterization rather than another output branch",
+    "boundary": "This single-state no-training audit cannot qualify H1a, initialize production, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

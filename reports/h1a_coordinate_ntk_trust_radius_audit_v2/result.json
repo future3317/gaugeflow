@@ -1,0 +1,97 @@
+{
+  "best_actual_loss_reduction": 0.0013880252176770025,
+  "best_preregistered_radius": 0.003,
+  "checks": {
+    "any_useful_nonlinear_step": false,
+    "linear_target_reachable": true,
+    "parameters_restored_exactly": true,
+    "small_step_linearization_consistent": false,
+    "tensor_candidates": 0
+  },
+  "damping": 5.450324399380468e-07,
+  "decision": "local_linearization_or_numeric_path_inconsistent",
+  "decision_boundary": "This single-state no-training audit cannot qualify H1a, initialize production, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "full_linear_loss_reduction": 0.999336628861608,
+  "gauss_newton_relative_step_norm": 3.1574992049896067,
+  "gauss_newton_step_norm": 524.8431539083867,
+  "graph_index": 521337,
+  "initial_coordinate_mse": 0.7454572825716623,
+  "maximum_gram_eigenvalue": 54.50324399380467,
+  "nodes": 11,
+  "output_dimension": 33,
+  "parameter_norm": 166.2211515616563,
+  "protocol": "h1a_coordinate_ntk_trust_radius_audit_v2",
+  "quotient_dimension": 30,
+  "steps": [
+    {
+      "actual_coordinate_mse": 0.7454103099435443,
+      "actual_loss_reduction": 6.301183074630679e-05,
+      "finite": true,
+      "linear_coordinate_mse": 0.7454103656690644,
+      "linear_loss_reduction": 6.293707727433873e-05,
+      "linearization_relative_error": 0.3384529061319529,
+      "relative_parameter_norm_radius": 0.0001,
+      "scale": 3.167063346903651e-05
+    },
+    {
+      "actual_coordinate_mse": 0.7453161359181492,
+      "actual_loss_reduction": 0.00018934237656953457,
+      "finite": true,
+      "linear_coordinate_mse": 0.7453165849126174,
+      "linear_loss_reduction": 0.00018874006912850128,
+      "linearization_relative_error": 1.0429823321382066,
+      "relative_parameter_norm_radius": 0.0003,
+      "scale": 9.501190040710951e-05
+    },
+    {
+      "actual_coordinate_mse": 0.7449919555343196,
+      "actual_loss_reduction": 0.000624216904471564,
+      "finite": true,
+      "linear_coordinate_mse": 0.7449883387280111,
+      "linear_loss_reduction": 0.0006290686999977924,
+      "linearization_relative_error": 3.7402880508409075,
+      "relative_parameter_norm_radius": 0.001,
+      "scale": 0.0003167063346903651
+    },
+    {
+      "actual_coordinate_mse": 0.7444225690647519,
+      "actual_loss_reduction": 0.0013880252176770025,
+      "finite": true,
+      "linear_coordinate_mse": 0.7440509668505235,
+      "linear_loss_reduction": 0.0018865141625383774,
+      "linearization_relative_error": 12.523494781064013,
+      "relative_parameter_norm_radius": 0.003,
+      "scale": 0.0009501190040710953
+    },
+    {
+      "actual_coordinate_mse": 0.7575704078867347,
+      "actual_loss_reduction": -0.016249254783969436,
+      "finite": true,
+      "linear_coordinate_mse": 0.7407747645678068,
+      "linear_loss_reduction": 0.006281403526841811,
+      "linearization_relative_error": 34.55056609014837,
+      "relative_parameter_norm_radius": 0.01,
+      "scale": 0.0031670633469036507
+    },
+    {
+      "actual_coordinate_mse": 1.1128700987455682,
+      "actual_loss_reduction": -0.49286904127680287,
+      "finite": true,
+      "linear_coordinate_mse": 0.73145407057381,
+      "linear_loss_reduction": 0.018784727609802654,
+      "linearization_relative_error": 68.81453307208939,
+      "relative_parameter_norm_radius": 0.03,
+      "scale": 0.009501190040710952
+    },
+    {
+      "actual_coordinate_mse": 197.1623943137297,
+      "actual_loss_reduction": -263.4851675921163,
+      "finite": true,
+      "linear_coordinate_mse": 0.6992966347522722,
+      "linear_loss_reduction": 0.06192259288170898,
+      "linearization_relative_error": 513.481217073256,
+      "relative_parameter_norm_radius": 0.1,
+      "scale": 0.03167063346903651
+    }
+  ]
+}

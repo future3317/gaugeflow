@@ -102,13 +102,13 @@ def _evaluate_steps(
     initial: torch.Tensor,
     target: torch.Tensor,
     predict: Callable[[], torch.Tensor],
-    scales: list[float],
+    radius_scale_pairs: list[tuple[float, float]],
 ) -> tuple[list[dict[str, float | bool]], bool]:
     originals = [value.detach().clone() for _, value in parameters]
     initial_error = initial - target
     rows: list[dict[str, float | bool]] = []
     try:
-        for scale in scales:
+        for radius, scale in radius_scale_pairs:
             offset = 0
             with torch.no_grad():
                 for (_, parameter), original in zip(parameters, originals, strict=True):
@@ -130,6 +130,7 @@ def _evaluate_steps(
             linear_error = linear - target
             rows.append(
                 {
+                    "relative_parameter_norm_radius": float(radius),
                     "scale": float(scale),
                     "finite": bool(torch.isfinite(actual).all()),
                     "linear_coordinate_mse": float(linear_error.double().square().mean()),
@@ -163,8 +164,8 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_coordinate_ntk_trust_step_audit_v1":
-        raise ValueError("coordinate NTK trust-step protocol identity mismatch")
+    if protocol.get("protocol") != "h1a_coordinate_ntk_trust_radius_audit_v2":
+        raise ValueError("coordinate NTK trust-radius protocol identity mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
     ):
@@ -221,7 +222,7 @@ def main() -> None:
     parameters = _active_parameters(model)
     jacobian = _jacobian(initial, parameters)
     gram = jacobian.double() @ jacobian.double().T
-    trust = protocol["trust_step"]
+    trust = protocol["trust_radius"]
     coefficients, damping = damped_output_coefficients(
         gram,
         desired.detach(),
@@ -229,7 +230,15 @@ def main() -> None:
     )
     delta = jacobian.T @ coefficients.to(jacobian.dtype)
     jacobian_delta = (gram @ coefficients).to(initial.dtype)
-    scales = [float(value) for value in trust["scales"]]
+    parameter_norm = torch.linalg.vector_norm(
+        torch.cat([value.detach().reshape(-1) for _, value in parameters]).double()
+    )
+    delta_norm = torch.linalg.vector_norm(delta.double())
+    relative_step_norm = float(delta_norm / parameter_norm.clamp_min(1e-30))
+    radii = [float(value) for value in trust["relative_parameter_norm_radii"]]
+    radius_scale_pairs = [
+        (radius, min(1.0, radius / relative_step_norm)) for radius in radii
+    ]
     steps, parameters_restored = _evaluate_steps(
         model,
         parameters,
@@ -238,44 +247,37 @@ def main() -> None:
         initial.detach(),
         target.reshape(-1).detach(),
         predict,
-        scales,
+        radius_scale_pairs,
     )
     first = steps[0]
-    full = steps[-1]
+    full_linear_error = initial.detach() + jacobian_delta - target.reshape(-1)
+    full_linear_reduction = relative_loss_reduction(
+        initial.detach() - target.reshape(-1), full_linear_error
+    )
     linear_reachable = (
-        float(full["linear_loss_reduction"])
-        >= float(trust["linear_full_step_loss_reduction_min"])
+        full_linear_reduction >= float(trust["full_linear_loss_reduction_min"])
     )
     locally_consistent = (
         bool(first["finite"])
         and float(first["linearization_relative_error"])
-        <= float(trust["smallest_step_linearization_relative_error_max"])
+        <= float(trust["smallest_radius_linearization_relative_error_max"])
     )
     useful = [
         row
         for row in steps
         if bool(row["finite"])
         and float(row["actual_loss_reduction"])
-        >= float(trust["useful_nonlinear_loss_reduction_min"])
+        >= float(trust["useful_actual_loss_reduction_min"])
     ]
-    full_success = (
-        bool(full["finite"])
-        and float(full["actual_loss_reduction"])
-        >= float(trust["full_step_nonlinear_loss_reduction_min"])
-    )
     if not linear_reachable:
         decision = "damped_tangent_does_not_fit_target"
     elif not locally_consistent:
         decision = "local_linearization_or_numeric_path_inconsistent"
-    elif full_success:
-        decision = "output_space_natural_gradient_locally_effective"
     elif useful:
-        decision = "nonlinear_curvature_requires_trust_region"
+        decision = "bounded_natural_gradient_effective_but_curvature_limited"
     else:
-        decision = "linear_reachable_but_nonlinear_step_not_useful"
-    parameter_norm = torch.linalg.vector_norm(
-        torch.cat([value.detach().reshape(-1) for _, value in parameters]).double()
-    )
+        decision = "linear_reachable_but_no_useful_trust_radius"
+    best = max(steps, key=lambda row: float(row["actual_loss_reduction"]))
     result = {
         "protocol": protocol["protocol"],
         "graph_index": graph_index,
@@ -287,17 +289,17 @@ def main() -> None:
         ),
         "damping": damping,
         "maximum_gram_eigenvalue": float(torch.linalg.eigvalsh(gram)[-1]),
+        "full_linear_loss_reduction": full_linear_reduction,
         "parameter_norm": float(parameter_norm),
-        "gauss_newton_step_norm": float(torch.linalg.vector_norm(delta.double())),
-        "gauss_newton_relative_step_norm": float(
-            torch.linalg.vector_norm(delta.double()) / parameter_norm.clamp_min(1e-30)
-        ),
+        "gauss_newton_step_norm": float(delta_norm),
+        "gauss_newton_relative_step_norm": relative_step_norm,
         "steps": steps,
+        "best_preregistered_radius": best["relative_parameter_norm_radius"],
+        "best_actual_loss_reduction": best["actual_loss_reduction"],
         "checks": {
             "linear_target_reachable": linear_reachable,
             "small_step_linearization_consistent": locally_consistent,
             "any_useful_nonlinear_step": bool(useful),
-            "full_nonlinear_step_success": full_success,
             "parameters_restored_exactly": parameters_restored,
             "tensor_candidates": 0,
         },
