@@ -1,0 +1,958 @@
+{
+  "checks": {
+    "coordinate_mse": false,
+    "explained_fraction": false,
+    "finite_curve": true,
+    "low_time_endpoint": false,
+    "sampling_failures": true,
+    "tensor_candidates": true
+  },
+  "curve": [
+    {
+      "coordinate_loss": 10.292033195495605,
+      "gradient_norm": 20827.1484375,
+      "graphs_per_second": 19.59621261696207,
+      "step": 1.0
+    },
+    {
+      "coordinate_loss": 1747.3480224609375,
+      "gradient_norm": 717891.875,
+      "graphs_per_second": 163.6321203405378,
+      "step": 32.0
+    },
+    {
+      "coordinate_loss": 13162.2685546875,
+      "gradient_norm": 1948188.25,
+      "graphs_per_second": 218.893074927992,
+      "step": 64.0
+    },
+    {
+      "coordinate_loss": 10565.029296875,
+      "gradient_norm": 3484375.5,
+      "graphs_per_second": 217.29617238125726,
+      "step": 96.0
+    },
+    {
+      "coordinate_loss": 7576.68359375,
+      "gradient_norm": 3268867.25,
+      "graphs_per_second": 216.70526126174482,
+      "step": 128.0
+    },
+    {
+      "coordinate_loss": 10025.521484375,
+      "gradient_norm": 1533344.125,
+      "graphs_per_second": 225.10299386782242,
+      "step": 160.0
+    },
+    {
+      "coordinate_loss": 61970.375,
+      "gradient_norm": 14670770.0,
+      "graphs_per_second": 228.2667139083654,
+      "step": 192.0
+    },
+    {
+      "coordinate_loss": 7564.69873046875,
+      "gradient_norm": 862971.125,
+      "graphs_per_second": 231.4733701629541,
+      "step": 224.0
+    },
+    {
+      "coordinate_loss": 19204.998046875,
+      "gradient_norm": 6716070.0,
+      "graphs_per_second": 232.51604068971338,
+      "step": 256.0
+    },
+    {
+      "coordinate_loss": 8766.005859375,
+      "gradient_norm": 3363366.5,
+      "graphs_per_second": 229.15677626273117,
+      "step": 288.0
+    },
+    {
+      "coordinate_loss": 25432.875,
+      "gradient_norm": 6210352.0,
+      "graphs_per_second": 230.67737382597625,
+      "step": 320.0
+    },
+    {
+      "coordinate_loss": 15255.2421875,
+      "gradient_norm": 3209259.5,
+      "graphs_per_second": 233.51339250430607,
+      "step": 352.0
+    },
+    {
+      "coordinate_loss": 12113.6162109375,
+      "gradient_norm": 2317946.25,
+      "graphs_per_second": 235.374367154788,
+      "step": 384.0
+    },
+    {
+      "coordinate_loss": 8187.27099609375,
+      "gradient_norm": 1330311.875,
+      "graphs_per_second": 235.687342982532,
+      "step": 416.0
+    },
+    {
+      "coordinate_loss": 27110.21484375,
+      "gradient_norm": 1685949.25,
+      "graphs_per_second": 230.36216799795645,
+      "step": 448.0
+    },
+    {
+      "coordinate_loss": 40544.9296875,
+      "gradient_norm": 6607927.0,
+      "graphs_per_second": 231.37241620411442,
+      "step": 480.0
+    },
+    {
+      "coordinate_loss": 8825.076171875,
+      "gradient_norm": 3271844.75,
+      "graphs_per_second": 231.43972289506817,
+      "step": 512.0
+    },
+    {
+      "coordinate_loss": 27004.87890625,
+      "gradient_norm": 5496271.0,
+      "graphs_per_second": 231.20641898525534,
+      "step": 544.0
+    },
+    {
+      "coordinate_loss": 8279.5400390625,
+      "gradient_norm": 1090767.375,
+      "graphs_per_second": 231.17830525505985,
+      "step": 576.0
+    },
+    {
+      "coordinate_loss": 87750.5625,
+      "gradient_norm": 14880036.0,
+      "graphs_per_second": 231.25113859257388,
+      "step": 608.0
+    },
+    {
+      "coordinate_loss": 15536.5888671875,
+      "gradient_norm": 4291128.5,
+      "graphs_per_second": 231.10014828137722,
+      "step": 640.0
+    },
+    {
+      "coordinate_loss": 10629.876953125,
+      "gradient_norm": 1416802.25,
+      "graphs_per_second": 231.93407624424194,
+      "step": 672.0
+    },
+    {
+      "coordinate_loss": 13524.138671875,
+      "gradient_norm": 2146264.75,
+      "graphs_per_second": 230.93401987771523,
+      "step": 704.0
+    },
+    {
+      "coordinate_loss": 67947.125,
+      "gradient_norm": 11944114.0,
+      "graphs_per_second": 230.2274606841889,
+      "step": 736.0
+    },
+    {
+      "coordinate_loss": 9095.7900390625,
+      "gradient_norm": 1096512.25,
+      "graphs_per_second": 231.03212665953683,
+      "step": 768.0
+    },
+    {
+      "coordinate_loss": 16888.59765625,
+      "gradient_norm": 1638259.125,
+      "graphs_per_second": 231.30065291408985,
+      "step": 800.0
+    },
+    {
+      "coordinate_loss": 70670.78125,
+      "gradient_norm": 12958359.0,
+      "graphs_per_second": 231.74135640064122,
+      "step": 832.0
+    },
+    {
+      "coordinate_loss": 14683.828125,
+      "gradient_norm": 1387410.625,
+      "graphs_per_second": 231.94701206912077,
+      "step": 864.0
+    },
+    {
+      "coordinate_loss": 16188.3046875,
+      "gradient_norm": 1395653.125,
+      "graphs_per_second": 232.88741408656807,
+      "step": 896.0
+    },
+    {
+      "coordinate_loss": 24684.357421875,
+      "gradient_norm": 3019489.25,
+      "graphs_per_second": 234.4462668719519,
+      "step": 928.0
+    },
+    {
+      "coordinate_loss": 17664.107421875,
+      "gradient_norm": 2636766.25,
+      "graphs_per_second": 236.1345144516915,
+      "step": 960.0
+    },
+    {
+      "coordinate_loss": 28240.68359375,
+      "gradient_norm": 1886884.375,
+      "graphs_per_second": 237.7445560090628,
+      "step": 992.0
+    },
+    {
+      "coordinate_loss": 28136.328125,
+      "gradient_norm": 4395671.5,
+      "graphs_per_second": 238.8772613249222,
+      "step": 1024.0
+    }
+  ],
+  "decision": "variable_projection_16_failed_reject_mechanism",
+  "decision_boundary": "This fixed-state mechanism test cannot qualify H1a, initialize production, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "final_readout_solve": {
+    "columns": 225,
+    "condition_number": 3613791612.700825,
+    "design_reconstruction_max_abs": 0.05913352966308594,
+    "maximum_singular_value": 6.772769530336356,
+    "minimum_active_singular_value": 1.8741450133796227e-09,
+    "rank": 225,
+    "rows": 417,
+    "solution_norm": 48323653.80796616,
+    "step": 1024
+  },
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "metrics": {
+    "coordinate_mse": 0.09459569305181503,
+    "endpoint_rms_angstrom": 0.9521442651748657,
+    "explained_fraction": 0.874121904373169,
+    "low_time_endpoint_rms_angstrom": 0.02003786340355873,
+    "sampling_failures": 0.0,
+    "tensor_candidates": 0.0,
+    "zero_predictor_mse": 0.7514864802360535
+  },
+  "protocol": "h1a_coordinate_variable_projection_16_v1",
+  "qualified": false,
+  "readout_solves": [
+    {
+      "columns": 225,
+      "condition_number": 218729.08790352324,
+      "design_reconstruction_max_abs": 2.682209014892578e-07,
+      "maximum_singular_value": 7.519295575974227,
+      "minimum_active_singular_value": 3.4377209030793515e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 9109.379800858807,
+      "step": 1
+    },
+    {
+      "columns": 225,
+      "condition_number": 162199.0479332914,
+      "design_reconstruction_max_abs": 0.0007266998291015625,
+      "maximum_singular_value": 5.316243747523562,
+      "minimum_active_singular_value": 3.277604779597724e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 8161.259855451654,
+      "step": 17
+    },
+    {
+      "columns": 225,
+      "condition_number": 258688.95051679417,
+      "design_reconstruction_max_abs": 0.0031585693359375,
+      "maximum_singular_value": 6.024607803215761,
+      "minimum_active_singular_value": 2.328900322638497e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 10157.481285922588,
+      "step": 33
+    },
+    {
+      "columns": 225,
+      "condition_number": 265220.91326658917,
+      "design_reconstruction_max_abs": 0.004974365234375,
+      "maximum_singular_value": 6.063505506745958,
+      "minimum_active_singular_value": 2.2862094214460275e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 17534.407307155445,
+      "step": 49
+    },
+    {
+      "columns": 225,
+      "condition_number": 327746.47349054064,
+      "design_reconstruction_max_abs": 0.015322685241699219,
+      "maximum_singular_value": 6.410951213496872,
+      "minimum_active_singular_value": 1.956070234782222e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 18491.026016183365,
+      "step": 65
+    },
+    {
+      "columns": 225,
+      "condition_number": 516830.4697445151,
+      "design_reconstruction_max_abs": 0.01177978515625,
+      "maximum_singular_value": 7.02424343113288,
+      "minimum_active_singular_value": 1.3591001000009104e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 29059.806286353076,
+      "step": 81
+    },
+    {
+      "columns": 225,
+      "condition_number": 602002.0224578786,
+      "design_reconstruction_max_abs": 0.012065887451171875,
+      "maximum_singular_value": 6.99687898996792,
+      "minimum_active_singular_value": 1.162268352754161e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 27128.465313956778,
+      "step": 97
+    },
+    {
+      "columns": 225,
+      "condition_number": 617803.2678748673,
+      "design_reconstruction_max_abs": 0.015474319458007812,
+      "maximum_singular_value": 7.21978532845582,
+      "minimum_active_singular_value": 1.1686220685252426e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 24209.748690025262,
+      "step": 113
+    },
+    {
+      "columns": 225,
+      "condition_number": 634749.3379179696,
+      "design_reconstruction_max_abs": 0.0157318115234375,
+      "maximum_singular_value": 7.178758555515252,
+      "minimum_active_singular_value": 1.1309595972265485e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 32048.661507321925,
+      "step": 129
+    },
+    {
+      "columns": 225,
+      "condition_number": 658687.4111925293,
+      "design_reconstruction_max_abs": 0.0185546875,
+      "maximum_singular_value": 7.088096113051886,
+      "minimum_active_singular_value": 1.0760940610993537e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 29321.68654320349,
+      "step": 145
+    },
+    {
+      "columns": 225,
+      "condition_number": 715978.3478413323,
+      "design_reconstruction_max_abs": 0.017974853515625,
+      "maximum_singular_value": 7.271119490622877,
+      "minimum_active_singular_value": 1.0155501926203818e-05,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 31121.28718992551,
+      "step": 161
+    },
+    {
+      "columns": 225,
+      "condition_number": 1115579.4702796168,
+      "design_reconstruction_max_abs": 0.01406097412109375,
+      "maximum_singular_value": 7.455198195287406,
+      "minimum_active_singular_value": 6.682803326793726e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 52241.53674706593,
+      "step": 177
+    },
+    {
+      "columns": 225,
+      "condition_number": 1727582.7769224667,
+      "design_reconstruction_max_abs": 0.0361328125,
+      "maximum_singular_value": 7.386394838138706,
+      "minimum_active_singular_value": 4.27556637910972e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 70962.22585074947,
+      "step": 193
+    },
+    {
+      "columns": 225,
+      "condition_number": 2880381.6058860337,
+      "design_reconstruction_max_abs": 0.026153564453125,
+      "maximum_singular_value": 7.335218748521584,
+      "minimum_active_singular_value": 2.546613522851323e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 82905.36109682886,
+      "step": 209
+    },
+    {
+      "columns": 225,
+      "condition_number": 3075927.9013641165,
+      "design_reconstruction_max_abs": 0.03207111358642578,
+      "maximum_singular_value": 7.4319976530154594,
+      "minimum_active_singular_value": 2.4161807075255266e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 72101.55012837917,
+      "step": 225
+    },
+    {
+      "columns": 225,
+      "condition_number": 3919378.919926089,
+      "design_reconstruction_max_abs": 0.03277587890625,
+      "maximum_singular_value": 7.425173406705857,
+      "minimum_active_singular_value": 1.894477048125237e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 85707.6535914822,
+      "step": 241
+    },
+    {
+      "columns": 225,
+      "condition_number": 4321013.368603645,
+      "design_reconstruction_max_abs": 0.02374267578125,
+      "maximum_singular_value": 7.476732945593945,
+      "minimum_active_singular_value": 1.7303193273873358e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 115014.3138004175,
+      "step": 257
+    },
+    {
+      "columns": 225,
+      "condition_number": 6887598.378243253,
+      "design_reconstruction_max_abs": 0.020599365234375,
+      "maximum_singular_value": 7.450969724753199,
+      "minimum_active_singular_value": 1.0817950344331256e-06,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 181137.1105925001,
+      "step": 273
+    },
+    {
+      "columns": 225,
+      "condition_number": 8044350.126153108,
+      "design_reconstruction_max_abs": 0.01592254638671875,
+      "maximum_singular_value": 7.398266784167058,
+      "minimum_active_singular_value": 9.196848307378419e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 253240.11721449473,
+      "step": 289
+    },
+    {
+      "columns": 225,
+      "condition_number": 8116112.040614257,
+      "design_reconstruction_max_abs": 0.0279541015625,
+      "maximum_singular_value": 7.443702571042495,
+      "minimum_active_singular_value": 9.171512830026345e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 106723.60417531802,
+      "step": 305
+    },
+    {
+      "columns": 225,
+      "condition_number": 9475904.059624128,
+      "design_reconstruction_max_abs": 0.023101806640625,
+      "maximum_singular_value": 7.467809673443253,
+      "minimum_active_singular_value": 7.880841370337251e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 45798.602947966574,
+      "step": 321
+    },
+    {
+      "columns": 225,
+      "condition_number": 9081341.873971771,
+      "design_reconstruction_max_abs": 0.016845703125,
+      "maximum_singular_value": 7.4546945252050945,
+      "minimum_active_singular_value": 8.208802871491e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 78886.56670281893,
+      "step": 337
+    },
+    {
+      "columns": 225,
+      "condition_number": 11949514.144830428,
+      "design_reconstruction_max_abs": 0.04396820068359375,
+      "maximum_singular_value": 7.504913194211168,
+      "minimum_active_singular_value": 6.280517436315959e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 107620.28715658147,
+      "step": 353
+    },
+    {
+      "columns": 225,
+      "condition_number": 8657287.955953067,
+      "design_reconstruction_max_abs": 0.03331565856933594,
+      "maximum_singular_value": 7.458509755218449,
+      "minimum_active_singular_value": 8.615295913877631e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 58282.7904747018,
+      "step": 369
+    },
+    {
+      "columns": 225,
+      "condition_number": 14897581.755415138,
+      "design_reconstruction_max_abs": 0.0214691162109375,
+      "maximum_singular_value": 7.341584145436718,
+      "minimum_active_singular_value": 4.928037493580539e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 330474.14910243853,
+      "step": 385
+    },
+    {
+      "columns": 225,
+      "condition_number": 14577691.419366091,
+      "design_reconstruction_max_abs": 0.033447265625,
+      "maximum_singular_value": 7.192633318278972,
+      "minimum_active_singular_value": 4.934000255159567e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 489428.1644240707,
+      "step": 401
+    },
+    {
+      "columns": 225,
+      "condition_number": 36188613.15899585,
+      "design_reconstruction_max_abs": 0.029388427734375,
+      "maximum_singular_value": 7.349022509444813,
+      "minimum_active_singular_value": 2.0307554968068668e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 228834.87453475047,
+      "step": 417
+    },
+    {
+      "columns": 225,
+      "condition_number": 24345456.416769784,
+      "design_reconstruction_max_abs": 0.051513671875,
+      "maximum_singular_value": 7.323889919255448,
+      "minimum_active_singular_value": 3.008319003709687e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 251930.36034311313,
+      "step": 433
+    },
+    {
+      "columns": 225,
+      "condition_number": 23870294.987798195,
+      "design_reconstruction_max_abs": 0.0597381591796875,
+      "maximum_singular_value": 7.1266363405249304,
+      "minimum_active_singular_value": 2.985566933365449e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 123894.69590340415,
+      "step": 449
+    },
+    {
+      "columns": 225,
+      "condition_number": 26726196.23222186,
+      "design_reconstruction_max_abs": 0.033935546875,
+      "maximum_singular_value": 7.070993598180524,
+      "minimum_active_singular_value": 2.6457164112473044e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 215462.3861050105,
+      "step": 465
+    },
+    {
+      "columns": 225,
+      "condition_number": 22092401.89077387,
+      "design_reconstruction_max_abs": 0.048095703125,
+      "maximum_singular_value": 7.1634780374575975,
+      "minimum_active_singular_value": 3.242507570192799e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 460825.5376230226,
+      "step": 481
+    },
+    {
+      "columns": 225,
+      "condition_number": 13391824.666681096,
+      "design_reconstruction_max_abs": 0.03619384765625,
+      "maximum_singular_value": 6.906836362333953,
+      "minimum_active_singular_value": 5.157502083728877e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 168908.968068961,
+      "step": 497
+    },
+    {
+      "columns": 225,
+      "condition_number": 11326268.54410043,
+      "design_reconstruction_max_abs": 0.023983001708984375,
+      "maximum_singular_value": 6.890142423668716,
+      "minimum_active_singular_value": 6.08332955981131e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 188200.71931242468,
+      "step": 513
+    },
+    {
+      "columns": 225,
+      "condition_number": 16872249.243790843,
+      "design_reconstruction_max_abs": 0.019073486328125,
+      "maximum_singular_value": 6.903393795233074,
+      "minimum_active_singular_value": 4.0915669840365787e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 76327.11385926658,
+      "step": 529
+    },
+    {
+      "columns": 225,
+      "condition_number": 29211626.26448991,
+      "design_reconstruction_max_abs": 0.03369140625,
+      "maximum_singular_value": 6.945031535255473,
+      "minimum_active_singular_value": 2.3774888369354353e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 420289.1858686557,
+      "step": 545
+    },
+    {
+      "columns": 225,
+      "condition_number": 35426369.30560701,
+      "design_reconstruction_max_abs": 0.0486907958984375,
+      "maximum_singular_value": 6.821991900423265,
+      "minimum_active_singular_value": 1.9256819239852311e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 257589.49186530936,
+      "step": 561
+    },
+    {
+      "columns": 225,
+      "condition_number": 42758610.601769954,
+      "design_reconstruction_max_abs": 0.0467987060546875,
+      "maximum_singular_value": 6.81377344360801,
+      "minimum_active_singular_value": 1.5935441651899605e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 219010.38052701796,
+      "step": 577
+    },
+    {
+      "columns": 225,
+      "condition_number": 78094482.18128024,
+      "design_reconstruction_max_abs": 0.05684471130371094,
+      "maximum_singular_value": 6.885442656471248,
+      "minimum_active_singular_value": 8.816810694112949e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 519975.8767046323,
+      "step": 593
+    },
+    {
+      "columns": 225,
+      "condition_number": 87243779.14352047,
+      "design_reconstruction_max_abs": 0.04345703125,
+      "maximum_singular_value": 6.8568736210361605,
+      "minimum_active_singular_value": 7.85944131300898e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 604336.9040999559,
+      "step": 609
+    },
+    {
+      "columns": 225,
+      "condition_number": 62217887.62266613,
+      "design_reconstruction_max_abs": 0.04833984375,
+      "maximum_singular_value": 6.7428450539141815,
+      "minimum_active_singular_value": 1.0837470238153419e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 962099.2813101069,
+      "step": 625
+    },
+    {
+      "columns": 225,
+      "condition_number": 49663808.23778944,
+      "design_reconstruction_max_abs": 0.03963184356689453,
+      "maximum_singular_value": 6.7301264769697235,
+      "minimum_active_singular_value": 1.3551370134054153e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 274482.2286146422,
+      "step": 641
+    },
+    {
+      "columns": 225,
+      "condition_number": 36120062.55254106,
+      "design_reconstruction_max_abs": 0.040618896484375,
+      "maximum_singular_value": 6.733312846410323,
+      "minimum_active_singular_value": 1.8641476150867386e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 812373.279077494,
+      "step": 657
+    },
+    {
+      "columns": 225,
+      "condition_number": 55317157.45972193,
+      "design_reconstruction_max_abs": 0.03005218505859375,
+      "maximum_singular_value": 6.711837556318839,
+      "minimum_active_singular_value": 1.2133373919666657e-07,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1225425.039247301,
+      "step": 673
+    },
+    {
+      "columns": 225,
+      "condition_number": 117247513.29360968,
+      "design_reconstruction_max_abs": 0.0475616455078125,
+      "maximum_singular_value": 6.74826184479288,
+      "minimum_active_singular_value": 5.7555692698522075e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1578397.3439518004,
+      "step": 689
+    },
+    {
+      "columns": 225,
+      "condition_number": 112283214.75629057,
+      "design_reconstruction_max_abs": 0.05430269241333008,
+      "maximum_singular_value": 6.744695494998776,
+      "minimum_active_singular_value": 6.006859983157822e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1857669.6981710973,
+      "step": 705
+    },
+    {
+      "columns": 225,
+      "condition_number": 100725603.39690034,
+      "design_reconstruction_max_abs": 0.05975341796875,
+      "maximum_singular_value": 6.761435053980852,
+      "minimum_active_singular_value": 6.712727276835478e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 833996.2178026065,
+      "step": 721
+    },
+    {
+      "columns": 225,
+      "condition_number": 99034023.1720086,
+      "design_reconstruction_max_abs": 0.0380859375,
+      "maximum_singular_value": 6.769596763086719,
+      "minimum_active_singular_value": 6.835627339231541e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1877512.5372751178,
+      "step": 737
+    },
+    {
+      "columns": 225,
+      "condition_number": 102883675.55780947,
+      "design_reconstruction_max_abs": 0.05304360389709473,
+      "maximum_singular_value": 6.756905175386928,
+      "minimum_active_singular_value": 6.567519228636305e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 829701.2318383593,
+      "step": 753
+    },
+    {
+      "columns": 225,
+      "condition_number": 191715877.06668213,
+      "design_reconstruction_max_abs": 0.06433868408203125,
+      "maximum_singular_value": 6.781746239866462,
+      "minimum_active_singular_value": 3.5373941603739225e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 4206142.532545295,
+      "step": 769
+    },
+    {
+      "columns": 225,
+      "condition_number": 367040012.0931133,
+      "design_reconstruction_max_abs": 0.08734130859375,
+      "maximum_singular_value": 6.80852423861478,
+      "minimum_active_singular_value": 1.8549814773021383e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1366396.3958408895,
+      "step": 785
+    },
+    {
+      "columns": 225,
+      "condition_number": 299806072.6646103,
+      "design_reconstruction_max_abs": 0.036170005798339844,
+      "maximum_singular_value": 6.857242364951601,
+      "minimum_active_singular_value": 2.2872259737789637e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 1700006.6862815376,
+      "step": 801
+    },
+    {
+      "columns": 225,
+      "condition_number": 517660406.4773044,
+      "design_reconstruction_max_abs": 0.0817255973815918,
+      "maximum_singular_value": 6.861607723924838,
+      "minimum_active_singular_value": 1.3255036773274389e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 24228663.10498404,
+      "step": 817
+    },
+    {
+      "columns": 225,
+      "condition_number": 444409552.7131111,
+      "design_reconstruction_max_abs": 0.3043212890625,
+      "maximum_singular_value": 6.865006205699019,
+      "minimum_active_singular_value": 1.544747668853718e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 6950688.985410118,
+      "step": 833
+    },
+    {
+      "columns": 225,
+      "condition_number": 566126988.8291417,
+      "design_reconstruction_max_abs": 0.05355262756347656,
+      "maximum_singular_value": 6.836686062933576,
+      "minimum_active_singular_value": 1.207624119294002e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 2919205.2526820134,
+      "step": 849
+    },
+    {
+      "columns": 225,
+      "condition_number": 489220705.14208657,
+      "design_reconstruction_max_abs": 0.0669403076171875,
+      "maximum_singular_value": 6.73807548656178,
+      "minimum_active_singular_value": 1.377307913532566e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 2391216.7410976156,
+      "step": 865
+    },
+    {
+      "columns": 225,
+      "condition_number": 679628502.0414153,
+      "design_reconstruction_max_abs": 0.1024627685546875,
+      "maximum_singular_value": 6.748726526709489,
+      "minimum_active_singular_value": 9.930022808693555e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 7117713.0243877005,
+      "step": 881
+    },
+    {
+      "columns": 225,
+      "condition_number": 626166719.2383885,
+      "design_reconstruction_max_abs": 0.06273269653320312,
+      "maximum_singular_value": 6.767499008376323,
+      "minimum_active_singular_value": 1.0807822901555172e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 8000042.986415258,
+      "step": 897
+    },
+    {
+      "columns": 225,
+      "condition_number": 448548882.1898107,
+      "design_reconstruction_max_abs": 0.056415557861328125,
+      "maximum_singular_value": 6.733484996222266,
+      "minimum_active_singular_value": 1.5011708341239123e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 5110122.82660237,
+      "step": 913
+    },
+    {
+      "columns": 225,
+      "condition_number": 628333048.9392709,
+      "design_reconstruction_max_abs": 0.08344268798828125,
+      "maximum_singular_value": 6.712812765449312,
+      "minimum_active_singular_value": 1.0683526478165743e-08,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 13917844.251249997,
+      "step": 929
+    },
+    {
+      "columns": 225,
+      "condition_number": 1029621164.8602469,
+      "design_reconstruction_max_abs": 0.05389404296875,
+      "maximum_singular_value": 6.720611427904423,
+      "minimum_active_singular_value": 6.5272661997159205e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 12919763.499322945,
+      "step": 945
+    },
+    {
+      "columns": 225,
+      "condition_number": 995925684.9680777,
+      "design_reconstruction_max_abs": 0.059741973876953125,
+      "maximum_singular_value": 6.7297936578850095,
+      "minimum_active_singular_value": 6.7573251292346365e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 18478465.519861713,
+      "step": 961
+    },
+    {
+      "columns": 225,
+      "condition_number": 1595792708.1266024,
+      "design_reconstruction_max_abs": 0.067901611328125,
+      "maximum_singular_value": 6.783869577308999,
+      "minimum_active_singular_value": 4.251096989453595e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 20232728.40181315,
+      "step": 977
+    },
+    {
+      "columns": 225,
+      "condition_number": 1678547585.2356615,
+      "design_reconstruction_max_abs": 0.04360198974609375,
+      "maximum_singular_value": 6.774579970058187,
+      "minimum_active_singular_value": 4.035977311365327e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 15125842.618890427,
+      "step": 993
+    },
+    {
+      "columns": 225,
+      "condition_number": 3137878167.0765,
+      "design_reconstruction_max_abs": 0.0821533203125,
+      "maximum_singular_value": 6.7689358883043225,
+      "minimum_active_singular_value": 2.1571697586368718e-09,
+      "rank": 225,
+      "rows": 417,
+      "solution_norm": 42065818.67956834,
+      "step": 1009
+    }
+  ]
+}

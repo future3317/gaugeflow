@@ -1,0 +1,62 @@
+{
+  "protocol": "h1a_coordinate_variable_projection_16_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed 16-fixed-state qualification of alternating exact affine-readout variable projection with unchanged backbone, path, capacity and 1024-step budget; no production checkpoint or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "readout_panel_decision": "small_panels_fit_large_panel_requires_backbone_feature_learning",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 5911
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "training": {
+    "seed": 5914,
+    "noise_seed": 5915,
+    "steps": 1024,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "precision": "bf16",
+    "solve_every_steps": 16,
+    "lstsq_rcond": 1e-10,
+    "log_every": 32,
+    "readout_parameters": [
+      "coordinate_vector_head.weight",
+      "coordinate_edge_head.2.weight",
+      "coordinate_edge_head.2.bias"
+    ],
+    "envelope_theorem": "exact head solve is detached; Adam updates only nonlinear features between solves"
+  },
+  "acceptance": {
+    "coordinate_mse_max": 0.001,
+    "explained_fraction_min": 0.995,
+    "low_time_endpoint_rms_angstrom_max": 0.01,
+    "finite_curve": true,
+    "sampling_failures": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "qualify one separately frozen 64-state variable-projection memorization test before any production integration",
+    "fail": "reject alternating exact readout solves; retain the active production head and inspect a compact quotient-mode preconditioner",
+    "boundary": "This fixed-state mechanism test cannot qualify H1a, initialize production, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
