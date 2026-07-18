@@ -1,0 +1,50 @@
+{
+  "protocol": "h1a_coordinate_ntk_trust_step_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-state no-training output-space Gauss-Newton/NTK trust-step audit of the active coordinate denoiser; no optimizer, checkpoint, architecture, probability-path or later-Gate change",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_memorization_protocol": "h1a_coordinate_memorization_scaling_audit_v1",
+    "corrected_tangent_protocol": "h1a_coordinate_tangent_audit_v2",
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "gram_accumulation_dtype": "fp64"
+  },
+  "trust_step": {
+    "damping_relative_to_max_gram_eigenvalue": 1e-8,
+    "scales": [0.03125, 0.0625, 0.125, 0.25, 0.5, 1.0],
+    "linear_full_step_loss_reduction_min": 0.95,
+    "smallest_step_linearization_relative_error_max": 0.25,
+    "useful_nonlinear_loss_reduction_min": 0.25,
+    "full_step_nonlinear_loss_reduction_min": 0.5
+  },
+  "decision_rule": {
+    "linear_fail": "the damped output tangent cannot fit the visible target direction; repair the output parameterization rather than the optimizer",
+    "small_step_mismatch": "the autograd tangent or numerical forward path is locally inconsistent; inspect implementation and precision before training",
+    "full_step_success": "a one-step output-space natural-gradient update is locally effective; qualify a scalable optimizer/preconditioner mechanism before retraining",
+    "trust_region_only": "the tangent is useful only inside a trust region; nonlinear curvature, not strict expressivity, limits ordinary parameter updates",
+    "nonlinear_fail": "the linear tangent reaches the target but the nonlinear network leaves that tangent too quickly for a useful step; prioritize curvature-aware parameterization",
+    "boundary": "This single-state no-training audit cannot qualify H1a, initialize production, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

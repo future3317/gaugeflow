@@ -1,0 +1,79 @@
+{
+  "checks": {
+    "any_useful_nonlinear_step": false,
+    "full_nonlinear_step_success": false,
+    "linear_target_reachable": true,
+    "parameters_restored_exactly": true,
+    "small_step_linearization_consistent": false,
+    "tensor_candidates": 0
+  },
+  "damping": 5.450324217777526e-07,
+  "decision": "local_linearization_or_numeric_path_inconsistent",
+  "decision_boundary": "This single-state no-training audit cannot qualify H1a, initialize production, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "gauss_newton_relative_step_norm": 3.1575754023409974,
+  "gauss_newton_step_norm": 524.8558195198808,
+  "graph_index": 521337,
+  "initial_coordinate_mse": 0.7454572939206415,
+  "maximum_gram_eigenvalue": 54.503242177775256,
+  "nodes": 11,
+  "output_dimension": 33,
+  "parameter_norm": 166.2211515616563,
+  "protocol": "h1a_coordinate_ntk_trust_step_audit_v1",
+  "quotient_dimension": 30,
+  "steps": [
+    {
+      "actual_coordinate_mse": 180.61780742164856,
+      "actual_loss_reduction": -241.29128736766566,
+      "finite": true,
+      "linear_coordinate_mse": 0.6999001115393257,
+      "linear_loss_reduction": 0.06111306811650252,
+      "linearization_relative_error": 497.88990553669413,
+      "scale": 0.03125
+    },
+    {
+      "actual_coordinate_mse": 16849.223773172078,
+      "actual_loss_reduction": -22601.53392190402,
+      "finite": true,
+      "linear_coordinate_mse": 0.6557801556242202,
+      "linear_loss_reduction": 0.12029815661843668,
+      "linearization_relative_error": 2419.861824585672,
+      "scale": 0.0625
+    },
+    {
+      "actual_coordinate_mse": 2742778.0316687343,
+      "actual_loss_reduction": -3679321.8184051006,
+      "finite": true,
+      "linear_coordinate_mse": 0.571851928323922,
+      "linear_loss_reduction": 0.23288438789519839,
+      "linearization_relative_error": 15444.397397552224,
+      "scale": 0.125
+    },
+    {
+      "actual_coordinate_mse": 761697982.5597581,
+      "actual_loss_reduction": -1021786208.3128107,
+      "finite": true,
+      "linear_coordinate_mse": 0.4212422749650658,
+      "linear_loss_reduction": 0.434920982864634,
+      "linearization_relative_error": 128692.14512535342,
+      "scale": 0.25
+    },
+    {
+      "actual_coordinate_mse": 352803398619.6915,
+      "actual_loss_reduction": -473271106871.0854,
+      "finite": true,
+      "linear_coordinate_mse": 0.18901015033715426,
+      "linear_loss_reduction": 0.7464507331559149,
+      "linearization_relative_error": 1384834.3002696745,
+      "scale": 0.5
+    },
+    {
+      "actual_coordinate_mse": 268837032179362.7,
+      "actual_loss_reduction": -360633713522938.94,
+      "finite": true,
+      "linear_coordinate_mse": 0.0004946001646914292,
+      "linear_loss_reduction": 0.9993365144204437,
+      "linearization_relative_error": 19113754.84915785,
+      "scale": 1.0
+    }
+  ]
+}
