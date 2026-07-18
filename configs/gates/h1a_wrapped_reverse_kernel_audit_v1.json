@@ -1,0 +1,64 @@
+{
+  "protocol": "h1a_wrapped_reverse_kernel_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training analytic qualification of the translation-quotient torus reverse kernel; no model or Gate advancement",
+  "source_failure": "h1a_rao_blackwell_causal_audit_v1",
+  "seed": 5701,
+  "dtype": "float64",
+  "samples": 1024,
+  "sites": 4,
+  "dimensions": 3,
+  "coordinate_sigma_min": 0.005,
+  "coordinate_sigma_max": 0.5,
+  "maximum_time": 0.999,
+  "step_counts": [25, 50, 100, 200],
+  "quadrature_points": 64,
+  "panels": {
+    "single_endpoint": [
+      [0.03, 0.11, 0.19],
+      [0.24, 0.31, 0.47],
+      [0.58, 0.67, 0.73],
+      [0.83, 0.89, 0.37]
+    ],
+    "two_endpoint_mixture": [
+      [
+        [0.03, 0.11, 0.19],
+        [0.24, 0.31, 0.47],
+        [0.58, 0.67, 0.73],
+        [0.83, 0.89, 0.37]
+      ],
+      [
+        [0.07, 0.16, 0.29],
+        [0.39, 0.23, 0.61],
+        [0.63, 0.79, 0.44],
+        [0.91, 0.52, 0.86]
+      ]
+    ],
+    "mixture_weights": [0.5, 0.5],
+    "terminal_initializations": ["exact_forward", "uniform_quotient"]
+  },
+  "methods": {
+    "ancestral_gaussian": "current Euclidean SMLD ancestral approximation with quotient-projected Gaussian noise",
+    "reverse_sde_grw": "intrinsic reverse Brownian SDE geodesic random walk in variance time",
+    "predictor_corrector_grw": "reverse_sde_grw plus one quotient Langevin correction with epsilon=0.1*min(variance_drop,variance_to)",
+    "probability_flow_heun": "deterministic quotient probability-flow ODE with one Heun correction and a terminal quotient Tweedie denoise at variance_to=0",
+    "endpoint_aware_wrapped_bridge_reference": "exact finite wrapped Brownian bridge with endpoint, translation and winding posterior sampling; diagnostic reference only"
+  },
+  "common_random_numbers": true,
+  "endpoint_rms_tolerance_fractional": 0.02,
+  "acceptance": {
+    "reference_single_endpoint_recovery_min": 1.0,
+    "reference_two_endpoint_recovery_min": 1.0,
+    "reference_mixture_weight_absolute_error_max": 0.03,
+    "score_only_single_endpoint_recovery_min": 0.98,
+    "score_only_two_endpoint_recovery_min": 0.98,
+    "score_only_cut_locus_failure_fraction_max": 0.02,
+    "score_only_mixture_weight_absolute_error_max": 0.05,
+    "score_only_100_to_200_mean_rms_increase_max": 0.001
+  },
+  "decision_rule": {
+    "pass": "only a score-only method satisfying every frozen threshold may be proposed as the production coordinate reverse kernel and tested on the existing seed-5601 checkpoint without retraining",
+    "fail": "do not modify production sampling or train; audit the terminal prior/probability path or introduce an explicitly mode-predictive reverse transition in a separately frozen protocol",
+    "boundary": "This audit cannot authorize training, H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT. The endpoint-aware reference can never be selected for production because it reads unavailable clean endpoints."
+  }
+}

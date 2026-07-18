@@ -10,15 +10,15 @@ from .schedules import wrapped_normal_log_density_and_score
 from .state_projection import graph_mean, project_translation_state
 
 
-def factorized_translation_quotient_scaled_score(
+def factorized_translation_quotient_log_density_and_scaled_score(
     displacement: torch.Tensor,
     sigma: torch.Tensor,
     batch: torch.Tensor,
     graph_count: int,
     *,
     quadrature_points: int = 32,
-) -> torch.Tensor:
-    """Return the common-translation-marginalized scaled torus score.
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return quotient log density and its common-translation-marginalized score.
 
     The production heat kernel is isotropic in fractional coordinates, so its
     three common-translation integrals factorize into one-dimensional periodic
@@ -56,9 +56,30 @@ def factorized_translation_quotient_scaled_score(
         (graph_count, quadrature_points, 3)
     )
     posterior_log.index_add_(0, batch, log_kernel.to(posterior_log.dtype))
+    log_integral = torch.logsumexp(posterior_log, dim=1) - math.log(
+        quadrature_points
+    )
     posterior = torch.softmax(posterior_log, dim=1)
     quotient_score = (site_score * posterior[batch]).sum(dim=1)
     quotient_score = project_translation_state(
         quotient_score, batch, graph_count
     )
-    return sigma[batch].unsqueeze(-1) * quotient_score
+    return log_integral.sum(dim=-1), sigma[batch].unsqueeze(-1) * quotient_score
+
+
+def factorized_translation_quotient_scaled_score(
+    displacement: torch.Tensor,
+    sigma: torch.Tensor,
+    batch: torch.Tensor,
+    graph_count: int,
+    *,
+    quadrature_points: int = 32,
+) -> torch.Tensor:
+    """Return the scaled score of the translation-quotient torus heat kernel."""
+    return factorized_translation_quotient_log_density_and_scaled_score(
+        displacement,
+        sigma,
+        batch,
+        graph_count,
+        quadrature_points=quadrature_points,
+    )[1]

@@ -1,6 +1,7 @@
 import torch
 
 from gaugeflow.production.quotient_score import (
+    factorized_translation_quotient_log_density_and_scaled_score,
     factorized_translation_quotient_scaled_score,
 )
 from gaugeflow.production.schedules import wrapped_normal_score
@@ -137,3 +138,45 @@ def test_quotient_marginalization_removes_high_noise_nuisance_energy():
     )
     site = project_translation_state(site, batch, 1)
     assert quotient.square().mean() < site.square().mean()
+
+
+def test_quotient_log_density_gradient_matches_returned_score():
+    displacement = torch.tensor(
+        [[0.12, -0.07, 0.31], [-0.22, 0.18, -0.11], [0.09, 0.27, -0.38]],
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+    batch = torch.zeros(3, dtype=torch.long)
+    sigma = torch.tensor([0.17], dtype=torch.float64)
+    log_density, scaled_score = (
+        factorized_translation_quotient_log_density_and_scaled_score(
+            displacement, sigma, batch, 1, quadrature_points=64
+        )
+    )
+    gradient = torch.autograd.grad(log_density.sum(), displacement)[0]
+    assert torch.allclose(gradient, scaled_score / sigma, atol=2e-10, rtol=2e-10)
+
+
+def test_quotient_log_density_is_representative_and_permutation_invariant():
+    displacement = torch.tensor(
+        [[0.12, -0.07, 0.31], [-0.22, 0.18, -0.11], [0.09, 0.27, -0.38]],
+        dtype=torch.float64,
+    )
+    batch = torch.zeros(3, dtype=torch.long)
+    sigma = torch.tensor([0.17], dtype=torch.float64)
+    observed, _ = factorized_translation_quotient_log_density_and_scaled_score(
+        displacement, sigma, batch, 1, quadrature_points=64
+    )
+    shift = torch.tensor([0.31, -0.27, 1.19], dtype=torch.float64)
+    shifted, _ = factorized_translation_quotient_log_density_and_scaled_score(
+        displacement + shift, sigma, batch, 1, quadrature_points=64
+    )
+    permuted, _ = factorized_translation_quotient_log_density_and_scaled_score(
+        displacement[torch.tensor([2, 0, 1])],
+        sigma,
+        batch,
+        1,
+        quadrature_points=64,
+    )
+    assert torch.allclose(shifted, observed, atol=2e-12, rtol=2e-12)
+    assert torch.allclose(permuted, observed, atol=2e-12, rtol=2e-12)
