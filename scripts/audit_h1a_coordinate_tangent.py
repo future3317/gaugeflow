@@ -80,7 +80,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_coordinate_tangent_audit_v1":
+    if protocol.get("protocol") != "h1a_coordinate_tangent_audit_v2":
         raise ValueError("coordinate tangent protocol identity mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
@@ -151,7 +151,11 @@ def main() -> None:
             ).detach()
         )
     jacobian = torch.stack(rows)
-    gram = jacobian @ jacobian.T
+    # The output dimension is tiny, so accumulate the parameter contraction in
+    # FP64.  FP32 accumulation produced spurious negative eigenvalues at the
+    # same scale as the v1 rank threshold and cannot certify a null space.
+    jacobian64 = jacobian.double()
+    gram = jacobian64 @ jacobian64.T
     numeric = protocol["numeric"]
     spectrum = tangent_spectrum_metrics(
         gram,
@@ -172,7 +176,11 @@ def main() -> None:
         )
     group_norm = {name: math.sqrt(value) for name, value in group_energy.items()}
     quotient_dimension = 3 * int(batch_data.num_nodes) - 3
-    rank_full = int(spectrum["tangent_rank"]) >= quotient_dimension
+    expected_nullity = int(numeric["expected_translation_nullity"])
+    rank_full = (
+        int(spectrum["tangent_rank"]) == quotient_dimension
+        and int(spectrum["nullity"]) == expected_nullity
+    )
     target_reachable = (
         float(spectrum["target_projection_relative_residual"])
         <= float(numeric["target_projection_relative_residual_max"])
@@ -203,6 +211,11 @@ def main() -> None:
             ).clamp_min(1e-30)
         ),
         "tangent": spectrum,
+        "numeric_path": {
+            "forward_dtype": str(prediction.dtype),
+            "jacobian_dtype": str(jacobian.dtype),
+            "gram_dtype": str(gram.dtype),
+        },
         "module_gradient_norm": group_norm,
         "checks": {
             "quotient_tangent_full_rank": rank_full,

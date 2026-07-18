@@ -1,11 +1,11 @@
 {
-  "protocol": "h1a_coordinate_tangent_audit_v1",
+  "protocol": "h1a_coordinate_tangent_audit_v2",
   "status_before_run": "frozen_not_run",
-  "scope": "no-training FP32 quotient-tangent/NTK audit of the failed one-state coordinate panel; no optimizer or model change and no later Gate",
+  "scope": "corrected no-training FP32-Jacobian/FP64-Gram quotient-tangent audit of the failed one-state panel; no optimizer or model change and no later Gate",
   "prerequisites": {
     "cache_protocol": "h1a_p1_structure_cache_v1",
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
-    "failed_scaling_protocol": "h1a_coordinate_memorization_scaling_audit_v1",
+    "inconclusive_fp32_gram_predecessor": "h1a_coordinate_tangent_audit_v1",
     "fixed_graph_index": 521337,
     "fixed_graph_nodes": 11,
     "fixed_time": 0.005,
@@ -25,17 +25,20 @@
     "coordinate_sigma_max": 0.5,
     "minimum_time": 0.001,
     "maximum_time": 0.999,
-    "dtype": "fp32"
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "gram_accumulation_dtype": "fp64"
   },
   "numeric": {
-    "rank_relative_eigenvalue_threshold": 1e-7,
-    "target_projection_relative_residual_max": 0.0001,
-    "severe_ntk_condition_number_min": 1000000.0
+    "rank_relative_eigenvalue_threshold": 1e-10,
+    "expected_translation_nullity": 3,
+    "target_projection_relative_residual_max": 0.000001,
+    "severe_ntk_condition_number_min": 100000000.0
   },
   "decision_rule": {
     "rank_deficient": "repair the equivariant vector-output basis before any optimizer experiment",
-    "full_rank_ill_conditioned": "qualify one principled output/gradient preconditioner at unchanged model capacity and budget",
+    "full_rank_ill_conditioned": "qualify one principled vector-output preconditioner at unchanged model capacity and budget",
     "full_rank_well_conditioned": "inspect optimizer update and nonlinear curvature without adding steps or capacity",
-    "boundary": "This no-training audit cannot change historical H1a failures, initialize production or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
+    "boundary": "This corrected no-training audit cannot change historical H1a failures, initialize production or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
   }
 }
