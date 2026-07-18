@@ -119,6 +119,9 @@ def main() -> None:
             "radial_dim": int(model_spec["radial_dim"]),
             "radial_cutoff": float(model_spec["radial_cutoff_angstrom"]),
             "atlas_residual_circle_samples": 8,
+            "reciprocal_channels": int(model_spec["reciprocal_channels"]),
+            "reciprocal_radial_dim": int(model_spec["reciprocal_radial_dim"]),
+            "reciprocal_cutoff": float(model_spec["reciprocal_cutoff_inverse_angstrom"]),
         }
     )
     model = HybridCrystalDenoiser(**model_config).to(device)
