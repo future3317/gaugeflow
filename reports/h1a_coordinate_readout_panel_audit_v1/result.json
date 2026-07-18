@@ -1,0 +1,183 @@
+{
+  "checks": {
+    "design_reconstruction": true,
+    "panels": {
+      "1": true,
+      "16": false,
+      "4": true,
+      "64": false
+    },
+    "tensor_candidates": true
+  },
+  "decision": "small_panels_fit_large_panel_requires_backbone_feature_learning",
+  "decision_boundary": "This no-training audit cannot change production, qualify H1a, initialize a checkpoint, add steps or seeds, or authorize H1b-H6, tensor, oracle, relaxation, DFT or DFPT.",
+  "design_reconstruction_max_abs": 8.502975106239319e-07,
+  "design_shape": [
+    1818,
+    225
+  ],
+  "endpoint_summary": [
+    {
+      "endpoint_rms_angstrom": 1.6561453719532437e-07,
+      "graphs": 1.0
+    },
+    {
+      "endpoint_rms_angstrom": 1.0829756291741433e-07,
+      "graphs": 4.0
+    },
+    {
+      "endpoint_rms_angstrom": 0.9112192988395691,
+      "graphs": 16.0
+    },
+    {
+      "endpoint_rms_angstrom": 0.8918423056602478,
+      "graphs": 64.0
+    }
+  ],
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621,
+    354002,
+    77825,
+    34230,
+    171240,
+    201854,
+    499134,
+    424896,
+    513473,
+    363090,
+    409731,
+    419944,
+    347071,
+    473766,
+    118459,
+    173450,
+    171233,
+    570,
+    410794,
+    504201,
+    434462,
+    513391,
+    27815,
+    480287,
+    363110,
+    496812,
+    343802,
+    95458,
+    180417,
+    11708,
+    326891,
+    78767,
+    246763,
+    466015,
+    271742,
+    225712,
+    28135,
+    239399,
+    137739,
+    196097,
+    494137,
+    393710,
+    477617,
+    93723,
+    167502,
+    203894,
+    204617,
+    419338,
+    211022
+  ],
+  "initial_coordinate_mse": 0.7893134951591492,
+  "panels": [
+    {
+      "graphs": 1,
+      "metrics": {
+        "coordinate_mse": 1.5503555831963664e-27,
+        "endpoint_rms_angstrom": 1.6561453719532437e-07,
+        "explained_fraction": 1.0,
+        "low_time_endpoint_rms_angstrom": 1.6561453719532437e-07,
+        "row_count": 33.0,
+        "zero_predictor_mse": 0.7445340342511442
+      },
+      "spectrum": {
+        "columns": 225,
+        "condition_number": 177206040.74149162,
+        "maximum_singular_value": 0.46373933052198363,
+        "minimum_active_singular_value": 2.6169498995719176e-09,
+        "rank": 33,
+        "rows": 33
+      }
+    },
+    {
+      "graphs": 4,
+      "metrics": {
+        "coordinate_mse": 1.4262907154821842e-14,
+        "endpoint_rms_angstrom": 1.0829756291741433e-07,
+        "explained_fraction": 0.999999999999984,
+        "low_time_endpoint_rms_angstrom": 1.1251063369854819e-07,
+        "row_count": 126.0,
+        "zero_predictor_mse": 0.8900600685225004
+      },
+      "spectrum": {
+        "columns": 225,
+        "condition_number": 3854907488.927521,
+        "maximum_singular_value": 3.6235855912295767,
+        "minimum_active_singular_value": 9.399928796313862e-10,
+        "rank": 123,
+        "rows": 126
+      }
+    },
+    {
+      "graphs": 16,
+      "metrics": {
+        "coordinate_mse": 0.09946780707478353,
+        "endpoint_rms_angstrom": 0.9112192988395691,
+        "explained_fraction": 0.8676385957273702,
+        "low_time_endpoint_rms_angstrom": 0.020287834107875824,
+        "row_count": 417.0,
+        "zero_predictor_mse": 0.7514864897467085
+      },
+      "spectrum": {
+        "columns": 225,
+        "condition_number": 218739.5781513368,
+        "maximum_singular_value": 7.519295400411189,
+        "minimum_active_singular_value": 3.437555957618654e-05,
+        "rank": 225,
+        "rows": 417
+      }
+    },
+    {
+      "graphs": 64,
+      "metrics": {
+        "coordinate_mse": 0.5523162736446603,
+        "endpoint_rms_angstrom": 0.8918423056602478,
+        "explained_fraction": 0.2911111782523932,
+        "low_time_endpoint_rms_angstrom": 0.04620211571455002,
+        "row_count": 1818.0,
+        "zero_predictor_mse": 0.7791296134181493
+      },
+      "spectrum": {
+        "columns": 225,
+        "condition_number": 16389.880993071187,
+        "maximum_singular_value": 21.42893108782831,
+        "minimum_active_singular_value": 0.001307448851940254,
+        "rank": 225,
+        "rows": 1818
+      }
+    }
+  ],
+  "protocol": "h1a_coordinate_readout_panel_audit_v1"
+}
