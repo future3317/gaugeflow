@@ -1,0 +1,73 @@
+{
+  "actual_affine_fit_mse": 3.8026938962188235e-08,
+  "checks": {
+    "actual_affine_fit": true,
+    "condition_number": false,
+    "cuda": true,
+    "effective_rank": false,
+    "full_model_translation": true,
+    "operator_o3": true,
+    "operator_permutation": true,
+    "parameter_count": true,
+    "quotient_rank": true,
+    "readout_step_norm": false,
+    "target_projection": true,
+    "tensor_candidates": true
+  },
+  "cuda_benchmark": {
+    "finite": true,
+    "graphs_per_second": 483.23418540698543,
+    "peak_allocated_mib": 1618.85205078125
+  },
+  "decision": "screened_quotient_laplacian_failed_remove_before_training",
+  "decision_boundary": "Qualification cannot authorize more states, resampled time, H1b-H6, tensor, oracle, relaxation, DFT or DFPT.",
+  "full_model_translation_error": 2.0582228899002075e-07,
+  "initial_coordinate_mse": 0.7452797293663025,
+  "operator_numeric": {
+    "o3_covariance_max_abs": 1.1920928955078125e-07,
+    "permutation_max_abs": 1.1920928955078125e-07
+  },
+  "protocol": "h1a_screened_quotient_laplacian_v1",
+  "qualified": false,
+  "readout_step_norm": 2484.9229808712525,
+  "spectrum": {
+    "condition_number": 34545913.964578874,
+    "effective_rank": 2.239513691061598,
+    "eigenvalues": [
+      1.4159934667305988e-07,
+      2.770462752203648e-07,
+      3.7467774874994016e-07,
+      7.696944831595062e-07,
+      9.13316949280474e-07,
+      1.9696672731627414e-06,
+      2.707233753156651e-06,
+      2.9644280661127383e-06,
+      4.800745031093684e-06,
+      6.286435160271144e-06,
+      7.385739153491319e-06,
+      1.1254402186206547e-05,
+      1.3417439158993508e-05,
+      2.2735709212551376e-05,
+      2.4202729222116356e-05,
+      3.276053680868164e-05,
+      7.772638267784881e-05,
+      8.702149538546353e-05,
+      0.00012104730400118976,
+      0.00020042905853422574,
+      0.0005620681815209764,
+      0.0014097623095003812,
+      0.002353733518745623,
+      0.0034158554353109077,
+      0.02256322063481913,
+      0.04980748500697231,
+      0.13798195720287584,
+      0.36405347658728904,
+      0.9659820230705185,
+      4.891678847608104
+    ],
+    "maximum_eigenvalue": 4.891678847608104,
+    "minimum_active_eigenvalue": 1.4159934667305988e-07,
+    "rank": 30,
+    "target_projection_relative_residual": 8.64611761956724e-16
+  }
+}

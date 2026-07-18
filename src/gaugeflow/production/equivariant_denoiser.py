@@ -39,6 +39,75 @@ class FourierTimeEmbedding(nn.Module):
         return self.network(torch.cat((time.unsqueeze(-1), phase.sin(), phase.cos()), dim=-1))
 
 
+def screened_quotient_laplacian_precondition(
+    field: torch.Tensor,
+    source: torch.Tensor,
+    target: torch.Tensor,
+    edge_weight: torch.Tensor,
+    batch: torch.Tensor,
+    graphs: int,
+    *,
+    screening: float = 0.1,
+) -> torch.Tensor:
+    """Apply a compact permutation/O(3)-equivariant quotient Poisson solve.
+
+    The radius graph defines a positive combinatorial Laplacian ``L``.  After
+    graphwise degree normalization, this routine applies
+
+    ``(L + screening * (I-J) + J)^(-1)``
+
+    to a Cartesian node vector field, where ``J`` is the common-translation
+    projector.  The screened inverse boosts weak smooth quotient modes without
+    materializing hidden edge channels.  Padded systems are solved as one
+    batched FP32 kernel; the result is projected back to zero graph mean.
+    """
+    if field.ndim != 2 or field.shape[-1] != 3:
+        raise ValueError("quotient field must have shape [nodes, 3]")
+    if batch.shape != (field.shape[0],):
+        raise ValueError("quotient field batch vector has the wrong shape")
+    if source.shape != target.shape or edge_weight.shape != source.shape:
+        raise ValueError("graph edges and weights must be rank-one and aligned")
+    if screening <= 0.0 or not math.isfinite(screening):
+        raise ValueError("Laplacian screening must be finite and positive")
+    if field.shape[0] == 0:
+        return field
+    counts = torch.bincount(batch, minlength=graphs)
+    if bool((counts < 1).any()):
+        raise ValueError("every quotient graph must contain at least one node")
+    maximum_nodes = int(counts.max())
+    starts = torch.cumsum(counts, dim=0) - counts
+    local = torch.arange(field.shape[0], device=batch.device) - starts[batch]
+    matrix = field.new_zeros((graphs, maximum_nodes, maximum_nodes), dtype=torch.float32)
+    if source.numel():
+        edge_graph = batch[target]
+        source_local = local[source]
+        target_local = local[target]
+        flat = matrix.reshape(-1)
+        stride = maximum_nodes * maximum_nodes
+        weight = edge_weight.detach().float()
+        diagonal = edge_graph * stride + target_local * maximum_nodes + target_local
+        off_diagonal = edge_graph * stride + target_local * maximum_nodes + source_local
+        flat.index_add_(0, diagonal, weight)
+        flat.index_add_(0, off_diagonal, -weight)
+    valid = torch.arange(maximum_nodes, device=batch.device)[None, :] < counts[:, None]
+    diagonal_degree = matrix.diagonal(dim1=-2, dim2=-1).sum(-1) / counts.float()
+    matrix = matrix / diagonal_degree.clamp_min(1.0e-6)[:, None, None]
+    valid_float = valid.float()
+    translation = (
+        valid_float[:, :, None] * valid_float[:, None, :] / counts.float()[:, None, None]
+    )
+    identity = torch.diag_embed(valid_float)
+    quotient = identity - translation
+    padded_identity = torch.diag_embed((~valid).float())
+    operator = matrix + float(screening) * quotient + translation + padded_identity
+    rhs = field.new_zeros((graphs, maximum_nodes, 3), dtype=torch.float32)
+    rhs[batch, local] = field.float()
+    with torch.autocast(device_type=field.device.type, enabled=False):
+        solved = torch.linalg.solve(operator, rhs)
+    output = solved[batch, local].to(field)
+    return output - graph_mean(output, batch, graphs)[batch]
+
+
 class EquivariantDenoisingBlock(nn.Module):
     """O(3)-typed scalar/vector message block with explicit time and condition FiLM."""
 
@@ -342,6 +411,14 @@ class HybridCrystalDenoiser(nn.Module):
                 1
             ).sqrt().unsqueeze(-1)
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
+        cartesian_score = screened_quotient_laplacian_precondition(
+            cartesian_score,
+            source,
+            target,
+            edge_envelope.squeeze(-1),
+            batch,
+            graphs,
+        )
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
         # instead use L^-1; mixing these two transformations is incorrect.)
