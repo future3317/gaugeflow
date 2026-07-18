@@ -86,6 +86,36 @@ H(d,a)=G_p^B\cap H_{\rm occ}(a)\cap
 
 最后资格化并测试了更一般的 signed pairwise reciprocal residual。算子本身在 FP64 的平移、周期代表元、置换、O(3) 和 unimodular 基变换误差均约为 `1e-16`，CUDA 训练步为 `490.77 graphs/s`、`1.73 GiB`。但一次完整预训练只把 validation 改善到 `0.53354`，仍失败。分支归因证明它确实活跃，所以结论是“收益不足”，不是“没有接通”；该实现已从 production 删除。
 
+### 坐标 tangent、精确 readout 与优化几何
+
+随后的小面板均是对上述全量 H1a 失败的机制审计，不是用小数据替代训练集。纠正后的
+平移商 Jacobian 在 30 个物理方向上满秩 `30/30`。阻尼 Gauss--Newton 线性模型预测
+完整步可消除 `99.9337%` 的单状态 loss，但该步长是全部 active parameter 范数的
+`3.1575` 倍；在真实局部曲率半径内，最佳预注册步只消除 `0.1388%`，更大的步随即
+恶化。这排除了“直接做一个大 pseudoinverse 更新”，同时表明问题不是严格不可表达。
+
+使用显式 Helmert basis 精确消除三个公共平移零模后，最终 225-parameter affine
+coordinate readout 覆盖 `30/30` 方向，target projection residual 为 `1.12e-15`，
+应用于 production forward 的 MSE 为 `5.39e-8`。但 quotient condition number 为
+`3.496e7`、effective rank 为 `2.23`，最小范数更新为 `2079.20`，而初始化范数仅
+`0.80036`。因此物理方向完整，但 basis 高度相关且弱方向参数尺度异常。
+
+固定 backbone features 时，1/4/16/64 个状态的最优 affine MSE 分别为
+`1.55e-27`、`1.43e-14`、`0.09947`、`0.55232`。小面板可以被 readout 记忆，
+16/64 状态则要求 backbone 学出不同特征。graphwise unit scaling 虽把 update norm
+降到 `6.14`，仍未达到 spectrum、吞吐与 translation guardrail；未正则 variable
+projection 令 head norm 从 `9109` 膨胀到 `4.83e7`；screened quotient Laplacian
+没有改善谱；单独的 powers-of-two `1024x` readout scaling 虽把精确解范数降到
+`2.03`，但 Adam/global clipping 下 1,024-step MSE 为 `0.40491`，劣于历史
+`0.34414`。这些候选已全部从 active runtime、配置与测试入口删除，只留报告和 Git
+历史。当前 production 恢复为简洁原坐标 head。
+
+综合判断是：当前阻塞不是 cache 损坏、解析 probability path 不闭合、坐标 head
+缺少物理方向，或只需增加 seed/steps；而是严重各向异性的优化几何与随状态变化的
+feature learning。唯一仍有因果依据的后继是假设明确、单次冻结的 scaled variable
+projection，但在任何训练前必须先通过 16-state FP32/BF16 exact-solve stability
+审计；不得搜索 scale、ridge、solve frequency、steps 或 seeds。
+
 ## 现在能声称与不能声称的内容
 
 可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。

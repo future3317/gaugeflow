@@ -374,6 +374,36 @@ the residual was active rather than disconnected, so its insufficient benefit
 is a negative representation result. The module and tests were removed from
 the current runtime; commit 154e6c9 retains the exact implementation.
 
+The subsequent fixed-state studies did not replace the full-data run. A
+corrected translation-quotient Jacobian had full physical rank `30/30`, but a
+damped Gauss--Newton step predicted to remove `99.9337%` of the one-state loss
+was `3.1575` active-parameter norms long. Within the measured nonlinear trust
+region the best preregistered step removed only `0.1388%`. Thus the target is
+linearly expressible but its weak directions lie beyond the useful local
+curvature radius.
+
+An explicit Helmert quotient then removed the three translation zero modes
+before solving the 225-parameter affine coordinate readout. It again spanned
+`30/30` physical directions, projected the target with relative residual
+`1.12e-15`, and achieved `5.39e-8` through the unchanged FP32 production
+forward. The negative result was scale: condition number `3.496e7`, entropy
+effective rank `2.23`, and a minimum-norm update of `2079.20` from an initial
+readout norm of `0.80036`. With the backbone frozen, exact readout MSE on
+1/4/16/64 states was respectively `1.55e-27`, `1.43e-14`, `0.09947`, and
+`0.55232`; beyond a tiny panel, state-dependent backbone features are required.
+
+Four bounded successors were rejected. Graphwise vector/edge unit scaling
+reduced the required update to `6.14` but missed spectral, throughput, and
+translation guardrails. Unregularized 16-state variable projection inflated
+the head norm from `9109` to `4.83e7` and destabilized BF16 backbone updates.
+A screened quotient-Laplacian operator was efficient but left the spectrum and
+required step essentially unchanged. Finally, a function-preserving power-of-two
+`1024x` reparameterization reduced the exact-solve norm to `2.03`, yet the
+same-state 1,024-step AdamW run ended at MSE `0.40491`, worse than the historical
+`0.34414`, because Adam normalization and global clipping cancel a pure constant
+scale without decorrelating the basis. All four candidates were removed from
+active runtime/config/test dispatch and remain only in reports and Git history.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas

@@ -26,6 +26,18 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   and lattice statistics but not the train-reference local-geometry
   distribution; one-pass coordinate-only pretraining also missed its frozen
   validation and low-noise endpoint thresholds.
+- The joint H1a run did use all 540,164 training structures for 20,000 updates
+  (1,280,000 graph presentations, about 2.37 passes). Later 1/4/16/64-state
+  panels are mechanism audits, not substitutes for that full-data run.
+- Corrected tangent and exact Helmert-quotient audits show full physical rank
+  `30/30` but severe anisotropy: condition numbers are `2.3e7--3.5e7`, effective
+  rank is about `2.2`, and a one-state exact readout needs an update of
+  `2079.20` from an initial norm of `0.80036`. The current attribution is
+  optimization geometry plus state-dependent feature learning, not a missing
+  coordinate direction, corrupt cache, or probability-path closure failure.
+- No external pretrained weights or failed H1a checkpoint initialize the active
+  model. "Coordinate-only pretraining" denotes a from-scratch auxiliary
+  objective on the qualified train split, not transfer learning.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 
@@ -34,6 +46,13 @@ prohibited. Do not add seeds or steps to rescue completed protocols, revive
 either failed reciprocal-score residual, or initialize joint training from a
 failed coordinate checkpoint. A new mechanism requires a separately frozen
 causal or operator qualification first.
+
+Graphwise unit scaling, unregularized variable projection, screened quotient
+Laplacian preconditioning, and standalone `1024x` readout reparameterization
+are rejected candidates. Do not restore them as runtime/config fallbacks. A
+future scaled variable-projection candidate is permitted only after a frozen
+16-state FP32/BF16 exact-solve stability audit and must not search scale, ridge,
+solve frequency, steps, or seeds.
 
 ## Required environment
 
