@@ -4,10 +4,7 @@ import torch
 
 from gaugeflow.manifold import vector_to_symmetric
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
-from gaugeflow.production.equivariant_denoiser import (
-    HybridCrystalDenoiser,
-    screened_quotient_laplacian_precondition,
-)
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.so3_quadrature import nested_hopf_so3_grid
 from gaugeflow.production.space_group_router import (
@@ -38,39 +35,6 @@ def _small_hybrid_input():
     projectors = _trace_free_projector().expand(2, -1, -1).clone()
     charts = torch.eye(3).expand(2, -1, -1).clone()
     return tokens, frac, log_volume, log_shape, batch, condition, present, projectors, charts
-
-
-def test_screened_quotient_laplacian_is_o3_and_permutation_equivariant():
-    field = torch.tensor(
-        [[1.0, 2.0, -1.0], [-0.5, 1.0, 0.0], [0.2, -0.3, 1.5]]
-    )
-    field = field - field.mean(0, keepdim=True)
-    source = torch.tensor([0, 1, 1, 2, 2, 0])
-    target = torch.tensor([1, 0, 2, 1, 0, 2])
-    weight = torch.tensor([1.0, 1.0, 0.7, 0.7, 0.4, 0.4])
-    batch = torch.zeros(3, dtype=torch.long)
-    matrix = torch.randn((3, 3), generator=torch.Generator().manual_seed(102))
-    rotation, _ = torch.linalg.qr(matrix)
-    reference = screened_quotient_laplacian_precondition(
-        field, source, target, weight, batch, 1
-    )
-    rotated = screened_quotient_laplacian_precondition(
-        field @ rotation, source, target, weight, batch, 1
-    )
-    assert torch.allclose(rotated, reference @ rotation, atol=2e-6, rtol=2e-6)
-    permutation = torch.tensor([2, 0, 1])
-    inverse = torch.empty_like(permutation)
-    inverse[permutation] = torch.arange(3)
-    permuted = screened_quotient_laplacian_precondition(
-        field[permutation],
-        inverse[source],
-        inverse[target],
-        weight,
-        batch,
-        1,
-    )
-    assert torch.allclose(permuted, reference[permutation], atol=2e-6, rtol=2e-6)
-    assert torch.allclose(reference.mean(0), torch.zeros(3), atol=1e-7)
 
 
 def test_element_vocabulary_roundtrip():

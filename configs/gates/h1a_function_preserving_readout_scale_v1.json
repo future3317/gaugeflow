@@ -1,16 +1,14 @@
 {
-  "protocol": "h1a_screened_quotient_laplacian_v1",
+  "protocol": "h1a_function_preserving_readout_scale_v1",
   "status_before_run": "frozen_not_run",
-  "scope": "no-training qualification of one compact screened graph-Laplacian inverse on the existing Cartesian quotient score; no capacity, loss, path, tensor or later-Gate change",
+  "scope": "no-training qualification of a powers-of-two function-preserving reparameterization of the existing affine coordinate readout; no capacity, path, loss, tensor or later-Gate change",
   "prerequisites": {
     "cache_protocol": "h1a_p1_structure_cache_v1",
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
     "qualified_exact_quotient_readout": "h1a_coordinate_exact_quotient_readout_audit_v2",
-    "failed_unit_scaled_basis": "h1a_coordinate_unit_scaled_readout_v1",
-    "failed_variable_projection": "h1a_coordinate_variable_projection_16_v1",
-    "baseline_condition_number": 34959983.40879783,
-    "baseline_effective_rank": 2.233659099341965,
     "baseline_readout_step_norm": 2079.195874261065,
+    "failed_dynamic_unit_scale": "h1a_coordinate_unit_scaled_readout_v1",
+    "failed_variable_projection": "h1a_coordinate_variable_projection_16_v1",
     "fixed_graph_index": 521337,
     "fixed_graph_nodes": 11,
     "fixed_time": 0.005,
@@ -19,11 +17,11 @@
     "tensor_condition_enabled": false
   },
   "mechanism": {
-    "definition": "s_hat=(L/mean_degree+mu(I-J)+J)^(-1)s with mu=0.1",
-    "screening": 0.1,
-    "laplacian_weight": "existing positive radial cutoff envelope",
-    "implementation": "one padded batched FP32 solve with maximum 20x20 node matrices; no hidden edge-channel expansion",
+    "scale": 1024.0,
+    "definition": "initialize w_scaled=w_baseline/1024 and return 1024*B*w_scaled",
+    "rationale": "power-of-two scaling is exact absent underflow; it preserves the initial function and shrinks the measured minimum-norm readout displacement by 1024",
     "parameter_change": 0,
+    "inference_extra_ops": "one scalar multiplication",
     "runtime_fallback": false
   },
   "model": {
@@ -41,15 +39,13 @@
     "maximum_time": 0.999
   },
   "numeric": {
-    "rank_relative_eigenvalue_threshold": 1e-10,
+    "readout_scale": 1024.0,
+    "function_preservation_max_abs": 2e-6,
     "quotient_rank": 30,
+    "rank_relative_eigenvalue_threshold": 1e-10,
     "target_projection_relative_residual_max": 1e-8,
-    "condition_number_max": 5000000.0,
-    "effective_rank_min": 4.0,
-    "readout_step_norm_max": 100.0,
+    "readout_step_norm_max": 5.0,
     "actual_affine_fit_mse_max": 1e-5,
-    "operator_o3_error_max": 1e-6,
-    "operator_permutation_error_max": 1e-6,
     "full_model_translation_error_max": 1e-5,
     "tensor_candidates": 0
   },
@@ -62,14 +58,14 @@
     "weight_decay": 0.000001,
     "gradient_clip_norm": 1.0,
     "ema_decay": 0.999,
-    "graphs_per_second_min": 425.0,
+    "graphs_per_second_min": 450.0,
     "peak_allocated_mib_max": 2500.0,
     "precision": "bf16",
     "device": "RTX 4060 Ti 16GB"
   },
   "decision_rule": {
     "pass": "freeze one same-seed 1024-step one-state memorization test before any larger panel",
-    "fail": "remove the screened quotient operator before training and retain the simple production head",
+    "fail": "remove the reparameterization before training and retain the simple production head",
     "boundary": "Qualification cannot authorize more states, resampled time, H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
   }
 }

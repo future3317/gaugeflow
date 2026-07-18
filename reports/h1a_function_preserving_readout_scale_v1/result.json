@@ -1,0 +1,36 @@
+{
+  "actual_affine_fit_mse": 4.270094144448371e-08,
+  "checks": {
+    "actual_affine_fit": true,
+    "cuda": true,
+    "full_model_translation": true,
+    "function_preservation": true,
+    "parameter_count": true,
+    "persistent_scale_buffer": true,
+    "quotient_rank": true,
+    "readout_step_norm": true,
+    "target_projection": true,
+    "tensor_candidates": true
+  },
+  "cuda_benchmark": {
+    "finite": true,
+    "graphs_per_second": 452.7533179998581,
+    "peak_allocated_mib": 1636.19140625
+  },
+  "decision": "readout_scale_qualified_freeze_one_state_training",
+  "decision_boundary": "Qualification cannot authorize more states, resampled time, H1b-H6, tensor, oracle, relaxation, DFT or DFPT.",
+  "full_model_translation_error": 1.8847640603780746e-07,
+  "function_preservation_max_abs": 1.7881393432617188e-07,
+  "initial_coordinate_mse": 0.7454572916030884,
+  "protocol": "h1a_function_preserving_readout_scale_v1",
+  "qualified": true,
+  "readout_step_norm": 2.030219957944669,
+  "spectrum": {
+    "condition_number": 34952668.05247803,
+    "effective_rank": 2.233659136854084,
+    "maximum_eigenvalue": 7441516.450611859,
+    "minimum_active_eigenvalue": 0.21290267282140365,
+    "rank": 30,
+    "target_projection_relative_residual": 7.471887786108454e-16
+  }
+}

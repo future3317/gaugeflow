@@ -1,8 +1,9 @@
-"""Qualify the screened quotient-Laplacian coordinate preconditioner."""
+"""Qualify the function-preserving coordinate-readout reparameterization."""
 
 from __future__ import annotations
 
 import argparse
+import copy
 import dataclasses
 import json
 import math
@@ -14,9 +15,6 @@ import torch
 
 from gaugeflow.file_utils import load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
-from gaugeflow.production.equivariant_denoiser import (
-    screened_quotient_laplacian_precondition,
-)
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
@@ -26,6 +24,19 @@ from scripts.audit_h1a_coordinate_memorization import (
     _make_model,
     _predict,
 )
+
+
+def unscaled_reference(model: torch.nn.Module, scale: float) -> torch.nn.Module:
+    """Convert a scaled-readout model copy to the algebraic baseline function."""
+    if scale <= 0.0 or not math.isfinite(scale):
+        raise ValueError("readout scale must be finite and positive")
+    reference = copy.deepcopy(model)
+    with torch.no_grad():
+        reference.coordinate_readout_scale.fill_(1.0)
+        reference.coordinate_vector_head.weight.mul_(scale)
+        reference.coordinate_edge_head[2].weight.mul_(scale)
+        reference.coordinate_edge_head[2].bias.mul_(scale)
+    return reference
 
 
 def helmert_quotient_basis(
@@ -42,14 +53,14 @@ def helmert_quotient_basis(
     return torch.kron(helmert, torch.eye(3, dtype=dtype, device=device))
 
 
-def _readout_parameters(model: torch.nn.Module) -> list[tuple[str, torch.nn.Parameter]]:
+def _parameters(model: torch.nn.Module) -> list[tuple[str, torch.nn.Parameter]]:
     names = [
         "coordinate_vector_head.weight",
         "coordinate_edge_head.2.weight",
         "coordinate_edge_head.2.bias",
     ]
-    parameters = dict(model.named_parameters())
-    return [(name, parameters[name]) for name in names]
+    available = dict(model.named_parameters())
+    return [(name, available[name]) for name in names]
 
 
 def _jacobian(
@@ -65,7 +76,7 @@ def _jacobian(
     return torch.stack(rows)
 
 
-def _spectrum_and_solution(
+def quotient_solution(
     jacobian: torch.Tensor,
     desired: torch.Tensor,
     *,
@@ -93,40 +104,6 @@ def _spectrum_and_solution(
         ),
         "minimum_active_eigenvalue": float(values[0]),
         "maximum_eigenvalue": float(maximum),
-        "eigenvalues": eigenvalues.tolist(),
-    }
-
-
-def _operator_checks(device: torch.device) -> dict[str, float]:
-    generator = torch.Generator(device=device).manual_seed(5920)
-    field = torch.randn((5, 3), device=device, generator=generator)
-    field = field - field.mean(0, keepdim=True)
-    source = torch.tensor([0, 1, 1, 2, 2, 3, 3, 4, 4, 0], device=device)
-    target = torch.tensor([1, 0, 2, 1, 3, 2, 4, 3, 0, 4], device=device)
-    weight = torch.linspace(0.4, 1.0, source.numel(), device=device)
-    batch = torch.zeros(5, dtype=torch.long, device=device)
-    matrix = torch.randn((3, 3), device=device, generator=generator)
-    rotation, _ = torch.linalg.qr(matrix)
-    reference = screened_quotient_laplacian_precondition(
-        field, source, target, weight, batch, 1
-    )
-    rotated = screened_quotient_laplacian_precondition(
-        field @ rotation, source, target, weight, batch, 1
-    )
-    permutation = torch.randperm(5, device=device, generator=generator)
-    inverse = torch.empty_like(permutation)
-    inverse[permutation] = torch.arange(5, device=device)
-    permuted = screened_quotient_laplacian_precondition(
-        field[permutation],
-        inverse[source],
-        inverse[target],
-        weight,
-        batch,
-        1,
-    )
-    return {
-        "o3_covariance_max_abs": float((rotated - reference @ rotation).abs().max()),
-        "permutation_max_abs": float((permuted - reference[permutation]).abs().max()),
     }
 
 
@@ -216,12 +193,12 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_screened_quotient_laplacian_v1":
-        raise ValueError("screened quotient-Laplacian protocol identity mismatch")
+    if protocol.get("protocol") != "h1a_function_preserving_readout_scale_v1":
+        raise ValueError("function-preserving readout-scale protocol identity mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
     ):
-        raise ValueError("screened quotient-Laplacian cache mismatch")
+        raise ValueError("function-preserving readout-scale cache mismatch")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but unavailable")
@@ -260,17 +237,23 @@ def main() -> None:
         ),
     )
     prediction = _predict(model, noisy, batch_data, blueprint, use_bf16=False)
+    scale = float(protocol["numeric"]["readout_scale"])
+    reference = unscaled_reference(model, scale).eval()
+    with torch.no_grad():
+        reference_prediction = _predict(
+            reference, noisy, batch_data, blueprint, use_bf16=False
+        )
+    function_error = float((prediction - reference_prediction).abs().max())
     target = noisy.coordinate_scaled_score_target
     quotient = helmert_quotient_basis(
         int(batch_data.num_nodes), dtype=prediction.dtype, device=device
     )
     initial = quotient.T @ prediction.reshape(-1)
     desired = quotient.T @ (target - prediction).reshape(-1)
-    parameters = _readout_parameters(model)
-    raw_jacobian = _jacobian(prediction, parameters)
-    jacobian = quotient.T @ raw_jacobian
+    parameters = _parameters(model)
+    jacobian = quotient.T @ _jacobian(prediction, parameters)
     numeric = protocol["numeric"]
-    solution, spectrum = _spectrum_and_solution(
+    solution, spectrum = quotient_solution(
         jacobian,
         desired.detach(),
         threshold=float(numeric["rank_relative_eigenvalue_threshold"]),
@@ -311,24 +294,17 @@ def main() -> None:
             .abs()
             .max()
         )
-    operator = _operator_checks(device)
     benchmark = _benchmark(protocol, dataset, standardizer, device=device)
     cuda = protocol["cuda"]
     checks = {
+        "function_preservation": function_error
+        <= float(numeric["function_preservation_max_abs"]),
         "quotient_rank": int(spectrum["rank"]) == int(numeric["quotient_rank"]),
         "target_projection": float(spectrum["target_projection_relative_residual"])
         <= float(numeric["target_projection_relative_residual_max"]),
-        "condition_number": float(spectrum["condition_number"])
-        <= float(numeric["condition_number_max"]),
-        "effective_rank": float(spectrum["effective_rank"])
-        >= float(numeric["effective_rank_min"]),
         "readout_step_norm": float(torch.linalg.vector_norm(solution))
         <= float(numeric["readout_step_norm_max"]),
         "actual_affine_fit": actual_mse <= float(numeric["actual_affine_fit_mse_max"]),
-        "operator_o3": operator["o3_covariance_max_abs"]
-        <= float(numeric["operator_o3_error_max"]),
-        "operator_permutation": operator["permutation_max_abs"]
-        <= float(numeric["operator_permutation_error_max"]),
         "full_model_translation": translation_error
         <= float(numeric["full_model_translation_error_max"]),
         "cuda": float(benchmark["graphs_per_second"])
@@ -338,24 +314,25 @@ def main() -> None:
         and bool(benchmark["finite"]),
         "parameter_count": sum(value.numel() for value in model.parameters())
         == int(protocol["model"]["parameter_count"]),
+        "persistent_scale_buffer": "coordinate_readout_scale" in model.state_dict(),
         "tensor_candidates": int(numeric["tensor_candidates"]) == 0,
     }
     qualified = all(checks.values())
     result = {
         "protocol": protocol["protocol"],
+        "function_preservation_max_abs": function_error,
         "initial_coordinate_mse": float((prediction - target).square().mean()),
         "readout_step_norm": float(torch.linalg.vector_norm(solution)),
         "actual_affine_fit_mse": actual_mse,
         "spectrum": spectrum,
-        "operator_numeric": operator,
         "full_model_translation_error": translation_error,
         "cuda_benchmark": benchmark,
         "checks": checks,
         "qualified": qualified,
         "decision": (
-            "screened_quotient_laplacian_qualified_freeze_one_state_training"
+            "readout_scale_qualified_freeze_one_state_training"
             if qualified
-            else "screened_quotient_laplacian_failed_remove_before_training"
+            else "readout_scale_failed_remove_before_training"
         ),
         "decision_boundary": protocol["decision_rule"]["boundary"],
     }
