@@ -117,6 +117,11 @@ def classify_attribution(
     return "distributed_nonlinear_optimization"
 
 
+def tensor_candidate_count(gauge_atlas: Any) -> int:
+    """Use the production null-condition accounting contract."""
+    return int(gauge_atlas.effective_frame_count.sum())
+
+
 @torch.no_grad()
 def collect_design_panel(
     runtime: Any,
@@ -245,8 +250,8 @@ def collect_design_panel(
                     )
                     target_parts.append((target_flat * component_weight).double().cpu())
                     graph_observations += graphs
-                    tensor_candidates += int(
-                        prediction.gauge_atlas.candidate_rotations.shape[0]
+                    tensor_candidates += tensor_candidate_count(
+                        prediction.gauge_atlas
                     )
                 blocks[(time_value, replicate)] = DesignBlock(
                     design=torch.cat(design_parts),

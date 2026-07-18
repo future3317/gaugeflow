@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import torch
 
 from scripts.audit_h1a_tangent_readout_span import (
@@ -7,6 +9,7 @@ from scripts.audit_h1a_tangent_readout_span import (
     classify_attribution,
     evaluate_readout,
     solve_minimum_norm,
+    tensor_candidate_count,
 )
 
 
@@ -68,3 +71,8 @@ def test_attribution_classification_obeys_preregistered_order() -> None:
         )
         == "distributed_nonlinear_optimization"
     )
+
+
+def test_tensor_candidate_count_uses_null_condition_contract() -> None:
+    atlas = SimpleNamespace(effective_frame_count=torch.tensor([0, 0, 0]))
+    assert tensor_candidate_count(atlas) == 0
