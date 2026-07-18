@@ -4,7 +4,10 @@ import torch
 
 from gaugeflow.manifold import vector_to_symmetric
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
+from gaugeflow.production.equivariant_denoiser import (
+    HybridCrystalDenoiser,
+    invariant_graphwise_basis_unit_scale,
+)
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.so3_quadrature import nested_hopf_so3_grid
 from gaugeflow.production.space_group_router import (
@@ -35,6 +38,26 @@ def _small_hybrid_input():
     projectors = _trace_free_projector().expand(2, -1, -1).clone()
     charts = torch.eye(3).expand(2, -1, -1).clone()
     return tokens, frac, log_volume, log_shape, batch, condition, present, projectors, charts
+
+
+def test_graphwise_basis_unit_scale_preserves_o3_permutation_and_zero_stratum():
+    generator = torch.Generator().manual_seed(101)
+    basis = torch.randn((7, 5, 3), generator=generator)
+    batch = torch.tensor([0, 0, 0, 1, 1, 1, 1])
+    matrix = torch.randn((3, 3), generator=generator)
+    rotation, _ = torch.linalg.qr(matrix)
+    reference = invariant_graphwise_basis_unit_scale(basis, batch, 2)
+    rotated = invariant_graphwise_basis_unit_scale(basis @ rotation, batch, 2)
+    assert torch.allclose(rotated, reference @ rotation, atol=2e-6, rtol=2e-6)
+    permutation = torch.tensor([2, 0, 1, 6, 3, 5, 4])
+    permuted = invariant_graphwise_basis_unit_scale(
+        basis[permutation], batch[permutation], 2
+    )
+    assert torch.allclose(permuted, reference[permutation], atol=2e-6, rtol=2e-6)
+    zero = torch.zeros_like(basis, requires_grad=True)
+    zero_output = invariant_graphwise_basis_unit_scale(zero, batch, 2)
+    zero_output.square().sum().backward()
+    assert zero.grad is not None and torch.isfinite(zero.grad).all()
 
 
 def test_element_vocabulary_roundtrip():

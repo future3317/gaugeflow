@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
+import math
+import time as wall_time
 from pathlib import Path
 from typing import Any
 
@@ -11,8 +14,12 @@ import torch
 
 from gaugeflow.file_utils import load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
+from gaugeflow.production.equivariant_denoiser import (
+    invariant_graphwise_basis_unit_scale,
+)
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
+from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 from scripts.audit_h1a_coordinate_memorization import (
     _blueprint,
     _make_batch,
@@ -132,6 +139,138 @@ def _column_slices(
     return result
 
 
+def _operator_numeric_checks(
+    model: torch.nn.Module,
+    noisy: Any,
+    batch_data: Any,
+    blueprint: Any,
+) -> dict[str, float | bool]:
+    generator = torch.Generator(device=batch_data.lattice.device).manual_seed(5917)
+    basis = torch.randn(
+        (17, 9, 3),
+        dtype=batch_data.lattice.dtype,
+        device=batch_data.lattice.device,
+        generator=generator,
+    )
+    batch = torch.tensor(
+        [0] * 8 + [1] * 9, dtype=torch.long, device=batch_data.lattice.device
+    )
+    matrix = torch.randn(
+        (3, 3),
+        dtype=basis.dtype,
+        device=basis.device,
+        generator=generator,
+    )
+    rotation, _ = torch.linalg.qr(matrix)
+    reference = invariant_graphwise_basis_unit_scale(basis, batch, 2)
+    rotated = invariant_graphwise_basis_unit_scale(basis @ rotation, batch, 2)
+    o3_error = float((rotated - reference @ rotation).abs().max())
+    permutation = torch.randperm(
+        basis.shape[0],
+        device=basis.device,
+        generator=torch.Generator(device=basis.device).manual_seed(5918),
+    )
+    permuted = invariant_graphwise_basis_unit_scale(
+        basis[permutation], batch[permutation], 2
+    )
+    permutation_error = float((permuted - reference[permutation]).abs().max())
+    original = _predict(model, noisy, batch_data, blueprint, use_bf16=False)
+    shifted = dataclasses.replace(
+        noisy,
+        fractional_coordinates=noisy.fractional_coordinates
+        + noisy.fractional_coordinates.new_tensor([0.31, -0.27, 1.19]),
+    )
+    translated = _predict(model, shifted, batch_data, blueprint, use_bf16=False)
+    translation_error = float((translated - original).abs().max())
+    zero = torch.zeros_like(basis, requires_grad=True)
+    zero_output = invariant_graphwise_basis_unit_scale(zero, batch, 2)
+    zero_output.square().sum().backward()
+    finite = zero.grad is not None and bool(torch.isfinite(zero.grad).all())
+    return {
+        "operator_o3_covariance_max_abs": o3_error,
+        "operator_permutation_max_abs": permutation_error,
+        "full_model_translation_invariance_max_abs": translation_error,
+        "zero_stratum_forward_backward_finite": finite,
+    }
+
+
+def _cuda_benchmark(
+    protocol: dict[str, Any],
+    dataset: PackedAlexP1Dataset,
+    standardizer: P1LatticeStandardizer,
+    *,
+    device: torch.device,
+) -> dict[str, float | bool]:
+    specification = protocol["cuda"]
+    count = int(specification["batch_graphs"])
+    indices = torch.randperm(
+        len(dataset),
+        generator=torch.Generator().manual_seed(int(specification["selection_seed"])),
+    )[:count]
+    batch_data = _make_batch(dataset, indices, device)
+    blueprint = _blueprint(batch_data)
+    seed = int(protocol["prerequisites"]["model_seed"])
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    model = _make_model(protocol, device)
+    path = protocol["path"]
+    diffusion = TensorFreeHybridDiffusion(
+        model,
+        standardizer,
+        coordinate_sigma_min=float(path["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(path["coordinate_sigma_max"]),
+        minimum_time=float(path["minimum_time"]),
+        maximum_time=float(path["maximum_time"]),
+    )
+    trainer = ProductionTrainer(
+        diffusion,
+        ProductionTrainingConfig(
+            learning_rate=float(specification["learning_rate"]),
+            weight_decay=float(specification["weight_decay"]),
+            gradient_clip_norm=float(specification["gradient_clip_norm"]),
+            ema_decay=float(specification["ema_decay"]),
+            coordinate_sigma_min=float(path["coordinate_sigma_min"]),
+            coordinate_sigma_max=float(path["coordinate_sigma_max"]),
+            minimum_time=float(path["minimum_time"]),
+            maximum_time=float(path["maximum_time"]),
+            precision=str(specification["precision"]),
+            objective="coordinate",
+        ),
+    )
+    generator = torch.Generator(device=device).manual_seed(seed + 11)
+    for _ in range(int(specification["warmup_steps"])):
+        trainer.train_step(
+            batch_data.atom_types,
+            batch_data.frac_coords,
+            batch_data.lattice,
+            batch_data.batch,
+            blueprint,
+            generator=generator,
+        )
+    torch.cuda.synchronize(device)
+    torch.cuda.reset_peak_memory_stats(device)
+    tick = wall_time.perf_counter()
+    finite = True
+    for _ in range(int(specification["measured_steps"])):
+        output, gradient = trainer.train_step(
+            batch_data.atom_types,
+            batch_data.frac_coords,
+            batch_data.lattice,
+            batch_data.batch,
+            blueprint,
+            generator=generator,
+        )
+        finite = finite and math.isfinite(float(output.coordinate_loss))
+        finite = finite and math.isfinite(gradient)
+    torch.cuda.synchronize(device)
+    elapsed = wall_time.perf_counter() - tick
+    return {
+        "graphs_per_second": count * int(specification["measured_steps"]) / elapsed,
+        "peak_allocated_mib": torch.cuda.max_memory_allocated(device) / (1024.0**2),
+        "finite": finite,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", type=Path, required=True)
@@ -141,8 +280,8 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_coordinate_exact_quotient_readout_audit_v2":
-        raise ValueError("coordinate exact-quotient-readout protocol identity mismatch")
+    if protocol.get("protocol") != "h1a_coordinate_unit_scaled_readout_v1":
+        raise ValueError("coordinate unit-scaled-readout protocol identity mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
     ):
@@ -267,26 +406,57 @@ def main() -> None:
         / coordinate_denominator
     )
     acceptance = protocol["acceptance"]
+    operator_numeric = _operator_numeric_checks(
+        model, noisy, batch_data, blueprint
+    )
+    benchmark = _cuda_benchmark(
+        protocol, dataset, standardizer, device=device
+    )
+    cuda = protocol["cuda"]
     checks = {
         "quotient_rank": int(combined["rank"]) == int(acceptance["quotient_rank"]),
         "target_projection": float(combined["target_projection_relative_residual"])
         <= float(acceptance["target_projection_relative_residual_max"]),
+        "condition_number": float(combined["condition_number"])
+        <= float(acceptance["condition_number_max"]),
+        "effective_rank": float(combined["effective_rank"])
+        >= float(acceptance["effective_rank_min"]),
+        "readout_step_norm": float(torch.linalg.vector_norm(delta))
+        <= float(acceptance["readout_step_norm_max"]),
         "actual_coordinate_mse": actual_mse
         <= float(acceptance["actual_coordinate_mse_max"]),
         "affine_forward": float(affine_error)
         <= float(acceptance["affine_forward_relative_error_max"]),
+        "operator_o3_covariance": float(
+            operator_numeric["operator_o3_covariance_max_abs"]
+        )
+        <= float(acceptance["operator_o3_covariance_max"]),
+        "operator_permutation": float(
+            operator_numeric["operator_permutation_max_abs"]
+        )
+        <= float(acceptance["operator_permutation_error_max"]),
+        "full_model_translation": float(
+            operator_numeric["full_model_translation_invariance_max_abs"]
+        )
+        <= float(acceptance["full_model_translation_error_max"]),
+        "finite_zero_stratum": bool(
+            operator_numeric["zero_stratum_forward_backward_finite"]
+        )
+        is bool(acceptance["finite_zero_stratum"]),
+        "cuda": float(benchmark["graphs_per_second"])
+        >= float(cuda["graphs_per_second_min"])
+        and float(benchmark["peak_allocated_mib"])
+        <= float(cuda["peak_allocated_mib_max"])
+        and bool(benchmark["finite"]),
         "parameters_restored_exactly": restored
         is bool(acceptance["parameters_restored_exactly"]),
         "tensor_candidates": int(acceptance["tensor_candidates"]) == 0,
     }
-    if not checks["quotient_rank"] or not checks["target_projection"]:
-        decision = "affine_coordinate_features_do_not_span_target"
-    elif not checks["affine_forward"]:
-        decision = "declared_coordinate_readout_not_numerically_affine"
-    elif all(checks.values()):
-        decision = "affine_readout_spans_target_qualify_two_timescale_optimization"
-    else:
-        decision = "affine_readout_qualification_failed"
+    decision = (
+        "unit_scaled_readout_qualified_freeze_one_state_training"
+        if all(checks.values())
+        else "unit_scaled_readout_failed_remove_before_training"
+    )
     result = {
         "protocol": protocol["protocol"],
         "graph_index": graph_index,
@@ -309,6 +479,8 @@ def main() -> None:
         ),
         "combined": combined,
         "groups": group_metrics,
+        "operator_numeric": operator_numeric,
+        "cuda_benchmark": benchmark,
         "checks": checks,
         "decision": decision,
         "decision_boundary": protocol["decision_rule"]["boundary"],
