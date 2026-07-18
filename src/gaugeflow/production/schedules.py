@@ -16,13 +16,13 @@ def standard_normal(
     return torch.randn(shape, dtype=reference.dtype, device=reference.device, generator=generator)
 
 
-def wrapped_normal_score(
+def wrapped_normal_log_density_and_score(
     displacement: torch.Tensor,
     sigma: torch.Tensor,
     *,
     dual_threshold: float = 0.25,
-) -> torch.Tensor:
-    """Exact-to-FP32 score of a unit-period wrapped normal, fully vectorized.
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Exact-to-FP32 log kernel and score of a unit wrapped normal.
 
     A nine-image log-sum-exp is used in the narrow-kernel regime and an
     eight-mode Poisson/Fourier series in the broad-kernel regime. At the
@@ -37,6 +37,7 @@ def wrapped_normal_score(
     scale = torch.broadcast_to(sigma, displacement.shape)
     centered = torch.remainder(displacement + 0.5, 1.0) - 0.5
     result = torch.empty_like(centered)
+    log_density = torch.empty_like(centered)
     image_mask = scale <= dual_threshold
     if bool(image_mask.any()):
         selected = centered[image_mask]
@@ -46,6 +47,7 @@ def wrapped_normal_score(
         logits = -0.5 * (residual / selected_scale.unsqueeze(-1)).square()
         mean_residual = (torch.softmax(logits, dim=-1) * residual).sum(dim=-1)
         result[image_mask] = -mean_residual / selected_scale.square()
+        log_density[image_mask] = torch.logsumexp(logits, dim=-1)
     fourier_mask = ~image_mask
     if bool(fourier_mask.any()):
         selected = centered[fourier_mask]
@@ -65,7 +67,20 @@ def wrapped_normal_score(
         if bool((density <= 0.0).any()):
             raise FloatingPointError("wrapped-normal Fourier density lost positivity")
         result[fourier_mask] = derivative / density
-    return result
+        log_density[fourier_mask] = density.log()
+    return log_density, result
+
+
+def wrapped_normal_score(
+    displacement: torch.Tensor,
+    sigma: torch.Tensor,
+    *,
+    dual_threshold: float = 0.25,
+) -> torch.Tensor:
+    """Exact-to-FP32 score of a unit-period wrapped normal, fully vectorized."""
+    return wrapped_normal_log_density_and_score(
+        displacement, sigma, dual_threshold=dual_threshold
+    )[1]
 
 
 class CosineNoiseSchedule:

@@ -13,11 +13,11 @@ from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser, HybridDenoiserOutput
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
+from .quotient_score import factorized_translation_quotient_scaled_score
 from .schedules import (
     CosineNoiseSchedule,
     ExponentialTorusNoiseSchedule,
     standard_normal,
-    wrapped_normal_score,
 )
 from .state_projection import project_translation_state
 
@@ -157,12 +157,12 @@ class TensorFreeHybridDiffusion(nn.Module):
         )
         displacement = coordinate_sigma.unsqueeze(-1) * fractional_noise
         noisy_coordinates = clean_coordinates + displacement
-        coordinate_score = wrapped_normal_score(
+        coordinate_target = factorized_translation_quotient_scaled_score(
             displacement,
-            coordinate_sigma.unsqueeze(-1),
+            self.coordinate_schedule.sigma(selected_time),
+            batch,
+            graphs,
         )
-        coordinate_score = project_translation_state(coordinate_score, batch, graphs)
-        coordinate_target = coordinate_sigma.unsqueeze(-1) * coordinate_score
 
         alpha = self.vp_schedule.alpha(selected_time)
         sigma = self.vp_schedule.sigma(selected_time).clamp_min(1.0e-8)
