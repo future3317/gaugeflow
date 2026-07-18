@@ -63,6 +63,22 @@ validation loss at most 0.47, total validation ratio at most 0.65, generated
 nearest-neighbour median at least 2.3 Å, zero failures/masks, and valid
 lattices.  Only a complete pass permits seeds 5502/5503.
 
+## Frozen result
+
+Seed 5501 **failed**.  Final coordinate validation loss was 0.52852 and the
+128-sample generated nearest-neighbour median was 2.12078 Å.  Total validation
+ratio passed at 0.51873; sampling had zero failures and masks, every lattice
+was finite with positive volume, and every sample exceeded 0.5 Å.
+
+A post-run branch decomposition showed that the spectral residual was active:
+on one fixed 64-graph teacher-forced batch, full coordinate MSE was 0.50246,
+compared with 0.56447 after subtracting the learned spectral contribution and
+0.69513 for the zero field.  Spectral and local RMS norms were 0.23943 and
+0.29945, respectively.  Thus the mechanism improved its own teacher-forced
+field but failed to improve free-running generation.  It is removed from the
+production runtime rather than retained as a fallback; its implementation and
+tests remain available in Git history at commit `0257a28`.
+
 References:
 
 - Jiao et al., *Crystal Structure Prediction by Joint Equivariant Diffusion*,

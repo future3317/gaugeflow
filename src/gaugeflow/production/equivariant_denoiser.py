@@ -16,7 +16,6 @@ from .cartesian_gauge_atlas import (
     StratifiedCartesianGaugeAtlas,
 )
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
-from .reciprocal_score import ReciprocalStructureFactorScore
 from .state_projection import graph_mean, graph_sum
 
 
@@ -149,9 +148,6 @@ class HybridCrystalDenoiser(nn.Module):
         radial_dim: int = 16,
         radial_cutoff: float = 8.0,
         atlas_residual_circle_samples: int = 8,
-        reciprocal_channels: int = 8,
-        reciprocal_radial_dim: int = 8,
-        reciprocal_cutoff: float = 4.0,
     ) -> None:
         super().__init__()
         if layers < 1:
@@ -182,11 +178,10 @@ class HybridCrystalDenoiser(nn.Module):
         self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
         self.coordinate_vector_head = nn.Linear(vector_dim, 1, bias=False)
         self.coordinate_control_gate = nn.Linear(3 * hidden_dim, vector_dim)
-        self.reciprocal_score_head = ReciprocalStructureFactorScore(
-            hidden_dim,
-            channels=reciprocal_channels,
-            radial_dim=reciprocal_radial_dim,
-            cutoff=reciprocal_cutoff,
+        self.coordinate_edge_head = nn.Sequential(
+            nn.Linear(5 * hidden_dim + radial_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 1),
         )
         self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(
@@ -322,9 +317,30 @@ class HybridCrystalDenoiser(nn.Module):
             self.coordinate_control_gate(coordinate_control)
         ).unsqueeze(-1)
         cartesian_score = self.coordinate_vector_head(time_gated_vectors.transpose(-1, -2)).squeeze(-1)
-        cartesian_score = cartesian_score + self.reciprocal_score_head(
-            nodes, frac_coords, lattice, batch
-        )
+        if source.numel():
+            edge_features = torch.cat(
+                (
+                    nodes[source],
+                    nodes[target],
+                    node_time[target],
+                    node_condition[target],
+                    node_state[target],
+                    radial,
+                ),
+                dim=-1,
+            )
+            edge_score = (
+                self.coordinate_edge_head(edge_features)
+                * edge_envelope
+                * edges.displacement
+            )
+            edge_aggregate = torch.zeros_like(cartesian_score)
+            edge_aggregate.index_add_(
+                0, target, edge_score.to(edge_aggregate.dtype)
+            )
+            cartesian_score = cartesian_score + edge_aggregate / degree.clamp_min(
+                1
+            ).sqrt().unsqueeze(-1)
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would

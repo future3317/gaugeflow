@@ -1,0 +1,17 @@
+{
+  "graphs": 64,
+  "protocol": "h1a_p1_reciprocal_score_v1",
+  "seed": 5501,
+  "checkpoint_step": 20000,
+  "full_mse": 0.5024558901786804,
+  "local_without_spectral_mse": 0.5644668340682983,
+  "zero_mse": 0.6951256990432739,
+  "full_rms": 0.4356076419353485,
+  "local_rms": 0.2994549572467804,
+  "spectral_rms": 0.2394295185804367,
+  "target_rms": 0.8337419629096985,
+  "full_cosine": 0.3949573338031769,
+  "local_cosine": 0.3281240165233612,
+  "spectral_cosine": 0.32578861713409424,
+  "decision": "active_teacher_forced_residual_but_no_free_running_improvement_remove_from_runtime"
+}
