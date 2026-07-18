@@ -2,9 +2,9 @@
 
 ## 一句话结论
 
-GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环和 H0 数据/群论资格化；但尚未完成 Alex-MP-20 全量缓存、真实数据 H1a 训练或 tensor-conditioned 生成验证，因此当前不能声称已生成满足目标压电张量的晶体。
+GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。真实数据 H1a 已运行，但局部坐标生成与最近邻分布未通过，因此当前不能声称已生成满足目标压电张量的晶体。
 
-本项目现已暂停在 H1a 数据入口之前。后续唯一允许的步骤是完成已冻结的 P1 packed cache 构建与独立审计；H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
+本项目现停在 H1a 坐标生成器诊断。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
 
 ## 已经完成了什么
 
@@ -76,18 +76,22 @@ H(d,a)=G_p^B\cap H_{\rm occ}(a)\cap
 
 `alex<agm004639609>` 仅从未来 parent-occurrence / blueprint-activation 数据中剔除，因为其观察到的 parent-path Hencky strain 为 0.48977，超出冻结的 0.15 domain。其有限 child structure 对 P1 结构生成仍有效，因此不会从 Alex 原始源或 H1a 结构池中删除。
 
-## 当前暂停点
+## H1a cache、训练与当前暂停点
 
-已冻结 `h1a_p1_structure_cache_v1` 协议，但尚未运行。协议要求保留全部 675,204 条 H0-A 结构、执行可证明的 Niggli \(GL(3,\mathbb Z)\) basis change，并把 ID、split、prototype、space group、Niggli transform 等全部留在 audit index，不能进入 denoiser。
+`h1a_p1_structure_cache_v1` 已完整运行并独立通过。675,204 条结构全部重建成功，split 为 540,164/67,520/67,520；最大 source-equivalence error 为 `8.10e-15 A`，float32 cache error 为 `2.79e-6 A`。ID、split、prototype、space group 和 Niggli transform 全部留在 audit index，没有进入 denoiser。
 
-代码中已有 fail-closed 的 `PackedAlexP1Dataset` reader；它只接受 `qualified=true` 且 hash 匹配的 cache，并默认只暴露 atom tokens、fractional coordinates、lattice 和 graph size。当前没有正式 cache artifact、没有 builder/auditor 结果，也没有 H1a checkpoint。
+联合 tensor-free H1a 使用全部 train split，20,000 steps 共呈现 1,280,000 个 graphs（约 2.37 passes）。晶格有限且正体积，sampling failure 和 terminal mask 均为零；element marginal、volume 和 formula uniqueness 通过。但生成最近邻中位数为 `2.172 A`，训练参考为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，因此 H1a 失败。
+
+随后 seed 5705 做了恰好一遍 540,164-graph 的 coordinate-only 预训练。validation 从 1.037 降至 `0.54928`，但未达到 `0.35`；`t=.005` endpoint RMS 为 `0.04640 A > 0.04 A`。raw/EMA 和 train/validation 对照排除了 EMA lag 与普通泛化差距作为主因。重复元素代表元的 raw target 虽不同，但替代代表元后验质量至多 `5.42e-14`，因此没有引入 Sinkhorn/Hungarian 或 permutation-path 修改。
+
+最后资格化并测试了更一般的 signed pairwise reciprocal residual。算子本身在 FP64 的平移、周期代表元、置换、O(3) 和 unimodular 基变换误差均约为 `1e-16`，CUDA 训练步为 `490.77 graphs/s`、`1.73 GiB`。但一次完整预训练只把 validation 改善到 `0.53354`，仍失败。分支归因证明它确实活跃，所以结论是“收益不足”，不是“没有接通”；该实现已从 production 删除。
 
 ## 现在能声称与不能声称的内容
 
-可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence 和 H0-v4 数据资格已通过各自冻结 Gate。
+可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。
 
 不能声称：真实 Alex 生成质量、H1a/H1b 通过、完整 parent blueprint 已训练、tensor condition 能引起 target-separated samples、oracle 已合格、结构已 relaxation、DFT/DFPT 已验证，或发现了新压电材料。
 
 ## 恢复任务时需要什么
 
-目前不需要用户补数据或修改阈值。恢复时只需确认允许继续 H1a data-plane，并保证 `E:/DATA/T2C-Flow` 可读；cache 构建是 CPU/磁盘任务。之后若进入正式训练，需要 WSL CUDA 环境和空闲的 RTX 4060 Ti 16 GB。任何 tensor、oracle 或物理计算仍必须等待前序 Gate 通过。
+目前不需要用户补数据或修改阈值。继续工作应先审计 coordinate probability path、结构表示的可记忆性与是否需要严格无泄漏的结构预训练，而不是再堆叠 reciprocal 输出头、增加 seed 或延长已失败协议。任何 tensor、oracle 或物理计算仍必须等待 H1a/H1b 通过。

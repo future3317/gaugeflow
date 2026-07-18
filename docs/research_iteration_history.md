@@ -348,6 +348,32 @@ An independent reverse-material/reverse-catalogue auditor rebuilt all 835 rows,
 O1-v1 therefore qualifies H0-E-v4 and H0-v4. It authorizes only a separately
 frozen real-data H1a; H1b and H2--H6 have not started.
 
+### Real-data H1a and coordinate-field attribution
+
+The P1 cache rebuilt and independently audited all 675,204 Alex-MP-20
+structures. Joint tensor-free training then used the complete 540,164-row
+train split for 20,000 updates. Element marginals, lattice volume, finite
+positive cells, formula uniqueness, mask termination and sampling reliability
+passed, while generated local geometry did not: nearest-neighbour median was
+2.172 Angstrom versus 2.698 Angstrom in the train reference and normalized
+nearest-neighbour Wasserstein was 0.953 against 0.75. H1a is frozen failed.
+
+One exact train pass of coordinate-only Rao--Blackwell quotient DSM reduced
+validation monotonically to 0.54928 but missed 0.35. Raw/EMA and
+train/validation comparisons rejected EMA lag and ordinary generalization gap
+as the main cause. A formal repeated-species representative difference was
+also rejected causally after likelihood weighting placed at most 5.42e-14 mass
+on the alternative matching; no permutation-path surrogate was added.
+
+A signed pairwise reciprocal residual was then separately qualified before
+training. Its numerical symmetry errors were of order 1e-16 and its 64-graph
+BF16 operator benchmark achieved 490.77 graphs/s at 1.73 GiB. A second exact
+one-pass run improved validation only to 0.53354 and low-noise endpoint RMS to
+0.04494 Angstrom, still above both thresholds. Branch subtraction showed that
+the residual was active rather than disconnected, so its insufficient benefit
+is a negative representation result. The module and tests were removed from
+the current runtime; commit 154e6c9 retains the exact implementation.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
@@ -357,8 +383,8 @@ training-budget explanation. The v1.3 clean log-volume/log-shape
 parameterization passed the bounded CUDA trainer/reverse-sampler closure with a
 fixed-loss ratio of 0.0811, zero sampling failures, and zero terminal masks.
 
-This is software-path evidence only. Real-data S1a and decoded generation
-quality have not been run, the production blueprint remains P1 rather than a
-full space-group/Wyckoff sampler, and the project does not claim
-tensor-conditioned sample separation. No tensor fine-tuning, learned oracle,
-relaxation, DFT, or DFPT is authorized by the implementation closure.
+Real-data H1a has now run and failed for local-coordinate fidelity despite
+passing coarse chemistry/lattice and sampler-safety checks. The production
+blueprint remains P1 rather than a full space-group/Wyckoff sampler, and the
+project does not claim tensor-conditioned sample separation. No tensor
+fine-tuning, learned oracle, relaxation, DFT, or DFPT is authorized.

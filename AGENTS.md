@@ -21,14 +21,19 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
 - H0 data/catalogue qualification passed. The current representation uses a
   species-free parent carrier plus exact occupational ordering, low-index
   supercells, OPD displacement modes, Kelvin strain, and a bounded residual.
-- Real-data H1a has not started. Its packed-cache contract is defined but the
-  cache has not been built or independently audited.
+- The complete 675,204-row H1a P1 cache is built and independently qualified.
+- Real-data H1a is frozen as failed: joint training learned coarse chemistry
+  and lattice statistics but not the train-reference local-geometry
+  distribution; one-pass coordinate-only pretraining also missed its frozen
+  validation and low-noise endpoint thresholds.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 
-Work is paused at the H1a data boundary. A fail-closed
-`PackedAlexP1Dataset` reader may remain active, but its presence is not cache
-qualification or permission to train.
+Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
+prohibited. Do not add seeds or steps to rescue completed protocols, revive
+either failed reciprocal-score residual, or initialize joint training from a
+failed coordinate checkpoint. A new mechanism requires a separately frozen
+causal or operator qualification first.
 
 ## Required environment
 

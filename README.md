@@ -14,12 +14,12 @@ Cartesian Gauge Atlas。项目没有旧 continuous-logit flow、harmonic conditi
 | 数学与软件接口 | 已通过：混合状态空间、周期商、晶格 chart、群作用和 Cartesian atlas runtime |
 | Trainer / reverse sampler | CUDA 软件闭环已通过；这不是生成质量结论 |
 | 数据与群论分解 H0 | 已通过：结构 split、声子/PES 接口、finite-affine/OPD catalogue、真实 occupational occurrence |
-| 真实数据 H1a | 尚未开始；P1 packed-cache 协议已定义但 cache 尚未构建 |
+| 真实数据 H1a | 已运行并失败：粗粒度 composition/lattice 合格，局部坐标与最近邻分布不合格 |
 | 完整 parent blueprint 与 H2--H6 | 尚未开始 |
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
-项目现已暂停在 H1a 数据入口之前。恢复时唯一允许的下一步是构建并独立审计
-P1 packed structure cache，然后另行固定真实训练设置。
+项目当前停在 H1a 坐标生成器诊断。P1 cache 已完整构建并独立审计；H1b 和后续
+Gate 仍被阻止。当前证据不支持继续增加 reciprocal 输出分支、训练 seed 或步数。
 
 ## 当前方法
 
@@ -74,10 +74,12 @@ H(d,a) = G_parent^B ∩ H_occ(a) ∩ intersection_l H_(l,c_l)
 fallback。`alex<agm004639609>` 只从未来 parent-occurrence / blueprint 数据入口剔除；
 它的 child structure 对 P1 结构训练仍有效，因此不会从 Alex 结构池删除。
 
-## H1a packed cache
+## H1a packed cache 与真实训练结论
 
-当前代码包含 fail-closed 的 `PackedAlexP1Dataset` reader，但正式 cache 尚不存在。
-reader 只接受 `qualified=true` 且文件哈希匹配的 manifest，默认仅返回：
+正式 cache 位于 `E:/DATA/T2C-Flow/processed/gaugeflow_h1a_v1/p1_structure_cache_v1`。
+675,204 条源结构全部重建成功，最大 source-equivalence error 为 `8.10e-15 A`，
+float32 cache error 为 `2.79e-6 A`。reader 只接受 `qualified=true` 且文件哈希
+匹配的 manifest，默认仅返回：
 
 ```text
 atom_types, frac_coords, lattice, num_nodes
@@ -86,6 +88,18 @@ atom_types, frac_coords, lattice, num_nodes
 material ID、source row、split、formula、prototype、space group 和 Niggli transform
 只能出现在离线 audit index，不能进入 denoiser。cache 构建只允许认证的 Niggli
 `GL(3,Z)` basis change，无 unreduced fallback。
+
+当前最佳联合 H1a checkpoint 使用完整 540,164 条 train split，20,000 steps、
+1,280,000 graph presentations（约 2.37 passes）。它生成有限正体积晶格且无
+sampling failure/mask；element marginal JSD 为 `0.0143`、volume Wasserstein 为
+`0.0644`、formula uniqueness 为 1.0。但生成最近邻中位数为 `2.172 A`，训练参考
+为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，所以 H1a 失败。
+
+一次完整 train pass 的 coordinate-only 预训练也失败：基线 validation 为
+`0.54928 > 0.35`。经过独立数学/CUDA 资格化的 signed pairwise reciprocal residual
+只改善到 `0.53354`，且 `t=.005` endpoint RMS 为 `0.04494 A > 0.04 A`。该分支
+确实活跃但收益不足，已从 production 删除，只在 Git commit `154e6c9` 和报告中
+保留。当前模型没有外部预训练权重，也没有启动 tensor/oracle/relaxation/DFT/DFPT。
 
 ## 环境
 
