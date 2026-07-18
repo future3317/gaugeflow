@@ -1,4 +1,4 @@
-"""Run the frozen held-out distribution benchmark for the H1a generator."""
+"""Run the corrected train-distribution and held-out H1a benchmark."""
 
 from __future__ import annotations
 
@@ -81,7 +81,6 @@ def _reference_statistics(
     node_counts: list[torch.Tensor] = []
     volumes: list[torch.Tensor] = []
     distances: list[torch.Tensor] = []
-    formulas: list[str] = []
     for start in range(0, indices.numel(), 64):
         selected = indices[start : start + 64]
         packed = Batch.from_data_list([dataset[int(index)] for index in selected]).to(device)
@@ -94,14 +93,28 @@ def _reference_statistics(
         distances.append(
             _minimum_distances(packed.frac_coords, packed.lattice, packed.batch).cpu()
         )
-        formulas.extend(_formula_keys(packed.atom_types, packed.batch, graphs))
     return {
         "element_histogram": element_histogram,
         "node_counts": torch.cat(node_counts),
         "volume_per_atom": torch.cat(volumes),
         "minimum_distance": torch.cat(distances),
-        "formulas": formulas,
     }
+
+
+def _reference_formula_set(
+    dataset: PackedAlexP1Dataset,
+    indices: torch.Tensor,
+    *,
+    device: torch.device,
+) -> set[str]:
+    formulas: set[str] = set()
+    for start in range(0, indices.numel(), 64):
+        selected = indices[start : start + 64]
+        packed = Batch.from_data_list([dataset[int(index)] for index in selected]).to(device)
+        formulas.update(
+            _formula_keys(packed.atom_types, packed.batch, int(packed.num_graphs))
+        )
+    return formulas
 
 
 @torch.no_grad()
@@ -194,20 +207,33 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     arguments = parser.parse_args()
     protocol = load_json_object(arguments.protocol)
-    if protocol.get("protocol") != "h1a_tensor_free_benchmark_v1":
+    if protocol.get("protocol") != "h1a_tensor_free_benchmark_v2":
         raise ValueError("unexpected tensor-free benchmark protocol")
     device = torch.device(arguments.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but unavailable")
-    reference_spec = protocol["reference"]
-    reference_dataset = PackedAlexP1Dataset(
-        arguments.cache_root, str(reference_spec["split"])
+    distribution_spec = protocol["distribution_reference"]
+    distribution_dataset = PackedAlexP1Dataset(
+        arguments.cache_root, str(distribution_spec["split"])
     )
-    indices = torch.randperm(
-        len(reference_dataset),
-        generator=torch.Generator().manual_seed(int(reference_spec["seed"])),
-    )[: int(reference_spec["graphs"])]
-    reference = _reference_statistics(reference_dataset, indices, device=device)
+    distribution_indices = torch.randperm(
+        len(distribution_dataset),
+        generator=torch.Generator().manual_seed(int(distribution_spec["seed"])),
+    )[: int(distribution_spec["graphs"])]
+    reference = _reference_statistics(
+        distribution_dataset, distribution_indices, device=device
+    )
+    novelty_spec = protocol["novelty_reference"]
+    novelty_dataset = PackedAlexP1Dataset(
+        arguments.cache_root, str(novelty_spec["split"])
+    )
+    novelty_indices = torch.randperm(
+        len(novelty_dataset),
+        generator=torch.Generator().manual_seed(int(novelty_spec["seed"])),
+    )[: int(novelty_spec["graphs"])]
+    novelty_formula_set = _reference_formula_set(
+        novelty_dataset, novelty_indices, device=device
+    )
     generated = {
         str(seed): _sample_seed(
             arguments.run_root
@@ -227,7 +253,6 @@ def main() -> None:
     all_volumes = torch.cat([value["volume_per_atom"] for value in generated.values()])
     all_distances = torch.cat([value["minimum_distance"] for value in generated.values()])
     all_formulas = sum((value["formulas"] for value in generated.values()), [])
-    reference_formula_set = set(reference["formulas"])
     reference_count_classes = max(int(reference["node_counts"].max()), int(all_counts.max())) + 1
     volume_iqr = torch.quantile(reference["volume_per_atom"].double(), 0.75) - torch.quantile(
         reference["volume_per_atom"].double(), 0.25
@@ -272,15 +297,15 @@ def main() -> None:
         )
         / float(distance_iqr),
         "formula_uniqueness_fraction": len(set(all_formulas)) / len(all_formulas),
-        "formula_novelty_vs_reference_subset_fraction": sum(
-            formula not in reference_formula_set for formula in all_formulas
+        "formula_novelty_vs_held_out_subset_fraction": sum(
+            formula not in novelty_formula_set for formula in all_formulas
         )
         / len(all_formulas),
         "generated_minimum_distance_quantiles_angstrom": torch.quantile(
             all_distances.double(),
             torch.tensor([0.0, 0.01, 0.05, 0.5, 0.95, 1.0], dtype=torch.float64),
         ).tolist(),
-        "reference_minimum_distance_quantiles_angstrom": torch.quantile(
+        "train_reference_minimum_distance_quantiles_angstrom": torch.quantile(
             reference["minimum_distance"].double(),
             torch.tensor(
                 [0.0, 0.01, 0.05, 0.5, 0.95, 1.0], dtype=torch.float64
@@ -315,7 +340,8 @@ def main() -> None:
     qualified = all(checks.values())
     result = {
         "protocol": protocol["protocol"],
-        "reference_graphs": int(indices.numel()),
+        "distribution_reference_graphs": int(distribution_indices.numel()),
+        "novelty_reference_graphs": int(novelty_indices.numel()),
         "generated_graphs": int(all_counts.numel()),
         "aggregate": aggregate,
         "checks": checks,
