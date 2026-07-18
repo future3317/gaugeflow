@@ -46,13 +46,21 @@ def main() -> None:
     protocol = load_json_object(args.protocol)
     model_spec = protocol.get("model")
     training_spec = protocol.get("training")
-    if not isinstance(model_spec, dict) or not isinstance(training_spec, dict):
-        raise ValueError("production protocol requires model and training objects")
+    prerequisites = protocol.get("prerequisites")
+    if (
+        not isinstance(model_spec, dict)
+        or not isinstance(training_spec, dict)
+        or not isinstance(prerequisites, dict)
+    ):
+        raise ValueError(
+            "production protocol requires model, training and prerequisites objects"
+        )
     seeds = [int(value) for value in training_spec["seeds"]]
     if args.seed not in seeds:
         raise ValueError("seed is not preregistered by the production protocol")
     steps = int(training_spec["steps"])
     batch_size = int(training_spec["batch_size"])
+    objective = str(training_spec["objective"])
     log_every = int(training_spec["log_every"])
     num_workers = int(training_spec["num_workers"])
     checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
@@ -72,7 +80,18 @@ def main() -> None:
     torch.manual_seed(args.seed)
     if device.type == "cuda":
         torch.cuda.manual_seed_all(args.seed)
+    observed_manifest_hash = sha256_file(args.cache_root / "manifest.json")
+    if observed_manifest_hash != str(prerequisites["cache_manifest_sha256"]):
+        raise ValueError("production protocol cache manifest mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
+    if objective == "coordinate":
+        graph_presentations = int(training_spec["graph_presentations"])
+        if graph_presentations != len(dataset) or steps != (
+            len(dataset) + batch_size - 1
+        ) // batch_size:
+            raise ValueError(
+                "coordinate pretraining must make exactly one complete data pass"
+            )
     node_prior = EmpiricalNodeCountPrior.fit(dataset.node_counts)
     loader_generator = torch.Generator().manual_seed(args.seed)
     loader = DataLoader(
@@ -99,7 +118,6 @@ def main() -> None:
         standardization_value = json.loads(
             args.lattice_standardization.read_text(encoding="utf-8")
         )
-        observed_manifest_hash = sha256_file(args.cache_root / "manifest.json")
         if standardization_value.get("source_cache_manifest_sha256") != observed_manifest_hash:
             raise ValueError("lattice standardization was not fitted on this cache manifest")
     else:
@@ -135,6 +153,7 @@ def main() -> None:
             minimum_time=float(training_spec["minimum_time"]),
             maximum_time=float(training_spec["maximum_time"]),
             precision=str(training_spec["precision"]),
+            objective=objective,
         )
     )
     diffusion = TensorFreeHybridDiffusion(
@@ -166,6 +185,7 @@ def main() -> None:
         "seed": args.seed,
         "tensor_condition_enabled": False,
         "blueprint": "P1_empirical_node_count",
+        "training_stage": training_config.objective,
     }
     if args.resume is None:
         save_production_checkpoint(
@@ -205,13 +225,21 @@ def main() -> None:
             generator=device_generator,
         )
         throughput_graphs += graph_count
-        if trainer.step % log_every == 0 or trainer.step == 1:
+        if trainer.step % log_every == 0 or trainer.step in {1, steps}:
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             elapsed = time.perf_counter() - throughput_start
             record = {
                 "step": trainer.step,
-                "loss": float(output.loss.detach().cpu()),
+                "loss": float(
+                    (
+                        output.loss
+                        if training_config.objective == "joint"
+                        else output.coordinate_loss
+                    )
+                    .detach()
+                    .cpu()
+                ),
                 "element_loss": float(output.element_loss.detach().cpu()),
                 "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
                 "volume_loss": float(output.volume_loss.detach().cpu()),

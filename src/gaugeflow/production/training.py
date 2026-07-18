@@ -23,6 +23,7 @@ class ProductionTrainingConfig:
     minimum_time: float = 1.0e-3
     maximum_time: float = 0.999
     precision: str = "bf16"
+    objective: str = "joint"
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
@@ -35,6 +36,8 @@ class ProductionTrainingConfig:
             raise ValueError("training time interval is invalid")
         if self.precision not in {"fp32", "bf16"}:
             raise ValueError("training precision must be fp32 or bf16")
+        if self.objective not in {"joint", "coordinate"}:
+            raise ValueError("training objective must be joint or coordinate")
 
 
 class ExponentialMovingAverage:
@@ -77,7 +80,7 @@ class ExponentialMovingAverage:
 
 
 class ProductionTrainer:
-    """One-owner optimizer for the tensor-free hybrid objective."""
+    """One-owner optimizer for joint training or coordinate pretraining."""
 
     def __init__(
         self,
@@ -122,9 +125,12 @@ class ProductionTrainer:
                 blueprint.fractional_to_cartesian,
                 generator=generator,
             )
-        if not torch.isfinite(output.loss):
-            raise FloatingPointError("hybrid training loss is non-finite")
-        output.loss.backward()
+        optimization_loss = (
+            output.loss if self.config.objective == "joint" else output.coordinate_loss
+        )
+        if not torch.isfinite(optimization_loss):
+            raise FloatingPointError("selected training loss is non-finite")
+        optimization_loss.backward()
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             self.diffusion.denoiser.parameters(), self.config.gradient_clip_norm
         )

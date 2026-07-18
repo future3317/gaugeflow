@@ -203,6 +203,49 @@ def test_quotient_coordinate_reverse_step_matches_deterministic_score_drift():
     assert torch.allclose(observed, expected)
 
 
+def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = _small_model()
+    diffusion = TensorFreeHybridDiffusion(model, _standardizer())
+    trainer = ProductionTrainer(
+        diffusion,
+        ProductionTrainingConfig(
+            precision="fp32", objective="coordinate", ema_decay=0.9
+        ),
+    )
+    inactive_before = {
+        name: value.detach().clone()
+        for name, value in model.named_parameters()
+        if name.startswith(("element_head.", "volume_head.", "shape_head."))
+    }
+    coordinate_before = {
+        name: value.detach().clone()
+        for name, value in model.named_parameters()
+        if name.startswith(
+            (
+                "coordinate_vector_head.",
+                "coordinate_control_gate.",
+                "coordinate_edge_head.",
+            )
+        )
+    }
+    output, gradient_norm = trainer.train_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(91),
+    )
+    assert torch.isfinite(output.coordinate_loss)
+    assert gradient_norm > 0.0
+    current = dict(model.named_parameters())
+    assert all(torch.equal(value, current[name]) for name, value in inactive_before.items())
+    assert any(
+        not torch.equal(value, current[name]) for name, value in coordinate_before.items()
+    )
+
+
 def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(tmp_path: Path):
     model = _small_model()
     diffusion = TensorFreeHybridDiffusion(model, _standardizer())
