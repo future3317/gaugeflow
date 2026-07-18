@@ -1,0 +1,35 @@
+{
+  "protocol": "h1a_primal_dual_metric_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only attribution of the failed low-noise Cartesian-covector pretraining to dual-score versus primal-endpoint lattice metrics; no optimizer step, new mechanism, H1b-H6 or tensor conditioning",
+  "prerequisites": {
+    "source_protocol": "h1a_cartesian_covector_coordinate_pretraining_v1",
+    "source_checkpoint_step": 8441,
+    "source_decision": "stop before joint training and diagnose the learned Cartesian carrier without adding steps, seeds or another simultaneous mechanism",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "data": {
+    "split": "val",
+    "graphs": 128,
+    "selection_seed": 8503,
+    "batch_size": 16,
+    "noise_seed": 8504,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1]
+  },
+  "audit": {
+    "optimizer_steps": 0,
+    "checkpoint_mutation": false
+  },
+  "decision_thresholds": {
+    "low_noise_time": 0.005,
+    "median_metric_condition_min": 4.0,
+    "dual_primal_gradient_cosine_max": 0.8,
+    "primal_endpoint_log_correlation_min": 0.8,
+    "primal_over_dual_endpoint_correlation_gap_min": 0.2
+  },
+  "decision_rule": {
+    "metric_mismatch": "if every threshold passes, attribute the low-noise failure to optimizing the dual covector metric G^-1 while endpoint displacement is measured in the primal metric G; only a separately frozen probability-path/metric proposal may follow",
+    "carrier_failure": "otherwise retain the current probability path and diagnose carrier direction/scale without adding training",
+    "boundary": "This read-only audit cannot change the failed pretraining result, add steps or seeds, initialize joint training, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
