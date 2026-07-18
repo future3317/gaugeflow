@@ -13,7 +13,10 @@ from diagnose_h1a_coordinate_generator import (
     _score_calibration,
     _translation_aligned_endpoint_rms,
 )
-from evaluate_h1a_p1_protocol import _validation_losses
+from evaluate_h1a_p1_protocol import (
+    _validation_losses,
+    _validation_losses_for_runtime,
+)
 from torch_geometric.data import Batch
 
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
@@ -194,6 +197,39 @@ def main() -> None:
         protocol_name=str(protocol["protocol"]),
         protocol_sha256=protocol_sha256,
     )
+    raw_runtime = load_tensor_free_ema_runtime(
+        checkpoint,
+        device,
+        protocol_name=str(protocol["protocol"]),
+        protocol_sha256=protocol_sha256,
+    )
+    checkpoint_payload = torch.load(checkpoint, map_location=device, weights_only=True)
+    raw_runtime.model.load_state_dict(checkpoint_payload["model"], strict=True)
+    raw_validation = _validation_losses_for_runtime(
+        raw_runtime,
+        dataset,
+        validation_indices,
+        device=device,
+        seed=int(specification["validation_noise_seed"]),
+    )
+    train_dataset = PackedAlexP1Dataset(args.cache_root, "train")
+    train_indices = torch.randperm(
+        len(train_dataset), generator=torch.Generator().manual_seed(8610)
+    )[: int(specification["validation_graphs"])]
+    ema_train = _validation_losses_for_runtime(
+        runtime,
+        train_dataset,
+        train_indices,
+        device=device,
+        seed=8612,
+    )
+    raw_train = _validation_losses_for_runtime(
+        raw_runtime,
+        train_dataset,
+        train_indices,
+        device=device,
+        seed=8612,
+    )
     score_indices = torch.randperm(
         len(dataset),
         generator=torch.Generator().manual_seed(int(specification["score_seed"])),
@@ -291,6 +327,15 @@ def main() -> None:
         "validation_curve": validation_curve,
         "score_calibration": score,
         "posthoc_high_noise_score_diagnostic": high_noise_score,
+        "posthoc_fit_diagnostic": {
+            "graphs_per_split": int(specification["validation_graphs"]),
+            "train_index_seed": 8610,
+            "noise_seed": 8612,
+            "ema_train_coordinate": ema_train["coordinate"],
+            "ema_validation_coordinate": validation["coordinate"],
+            "raw_train_coordinate": raw_train["coordinate"],
+            "raw_validation_coordinate": raw_validation["coordinate"],
+        },
         "rollout_closure": rollout,
         "checks": checks,
         "qualified": all(checks.values()),

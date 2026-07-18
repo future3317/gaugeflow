@@ -14,7 +14,7 @@ from torch_geometric.data import Batch
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.quotient_score import (
-    factorized_translation_quotient_scaled_score,
+    factorized_translation_quotient_log_density_and_scaled_score,
 )
 from gaugeflow.production.schedules import ExponentialTorusNoiseSchedule
 from gaugeflow.production.state_projection import project_translation_state
@@ -89,6 +89,10 @@ def run_audit(
     for time_offset, time_value in enumerate(protocol["times"]):
         left_targets: list[torch.Tensor] = []
         right_targets: list[torch.Tensor] = []
+        posterior_minority: list[torch.Tensor] = []
+        conditional_variance = 0.0
+        mixture_energy = 0.0
+        mixture_components = 0
         time_graphs = 0
         time_nontrivial = 0
         generator = torch.Generator(device=device).manual_seed(
@@ -125,31 +129,68 @@ def run_audit(
             )
             changed_graph[packed.batch[changed_node]] = True
             keep = changed_graph[packed.batch]
-            left = factorized_translation_quotient_scaled_score(
+            left_log_density, left = (
+                factorized_translation_quotient_log_density_and_scaled_score(
                 noisy - clean, sigma, packed.batch, graphs
             )
-            right = factorized_translation_quotient_scaled_score(
+            )
+            right_log_density, right = (
+                factorized_translation_quotient_log_density_and_scaled_score(
                 noisy - clean[permutation], sigma, packed.batch, graphs
             )
+            )
+            representative_posterior = torch.softmax(
+                torch.stack((left_log_density, right_log_density), dim=-1),
+                dim=-1,
+            )
+            left_weight = representative_posterior[:, 0][packed.batch, None]
+            right_weight = representative_posterior[:, 1][packed.batch, None]
+            mixture = left_weight * left + right_weight * right
+            variance = left_weight * (left - mixture).square() + right_weight * (
+                right - mixture
+            ).square()
             left_targets.append(left[keep].cpu())
             right_targets.append(right[keep].cpu())
+            posterior_minority.append(
+                representative_posterior[changed_graph].amin(dim=-1).cpu()
+            )
+            conditional_variance += float(variance[keep].sum())
+            mixture_energy += float(mixture[keep].square().sum())
+            mixture_components += int(3 * keep.sum())
             time_graphs += graphs
             time_nontrivial += int(changed_graph.sum())
         left_all = torch.cat(left_targets).double()
         right_all = torch.cat(right_targets).double()
         metrics = _relative_target_metrics(left_all, right_all)
+        minority = torch.cat(posterior_minority).double()
         metrics.update(
             {
                 "time": float(time_value),
                 "graphs": float(time_graphs),
                 "graphs_with_repeated_species": float(time_nontrivial),
                 "repeated_species_graph_fraction": time_nontrivial / time_graphs,
+                "two_representative_minority_posterior_mean": float(
+                    minority.mean()
+                ),
+                "two_representative_minority_posterior_max": float(
+                    minority.max()
+                ),
+                "posterior_weighted_conditional_variance_per_component": (
+                    conditional_variance / mixture_components
+                ),
+                "posterior_weighted_variance_to_mixture_energy": (
+                    conditional_variance / max(mixture_energy, 1.0e-30)
+                ),
             }
         )
         results.append(metrics)
         graph_total = time_graphs
         nontrivial_graph_total = time_nontrivial
     maximum = max(value["target_relative_difference"] for value in results)
+    maximum_weighted_variance = max(
+        value["posterior_weighted_variance_to_mixture_energy"]
+        for value in results
+    )
     threshold = float(protocol["acceptance"]["target_relative_difference_max"])
     invariant = maximum <= threshold
     return {
@@ -162,12 +203,20 @@ def run_audit(
         "graphs_with_repeated_species": nontrivial_graph_total,
         "time_resolved": results,
         "maximum_target_relative_difference": maximum,
+        "maximum_posterior_weighted_variance_to_mixture_energy": (
+            maximum_weighted_variance
+        ),
         "checks": {
             "visible_state_identity": True,
             "endpoint_set_identity": True,
             "translation_only_target_representative_invariance": invariant,
         },
         "qualified": invariant,
+        "posthoc_causal_interpretation": (
+            "representative_noninvariance_is_not_a_material_variance_source"
+            if maximum_weighted_variance <= 1.0e-6
+            else "representative_nuisance_has_nonnegligible_posterior_variance"
+        ),
         "decision": (
             "row_label_nuisance_not_detected"
             if invariant

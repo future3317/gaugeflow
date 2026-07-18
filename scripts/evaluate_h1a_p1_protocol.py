@@ -17,7 +17,7 @@ from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
-from gaugeflow.production.runtime import load_tensor_free_ema_runtime
+from gaugeflow.production.runtime import TensorFreeEmaRuntime, load_tensor_free_ema_runtime
 
 
 @torch.no_grad()
@@ -38,6 +38,26 @@ def _validation_losses(
         protocol_name=protocol_name,
         protocol_sha256=protocol_sha256,
     )
+    return _validation_losses_for_runtime(
+        runtime,
+        dataset,
+        indices,
+        device=device,
+        seed=seed,
+        batch_size=batch_size,
+    )
+
+
+def _validation_losses_for_runtime(
+    runtime: TensorFreeEmaRuntime,
+    dataset: PackedAlexP1Dataset,
+    indices: torch.Tensor,
+    *,
+    device: torch.device,
+    seed: int,
+    batch_size: int = 16,
+) -> dict[str, float]:
+    """Evaluate one already-loaded raw or EMA runtime on fixed noise."""
     diffusion = TensorFreeHybridDiffusion(
         runtime.model,
         runtime.lattice_standardizer,

@@ -51,8 +51,17 @@ already decays near the mixed-torus end, so an analytic high-noise envelope is
 not supported as the primary repair.
 
 The subsequent state-visibility audit identifies a more specific source of
-sample inefficiency: the translation-only target changes strongly under an
-equivalent repeated-species row relabeling that leaves the noisy state and
-unlabeled endpoint unchanged.  No joint initialization or additional training
-is run.  The next admissible implementation task is to qualify a smooth joint
-translation--permutation quotient target against exact small-site oracles.
+apparent sample inefficiency, but likelihood weighting rejects it as causal:
+alternative repeated-species row representatives have at most `5.42e-14`
+posterior mass on the fixed panel, so their weighted target variance is
+negligible.  No permutation quotient or Sinkhorn surrogate is introduced.
+
+A separate 256/256 train--validation fit diagnostic gives EMA coordinate loss
+`0.49830/0.54928` and raw-weight loss `0.49768/0.55901`.  Thus EMA lag is not
+the failure mechanism, the train--validation gap is modest, and even the raw
+training fit remains far above `0.35`.  The evidence supports insufficient
+sample-efficient field representation/optimization rather than memorization,
+data-split leakage, permutation nuisance, high-noise nonvanishing, or the
+already-qualified reverse integrator.  No joint initialization or additional
+training is run.  The next H1a repair must improve the coordinate field's
+periodic representation under a separately frozen protocol.

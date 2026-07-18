@@ -11,36 +11,45 @@
   },
   "decision": "coordinate_pretraining_failed_stop_before_joint_training",
   "decision_boundary": "No extra seed or step may rescue failure. No result authorizes H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "posthoc_fit_diagnostic": {
+    "ema_train_coordinate": 0.4983008448034525,
+    "ema_validation_coordinate": 0.5492788590490818,
+    "graphs_per_split": 256,
+    "noise_seed": 8612,
+    "raw_train_coordinate": 0.4976808689534664,
+    "raw_validation_coordinate": 0.5590066388249397,
+    "train_index_seed": 8610
+  },
   "posthoc_high_noise_score_diagnostic": [
     {
-      "endpoint_rms_angstrom": 0.10706472847818908,
-      "oracle_endpoint_rms_angstrom": 2.388408178212657e-07,
-      "prediction_target_cosine": 0.5769135610421479,
-      "prediction_to_target_norm": 0.5536937588624175,
-      "score_explained_fraction": 0.33229007480011563,
-      "score_mse_per_component": 3996.2209772478072,
+      "endpoint_rms_angstrom": 0.10705840706437525,
+      "oracle_endpoint_rms_angstrom": 2.3858546714913994e-07,
+      "prediction_target_cosine": 0.5769789733946279,
+      "prediction_to_target_norm": 0.5538807974107572,
+      "score_explained_fraction": 0.332371189967405,
+      "score_mse_per_component": 3995.7355057565787,
       "time": 0.2,
       "zero_score_mse_per_component": 5984.965666118421
     },
     {
-      "endpoint_rms_angstrom": 0.4429218069731782,
-      "oracle_endpoint_rms_angstrom": 2.4112057287991227e-07,
-      "prediction_target_cosine": 0.4946857263106574,
-      "prediction_to_target_norm": 0.49489485497288416,
-      "score_explained_fraction": 0.2447139148005708,
-      "score_mse_per_component": 261.44700863486844,
+      "endpoint_rms_angstrom": 0.44287913734676765,
+      "oracle_endpoint_rms_angstrom": 2.4189017812763644e-07,
+      "prediction_target_cosine": 0.494848573525745,
+      "prediction_to_target_norm": 0.4949360680584243,
+      "score_explained_fraction": 0.2448750829582138,
+      "score_mse_per_component": 261.39122250205594,
       "time": 0.5,
-      "zero_score_mse_per_component": 346.15626284950656
+      "zero_score_mse_per_component": 346.15626713267545
     },
     {
-      "endpoint_rms_angstrom": 2.583423821853857,
-      "oracle_endpoint_rms_angstrom": 2.1769563867587998,
-      "prediction_target_cosine": 0.05948002017929581,
-      "prediction_to_target_norm": 0.08787440583362925,
-      "score_explained_fraction": 0.0027316135306574285,
-      "score_mse_per_component": 0.2731723994539495,
+      "endpoint_rms_angstrom": 2.5834517618433748,
+      "oracle_endpoint_rms_angstrom": 2.176956407293655,
+      "prediction_target_cosine": 0.0592642273498861,
+      "prediction_to_target_norm": 0.08785730806827959,
+      "score_explained_fraction": 0.0026946981423326966,
+      "score_mse_per_component": 0.27318251551243294,
       "time": 0.9,
-      "zero_score_mse_per_component": 0.27392064479359407
+      "zero_score_mse_per_component": 0.2739206489763762
     }
   ],
   "protocol": "h1a_coordinate_pretraining_v1",
@@ -48,28 +57,28 @@
   "rollout_closure": [
     {
       "endpoint_rms_quantiles_angstrom": [
-        0.023396415635943413,
-        0.07641015201807022,
-        0.10413082763552667,
-        0.10623965710401535,
-        0.11976680159568787
+        0.023520883172750473,
+        0.07635645568370819,
+        0.10416679009795189,
+        0.10632393844425678,
+        0.11984853446483612
       ],
       "failure": null,
-      "mean_endpoint_rms_angstrom": 0.07207649946212769,
+      "mean_endpoint_rms_angstrom": 0.07209813594818115,
       "sampling_failures": 0,
       "start_time": 0.1,
       "steps": 100
     },
     {
       "endpoint_rms_quantiles_angstrom": [
-        0.01786786876618862,
-        0.1093880757689476,
-        0.17858070433139805,
-        0.19144219383597375,
-        0.21290834248065948
+        0.017833266407251358,
+        0.10948863998055458,
+        0.17866544723510747,
+        0.19136680588126181,
+        0.21301868557929993
       ],
       "failure": null,
-      "mean_endpoint_rms_angstrom": 0.11005760729312897,
+      "mean_endpoint_rms_angstrom": 0.11007031053304672,
       "sampling_failures": 0,
       "start_time": 0.2,
       "steps": 100
@@ -77,54 +86,54 @@
   ],
   "score_calibration": [
     {
-      "endpoint_rms_angstrom": 0.0463972409134883,
-      "oracle_endpoint_rms_angstrom": 2.40260037025374e-07,
-      "prediction_target_cosine": 0.49270361704071114,
-      "prediction_to_target_norm": 0.4888205540730558,
-      "score_explained_fraction": 0.24274178824071324,
-      "score_mse_per_component": 25577.433388157893,
+      "endpoint_rms_angstrom": 0.0463953162369724,
+      "oracle_endpoint_rms_angstrom": 2.3817466445568348e-07,
+      "prediction_target_cosine": 0.49271631907923824,
+      "prediction_to_target_norm": 0.4884484237919997,
+      "score_explained_fraction": 0.24275117035948868,
+      "score_mse_per_component": 25577.117324561405,
       "time": 0.005,
-      "zero_score_mse_per_component": 33776.369791666664
+      "zero_score_mse_per_component": 33776.37088815789
     },
     {
-      "endpoint_rms_angstrom": 0.04712106878036599,
-      "oracle_endpoint_rms_angstrom": 2.3565841573363797e-07,
-      "prediction_target_cosine": 0.5078222467876768,
-      "prediction_to_target_norm": 0.5072000178439611,
-      "score_explained_fraction": 0.2578830451228713,
-      "score_mse_per_component": 24921.074013157893,
+      "endpoint_rms_angstrom": 0.04712545505150894,
+      "oracle_endpoint_rms_angstrom": 2.294973937237065e-07,
+      "prediction_target_cosine": 0.507720325596279,
+      "prediction_to_target_norm": 0.507153183285338,
+      "score_explained_fraction": 0.2577796094139453,
+      "score_mse_per_component": 24924.54769736842,
       "time": 0.01,
-      "zero_score_mse_per_component": 33581.06003289474
+      "zero_score_mse_per_component": 33581.06030701754
     },
     {
-      "endpoint_rms_angstrom": 0.052115646566917466,
-      "oracle_endpoint_rms_angstrom": 2.130003504639118e-07,
-      "prediction_target_cosine": 0.4798456014348395,
-      "prediction_to_target_norm": 0.4930445029547973,
-      "score_explained_fraction": 0.23007757221176117,
-      "score_mse_per_component": 23446.109375,
+      "endpoint_rms_angstrom": 0.05210620991153772,
+      "oracle_endpoint_rms_angstrom": 2.177878326671008e-07,
+      "prediction_target_cosine": 0.4799854116701444,
+      "prediction_to_target_norm": 0.49317365604431196,
+      "score_explained_fraction": 0.23021206112566817,
+      "score_mse_per_component": 23442.013843201756,
       "time": 0.02,
       "zero_score_mse_per_component": 30452.56058114035
     },
     {
-      "endpoint_rms_angstrom": 0.05548908653542673,
-      "oracle_endpoint_rms_angstrom": 2.30000293264806e-07,
-      "prediction_target_cosine": 0.5276144947641588,
-      "prediction_to_target_norm": 0.5301184366563898,
-      "score_explained_fraction": 0.278370741689256,
-      "score_mse_per_component": 15853.836759868422,
+      "endpoint_rms_angstrom": 0.05547294726744363,
+      "oracle_endpoint_rms_angstrom": 2.293019952581878e-07,
+      "prediction_target_cosine": 0.527671009600122,
+      "prediction_to_target_norm": 0.530041704189981,
+      "score_explained_fraction": 0.27843106482150615,
+      "score_mse_per_component": 15852.511787280702,
       "time": 0.05,
-      "zero_score_mse_per_component": 21969.503837719298
+      "zero_score_mse_per_component": 21969.504248903508
     },
     {
-      "endpoint_rms_angstrom": 0.06740092922867834,
-      "oracle_endpoint_rms_angstrom": 2.2484705989357016e-07,
-      "prediction_target_cosine": 0.5496383947477226,
-      "prediction_to_target_norm": 0.5517604987941062,
-      "score_explained_fraction": 0.30209788396545734,
-      "score_mse_per_component": 9646.926809210527,
+      "endpoint_rms_angstrom": 0.06737090434018304,
+      "oracle_endpoint_rms_angstrom": 2.3243646968293832e-07,
+      "prediction_target_cosine": 0.5498062004087406,
+      "prediction_to_target_norm": 0.5517242718615974,
+      "score_explained_fraction": 0.30228317405197835,
+      "score_mse_per_component": 9644.365542763158,
       "time": 0.1,
-      "zero_score_mse_per_component": 13822.750479714912
+      "zero_score_mse_per_component": 13822.75041118421
     }
   ],
   "seed": 5705,
@@ -137,45 +146,45 @@
     "training_log_finite": true
   },
   "validation": {
-    "coordinate": 0.5493714865297079,
-    "element": 4.746577709913254,
-    "shape": 1.217309795320034,
+    "coordinate": 0.5492788590490818,
+    "element": 4.746548116207123,
+    "shape": 1.2173091173171997,
     "tensor_candidate_count": 0.0,
-    "total": 7.557902157306671,
-    "volume": 1.044643111526966
+    "total": 7.557782202959061,
+    "volume": 1.0446460917592049
   },
   "validation_curve": {
     "0": {
-      "coordinate": 1.0367463566362858,
+      "coordinate": 1.0371496342122555,
       "element": 4.767755031585693,
-      "shape": 1.217354528605938,
+      "shape": 1.2173536345362663,
       "tensor_candidate_count": 0.0,
-      "total": 8.182675987482071,
-      "volume": 1.1608200445771217
+      "total": 8.18307837843895,
+      "volume": 1.160820096731186
     },
     "1250": {
-      "coordinate": 0.6920382082462311,
+      "coordinate": 0.6921733133494854,
       "element": 4.750955879688263,
-      "shape": 1.2113242894411087,
+      "shape": 1.21132455393672,
       "tensor_candidate_count": 0.0,
-      "total": 7.8134715259075165,
+      "total": 7.813607066869736,
       "volume": 1.1591531969606876
     },
     "5000": {
-      "coordinate": 0.5894426368176937,
+      "coordinate": 0.5894961506128311,
       "element": 4.747128427028656,
-      "shape": 1.219629768282175,
+      "shape": 1.2196274623274803,
       "tensor_candidate_count": 0.0,
-      "total": 7.636128485202789,
-      "volume": 1.0799276642501354
+      "total": 7.636181443929672,
+      "volume": 1.0799292773008347
     },
     "8441": {
-      "coordinate": 0.5493714865297079,
-      "element": 4.746577709913254,
-      "shape": 1.217309795320034,
+      "coordinate": 0.5492788590490818,
+      "element": 4.746548116207123,
+      "shape": 1.2173091173171997,
       "tensor_candidate_count": 0.0,
-      "total": 7.557902157306671,
-      "volume": 1.044643111526966
+      "total": 7.557782202959061,
+      "volume": 1.0446460917592049
     }
   }
 }
