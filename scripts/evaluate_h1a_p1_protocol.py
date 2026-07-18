@@ -244,6 +244,7 @@ def main() -> None:
     seed_results: dict[str, Any] = {}
     ratios: list[float] = []
     coordinate_ratios: list[float] = []
+    final_coordinate_losses: list[float] = []
     selected_seeds = (
         [int(protocol["staged_execution"]["screen_seed"])]
         if arguments.stage == "screen"
@@ -269,6 +270,7 @@ def main() -> None:
         ratio = final["total"] / initial["total"]
         ratios.append(ratio)
         coordinate_ratios.append(final["coordinate"] / initial["coordinate"])
+        final_coordinate_losses.append(final["coordinate"])
         samples = _sample_checkpoint(
             final_checkpoint,
             device=device,
@@ -332,6 +334,15 @@ def main() -> None:
         ) <= float(coordinate_mean_bound)
         checks["all_seed_coordinate_ratio"] = max(coordinate_ratios) <= float(
             coordinate_seed_bound
+        )
+    coordinate_loss_mean_bound = acceptance.get("mean_final_coordinate_loss_max")
+    coordinate_loss_seed_bound = acceptance.get("each_final_coordinate_loss_max")
+    if coordinate_loss_mean_bound is not None and coordinate_loss_seed_bound is not None:
+        checks["mean_final_coordinate_loss"] = sum(final_coordinate_losses) / len(
+            final_coordinate_losses
+        ) <= float(coordinate_loss_mean_bound)
+        checks["each_final_coordinate_loss"] = max(final_coordinate_losses) <= float(
+            coordinate_loss_seed_bound
         )
     if isinstance(distance_guardrail, dict):
         fractions = [
