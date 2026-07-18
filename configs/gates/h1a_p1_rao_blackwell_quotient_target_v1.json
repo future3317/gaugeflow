@@ -1,0 +1,118 @@
+{
+  "protocol": "h1a_p1_rao_blackwell_quotient_target_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed tensor-free H1a target-correction screen; no H1b-H6",
+  "prerequisites": {
+    "qualified_cache": "h1a_p1_structure_cache_v1",
+    "failed_schedule_screen": "h1a_p1_exponential_torus_schedule_v1",
+    "failed_reciprocal_screen": "h1a_p1_reciprocal_score_v1",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "probability_path": "unchanged cell-independent Brownian heat kernel on the fractional torus modulo common translation",
+    "old_target": "projected per-site wrapped-normal score, an unbiased but noisy estimator after quotient observation",
+    "production_target": "Rao-Blackwell conditional expectation of that score given the translation-quotient state",
+    "translation_integral": "three factorized one-dimensional periodic integrals",
+    "quadrature": "32-point circular-mean-shifted periodic trapezoidal cubature",
+    "complexity": "O(NQ) vectorized index_add reductions with Q=32",
+    "network_change": false,
+    "sampler_change": false,
+    "runtime_fallback": false
+  },
+  "qualification_evidence_before_training": {
+    "exact_three_site_max_abs_error_fp64": 2e-10,
+    "low_noise_batched_analytic_limit_max_abs_error_fp64": 2e-7,
+    "translation_and_permutation_invariance_atol_fp64": 2e-12,
+    "quadrature_32_vs_64_atol_fp64": 2e-9,
+    "real_batch_graphs": 64,
+    "real_batch_nodes": 596,
+    "target_latency_ms": 5.05113,
+    "legacy_target_latency_ms": 3.52084,
+    "target_extra_peak_memory_mib": 7.84033,
+    "full_training_graphs_per_second_observed": 329.62,
+    "full_training_peak_allocated_mib": 1696.43
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "training": {
+    "seeds": [5601],
+    "steps": 20000,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1250, 5000, 12000, 20000]
+  },
+  "staged_execution": {
+    "screen_seed": 5601,
+    "iteration_seed_count": 1,
+    "confirmatory_seed_policy": "no additional seeds during mechanism iteration; add two fixed seeds only after selecting the final production baseline",
+    "graph_presentations_at_final": 1280000
+  },
+  "fixed_evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 7601,
+    "samples_per_seed": 128,
+    "sampling_seed": 7602,
+    "sampler_steps": 100,
+    "time_grid": "uniform_time"
+  },
+  "screen_acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.65,
+    "mean_final_coordinate_loss_max": 0.47,
+    "each_final_coordinate_loss_max": 0.47,
+    "generated_minimum_distance_median_angstrom_min": 2.3,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.97
+    }
+  },
+  "acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.65,
+    "mean_final_coordinate_loss_max": 0.47,
+    "each_final_coordinate_loss_max": 0.47,
+    "generated_minimum_distance_median_angstrom_min": 2.3,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.97
+    }
+  },
+  "screen_decision_rule": {
+    "pass": "run_the_pre_registered_single_seed_train_reference_distribution_qualification",
+    "fail": "record_failure_and_run_only_the_pre_registered_no_training_distribution_diagnostic",
+    "boundary": "No result authorizes a second iteration seed or H1b."
+  },
+  "decision_rule": {
+    "pass": "provisional_single_seed_H1a_mechanism_success_pending_final_baseline_replication",
+    "fail": "H1a_target_correction_failed_stop_before_H1b",
+    "boundary": "Final production and paper claims still require two additional fixed seeds."
+  }
+}
