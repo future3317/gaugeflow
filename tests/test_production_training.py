@@ -226,7 +226,7 @@ def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
                 "coordinate_control_gate.",
                 "coordinate_edge_encoder.",
                 "coordinate_carrier.",
-                "coordinate_carrier_head.",
+                "coordinate_carrier_mixer.",
             )
         )
     }

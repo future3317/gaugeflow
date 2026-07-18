@@ -164,3 +164,62 @@ class CompactCartesianKrylovCarrier(nn.Module):
                 (vectors, first, second_first, second_squared_first), dim=1
             )
             return carrier - graph_mean(carrier, batch, graph_count)[batch]
+
+
+class StateAdaptiveCartesianCarrierMixer(nn.Module):
+    """Mix polar Cartesian carriers with invariant node-dependent weights.
+
+    A single global readout can only select one vector from the carrier span
+    with the same coefficients at every state and site.  This mixer keeps that
+    readout as its base term and adds the bounded low-rank residual
+
+    ``a_i = w_0 + U tanh(V h_i)``.
+
+    ``h_i`` contains scalar node features and ``a_i`` therefore remains an
+    invariant coefficient vector.  Mixing polar carriers with these scalars
+    preserves Cartesian covariance.  ``U`` is initialized to zero, so the
+    production function at initialization is exactly the preceding global
+    linear readout; there is no compatibility dispatch or second coordinate
+    branch.
+    """
+
+    def __init__(
+        self,
+        carrier_channels: int,
+        state_dim: int,
+        *,
+        rank: int = 8,
+    ) -> None:
+        super().__init__()
+        if carrier_channels < 1 or state_dim < 1 or rank < 1:
+            raise ValueError("adaptive carrier dimensions must be positive")
+        self.carrier_channels = int(carrier_channels)
+        self.state_dim = int(state_dim)
+        self.rank = int(rank)
+        self.base_weight = nn.Parameter(torch.empty(carrier_channels))
+        self.state_projection = nn.Linear(state_dim, rank, bias=False)
+        self.carrier_projection = nn.Linear(rank, carrier_channels, bias=False)
+        nn.init.kaiming_uniform_(self.base_weight.unsqueeze(0), a=5.0**0.5)
+        nn.init.zeros_(self.carrier_projection.weight)
+
+    def forward(
+        self,
+        carrier: torch.Tensor,
+        scalar_state: torch.Tensor,
+    ) -> torch.Tensor:
+        if carrier.ndim != 3 or carrier.shape[1:] != (
+            self.carrier_channels,
+            3,
+        ):
+            raise ValueError("adaptive mixer received the wrong carrier shape")
+        if scalar_state.shape != (carrier.shape[0], self.state_dim):
+            raise ValueError("adaptive mixer received the wrong scalar state")
+        with torch.autocast(device_type=carrier.device.type, enabled=False):
+            latent = torch.tanh(
+                F.linear(scalar_state.float(), self.state_projection.weight.float())
+            )
+            residual = F.linear(
+                latent, self.carrier_projection.weight.float()
+            )
+            coefficients = self.base_weight.float().unsqueeze(0) + residual
+            return torch.einsum("nc,ncd->nd", coefficients, carrier.float())

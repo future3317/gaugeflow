@@ -10,7 +10,10 @@ from torch import nn
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
 
-from .cartesian_coordinate_carrier import CompactCartesianKrylovCarrier
+from .cartesian_coordinate_carrier import (
+    CompactCartesianKrylovCarrier,
+    StateAdaptiveCartesianCarrierMixer,
+)
 from .cartesian_gauge_atlas import (
     CartesianGaugeAtlasOutput,
     CartesianSTFGeometryQueryEncoder,
@@ -194,8 +197,10 @@ class HybridCrystalDenoiser(nn.Module):
         self.coordinate_carrier = CompactCartesianKrylovCarrier(
             hidden_dim, vector_dim, moment_channels=16, rms_epsilon=1.0e-4
         )
-        self.coordinate_carrier_head = nn.Linear(
-            self.coordinate_carrier.output_channels, 1, bias=False
+        self.coordinate_carrier_mixer = StateAdaptiveCartesianCarrierMixer(
+            self.coordinate_carrier.output_channels,
+            hidden_dim,
+            rank=8,
         )
         self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(
@@ -366,9 +371,7 @@ class HybridCrystalDenoiser(nn.Module):
             graphs,
         )
         with torch.autocast(device_type=carrier.device.type, enabled=False):
-            cartesian_score = self.coordinate_carrier_head(
-                carrier.transpose(-1, -2).float()
-            ).squeeze(-1)
+            cartesian_score = self.coordinate_carrier_mixer(carrier, nodes)
             cartesian_score = cartesian_score - graph_mean(
                 cartesian_score, batch, graphs
             )[batch]
