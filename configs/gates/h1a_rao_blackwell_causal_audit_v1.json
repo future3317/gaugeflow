@@ -1,0 +1,31 @@
+{
+  "protocol": "h1a_rao_blackwell_causal_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only post-failure audit of the single seed-5601 EMA checkpoint; no training and no H1b-H6",
+  "source_protocol": "h1a_p1_rao_blackwell_quotient_target_v1",
+  "source_protocol_sha256": "4d8d28d87d787032c26102ec26d1ecae4a7fd20c87327b0f98e4861f17a6e47c",
+  "source_checkpoint_step": 20000,
+  "seeds": [5601],
+  "score_calibration": {
+    "validation_graphs": 128,
+    "validation_seed": 8301,
+    "noise_seed": 8302,
+    "batch_size": 16,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "reference_geometry": {
+    "train_graphs": 4096,
+    "train_seed": 8303,
+    "distance_threshold_angstrom": 0.5
+  },
+  "sampler_sensitivity": {
+    "seeds": [5601],
+    "samples": 32,
+    "sample_seed": 8304,
+    "steps": [25, 50, 100, 200],
+    "time_grids": ["uniform_time"],
+    "stochastic": true,
+    "common_initial_random_stream_only": true
+  },
+  "decision_boundary": "If low-noise teacher-forced calibration remains weak, repair representation/optimization. If calibration is strong but step refinement is nonconvergent, audit the torus reverse kernel. This diagnostic cannot authorize more training, H1b, tensor conditioning, oracle, relaxation, DFT or DFPT."
+}

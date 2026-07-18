@@ -67,3 +67,27 @@ nearest-neighbour Wasserstein at most `0.75` in addition to the existing H1a
 safety and marginal-distribution checks.  No seed replacement or second seed is
 allowed during this iteration.  Two further fixed seeds are reserved for the
 eventual selected production baseline and paper statistics.
+
+## Frozen result
+
+Seed `5601` completed all 20,000 steps with finite losses and gradients.  The
+screen **failed**: final fixed-validation coordinate loss was `0.50350` against
+`0.47`, and the 128-sample nearest-neighbour median was `2.26062 A` against
+`2.3 A`.  Total validation ratio passed at `0.54325`; all samples had finite
+positive-volume lattices, no terminal masks, no sampling failures, and no
+tensor candidates.
+
+The separately frozen 256-sample train-reference qualification also failed.
+Normalized nearest-neighbour Wasserstein was `0.95302` against `0.75`, nearly
+unchanged from `0.95972` for the preceding exponential-schedule model.  Volume
+Wasserstein (`0.06443`), element marginal JSD (`0.01434`), lattice validity,
+minimum-distance safety and formula uniqueness passed.  Node-count JSD was
+`0.01144` versus `0.01`; because node counts are sampled from the exact
+empirical prior, that small 256-sample deviation is finite-sample noise and is
+not the primary scientific failure.
+
+The correct conclusion is that nuisance-target marginalization modestly
+improved teacher-forced coordinate loss and the small screen median, but did
+not repair free-running local-geometry fidelity.  H1a remains failed and H1b
+is not authorized.  No additional iteration seed or training extension is
+run; the next action is the pre-registered read-only causal audit.

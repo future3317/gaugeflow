@@ -1,0 +1,106 @@
+{
+  "checks": {
+    "all_seed_validation_ratio": true,
+    "each_final_coordinate_loss": false,
+    "finite_positive_lattices": true,
+    "generated_minimum_distance_median": false,
+    "mean_final_coordinate_loss": false,
+    "mean_validation_ratio": true,
+    "minimum_distance_aggregate": true,
+    "minimum_distance_each_seed": true,
+    "sampling_failures": true,
+    "tensor_bypass": true,
+    "terminal_masks": true,
+    "training_finite": true
+  },
+  "decision": "record_failure_and_run_only_the_pre_registered_no_training_distribution_diagnostic",
+  "mean_final_over_initial_coordinate": 0.6967274974094291,
+  "mean_final_over_initial_total": 0.5432515199683438,
+  "protocol": "h1a_p1_rao_blackwell_quotient_target_v1",
+  "protocol_sha256": "4d8d28d87d787032c26102ec26d1ecae4a7fd20c87327b0f98e4861f17a6e47c",
+  "qualified": false,
+  "seed_results": {
+    "5601": {
+      "final_over_initial_coordinate": 0.6967274974094291,
+      "final_over_initial_total": 0.5432515199683438,
+      "final_validation": {
+        "coordinate": 0.5034960508346558,
+        "element": 2.832370549440384,
+        "shape": 0.5836918950080872,
+        "tensor_candidate_count": 0.0,
+        "total": 4.246638789772987,
+        "volume": 0.3270802954211831
+      },
+      "initial_validation": {
+        "coordinate": 0.7226585038006306,
+        "element": 4.758749097585678,
+        "shape": 1.2788044176995754,
+        "tensor_candidate_count": 0.0,
+        "total": 7.817076683044434,
+        "volume": 1.056864656507969
+      },
+      "sampling": {
+        "finite_positive_lattices_fraction": 1.0,
+        "minimum_distance_guardrail_fraction": 1.0,
+        "minimum_distance_quantiles_angstrom": [
+          1.0988935232162476,
+          2.260616898536682,
+          3.2346246242523193
+        ],
+        "minimum_distance_threshold_angstrom": 0.5,
+        "samples": 128,
+        "sampling_failures": 0,
+        "terminal_masks": 0,
+        "volume_per_atom_quantiles_angstrom3": [
+          9.935298919677734,
+          24.40201473236084,
+          65.65234375
+        ]
+      },
+      "training_log_finite": true,
+      "validation_curve": {
+        "0": {
+          "coordinate": 0.7226585038006306,
+          "element": 4.758749097585678,
+          "shape": 1.2788044176995754,
+          "tensor_candidate_count": 0.0,
+          "total": 7.817076683044434,
+          "volume": 1.056864656507969
+        },
+        "12000": {
+          "coordinate": 0.5446163211017847,
+          "element": 2.9542662650346756,
+          "shape": 0.5936415698379278,
+          "tensor_candidate_count": 0.0,
+          "total": 4.428505539894104,
+          "volume": 0.3359814053401351
+        },
+        "1250": {
+          "coordinate": 0.6629712320864201,
+          "element": 3.693511590361595,
+          "shape": 1.1942190304398537,
+          "tensor_candidate_count": 0.0,
+          "total": 6.077929198741913,
+          "volume": 0.5272274632006884
+        },
+        "20000": {
+          "coordinate": 0.5034960508346558,
+          "element": 2.832370549440384,
+          "shape": 0.5836918950080872,
+          "tensor_candidate_count": 0.0,
+          "total": 4.246638789772987,
+          "volume": 0.3270802954211831
+        },
+        "5000": {
+          "coordinate": 0.5849119797348976,
+          "element": 3.1317193806171417,
+          "shape": 0.7177133224904537,
+          "tensor_candidate_count": 0.0,
+          "total": 4.804761469364166,
+          "volume": 0.3704167562536895
+        }
+      }
+    }
+  },
+  "stage": "screen"
+}
