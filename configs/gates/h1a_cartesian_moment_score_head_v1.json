@@ -1,0 +1,80 @@
+{
+  "protocol": "h1a_cartesian_moment_score_head_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training qualification of one vectorized Cartesian rank-1/rank-2 moment score readout targeted at the diagnosed coordinate tangent anisotropy; no production training or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "full_rank_ill_conditioned_tangent": "h1a_coordinate_tangent_audit_v2",
+    "rejected_scalar_preconditioner": "h1a_coordinate_vector_rms_preconditioner_v1",
+    "baseline_condition_number": 23153400.23565566,
+    "baseline_effective_rank": 2.269670208784417,
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915
+  },
+  "mechanism": {
+    "channels": 8,
+    "residual_scale": 0.1,
+    "vector_moment": "m_ic=sum_{j,n} a_ijc rhat_ijn / sqrt(deg_i)",
+    "stf_dyadic_moment": "Q_ic=sum_{j,n} b_ijc (rhat_ijn outer rhat_ijn - I/3) / sqrt(deg_i)",
+    "polar_readout": "delta s_i = scale * W_c Q_ic m_ic",
+    "parity": "Q is even and m is polar, hence Qm is polar under full O(3)",
+    "edge_trunk": "shared with the existing scalar central edge score",
+    "complexity": "O(E*C) vectorized scatter/einsum with C=8",
+    "probability_path_change": false,
+    "loss_change": false,
+    "optimizer_change": false,
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4476258
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "gram_accumulation_dtype": "fp64"
+  },
+  "numeric": {
+    "rank_relative_eigenvalue_threshold": 1e-10,
+    "expected_translation_nullity": 3,
+    "condition_number_max": 5000000.0,
+    "effective_rank_min": 4.0,
+    "moment_to_central_gradient_norm_ratio_min": 0.1,
+    "translation_invariance_max_fp32": 0.00001,
+    "node_permutation_equivariance_max_fp32": 0.00001,
+    "o3_covariance_max_fp32": 0.00001,
+    "finite_forward_backward": true,
+    "tensor_candidates": 0
+  },
+  "cuda": {
+    "batch_graphs": 64,
+    "selection_seed": 5916,
+    "warmup_steps": 3,
+    "measured_steps": 10,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "graphs_per_second_min": 400.0,
+    "peak_allocated_mib_max": 2600.0,
+    "device": "RTX 4060 Ti 16GB"
+  },
+  "decision_rule": {
+    "pass": "freeze exactly one same-seed 1,024-step one-state memorization test of the qualified production model",
+    "fail": "remove the moment head from active production and return to representation analysis",
+    "boundary": "Qualification cannot authorize more states, resampled time, H1b-H6, tensor, oracle, relaxation, DFT or DFPT."
+  }
+}
