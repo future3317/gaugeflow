@@ -1,0 +1,56 @@
+{
+  "protocol": "h1a_coordinate_affine_readout_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-state no-training exact affine coordinate-readout span audit after the full-network NTK trust radius failed; no optimizer, checkpoint, architecture, path or later-Gate change",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "trust_radius_predecessor": "h1a_coordinate_ntk_trust_radius_audit_v2",
+    "fixed_graph_index": 521337,
+    "fixed_graph_nodes": 11,
+    "fixed_time": 0.005,
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "path": {
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "forward_dtype": "fp32",
+    "jacobian_dtype": "fp32",
+    "solve_dtype": "fp64"
+  },
+  "readout": {
+    "parameter_names": [
+      "coordinate_vector_head.weight",
+      "coordinate_edge_head.2.weight",
+      "coordinate_edge_head.2.bias"
+    ],
+    "parameter_count": 225,
+    "rank_relative_eigenvalue_threshold": 1e-10
+  },
+  "acceptance": {
+    "quotient_rank": 30,
+    "target_projection_relative_residual_max": 1e-5,
+    "actual_coordinate_mse_max": 1e-5,
+    "affine_forward_relative_error_max": 1e-4,
+    "parameters_restored_exactly": true,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "the fixed upstream representation contains a complete affine coordinate basis; qualify a separate two-timescale/readout-optimization mechanism before any retraining",
+    "rank_fail": "the final coordinate features do not span the quotient target; redesign the coordinate representation rather than the optimizer",
+    "affine_fail": "the declared final readout is not numerically affine in production; inspect the forward implementation before training",
+    "boundary": "This one-state no-training audit cannot qualify H1a, initialize production, add steps or seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
