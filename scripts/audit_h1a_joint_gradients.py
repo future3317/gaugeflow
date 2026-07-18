@@ -19,9 +19,10 @@ from gaugeflow.production.runtime import load_tensor_free_ema_runtime
 
 _HEAD_PREFIXES = {
     "coordinate": (
-        "coordinate_vector_head.",
         "coordinate_control_gate.",
-        "coordinate_edge_head.",
+        "coordinate_edge_encoder.",
+        "coordinate_carrier.",
+        "coordinate_carrier_head.",
     ),
     "element": ("element_head.",),
     "lattice": ("volume_head.", "shape_head."),
