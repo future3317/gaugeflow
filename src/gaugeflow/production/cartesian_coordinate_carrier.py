@@ -195,12 +195,15 @@ class StateAdaptiveCartesianCarrierMixer(nn.Module):
             raise ValueError("adaptive carrier dimensions must be positive")
         self.carrier_channels = int(carrier_channels)
         self.state_dim = int(state_dim)
-        self.rank = int(rank)
         self.base_weight = nn.Parameter(torch.empty(carrier_channels))
         self.state_projection = nn.Linear(state_dim, rank, bias=False)
         self.carrier_projection = nn.Linear(rank, carrier_channels, bias=False)
         nn.init.kaiming_uniform_(self.base_weight.unsqueeze(0), a=5.0**0.5)
         nn.init.zeros_(self.carrier_projection.weight)
+
+    @property
+    def rank(self) -> int:
+        return self.state_projection.out_features
 
     def forward(
         self,

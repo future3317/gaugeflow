@@ -40,7 +40,7 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h1a_coordinate_path_metric.py",
     ROOT / "scripts" / "audit_h1a_coordinate_memorization.py",
     ROOT / "scripts" / "audit_h1a_coordinate_memorization_scaling.py",
-    ROOT / "scripts" / "audit_h1a_krylov_gradient_attribution.py",
+    ROOT / "scripts" / "qualify_h1a_state_adaptive_carrier_mixing.py",
     ROOT / "scripts" / "audit_h1a_tangent_score_index_correction.py",
     ROOT / "scripts" / "audit_h1a_primal_dual_metric.py",
     ROOT / "scripts" / "diagnose_h1a_coordinate_generator.py",
