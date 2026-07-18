@@ -39,6 +39,26 @@ class FourierTimeEmbedding(nn.Module):
         return self.network(torch.cat((time.unsqueeze(-1), phase.sin(), phase.cos()), dim=-1))
 
 
+def invariant_vector_rms_precondition(
+    vectors: torch.Tensor, *, floor: float = 1.0e-2
+) -> torch.Tensor:
+    """Balance latent vector readout without changing its O(3) type.
+
+    The message stack can produce vector channels orders of magnitude smaller
+    than its direct central edge route.  A nodewise Frobenius RMS is an O(3)
+    invariant scalar, so dividing by a fixed-floor RMS improves the tangent
+    conditioning while preserving rotations, reflections and node
+    permutations.  The nonzero floor keeps the zero-vector stratum smooth.
+    """
+    if vectors.ndim != 3 or vectors.shape[-1] != 3:
+        raise ValueError("latent vectors must have shape [nodes,channels,3]")
+    if floor <= 0.0 or not math.isfinite(floor):
+        raise ValueError("vector RMS floor must be finite and positive")
+    squared_rms = vectors.float().square().mean(dim=(-2, -1), keepdim=True)
+    scale = (squared_rms + float(floor) ** 2).rsqrt().to(vectors)
+    return vectors * scale
+
+
 class EquivariantDenoisingBlock(nn.Module):
     """O(3)-typed scalar/vector message block with explicit time and condition FiLM."""
 
@@ -313,7 +333,8 @@ class HybridCrystalDenoiser(nn.Module):
         node_context = torch.cat((nodes, node_time, node_condition, node_state), dim=-1)
         element_logits = self.element_head(node_context)
         coordinate_control = torch.cat((node_time, node_condition, node_state), dim=-1)
-        time_gated_vectors = vectors * torch.sigmoid(
+        balanced_vectors = invariant_vector_rms_precondition(vectors)
+        time_gated_vectors = balanced_vectors * torch.sigmoid(
             self.coordinate_control_gate(coordinate_control)
         ).unsqueeze(-1)
         cartesian_score = self.coordinate_vector_head(time_gated_vectors.transpose(-1, -2)).squeeze(-1)

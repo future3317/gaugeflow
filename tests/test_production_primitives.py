@@ -4,7 +4,10 @@ import torch
 
 from gaugeflow.manifold import vector_to_symmetric
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
+from gaugeflow.production.equivariant_denoiser import (
+    HybridCrystalDenoiser,
+    invariant_vector_rms_precondition,
+)
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.so3_quadrature import nested_hopf_so3_grid
 from gaugeflow.production.space_group_router import (
@@ -231,6 +234,23 @@ def test_time_reaches_every_block_and_head_and_coordinate_score_has_zero_graph_m
     assert torch.allclose(
         first.coordinate_fractional_scaled_score, expected_fractional, atol=2e-6
     )
+
+
+def test_vector_rms_preconditioner_is_o3_covariant_and_smooth_at_zero():
+    generator = torch.Generator().manual_seed(1401)
+    vectors = torch.randn((7, 5, 3), generator=generator, dtype=torch.float64)
+    matrix = torch.randn((3, 3), generator=generator, dtype=torch.float64)
+    rotation, _ = torch.linalg.qr(matrix)
+    if torch.linalg.det(rotation) < 0:
+        rotation[:, 0] = -rotation[:, 0]
+    original = invariant_vector_rms_precondition(vectors)
+    transformed = invariant_vector_rms_precondition(vectors @ rotation)
+    assert torch.allclose(transformed, original @ rotation, atol=1e-12)
+    zero = torch.zeros_like(vectors, requires_grad=True)
+    output = invariant_vector_rms_precondition(zero)
+    output.square().sum().backward()
+    assert torch.equal(output, torch.zeros_like(output))
+    assert zero.grad is not None and torch.isfinite(zero.grad).all()
 
 
 def test_no_target_metadata_in_model_signature():

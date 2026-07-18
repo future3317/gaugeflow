@@ -58,8 +58,13 @@
   },
   "cuda": {
     "batch_graphs": 64,
+    "selection_seed": 5916,
     "warmup_steps": 3,
     "measured_steps": 10,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
     "graphs_per_second_min": 450.0,
     "peak_allocated_mib_max": 2500.0,
     "device": "RTX 4060 Ti 16GB",
