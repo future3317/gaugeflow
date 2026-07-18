@@ -5,9 +5,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
-from torch_geometric.utils import scatter
 
 from .lattice_volume_shape import project_lattice_state
+
+
+def sorted_segment_sum(
+    value: torch.Tensor,
+    index: torch.Tensor,
+    segment_count: int,
+) -> torch.Tensor:
+    """Linearly reduce a production-contiguous segment vector without atomics."""
+    if index.shape != value.shape[:1] or index.dtype != torch.long:
+        raise ValueError("segment index must provide one int64 value per row")
+    if segment_count < 0:
+        raise ValueError("segment count must be nonnegative")
+    # Batch contiguity and edge target ordering are construction invariants.
+    # Re-sorting here would add O(E log E) work to every message block.
+    lengths = torch.bincount(index, minlength=segment_count)
+    return torch.segment_reduce(value, "sum", lengths=lengths)
 
 
 @dataclass(frozen=True)
@@ -20,14 +35,18 @@ def graph_mean(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> to
     """Return one mean per graph for a node-leading tensor."""
     if value.shape[:1] != batch.shape:
         raise ValueError("batch must provide one graph index per node")
-    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="mean")
+    counts = torch.bincount(batch, minlength=graph_count).clamp_min(1)
+    total = sorted_segment_sum(value, batch, graph_count)
+    return total / counts.to(value).reshape(
+        (graph_count,) + (1,) * (value.ndim - 1)
+    )
 
 
 def graph_sum(value: torch.Tensor, batch: torch.Tensor, graph_count: int) -> torch.Tensor:
     """Return one sum per graph for a node-leading tensor."""
     if value.shape[:1] != batch.shape:
         raise ValueError("batch must provide one graph index per node")
-    return scatter(value, batch, dim=0, dim_size=graph_count, reduce="sum")
+    return sorted_segment_sum(value, batch, graph_count)
 
 
 def fractional_tangent_to_cartesian(
