@@ -1,0 +1,16 @@
+{
+  "checkpoint_step": 8441,
+  "graphs": 128,
+  "noise_seed": 8504,
+  "protocol": "h1a_pairwise_reciprocal_coordinate_pretraining_v1",
+  "records": [
+    {"time": 0.005, "full_mse": 0.6211321563051458, "local_without_pair_mse": 0.8086116188450864, "zero_mse": 0.8842050401788009, "full_explained_fraction": 0.29752475039099235, "local_explained_fraction": 0.08549309028868268, "pair_rms": 0.4135064220585655},
+    {"time": 0.01, "full_mse": 0.6288643468890274, "local_without_pair_mse": 0.8201802153336374, "zero_mse": 0.9205224723146673, "full_explained_fraction": 0.3168397667601327, "local_explained_fraction": 0.10900576574596577, "pair_rms": 0.4013866110965764},
+    {"time": 0.02, "full_mse": 0.6454141265467593, "local_without_pair_mse": 0.8278064644127562, "zero_mse": 0.9153007708097759, "full_explained_fraction": 0.2948611569771159, "local_explained_fraction": 0.09559077102012348, "pair_rms": 0.407827158871708},
+    {"time": 0.05, "full_mse": 0.5785167886499774, "local_without_pair_mse": 0.7621605689065498, "zero_mse": 0.8704829885248553, "full_explained_fraction": 0.33540712882816015, "local_explained_fraction": 0.12443944459141199, "pair_rms": 0.4296165882351031},
+    {"time": 0.1, "full_mse": 0.5594860838170637, "local_without_pair_mse": 0.7336704354537161, "zero_mse": 0.8680295776902583, "full_explained_fraction": 0.35545274239870794, "local_explained_fraction": 0.15478636407074842, "pair_rms": 0.4185295239759721},
+    {"time": 0.2, "full_mse": 0.5739318362453527, "local_without_pair_mse": 0.7654465541504977, "zero_mse": 0.9440645753291615, "full_explained_fraction": 0.39206294649363016, "local_explained_fraction": 0.18920106298489814, "pair_rms": 0.4033698342478512},
+    {"time": 0.5, "full_mse": 0.6274830667596114, "local_without_pair_mse": 0.6878232286687482, "zero_mse": 0.8653905684487861, "full_explained_fraction": 0.2749134441291916, "local_explained_fraction": 0.2051875144633568, "pair_rms": 0.2516051428472601}
+  ],
+  "decision": "pairwise_residual_is_active_but_insufficient_remove_from_production"
+}
