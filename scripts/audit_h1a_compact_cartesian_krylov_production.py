@@ -13,13 +13,13 @@ from torch import nn
 
 from gaugeflow.file_utils import load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from scripts.audit_h1a_coordinate_memorization import (
     _blueprint,
     _fixed_indices,
     _make_batch,
-    _make_model,
 )
 
 
@@ -198,7 +198,14 @@ def main() -> None:
     )
     batch_data = _make_batch(dataset, fixed_indices, device)
     blueprint = _blueprint(batch_data)
-    model = _make_model(protocol, device).float()
+    spec = protocol["model"]
+    model = HybridCrystalDenoiser(
+        hidden_dim=int(spec["hidden_dim"]),
+        vector_dim=int(spec["vector_dim"]),
+        layers=int(spec["layers"]),
+        radial_dim=int(spec["radial_dim"]),
+        radial_cutoff=float(spec["radial_cutoff_angstrom"]),
+    ).to(device).float()
     initial_state = {
         name: value.detach().clone() for name, value in model.state_dict().items()
     }
