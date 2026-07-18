@@ -57,6 +57,14 @@ runtime/config fallbacks or rerun them with searched scale, ridge, precision,
 solve frequency, steps, or seeds. A successor requires a separately frozen,
 compact equivariant basis-decorrelation qualification first.
 
+The subsequent exact-Helmert branch-minimality audit also rejects deleting one
+branch. Vector-only and edge-only are each locally full quotient rank `30/30`,
+but vector-only 16-state MSE is `0.56437`; edge-only MSE is `0.13474 > 0.12`
+and its BF16 MSE is `10.2160` with gradient cosine `-0.1419`. Retain the compact
+combined head. The next candidate must preserve its cross-state span through a
+target-free equivariant orthogonal-residual basis; do not silently switch to a
+single branch or FP32-only training.
+
 ## Required environment
 
 Use WSL 2 Ubuntu-22.04 for reported tests, benchmarks, training, and sampling:

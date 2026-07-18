@@ -1,0 +1,185 @@
+{
+  "branches": {
+    "combined": {
+      "bf16": {
+        "backbone_gradient_norm": 19778.111328125,
+        "coordinate_mse": 10.52707290649414,
+        "low_time_endpoint_rms_angstrom": 0.30571484565734863
+      },
+      "bf16_over_fp32_mse_ratio": 105.83558777927331,
+      "bf16_prediction_relative_rmse": 4.416738033294678,
+      "checks": {
+        "bf16_endpoint": false,
+        "bf16_gradient": false,
+        "bf16_mse": false,
+        "bf16_mse_ratio": false,
+        "bf16_prediction": false,
+        "fp32_gradient": true,
+        "gradient_direction": false,
+        "gradient_norm_agreement": false,
+        "one_state_projection": true,
+        "one_state_rank": true,
+        "panel_fp32_endpoint": true,
+        "panel_fp32_mse": true,
+        "solution_norm": false
+      },
+      "fp32": {
+        "backbone_gradient_norm": 4.1489481925964355,
+        "coordinate_mse": 0.09946628659963608,
+        "low_time_endpoint_rms_angstrom": 0.02028791420161724
+      },
+      "gradient_agreement": {
+        "candidate_over_reference_norm": 4767.018810666109,
+        "cosine": -0.36674330930511456
+      },
+      "one_state": {
+        "projection_relative_residual": 3.1733735738092156e-14,
+        "quotient_rows": 30,
+        "rank": 30
+      },
+      "qualified": false,
+      "solution_norm": 9110.431017135601,
+      "spectrum": {
+        "columns": 225,
+        "condition_number": 218715.7840054757,
+        "maximum_singular_value": 7.5192954228383435,
+        "minimum_active_singular_value": 3.437929940461038e-05,
+        "rank": 225,
+        "rows": 417
+      }
+    },
+    "edge_only": {
+      "bf16": {
+        "backbone_gradient_norm": 16794.0625,
+        "coordinate_mse": 10.21604061126709,
+        "low_time_endpoint_rms_angstrom": 0.30794060230255127
+      },
+      "bf16_over_fp32_mse_ratio": 75.81878388811162,
+      "bf16_prediction_relative_rmse": 4.445520401000977,
+      "checks": {
+        "bf16_endpoint": false,
+        "bf16_gradient": false,
+        "bf16_mse": false,
+        "bf16_mse_ratio": false,
+        "bf16_prediction": false,
+        "fp32_gradient": true,
+        "gradient_direction": false,
+        "gradient_norm_agreement": false,
+        "one_state_projection": true,
+        "one_state_rank": true,
+        "panel_fp32_endpoint": true,
+        "panel_fp32_mse": false,
+        "solution_norm": false
+      },
+      "fp32": {
+        "backbone_gradient_norm": 4.2953596115112305,
+        "coordinate_mse": 0.134742870926857,
+        "low_time_endpoint_rms_angstrom": 0.0240145493298769
+      },
+      "gradient_agreement": {
+        "candidate_over_reference_norm": 3909.815391363097,
+        "cosine": -0.14192699836288108
+      },
+      "one_state": {
+        "projection_relative_residual": 3.870616543611391e-14,
+        "quotient_rows": 30,
+        "rank": 30
+      },
+      "qualified": false,
+      "solution_norm": 1325.8257598277046,
+      "spectrum": {
+        "columns": 193,
+        "condition_number": 19886.491720735918,
+        "maximum_singular_value": 7.519177112476483,
+        "minimum_active_singular_value": 0.00037810475663920825,
+        "rank": 193,
+        "rows": 417
+      }
+    },
+    "vector_only": {
+      "bf16": {
+        "backbone_gradient_norm": 7.35011625289917,
+        "coordinate_mse": 0.5636831521987915,
+        "low_time_endpoint_rms_angstrom": 0.05047674849629402
+      },
+      "bf16_over_fp32_mse_ratio": 0.9987900921899902,
+      "bf16_prediction_relative_rmse": 0.09810619801282883,
+      "checks": {
+        "bf16_endpoint": false,
+        "bf16_gradient": true,
+        "bf16_mse": false,
+        "bf16_mse_ratio": true,
+        "bf16_prediction": true,
+        "fp32_gradient": true,
+        "gradient_direction": false,
+        "gradient_norm_agreement": true,
+        "one_state_projection": true,
+        "one_state_rank": true,
+        "panel_fp32_endpoint": false,
+        "panel_fp32_mse": false,
+        "solution_norm": false
+      },
+      "fp32": {
+        "backbone_gradient_norm": 4.353955268859863,
+        "coordinate_mse": 0.5643659830093384,
+        "low_time_endpoint_rms_angstrom": 0.050457295030355453
+      },
+      "gradient_agreement": {
+        "candidate_over_reference_norm": 1.6881473499774458,
+        "cosine": 0.6146933483747617
+      },
+      "one_state": {
+        "projection_relative_residual": 1.788787503995076e-13,
+        "quotient_rows": 30,
+        "rank": 30
+      },
+      "qualified": false,
+      "solution_norm": 1022.6716447968779,
+      "spectrum": {
+        "columns": 32,
+        "condition_number": 91.27759688988854,
+        "maximum_singular_value": 0.04903793248442785,
+        "minimum_active_singular_value": 0.0005372395215836376,
+        "rank": 32,
+        "rows": 417
+      }
+    }
+  },
+  "common_checks": {
+    "design_reconstruction": true,
+    "parameters_restored": true,
+    "sampling_failures": true,
+    "tensor_candidates": true
+  },
+  "decision": "single_branch_minimality_failed_retain_combined_head",
+  "decision_boundary": "This no-training audit cannot qualify H1a, mutate production, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "design_reconstruction_max_abs": 2.2351741790771484e-07,
+  "design_shape": [
+    417,
+    225
+  ],
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "optimizer_steps": 0,
+  "protocol": "h1a_coordinate_branch_minimality_v1",
+  "qualified": false,
+  "sampling_failures": 0,
+  "selected_branch": null,
+  "tensor_candidates": 0
+}

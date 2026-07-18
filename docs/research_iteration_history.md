@@ -416,6 +416,22 @@ contributions had norms `272.59` and `271.00` but summed to only `16.83`, a
 restored exactly. Scaled variable projection was therefore rejected; commit
 `231126d` retains the frozen runner, protocol and tests.
 
+A branch-minimality audit next tested deletion rather than adding machinery.
+After an explicit Helmert quotient removed exactly three translation modes,
+vector-only and edge-only designs were each locally full rank `30/30` with
+one-state target projection residual below `1.8e-13`. Vector-only was relatively
+BF16-stable but its 16-state FP32 MSE was `0.56437`, low-time endpoint RMS
+`0.05046` Angstrom, and solution norm `1022.67`. Edge-only reached FP32 MSE
+`0.13474` and endpoint RMS `0.02401` Angstrom but missed the frozen `0.12` bound,
+required norm `1325.83`, and remained BF16-unstable: MSE `10.2160`, gradient
+norm `16794.1` versus `4.295` in FP32, and cosine `-0.1419`. Neither branch
+qualified. No optimizer step ran and production retained the combined head.
+
+The initial debug execution had estimated quotient rank from an FP32 mean-zero
+matrix and counted three roundoff translation modes. Commit `7c9cacb` replaced
+that diagnostic with the exact Helmert basis without changing any threshold,
+state, seed or model setting; only the corrected result is retained as evidence.
+
 ## Current scientific boundary
 
 The current tree proves mathematical interfaces and a qualified Cartesian-atlas
