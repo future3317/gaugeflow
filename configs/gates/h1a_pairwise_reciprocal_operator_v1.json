@@ -1,0 +1,63 @@
+{
+  "protocol": "h1a_pairwise_reciprocal_operator_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training qualification of one compact pairwise reciprocal-torus score residual after coordinate-only H1a underfit; no checkpoint loading, generation, H1b-H6, tensor, oracle, relaxation, DFT or DFPT",
+  "prerequisites": {
+    "failed_coordinate_pretraining": "h1a_coordinate_pretraining_v1",
+    "rejected_permutation_cause": "h1a_coordinate_state_visibility_audit_v1",
+    "archived_low_rank_predecessor": "h1a_p1_reciprocal_score_v1",
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "local_field": "unchanged O(3)-typed periodic radius-multigraph score",
+    "new_residual": "complete unordered node pairs with signed symmetric pair coefficients and a smooth projective physical reciprocal ball",
+    "pair_coefficient": "b_ijc=b_jic from shared scalar node states; unlike the archived a_ic*a_jc factorization it is not constrained to a node-amplitude Gram form",
+    "mode_coefficient": "shared radial function of |2*pi*k*L^-T|",
+    "projective_modes": "k and -k are evaluated once with exact duplicate correction",
+    "complexity": "O(P*C + K*C + P*K*C), P=N*(N-1)/2, vectorized over padded pairs and reciprocal modes with N<=20",
+    "output": "antisymmetric pair contributions in Cartesian covector coordinates, hence exact graphwise zero mean",
+    "runtime_fallback": false,
+    "probability_path_change": false,
+    "sampler_change": false,
+    "training": false
+  },
+  "operator": {
+    "pair_width": 32,
+    "channels": 8,
+    "reciprocal_radial_dim": 8,
+    "reciprocal_cutoff_inverse_angstrom": 4.0,
+    "initial_residual": "exact_zero"
+  },
+  "qualification": {
+    "seed": 8701,
+    "real_batch_graphs": 64,
+    "real_batch_split": "train",
+    "real_batch_selection": "first 64 rows",
+    "numeric_reference_dtype": "fp64",
+    "training_dtype": "bf16",
+    "device": "RTX 4060 Ti 16GB"
+  },
+  "acceptance": {
+    "translation_covariance_max_fp64": 1e-10,
+    "periodic_representative_error_max_fp64": 1e-10,
+    "node_permutation_equivariance_max_fp64": 1e-10,
+    "physical_o3_covariance_max_fp64": 1e-10,
+    "unimodular_basis_covariance_max_fp64": 1e-9,
+    "projective_vs_full_ball_error_max_fp64": 1e-10,
+    "graphwise_mean_max_fp64": 1e-10,
+    "cutoff_value_max_fp64": 1e-10,
+    "cutoff_radial_derivative_max_fp64": 1e-8,
+    "finite_forward_and_backward": true,
+    "explicit_pair_reference_error_max_fp64": 1e-10,
+    "cuda_training_step_graphs_per_second_min": 300.0,
+    "cuda_peak_allocated_mib_max": 3500.0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "freeze a separately versioned one-seed one-pass coordinate-pretraining experiment with the qualified residual",
+    "fail": "do not train it; reject the operator and return to H1a representation analysis",
+    "boundary": "Qualification cannot revive the archived reciprocal implementation or authorize extra steps, joint initialization, H1b, tensor conditioning or later Gates."
+  }
+}
