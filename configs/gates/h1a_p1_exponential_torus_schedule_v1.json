@@ -1,0 +1,103 @@
+{
+  "protocol": "h1a_p1_exponential_torus_schedule_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-mechanism tensor-free H1a repair after the corrected benchmark and oracle-context coordinate closure failed; no H1b-H6",
+  "prerequisites": {
+    "failed_corrected_benchmark": "h1a_tensor_free_benchmark_v2",
+    "failed_oracle_context_closure": "h1a_oracle_context_reverse_closure_v1",
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_qualified": true,
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "coordinate_schedule": "sigma(0)=0; sigma(t)=0.005*(0.5/0.005)^t for t>0",
+    "rationale": "uniform time is uniform in log coordinate noise, preventing most training samples from lying after torus Fourier modes have already mixed",
+    "coordinate_target": "exact wrapped-normal scaled score on the fractional product torus modulo common translation",
+    "time_sampling": "randomized within-minibatch stratification with exactly uniform marginal",
+    "reverse_grid": "100 uniform model-time increments, hence uniform log-sigma increments for positive coordinate times",
+    "terminal_first_fourier_residual_max": 0.01,
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0
+  },
+  "training": {
+    "seeds": [5401, 5402, 5403],
+    "steps": 20000,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1250, 5000, 8441, 12000, 20000]
+  },
+  "staged_execution": {
+    "screen_seed": 5401,
+    "screen_first": true,
+    "full_seed_rule": "run seeds 5402 and 5403 only if seed 5401 passes every frozen screen check",
+    "graph_presentations_at_final": 1280000
+  },
+  "fixed_evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 7401,
+    "samples_per_seed": 128,
+    "sampling_seed": 7402,
+    "sampler_steps": 100,
+    "time_grid": "uniform_time"
+  },
+  "screen_acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.65,
+    "mean_final_coordinate_over_initial_max": 0.30,
+    "three_seed_final_coordinate_over_initial_max": 0.30,
+    "generated_minimum_distance_median_angstrom_min": 2.0,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.97
+    }
+  },
+  "acceptance": {
+    "finite_all_training_losses_and_gradients": true,
+    "mean_final_validation_total_over_initial_max": 0.65,
+    "three_seed_final_validation_total_over_initial_max": 0.75,
+    "mean_final_coordinate_over_initial_max": 0.30,
+    "three_seed_final_coordinate_over_initial_max": 0.40,
+    "generated_minimum_distance_median_angstrom_min": 2.0,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattices_fraction": 1.0,
+    "tensor_candidates_when_absent": 0,
+    "minimum_distance_guardrail": {
+      "threshold_angstrom": 0.5,
+      "each_seed_fraction_min": 0.97,
+      "aggregate_fraction_min": 0.98
+    }
+  },
+  "screen_decision_rule": {
+    "pass": "seed_5401_qualified_run_seeds_5402_5403",
+    "fail": "seed_5401_failed_stop_before_further_schedule_or_backbone changes",
+    "boundary": "The screen only decides whether the other two tensor-free seeds are worth running."
+  },
+  "decision_rule": {
+    "pass": "learning_curve_qualified_freeze_separate_corrected_H1a_benchmark",
+    "fail": "learning_curve_failed_stop_before_full_benchmark_and_H1b",
+    "boundary": "Passing authorizes only a separately frozen corrected H1a benchmark; it does not authorize H1b-H6."
+  }
+}

@@ -344,6 +344,17 @@ def main() -> None:
         checks["minimum_distance_aggregate"] = sum(fractions) / len(fractions) >= float(
             distance_guardrail["aggregate_fraction_min"]
         )
+    median_distance_bound = acceptance.get(
+        "generated_minimum_distance_median_angstrom_min"
+    )
+    if median_distance_bound is not None:
+        medians = [
+            float(value["sampling"]["minimum_distance_quantiles_angstrom"][1])
+            for value in seed_results.values()
+        ]
+        checks["generated_minimum_distance_median"] = min(medians) >= float(
+            median_distance_bound
+        )
     qualified = all(checks.values())
     result = {
         "protocol": protocol_name,
