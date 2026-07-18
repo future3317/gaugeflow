@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 from typing import Any
 
@@ -272,6 +273,14 @@ def main() -> None:
     device = torch.device(args.device)
     if device.type != "cuda" or not torch.cuda.is_available():
         raise RuntimeError("Krylov gradient attribution requires CUDA")
+    audit = protocol["audit"]
+    workspace = str(audit["cublas_workspace_config"])
+    if os.environ.get("CUBLAS_WORKSPACE_CONFIG") != workspace:
+        raise RuntimeError(
+            "Krylov gradient attribution requires "
+            f"CUBLAS_WORKSPACE_CONFIG={workspace}"
+        )
+    torch.use_deterministic_algorithms(bool(audit["deterministic_algorithms"]))
     path = protocol["path"]
     torch.manual_seed(int(path["model_seed"]))
     torch.cuda.manual_seed_all(int(path["model_seed"]))
@@ -342,7 +351,10 @@ def main() -> None:
     reconstruction = float((carrier - actual_carrier).abs().max())
     forward_detach_error = float((detached_carrier - carrier).abs().max())
     if reconstruction > float(protocol["audit"]["carrier_reconstruction_max_abs"]):
-        raise RuntimeError("diagnostic carrier does not reconstruct the frozen candidate")
+        raise RuntimeError(
+            "diagnostic carrier does not reconstruct the frozen candidate: "
+            f"max_abs={reconstruction:.9g}"
+        )
 
     head_weight = model.coordinate_carrier_head.weight.float().reshape(-1)  # type: ignore[attr-defined]
     splits = list(torch.split(head_weight, list(model_spec["carrier_splits"])))
@@ -441,6 +453,8 @@ def main() -> None:
         "attribution": attribution,
         "optimizer_steps": 0,
         "coordinate_targets_read": 0,
+        "deterministic_algorithms": bool(audit["deterministic_algorithms"]),
+        "cublas_workspace_config": workspace,
         "decision_boundary": protocol["decision_rule"]["boundary"],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

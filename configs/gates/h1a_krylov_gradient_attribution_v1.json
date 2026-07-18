@@ -35,6 +35,8 @@
   "audit": {
     "precision": "fp32",
     "probe_seed": 5923,
+    "deterministic_algorithms": true,
+    "cublas_workspace_config": ":4096:8",
     "optimizer_steps": 0,
     "coordinate_targets_read": 0,
     "carrier_reconstruction_max_abs": 2e-6

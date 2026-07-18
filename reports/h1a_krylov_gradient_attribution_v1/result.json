@@ -1,0 +1,244 @@
+{
+  "attribution": "fractional_chart_dominant",
+  "candidate_commit": "e25f432",
+  "carrier_orders": {
+    "Q2m": {
+      "finite": true,
+      "gradient_norm": 121.63840938503323,
+      "group_gradient_norms": {
+        "carrier_head": 22.757158096495843,
+        "control_gate": 0.0,
+        "edge_encoder": 100.2258779847456,
+        "message_blocks": 26.634033676738948,
+        "moment_projection": 23.433645516383063,
+        "shared": 54.5369625409938
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.035002139261757007,
+        "control_gate": 0.0,
+        "edge_encoder": 0.6789194862774799,
+        "message_blocks": 0.047943796824208566,
+        "moment_projection": 0.03711404134192688,
+        "shared": 0.20102053629462774
+      },
+      "loss": 2.073354482650757
+    },
+    "Qm": {
+      "finite": true,
+      "gradient_norm": 256.3742059537581,
+      "group_gradient_norms": {
+        "carrier_head": 26.695650879476723,
+        "control_gate": 0.0,
+        "edge_encoder": 215.41034372618836,
+        "message_blocks": 57.470244987111656,
+        "moment_projection": 56.25126951692402,
+        "shared": 110.21082132514125
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.010842573418614672,
+        "control_gate": 0.0,
+        "edge_encoder": 0.7059670816044401,
+        "message_blocks": 0.0502501590133643,
+        "moment_projection": 0.04814109896706708,
+        "shared": 0.1847990869965138
+      },
+      "loss": 2.5907163619995117
+    },
+    "m": {
+      "finite": true,
+      "gradient_norm": 13.821790042517158,
+      "group_gradient_norms": {
+        "carrier_head": 3.49456637812799,
+        "control_gate": 0.0,
+        "edge_encoder": 12.221063969792933,
+        "message_blocks": 2.816629193072941,
+        "moment_projection": 3.0617743430379627,
+        "shared": 3.4882114493758243
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.06392312603109697,
+        "control_gate": 0.0,
+        "edge_encoder": 0.7817888128501206,
+        "message_blocks": 0.04152702021213927,
+        "moment_projection": 0.049070194078361745,
+        "shared": 0.06369084682828151
+      },
+      "loss": 0.1473957896232605
+    },
+    "vector": {
+      "finite": true,
+      "gradient_norm": 0.45384892355030415,
+      "group_gradient_norms": {
+        "carrier_head": 0.14680460577073287,
+        "control_gate": 0.03454625566861453,
+        "edge_encoder": 0.0,
+        "message_blocks": 0.39518951961264387,
+        "moment_projection": 0.0,
+        "shared": 0.16449636147914026
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.10463012467535339,
+        "control_gate": 0.0057940114110197035,
+        "edge_encoder": 0.0,
+        "message_blocks": 0.7582077475116341,
+        "moment_projection": 0.0,
+        "shared": 0.13136811640199278
+      },
+      "loss": 0.009526756592094898
+    }
+  },
+  "carrier_reconstruction_max_abs": 0.0,
+  "coordinate_targets_read": 0,
+  "cublas_workspace_config": ":4096:8",
+  "decision_boundary": "This read-only attribution cannot qualify or mutate production, change the failed integration result, fit a coordinate target, run an optimizer step, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "detached_rms_forward_max_abs": 0.0,
+  "deterministic_algorithms": true,
+  "fixed_indices": [
+    521337,
+    31933,
+    401562,
+    228873,
+    504485,
+    190806,
+    55219,
+    524367,
+    123040,
+    195962,
+    358601,
+    517842,
+    112370,
+    387445,
+    437822,
+    397621
+  ],
+  "fractional_over_cartesian_gradient": 72.18181213423152,
+  "lattice_spectral_norm": {
+    "maximum": 12.09371566772461,
+    "median": 8.162765502929688,
+    "minimum": 3.8803906440734863
+  },
+  "maximum_parameter_group": "edge_encoder",
+  "maximum_parameter_group_squared_fraction": 0.7193199507169993,
+  "optimizer_steps": 0,
+  "protocol": "h1a_krylov_gradient_attribution_v1",
+  "q2m_over_full_gradient": 0.3258759350090422,
+  "rms_derivative_amplification": 0.6048111961629381,
+  "scale_statistics": {
+    "Q": {
+      "fraction_at_half_max_gain": 0.94140625,
+      "maximum": 99.9262466430664,
+      "median": 89.26453399658203,
+      "minimum": 22.78805923461914
+    },
+    "Q2m": {
+      "fraction_at_half_max_gain": 0.00390625,
+      "maximum": 84.79206848144531,
+      "median": 1.3319759368896484,
+      "minimum": 0.48476797342300415
+    },
+    "Qm": {
+      "fraction_at_half_max_gain": 0.16796875,
+      "maximum": 99.50753021240234,
+      "median": 5.619189739227295,
+      "minimum": 0.7538402080535889
+    },
+    "m": {
+      "fraction_at_half_max_gain": 0.9765625,
+      "maximum": 99.99723052978516,
+      "median": 94.7412338256836,
+      "minimum": 30.28203582763672
+    },
+    "vector": {
+      "fraction_at_half_max_gain": 1.0,
+      "maximum": 100.0,
+      "median": 99.98097229003906,
+      "minimum": 98.76388549804688
+    }
+  },
+  "stages": {
+    "carrier_probe": {
+      "finite": true,
+      "gradient_norm": 12.974084668804261,
+      "group_gradient_norms": {
+        "carrier_head": 0.0,
+        "control_gate": 0.02247782835712926,
+        "edge_encoder": 10.646953149054697,
+        "message_blocks": 2.929828154766276,
+        "moment_projection": 2.762664244589364,
+        "shared": 6.22515458744397
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.0,
+        "control_gate": 3.001616786837534e-06,
+        "edge_encoder": 0.6734373979767126,
+        "message_blocks": 0.050995380974033416,
+        "moment_projection": 0.04534221774936811,
+        "shared": 0.23022200168309895
+      },
+      "loss": 0.3883137106895447
+    },
+    "cartesian_output": {
+      "finite": true,
+      "gradient_norm": 5.171191980746098,
+      "group_gradient_norms": {
+        "carrier_head": 0.685265420809072,
+        "control_gate": 0.004474576034993713,
+        "edge_encoder": 4.2462033439256635,
+        "message_blocks": 1.1568600131185238,
+        "moment_projection": 1.1005735895907807,
+        "shared": 2.385746765464141
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.017560477150373285,
+        "control_gate": 7.487252199012899e-07,
+        "edge_encoder": 0.6742489106398011,
+        "message_blocks": 0.05004725904647163,
+        "moment_projection": 0.04529568701817959,
+        "shared": 0.21284691741995454
+      },
+      "loss": 0.08717148751020432
+    },
+    "fractional_detached_rms": {
+      "finite": true,
+      "gradient_norm": 617.1612073856192,
+      "group_gradient_norms": {
+        "carrier_head": 40.3170176732171,
+        "control_gate": 0.44303146574094576,
+        "edge_encoder": 510.81736241692295,
+        "message_blocks": 140.23031548902074,
+        "moment_projection": 129.55883677889364,
+        "shared": 286.1431222212072
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.0042675592359294945,
+        "control_gate": 5.153139567564561e-07,
+        "edge_encoder": 0.6850685974799929,
+        "message_blocks": 0.05162815226225378,
+        "moment_projection": 0.04406936981707322,
+        "shared": 0.21496580589079378
+      },
+      "loss": 4.640344619750977
+    },
+    "fractional_output": {
+      "finite": true,
+      "gradient_norm": 373.26600806425944,
+      "group_gradient_norms": {
+        "carrier_head": 40.3170176732171,
+        "control_gate": 0.43863658703650876,
+        "edge_encoder": 316.57709901968315,
+        "message_blocks": 82.01232896363462,
+        "moment_projection": 79.28278969730758,
+        "shared": 156.4257523305054
+      },
+      "group_squared_fractions": {
+        "carrier_head": 0.011666481958040365,
+        "control_gate": 1.3809336839024127e-06,
+        "edge_encoder": 0.7193199507169993,
+        "message_blocks": 0.048274902551673354,
+        "moment_projection": 0.04511500002359895,
+        "shared": 0.1756222838160041
+      },
+      "loss": 4.640344619750977
+    }
+  }
+}
