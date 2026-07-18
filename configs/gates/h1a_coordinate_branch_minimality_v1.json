@@ -1,0 +1,68 @@
+{
+  "protocol": "h1a_coordinate_branch_minimality_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed no-training 16-state exact-readout comparison of vector-only, edge-only and combined coordinate bases under FP32/BF16; no optimizer step, production mutation, search, checkpoint or later Gate",
+  "prerequisites": {
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "exact_quotient_decision": "full_rank_but_ill_conditioned",
+    "scaled_variable_projection_decision": "scaled_variable_projection_stability_failed_reject_before_training",
+    "observed_vector_edge_cancellation_ratio": 32.307580304920535,
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "parameter_count": 4473162
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 5911
+  },
+  "path": {
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "audit": {
+    "branches": ["vector_only", "edge_only", "combined"],
+    "lstsq_rcond": 1e-10,
+    "solve_precision": "fp64_cpu_gelsd",
+    "forward_precisions": ["fp32", "bf16"],
+    "optimizer_steps": 0
+  },
+  "acceptance": {
+    "one_state_quotient_rank": 30,
+    "one_state_projection_relative_residual_max": 1e-6,
+    "panel_fp32_coordinate_mse_max": 0.12,
+    "panel_fp32_low_time_endpoint_rms_angstrom_max": 0.025,
+    "solution_norm_max": 100.0,
+    "bf16_coordinate_mse_max": 0.15,
+    "bf16_low_time_endpoint_rms_angstrom_max": 0.03,
+    "bf16_over_fp32_mse_ratio_max": 1.25,
+    "bf16_prediction_relative_rmse_max": 0.1,
+    "fp32_backbone_gradient_norm_max": 100.0,
+    "bf16_backbone_gradient_norm_max": 100.0,
+    "bf16_over_fp32_gradient_norm_min": 0.5,
+    "bf16_over_fp32_gradient_norm_max": 2.0,
+    "bf16_fp32_gradient_cosine_min": 0.95,
+    "design_reconstruction_max_abs": 2e-6,
+    "parameters_restored": true,
+    "sampling_failures": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "selection": "qualify each single branch independently; if both pass choose vector_only because it has fewer affine parameters, otherwise choose the only passing branch",
+    "pass": "authorize a separately frozen no-training production qualification of only the selected single branch before any memorization run",
+    "fail": "retain the compact current production head and require a separately frozen target-free equivariant orthogonal-residual basis; do not train or search",
+    "boundary": "This no-training audit cannot qualify H1a, mutate production, initialize a checkpoint, add steps/seeds, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
