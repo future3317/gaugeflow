@@ -1,0 +1,30 @@
+{
+  "protocol": "h1a_coordinate_causal_audit_v2",
+  "status_before_run": "frozen_not_run",
+  "source_protocol": "h1a_p1_stratified_learning_curve_v1",
+  "source_protocol_sha256": "2ecf1f467cb819f21d042989998c347acb9df7e9a7a09108b925d0969298d71c",
+  "source_checkpoint_step": 20000,
+  "seeds": [5301, 5302, 5303],
+  "score_calibration": {
+    "validation_graphs": 128,
+    "validation_seed": 8301,
+    "noise_seed": 8302,
+    "batch_size": 16,
+    "times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "reference_geometry": {
+    "train_graphs": 4096,
+    "train_seed": 8303,
+    "distance_threshold_angstrom": 0.5
+  },
+  "sampler_sensitivity": {
+    "seeds": [5301, 5302, 5303],
+    "samples": 64,
+    "sample_seed": 8304,
+    "steps": [100],
+    "time_grids": ["uniform_time"],
+    "stochastic": true,
+    "common_initial_random_stream_only": true
+  },
+  "decision_boundary": "Read-only post-failure audit. If teacher-forced low-noise score remains weak, repair optimization/representation; if it is strong while free rollout remains over-dense, audit rollout-state distribution shift. It cannot authorize H1b-H6."
+}
