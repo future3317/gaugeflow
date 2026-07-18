@@ -61,9 +61,8 @@ def main() -> None:
     sampler = TensorFreeReverseSampler(
         model,
         lattice_standardizer,
-        coordinate_fractional_sigma_max=float(
-            training_config["coordinate_fractional_sigma_max"]
-        ),
+        coordinate_sigma_min=float(training_config["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(training_config["coordinate_sigma_max"]),
         maximum_time=float(training_config["maximum_time"]),
     )
     args.output.mkdir(parents=True, exist_ok=True)

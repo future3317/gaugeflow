@@ -85,9 +85,8 @@ def _score_calibration(
     diffusion = TensorFreeHybridDiffusion(
         runtime.model,
         runtime.lattice_standardizer,
-        coordinate_fractional_sigma_max=float(
-            runtime.training_config["coordinate_fractional_sigma_max"]
-        ),
+        coordinate_sigma_min=float(runtime.training_config["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(runtime.training_config["coordinate_sigma_max"]),
         minimum_time=float(runtime.training_config["minimum_time"]),
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
@@ -239,9 +238,8 @@ def _sampler_sensitivity(
     sampler = TensorFreeReverseSampler(
         runtime.model,
         runtime.lattice_standardizer,
-        coordinate_fractional_sigma_max=float(
-            runtime.training_config["coordinate_fractional_sigma_max"]
-        ),
+        coordinate_sigma_min=float(runtime.training_config["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(runtime.training_config["coordinate_sigma_max"]),
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
     results: list[dict[str, Any]] = []

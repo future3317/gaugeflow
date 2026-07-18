@@ -130,9 +130,8 @@ def main() -> None:
             weight_decay=float(training_spec["weight_decay"]),
             gradient_clip_norm=float(training_spec["gradient_clip_norm"]),
             ema_decay=float(training_spec["ema_decay"]),
-            coordinate_fractional_sigma_max=float(
-                training_spec["coordinate_fractional_sigma_max"]
-            ),
+            coordinate_sigma_min=float(training_spec["coordinate_sigma_min"]),
+            coordinate_sigma_max=float(training_spec["coordinate_sigma_max"]),
             minimum_time=float(training_spec["minimum_time"]),
             maximum_time=float(training_spec["maximum_time"]),
             precision=str(training_spec["precision"]),
@@ -141,7 +140,8 @@ def main() -> None:
     diffusion = TensorFreeHybridDiffusion(
         model,
         lattice_standardizer,
-        coordinate_fractional_sigma_max=training_config.coordinate_fractional_sigma_max,
+        coordinate_sigma_min=training_config.coordinate_sigma_min,
+        coordinate_sigma_max=training_config.coordinate_sigma_max,
         minimum_time=training_config.minimum_time,
         maximum_time=training_config.maximum_time,
     )

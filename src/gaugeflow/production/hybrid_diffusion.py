@@ -15,7 +15,7 @@ from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 from .schedules import (
     CosineNoiseSchedule,
-    FractionalTorusVarianceSchedule,
+    ExponentialTorusNoiseSchedule,
     standard_normal,
     wrapped_normal_score,
 )
@@ -61,7 +61,8 @@ class TensorFreeHybridDiffusion(nn.Module):
         denoiser: HybridCrystalDenoiser,
         lattice_standardizer: P1LatticeStandardizer,
         *,
-        coordinate_fractional_sigma_max: float = 1.0,
+        coordinate_sigma_min: float = 0.005,
+        coordinate_sigma_max: float = 0.5,
         minimum_time: float = 1.0e-3,
         maximum_time: float = 0.999,
     ) -> None:
@@ -72,8 +73,9 @@ class TensorFreeHybridDiffusion(nn.Module):
         self.lattice_standardizer = lattice_standardizer
         self.categorical = AbsorbingMaskDiffusion()
         self.vp_schedule = CosineNoiseSchedule()
-        self.coordinate_schedule = FractionalTorusVarianceSchedule(
-            sigma_max=coordinate_fractional_sigma_max
+        self.coordinate_schedule = ExponentialTorusNoiseSchedule(
+            sigma_min=coordinate_sigma_min,
+            sigma_max=coordinate_sigma_max,
         )
         self.minimum_time = float(minimum_time)
         self.maximum_time = float(maximum_time)

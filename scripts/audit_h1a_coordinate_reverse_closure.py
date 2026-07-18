@@ -20,10 +20,7 @@ from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.reverse_sampler import quotient_coordinate_reverse_step
 from gaugeflow.production.runtime import load_tensor_free_ema_runtime
-from gaugeflow.production.schedules import (
-    FractionalTorusVarianceSchedule,
-    standard_normal,
-)
+from gaugeflow.production.schedules import ExponentialTorusNoiseSchedule, standard_normal
 from gaugeflow.production.state_projection import graph_mean, project_translation_state
 
 
@@ -91,8 +88,9 @@ def main() -> None:
     indices = torch.randperm(
         len(dataset), generator=torch.Generator().manual_seed(int(protocol["validation_seed"]))
     )[: int(protocol["validation_graphs"])]
-    schedule = FractionalTorusVarianceSchedule(
-        sigma_max=float(runtime.training_config["coordinate_fractional_sigma_max"])
+    schedule = ExponentialTorusNoiseSchedule(
+        sigma_min=float(runtime.training_config["coordinate_sigma_min"]),
+        sigma_max=float(runtime.training_config["coordinate_sigma_max"]),
     )
     results: list[dict[str, Any]] = []
     for time_index, start_time in enumerate(protocol["start_times"]):

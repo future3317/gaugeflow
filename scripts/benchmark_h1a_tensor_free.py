@@ -138,9 +138,8 @@ def _sample_seed(
     sampler = TensorFreeReverseSampler(
         runtime.model,
         runtime.lattice_standardizer,
-        coordinate_fractional_sigma_max=float(
-            runtime.training_config["coordinate_fractional_sigma_max"]
-        ),
+        coordinate_sigma_min=float(runtime.training_config["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(runtime.training_config["coordinate_sigma_max"]),
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
     generator = torch.Generator(device=device).manual_seed(

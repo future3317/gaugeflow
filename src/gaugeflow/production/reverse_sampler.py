@@ -13,7 +13,7 @@ from .categorical_mask import AbsorbingMaskDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape
-from .schedules import CosineNoiseSchedule, FractionalTorusVarianceSchedule, standard_normal
+from .schedules import CosineNoiseSchedule, ExponentialTorusNoiseSchedule, standard_normal
 from .state_projection import project_hybrid_reverse_state, project_translation_state
 
 
@@ -86,7 +86,8 @@ class TensorFreeReverseSampler:
         denoiser: HybridCrystalDenoiser,
         lattice_standardizer: P1LatticeStandardizer,
         *,
-        coordinate_fractional_sigma_max: float = 1.0,
+        coordinate_sigma_min: float = 0.005,
+        coordinate_sigma_max: float = 0.5,
         maximum_time: float = 0.999,
         guardrails: LatticeGuardrails | None = None,
     ) -> None:
@@ -96,8 +97,9 @@ class TensorFreeReverseSampler:
         self.lattice_standardizer = lattice_standardizer
         self.categorical = AbsorbingMaskDiffusion()
         self.vp_schedule = CosineNoiseSchedule()
-        self.coordinate_schedule = FractionalTorusVarianceSchedule(
-            sigma_max=coordinate_fractional_sigma_max
+        self.coordinate_schedule = ExponentialTorusNoiseSchedule(
+            sigma_min=coordinate_sigma_min,
+            sigma_max=coordinate_sigma_max,
         )
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails

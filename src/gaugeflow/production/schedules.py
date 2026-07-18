@@ -122,23 +122,32 @@ class CosineNoiseSchedule:
         return step_noise * (1.0 - survival_to) / (1.0 - survival_from).clamp_min(self.minimum_sigma**2)
 
 
-class FractionalTorusVarianceSchedule:
-    """Cell-independent Brownian variance on the fractional torus.
+class ExponentialTorusNoiseSchedule:
+    """Log-uniform heat scale for fractional-torus score matching.
 
-    This path is a genuine product Markov process with the independently
-    diffused lattice chart. ``sigma_max`` is dimensionless; at one, the first
-    non-zero Fourier mode has residual ``exp(-2*pi^2)``, so the finite terminal
-    wrapped Gaussian is numerically matched to the uniform torus prior.
+    For positive time, ``sigma(t)=sigma_min*(sigma_max/sigma_min)**t``;
+    ``sigma(0)=0`` is the clean endpoint.  Uniform model time therefore gives
+    uniform coverage in log noise scale instead of spending most examples
+    after the compact torus has already mixed.  The small final bridge from
+    ``sigma_min`` to zero is handled exactly by the same Brownian transition.
     """
 
-    def __init__(self, *, sigma_max: float = 1.0) -> None:
-        if sigma_max <= 0.0 or not math.isfinite(sigma_max):
-            raise ValueError("sigma_max must be finite and positive")
+    def __init__(self, *, sigma_min: float = 0.005, sigma_max: float = 0.5) -> None:
+        if (
+            sigma_min <= 0.0
+            or sigma_max <= sigma_min
+            or not math.isfinite(sigma_min)
+            or not math.isfinite(sigma_max)
+        ):
+            raise ValueError("torus scales must be finite with 0 < sigma_min < sigma_max")
+        self.sigma_min = float(sigma_min)
         self.sigma_max = float(sigma_max)
+        self.log_ratio = math.log(self.sigma_max / self.sigma_min)
 
     def variance(self, time: torch.Tensor) -> torch.Tensor:
         CosineNoiseSchedule._validate(time)
-        return self.sigma_max**2 * time
+        sigma = self.sigma_min * torch.exp(self.log_ratio * time)
+        return torch.where(time > 0.0, sigma.square(), torch.zeros_like(time))
 
     def sigma(self, time: torch.Tensor) -> torch.Tensor:
         return self.variance(time).sqrt()

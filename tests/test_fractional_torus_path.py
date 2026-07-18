@@ -8,7 +8,7 @@ from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.schedules import (
-    FractionalTorusVarianceSchedule,
+    ExponentialTorusNoiseSchedule,
     wrapped_normal_score,
 )
 
@@ -26,11 +26,31 @@ def _small_model() -> HybridCrystalDenoiser:
     )
 
 
-def test_terminal_fractional_heat_kernel_matches_uniform_torus_prior():
-    schedule = FractionalTorusVarianceSchedule(sigma_max=1.0)
-    variance = float(schedule.variance(torch.tensor(0.999)))
+def test_exponential_torus_schedule_has_clean_origin_and_log_uniform_positive_scales():
+    schedule = ExponentialTorusNoiseSchedule(sigma_min=0.005, sigma_max=0.5)
+    time = torch.linspace(0.0, 1.0, 9, dtype=torch.float64)
+    sigma = schedule.sigma(time)
+    assert sigma[0] == 0.0
+    assert torch.allclose(sigma[-1], torch.tensor(0.5, dtype=torch.float64))
+    log_steps = sigma[1:].log().diff()
+    assert torch.allclose(log_steps, log_steps[0].expand_as(log_steps), atol=1e-12)
+
+
+def test_terminal_fractional_heat_kernel_is_close_to_uniform_torus_prior():
+    schedule = ExponentialTorusNoiseSchedule(sigma_min=0.005, sigma_max=0.5)
+    variance = float(schedule.variance(torch.tensor(1.0)))
     first_fourier_residual = math.exp(-2.0 * math.pi**2 * variance)
-    assert first_fourier_residual < 1.0e-8
+    assert first_fourier_residual < 1.0e-2
+
+
+def test_exponential_torus_reverse_variance_increment_is_nonnegative():
+    schedule = ExponentialTorusNoiseSchedule(sigma_min=0.005, sigma_max=0.5)
+    time_from = torch.linspace(1.0, 0.1, 11)
+    time_to = (time_from - 0.1).clamp_min(0.0)
+    increment = schedule.increment(time_from, time_to)
+    assert torch.isfinite(increment).all()
+    assert torch.all(increment >= 0.0)
+    assert increment[-1] > 0.0
 
 
 def test_fractional_coordinate_forward_kernel_is_independent_of_cell_metric():

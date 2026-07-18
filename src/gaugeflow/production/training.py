@@ -18,7 +18,8 @@ class ProductionTrainingConfig:
     weight_decay: float = 1.0e-6
     gradient_clip_norm: float = 1.0
     ema_decay: float = 0.999
-    coordinate_fractional_sigma_max: float = 1.0
+    coordinate_sigma_min: float = 0.005
+    coordinate_sigma_max: float = 0.5
     minimum_time: float = 1.0e-3
     maximum_time: float = 0.999
     precision: str = "bf16"
@@ -28,8 +29,8 @@ class ProductionTrainingConfig:
             raise ValueError("optimizer rates must be nonnegative with positive learning rate")
         if self.gradient_clip_norm <= 0.0 or not 0.0 < self.ema_decay < 1.0:
             raise ValueError("gradient clipping and EMA decay are invalid")
-        if self.coordinate_fractional_sigma_max <= 0.0:
-            raise ValueError("fractional torus sigma must be positive")
+        if not 0.0 < self.coordinate_sigma_min < self.coordinate_sigma_max:
+            raise ValueError("fractional torus scales must satisfy 0 < min < max")
         if not 0.0 < self.minimum_time < self.maximum_time < 1.0:
             raise ValueError("training time interval is invalid")
         if self.precision not in {"fp32", "bf16"}:

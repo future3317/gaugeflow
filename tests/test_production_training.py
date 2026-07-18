@@ -52,7 +52,7 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     torch.manual_seed(101)
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     diffusion = TensorFreeHybridDiffusion(
-        _small_model(), _standardizer(), coordinate_fractional_sigma_max=1.0
+        _small_model(), _standardizer(), coordinate_sigma_min=0.005, coordinate_sigma_max=0.5
     )
     output = diffusion(
         elements,
@@ -124,7 +124,7 @@ def test_production_trainer_updates_ema_and_all_heads():
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     config = ProductionTrainingConfig(learning_rate=1.0e-3, ema_decay=0.9)
     diffusion = TensorFreeHybridDiffusion(
-        _small_model(), _standardizer(), coordinate_fractional_sigma_max=1.0
+        _small_model(), _standardizer(), coordinate_sigma_min=0.005, coordinate_sigma_max=0.5
     )
     trainer = ProductionTrainer(diffusion, config)
     before = {name: value.clone() for name, value in diffusion.denoiser.state_dict().items()}
@@ -156,7 +156,8 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     sampler = TensorFreeReverseSampler(
         model,
         _standardizer(),
-        coordinate_fractional_sigma_max=1.0,
+        coordinate_sigma_min=0.005,
+        coordinate_sigma_max=0.5,
         maximum_time=0.8,
     )
     generated = sampler.sample(
