@@ -87,3 +87,9 @@ versioned, single-seed, exactly one-pass coordinate-pretraining experiment
 with the old local field unchanged.  Failure of that experiment requires
 removing this residual from production rather than retaining it as a dormant
 fallback.
+
+The authorized training experiment subsequently failed.  The operator is
+therefore no longer present in the active runtime despite passing this narrow
+qualification; its implementation is retained only in Git history at commit
+`154e6c9`.  See `h1a_pairwise_reciprocal_coordinate_pretraining_v1` for the
+negative causal result.
