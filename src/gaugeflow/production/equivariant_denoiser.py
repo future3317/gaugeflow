@@ -183,17 +183,6 @@ class HybridCrystalDenoiser(nn.Module):
             nn.SiLU(),
             nn.Linear(hidden_dim, 1),
         )
-        self.register_buffer(
-            "coordinate_readout_scale", torch.tensor(1024.0), persistent=True
-        )
-        # Pure powers-of-two reparameterization: the initialized function is
-        # unchanged, while gradients and useful parameter motion in the final
-        # affine coordinate readout are enlarged by 1024.  Failed historical
-        # checkpoints lack this buffer and therefore fail strict loading.
-        with torch.no_grad():
-            self.coordinate_vector_head.weight.div_(self.coordinate_readout_scale)
-            self.coordinate_edge_head[2].weight.div_(self.coordinate_readout_scale)
-            self.coordinate_edge_head[2].bias.div_(self.coordinate_readout_scale)
         self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(
             nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
@@ -352,7 +341,6 @@ class HybridCrystalDenoiser(nn.Module):
             cartesian_score = cartesian_score + edge_aggregate / degree.clamp_min(
                 1
             ).sqrt().unsqueeze(-1)
-        cartesian_score = self.coordinate_readout_scale * cartesian_score
         cartesian_score = cartesian_score - graph_mean(cartesian_score, batch, graphs)[batch]
         # A score is a covector, not a displacement. With r=fL, the chain rule
         # gives grad_f log p = grad_r log p @ L^T. (A Cartesian velocity would
