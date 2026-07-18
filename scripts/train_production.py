@@ -137,9 +137,20 @@ def main() -> None:
             "radial_dim": int(model_spec["radial_dim"]),
             "radial_cutoff": float(model_spec["radial_cutoff_angstrom"]),
             "atlas_residual_circle_samples": 8,
+            "reciprocal_pair_width": int(model_spec["reciprocal_pair_width"]),
+            "reciprocal_channels": int(model_spec["reciprocal_channels"]),
+            "reciprocal_radial_dim": int(model_spec["reciprocal_radial_dim"]),
+            "reciprocal_cutoff": float(
+                model_spec["reciprocal_cutoff_inverse_angstrom"]
+            ),
         }
     )
     model = HybridCrystalDenoiser(**model_config).to(device)
+    observed_parameter_count = sum(value.numel() for value in model.parameters())
+    if observed_parameter_count != int(model_spec["parameter_count"]):
+        raise ValueError(
+            "production model parameter count does not match the frozen protocol"
+        )
     training_config = (
         ProductionTrainingConfig(**resume_metadata["training_config"])
         if resume_metadata is not None

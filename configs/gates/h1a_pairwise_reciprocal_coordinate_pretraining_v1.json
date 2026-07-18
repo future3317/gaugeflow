@@ -1,0 +1,84 @@
+{
+  "protocol": "h1a_pairwise_reciprocal_coordinate_pretraining_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed exact-one-pass coordinate-only H1a test of the qualified pairwise reciprocal residual; no joint generation and no H1b-H6",
+  "prerequisites": {
+    "qualified_cache": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_baseline": "h1a_coordinate_pretraining_v1",
+    "qualified_operator": "h1a_pairwise_reciprocal_operator_v1",
+    "operator_protocol_sha256": "773106102b03502f57d0a7dad564f0ba3326828a28d50f910a0eeb6cb42e96a4",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "objective": "coordinate-only Rao-Blackwell quotient DSM",
+    "local_field": "unchanged O(3)-typed periodic radius-multigraph score",
+    "added_field": "qualified signed-symmetric pairwise projective reciprocal score",
+    "archived_predecessor_reused": false,
+    "probability_path_change": false,
+    "sampler_change": false,
+    "loss_weight_search": false,
+    "runtime_fallback": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "reciprocal_pair_width": 32,
+    "reciprocal_channels": 8,
+    "reciprocal_radial_dim": 8,
+    "reciprocal_cutoff_inverse_angstrom": 4.0,
+    "parameter_count": 4482234
+  },
+  "training": {
+    "seeds": [5801],
+    "steps": 8441,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "objective": "coordinate",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1250, 5000, 8441],
+    "graph_presentations": 540164,
+    "data_passes": 1.0
+  },
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "score_graphs": 128,
+    "score_seed": 8503,
+    "score_noise_seed": 8504,
+    "score_times": [0.005, 0.01, 0.02, 0.05, 0.1],
+    "rollout_graphs": 32,
+    "rollout_seed": 8505,
+    "rollout_noise_seed": 8506,
+    "rollout_start_times": [0.1, 0.2],
+    "rollout_steps": 100,
+    "rollout_stochastic": true
+  },
+  "acceptance": {
+    "final_coordinate_validation_max": 0.35,
+    "t005_teacher_forced_endpoint_rms_angstrom_max": 0.04,
+    "t01_teacher_forced_endpoint_rms_angstrom_max": 0.08,
+    "t01_rollout_endpoint_rms_angstrom_max": 0.5,
+    "t02_rollout_endpoint_rms_angstrom_max": 1.0,
+    "sampling_failures": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "coordinate representation is qualified for a separately frozen joint-initialization protocol; this result alone is not H1a generation qualification",
+    "fail": "remove the pairwise reciprocal residual from production and continue H1a probability-path/representation diagnosis without extra steps or seeds",
+    "boundary": "No extra seed or step may rescue failure. No result authorizes H1b, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

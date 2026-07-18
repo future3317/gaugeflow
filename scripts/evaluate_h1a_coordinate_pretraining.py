@@ -155,8 +155,14 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_coordinate_pretraining_v1":
-        raise ValueError("unexpected coordinate-pretraining protocol")
+    training = protocol.get("training")
+    if (
+        not isinstance(training, dict)
+        or training.get("objective") != "coordinate"
+        or len(training.get("seeds", [])) != 1
+        or float(training.get("data_passes", -1.0)) != 1.0
+    ):
+        raise ValueError("evaluation requires one exact-pass coordinate protocol")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
     ):
