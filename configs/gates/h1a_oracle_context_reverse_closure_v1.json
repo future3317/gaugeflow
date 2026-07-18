@@ -1,0 +1,26 @@
+{
+  "protocol": "h1a_oracle_context_reverse_closure_v1",
+  "status_before_run": "frozen_not_run",
+  "source_protocol": "h1a_p1_stratified_learning_curve_v1",
+  "source_protocol_sha256": "2ecf1f467cb819f21d042989998c347acb9df7e9a7a09108b925d0969298d71c",
+  "source_checkpoint_step": 20000,
+  "seed": 5301,
+  "validation_graphs": 32,
+  "validation_seed": 8401,
+  "noise_seed": 8402,
+  "batch_size": 8,
+  "start_times": [0.02, 0.05, 0.1, 0.2, 0.5, 0.999],
+  "steps_per_unit_time": 100,
+  "stochastic": false,
+  "oracle_context": {
+    "elements": "clean fixed",
+    "lattice": "clean fixed",
+    "tensor_condition": "absent",
+    "purpose": "upper-bound coordinate-field closure, not a generation claim"
+  },
+  "decision_rule": {
+    "field_failure": "reverse closure from low or intermediate forward noise does not restore realistic nearest-distance distribution",
+    "rollout_shift": "low/intermediate closure succeeds but the t=0.999 prior and full free sampler remain over-dense",
+    "boundary": "Diagnostic only; no H1b-H6."
+  }
+}

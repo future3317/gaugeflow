@@ -21,6 +21,42 @@ class SamplingFailure(RuntimeError):
     """Fail-closed signal for an invalid joint reverse trajectory."""
 
 
+def quotient_coordinate_reverse_step(
+    coordinates: torch.Tensor,
+    scaled_score: torch.Tensor,
+    variance_from: torch.Tensor,
+    variance_to: torch.Tensor,
+    batch: torch.Tensor,
+    graph_count: int,
+    *,
+    generator: torch.Generator | None,
+    stochastic: bool,
+) -> torch.Tensor:
+    """Apply one exact Brownian reverse bridge step on the translation quotient."""
+    if coordinates.shape != scaled_score.shape or coordinates.ndim != 2 or coordinates.shape[1] != 3:
+        raise ValueError("coordinate reverse state and score must share shape [nodes,3]")
+    if variance_from.shape != (graph_count,) or variance_to.shape != (graph_count,):
+        raise ValueError("coordinate reverse variances must provide one value per graph")
+    if batch.shape != coordinates.shape[:1]:
+        raise ValueError("coordinate reverse batch must provide one graph per node")
+    variance_drop = variance_from - variance_to
+    if bool((variance_drop < 0.0).any()) or bool((variance_to < 0.0).any()):
+        raise ValueError("coordinate reverse step requires decreasing nonnegative variance")
+    score = (
+        scaled_score
+        / variance_from[batch].sqrt().clamp_min(1.0e-8).unsqueeze(-1)
+    )
+    updated = coordinates + variance_drop[batch].unsqueeze(-1) * score
+    if stochastic and bool((variance_to > 0.0).any()):
+        bridge_variance = (
+            variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
+        )
+        noise = standard_normal(coordinates.shape, coordinates, generator)
+        noise = project_translation_state(noise, batch, graph_count)
+        updated = updated + bridge_variance[batch].sqrt().unsqueeze(-1) * noise
+    return project_translation_state(updated, batch, graph_count)
+
+
 @dataclass(frozen=True)
 class ReverseTrajectoryDiagnostics:
     time: torch.Tensor
@@ -179,31 +215,16 @@ class TensorFreeReverseSampler:
 
                     variance_from = self.coordinate_schedule.variance(time_from)
                     variance_to = self.coordinate_schedule.variance(time_to)
-                    variance_drop = variance_from - variance_to
-                    coordinate_score = (
-                        prediction.coordinate_fractional_scaled_score
-                        / variance_from[blueprint.batch]
-                        .sqrt()
-                        .clamp_min(1.0e-8)
-                        .unsqueeze(-1)
+                    next_coordinates = quotient_coordinate_reverse_step(
+                        coordinates,
+                        prediction.coordinate_fractional_scaled_score,
+                        variance_from,
+                        variance_to,
+                        blueprint.batch,
+                        graphs,
+                        generator=generator,
+                        stochastic=stochastic and float(scalar_to) > 0.0,
                     )
-                    coordinate_drift = (
-                        variance_drop[blueprint.batch].unsqueeze(-1)
-                        * coordinate_score
-                    )
-                    next_coordinates = coordinates + coordinate_drift
-                    if stochastic and float(scalar_to) > 0.0:
-                        bridge_variance = (
-                            variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
-                        )
-                        fractional_noise = standard_normal(
-                            coordinates.shape, coordinates, generator
-                        )
-                        fractional_noise = project_translation_state(
-                            fractional_noise, blueprint.batch, graphs
-                        )
-                        bridge_scale = bridge_variance[blueprint.batch].sqrt().unsqueeze(-1)
-                        next_coordinates = next_coordinates + bridge_scale * fractional_noise
 
                     next_volume_latent = self._vp_reverse_step(
                         volume_latent,

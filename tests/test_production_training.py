@@ -7,7 +7,10 @@ from gaugeflow.production.checkpointing import load_production_checkpoint, save_
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from gaugeflow.production.reverse_sampler import TensorFreeReverseSampler
+from gaugeflow.production.reverse_sampler import (
+    TensorFreeReverseSampler,
+    quotient_coordinate_reverse_step,
+)
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
 
@@ -173,6 +176,30 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
             torch.tensor(0.0),
             atol=2e-5,
         )
+
+
+def test_quotient_coordinate_reverse_step_matches_deterministic_score_drift():
+    coordinates = torch.tensor(
+        [[-0.2, 0.1, 0.1], [0.2, -0.1, -0.1], [0.0, 0.3, -0.3]]
+    )
+    score = torch.tensor(
+        [[0.4, 0.2, -0.2], [-0.4, -0.2, 0.2], [0.0, 0.0, 0.0]]
+    )
+    batch = torch.tensor([0, 0, 1])
+    observed = quotient_coordinate_reverse_step(
+        coordinates,
+        score,
+        torch.tensor([0.25, 0.25]),
+        torch.tensor([0.16, 0.16]),
+        batch,
+        2,
+        generator=None,
+        stochastic=False,
+    )
+    expected = coordinates + 0.09 * score / 0.5
+    expected[:2] -= expected[:2].mean(0)
+    expected[2] = 0.0
+    assert torch.allclose(observed, expected)
 
 
 def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(tmp_path: Path):
