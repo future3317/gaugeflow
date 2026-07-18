@@ -3,6 +3,7 @@ import torch
 
 from scripts.audit_h1a_coordinate_affine_readout import (
     affine_readout_solution,
+    helmert_quotient_basis,
     project_common_translation,
 )
 
@@ -12,6 +13,14 @@ def test_common_translation_projection_preserves_relative_vectors():
     projected = project_common_translation(value)
     assert torch.allclose(projected.mean(0), torch.zeros(3))
     assert torch.equal(projected[1] - projected[0], value[1] - value[0])
+
+
+def test_helmert_basis_is_orthonormal_and_removes_common_translation():
+    basis = helmert_quotient_basis(4, dtype=torch.float64, device=torch.device("cpu"))
+    assert basis.shape == (12, 9)
+    assert torch.allclose(basis.T @ basis, torch.eye(9, dtype=torch.float64))
+    common = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64).repeat(4)
+    assert torch.allclose(basis.T @ common, torch.zeros(9, dtype=torch.float64))
 
 
 def test_affine_readout_solution_fits_reachable_output_and_reports_rank():

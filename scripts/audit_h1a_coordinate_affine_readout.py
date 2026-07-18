@@ -28,6 +28,23 @@ def project_common_translation(value: torch.Tensor) -> torch.Tensor:
     return value - value.mean(dim=0, keepdim=True)
 
 
+def helmert_quotient_basis(
+    nodes: int, *, dtype: torch.dtype, device: torch.device
+) -> torch.Tensor:
+    """Return an orthonormal basis of R^(3N) modulo common translation."""
+    if nodes < 2:
+        raise ValueError("a coordinate quotient basis needs at least two nodes")
+    helmert = torch.zeros((nodes, nodes - 1), dtype=dtype, device=device)
+    for column in range(nodes - 1):
+        count = column + 1
+        scale = (float(count * (count + 1))) ** -0.5
+        helmert[:count, column] = scale
+        helmert[count, column] = -float(count) * scale
+    return torch.kron(
+        helmert, torch.eye(3, dtype=dtype, device=device)
+    )
+
+
 def affine_readout_solution(
     jacobian: torch.Tensor,
     desired_change: torch.Tensor,
@@ -124,8 +141,8 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_coordinate_affine_readout_audit_v1":
-        raise ValueError("coordinate affine-readout protocol identity mismatch")
+    if protocol.get("protocol") != "h1a_coordinate_exact_quotient_readout_audit_v2":
+        raise ValueError("coordinate exact-quotient-readout protocol identity mismatch")
     if sha256_file(args.cache_root / "manifest.json") != str(
         protocol["prerequisites"]["cache_manifest_sha256"]
     ):
@@ -173,20 +190,24 @@ def main() -> None:
     )
 
     def predict() -> torch.Tensor:
-        return project_common_translation(
-            _predict(model, noisy, batch_data, blueprint, use_bf16=False)
-        )
+        return _predict(model, noisy, batch_data, blueprint, use_bf16=False)
 
     prediction = predict()
-    target = project_common_translation(noisy.coordinate_scaled_score_target)
-    desired = (target - prediction).reshape(-1)
+    target = noisy.coordinate_scaled_score_target
+    quotient_basis = helmert_quotient_basis(
+        int(batch_data.num_nodes), dtype=prediction.dtype, device=prediction.device
+    )
+    initial_quotient = quotient_basis.T @ prediction.reshape(-1)
+    target_quotient = quotient_basis.T @ target.reshape(-1)
+    desired = target_quotient - initial_quotient
     readout = protocol["readout"]
     parameters = _readout_parameters(model, list(readout["parameter_names"]))
     parameter_count = sum(value.numel() for _, value in parameters)
     if parameter_count != int(readout["parameter_count"]):
         raise ValueError("coordinate affine-readout parameter count mismatch")
-    jacobian = _jacobian(prediction, parameters)
-    threshold = float(readout["rank_relative_eigenvalue_threshold"])
+    raw_jacobian = _jacobian(prediction, parameters)
+    jacobian = quotient_basis.T @ raw_jacobian
+    threshold = float(readout["rank_relative_singular_value_threshold"])
     delta, combined = affine_readout_solution(
         jacobian, desired.detach(), relative_threshold=threshold
     )
@@ -233,13 +254,18 @@ def main() -> None:
         torch.equal(value.detach(), original)
         for (_, value), original in zip(parameters, originals, strict=True)
     )
-    initial = prediction.reshape(-1).detach()
-    target_flat = target.reshape(-1).detach()
+    initial = initial_quotient.detach()
+    target_flat = target_quotient.detach()
+    actual_quotient = quotient_basis.double().T @ actual.double()
     linear = initial.double() + jacobian.double() @ delta
-    affine_error = torch.linalg.vector_norm(actual.double() - linear) / torch.linalg.vector_norm(
-        desired.double()
-    ).clamp_min(1e-30)
-    actual_mse = float((actual.double() - target_flat.double()).square().mean())
+    affine_error = torch.linalg.vector_norm(
+        actual_quotient - linear
+    ) / torch.linalg.vector_norm(desired.double()).clamp_min(1e-30)
+    coordinate_denominator = 3 * int(batch_data.num_nodes)
+    actual_mse = float(
+        (actual_quotient - target_flat.double()).square().sum()
+        / coordinate_denominator
+    )
     acceptance = protocol["acceptance"]
     checks = {
         "quotient_rank": int(combined["rank"]) == int(acceptance["quotient_rank"]),
@@ -266,11 +292,13 @@ def main() -> None:
         "graph_index": graph_index,
         "nodes": int(batch_data.num_nodes),
         "initial_coordinate_mse": float(
-            (initial.double() - target_flat.double()).square().mean()
+            (initial.double() - target_flat.double()).square().sum()
+            / coordinate_denominator
         ),
         "actual_coordinate_mse": actual_mse,
         "linear_coordinate_mse": float(
-            (linear - target_flat.double()).square().mean()
+            (linear - target_flat.double()).square().sum()
+            / coordinate_denominator
         ),
         "affine_forward_relative_error": float(affine_error),
         "readout_step_norm": float(torch.linalg.vector_norm(delta)),
