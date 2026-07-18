@@ -1,0 +1,58 @@
+{
+  "protocol": "h1a_krylov_gradient_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed target-free read-only attribution of the failed e25f432 Krylov production Jacobian by output chart, RMS derivative, carrier order and parameter group; no active production mutation, target fit, optimizer step or later Gate",
+  "prerequisites": {
+    "candidate_commit": "e25f432",
+    "candidate_parameter_count": 4479161,
+    "integration_decision": "compact_cartesian_krylov_production_failed_revert_integration",
+    "cache_protocol": "h1a_p1_structure_cache_v1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "carrier_splits": [32, 16, 16, 16]
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 5911
+  },
+  "path": {
+    "model_seed": 5914,
+    "noise_seed": 5915,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "time_grid": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9]
+  },
+  "audit": {
+    "precision": "fp32",
+    "probe_seed": 5923,
+    "optimizer_steps": 0,
+    "coordinate_targets_read": 0,
+    "carrier_reconstruction_max_abs": 2e-6
+  },
+  "decision_thresholds": {
+    "rms_derivative_amplification_min": 2.0,
+    "fractional_over_cartesian_gradient_min": 3.0,
+    "q2m_over_full_gradient_min": 1.0,
+    "parameter_group_squared_fraction_min": 0.5
+  },
+  "decision_rule": {
+    "priority": [
+      "RMS derivative",
+      "fractional chart",
+      "Q2m order",
+      "parameter group",
+      "distributed"
+    ],
+    "boundary": "This read-only attribution cannot qualify or mutate production, change the failed integration result, fit a coordinate target, run an optimizer step, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}
