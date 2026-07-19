@@ -1,0 +1,36 @@
+{
+  "checkpoint_parameters_unchanged": true,
+  "checkpoint_sha256": "bc0ab5805adba3d41bb5408ecb14fb1f2cf41308d9d13b1fe2fe8af73f16372c",
+  "checks": {
+    "clean_topology_mass_is_covered": true,
+    "clean_topology_oracle_helps": true,
+    "clean_topology_probe_is_predictive": true,
+    "middle_topology_is_disrupted": true,
+    "probe_weighted_carrier_retains_oracle_gain": false
+  },
+  "decision": "probe_predictive_but_topology_correction_not_residual_causal",
+  "decision_boundary": "No threshold, pair definition, image temperature, panel, feature, ridge, time, seed or checkpoint may change after viewing results. This audit performs zero optimizer steps, adds no production branch, does not rewrite H1a, and cannot authorize extra training, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT.",
+  "decision_metrics": {
+    "learned_middle_mean_improvement": -0.04391134241592365,
+    "learned_to_oracle_improvement_ratio": -0.40976264297601817,
+    "middle_hard_switch_fraction": 0.2646891714636392,
+    "middle_soft_jaccard": 0.504130556442154,
+    "minimum_clean_mass_coverage": 1.0,
+    "noisy_middle_mean_improvement": -0.0035352877566996823,
+    "oracle_middle_mean_improvement": 0.10716287384570977,
+    "oracle_middle_supporting_times": 3,
+    "oracle_minus_noisy_middle_mean": 0.11069816160240946,
+    "probe_middle_mean_auc": 0.8792265757594717,
+    "probe_middle_mean_explained_fraction": 0.6136206311833924,
+    "probe_middle_mean_improvement_over_noisy": 0.613693055538659
+  },
+  "elapsed_seconds": 82.511227234,
+  "optimizer_steps": 0,
+  "parameter_fingerprint": "dd9aa714763a663ee8d7fe572d703d114d2c759202ed1d32c29810d6b688cc07",
+  "peak_cuda_mib": 136.6103515625,
+  "protocol": "h1a_all_pair_clean_topology_attribution_v2",
+  "protocol_sha256": "8abc72d8dd5582542a84a3e4df4acf7c2ff44193443bf64cbd579b1f0150f0b9",
+  "qualified": false,
+  "train_indices_sha256": "bb94e89d69266af8bc3c2a2045430f1bca120a70ce621d3622fe61e10938ff70",
+  "validation_indices_sha256": "7c02695bbd1923eef11717c6901048639392efc32e79e13286819b73ccabb84f"
+}
