@@ -3,6 +3,7 @@ import torch
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
 from scripts.audit_h1a_latent_clean_topology import (
     ScalarRidgeAccumulator,
+    _aggregate_decision,
     _bootstrap_improvement,
     fit_standardized_ridge,
     smooth_first_shell_probability,
@@ -146,3 +147,50 @@ def test_bootstrap_improvement_preserves_float64_dtype() -> None:
         baseline, corrected, seed=91, samples=64
     )
     assert all(abs(value - 0.2) < 1.0e-12 for value in interval)
+
+
+def test_missing_clean_mass_invalidates_decision_before_topology_interpretation() -> None:
+    specification = {
+        "diagnostic": {"middle_times": [0.4, 0.5, 0.6]},
+        "acceptance": {
+            "middle_soft_jaccard_max": 0.8,
+            "middle_hard_switch_fraction_min": 0.2,
+            "clean_topology_mass_coverage_min": 0.95,
+            "oracle_middle_mean_improvement_min": 0.1,
+            "oracle_minus_noisy_middle_mean_min": 0.05,
+            "oracle_middle_supporting_times_min": 2,
+            "oracle_each_supporting_time_improvement_min": 0.05,
+            "probe_middle_mean_explained_fraction_min": 0.2,
+            "probe_middle_mean_auc_min": 0.8,
+            "probe_middle_mean_improvement_over_noisy_min": 0.1,
+            "learned_middle_mean_improvement_min": 0.05,
+            "learned_to_oracle_improvement_ratio_min": 0.5,
+        },
+    }
+    topology_rows = [
+        {
+            "time": time,
+            "soft_jaccard": 0.1,
+            "hard_switch_fraction": 0.05,
+            "clean_mass_coverage": 0.58,
+        }
+        for time in [0.4, 0.5, 0.6]
+    ]
+    probe_rows = [
+        {
+            "time": time,
+            "explained_fraction": 0.0,
+            "auc": 0.5,
+            "improvement_over_noisy": 0.0,
+        }
+        for time in [0.4, 0.5, 0.6]
+    ]
+    carrier_rows = [
+        {"time": time, "variant": variant, "relative_improvement": 0.0}
+        for time in [0.4, 0.5, 0.6]
+        for variant in ["clean_oracle", "noisy_current", "learned_probe"]
+    ]
+    _, _, decision = _aggregate_decision(
+        topology_rows, probe_rows, carrier_rows, specification
+    )
+    assert decision == "audit_invalid_clean_topology_mass_not_covered"

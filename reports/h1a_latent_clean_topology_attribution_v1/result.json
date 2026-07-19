@@ -1,0 +1,36 @@
+{
+  "checkpoint_parameters_unchanged": true,
+  "checkpoint_sha256": "bc0ab5805adba3d41bb5408ecb14fb1f2cf41308d9d13b1fe2fe8af73f16372c",
+  "checks": {
+    "clean_topology_mass_is_covered": false,
+    "clean_topology_oracle_helps": false,
+    "clean_topology_probe_is_predictive": false,
+    "middle_topology_is_disrupted": false,
+    "probe_weighted_carrier_retains_oracle_gain": false
+  },
+  "decision": "audit_invalid_clean_topology_mass_not_covered",
+  "decision_boundary": "No threshold, topology definition, panel, feature, ridge, time, seed or checkpoint may change after viewing results. This audit performs zero optimizer steps, adds no production branch, does not rewrite H1a, and cannot authorize extra training, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT.",
+  "decision_metrics": {
+    "learned_middle_mean_improvement": -0.0004101478336632214,
+    "learned_to_oracle_improvement_ratio": -0.16954316264151376,
+    "middle_hard_switch_fraction": 0.05181531057921044,
+    "middle_soft_jaccard": 0.10338742644027359,
+    "minimum_clean_mass_coverage": 0.5826054240460508,
+    "noisy_middle_mean_improvement": -0.00017323949827241503,
+    "oracle_middle_mean_improvement": 0.0024191352058852886,
+    "oracle_middle_supporting_times": 0,
+    "oracle_minus_noisy_middle_mean": 0.0025923747041577037,
+    "probe_middle_mean_auc": 0.7270886403900375,
+    "probe_middle_mean_explained_fraction": 0.05636312825202783,
+    "probe_middle_mean_improvement_over_noisy": 0.39137406694655397
+  },
+  "elapsed_seconds": 31.580074823999997,
+  "optimizer_steps": 0,
+  "parameter_fingerprint": "dd9aa714763a663ee8d7fe572d703d114d2c759202ed1d32c29810d6b688cc07",
+  "peak_cuda_mib": 142.3505859375,
+  "protocol": "h1a_latent_clean_topology_attribution_v1",
+  "protocol_sha256": "30fa24d58c1120280e783e3b3ce216b82c845f09c58946bcd263b9476e4c5165",
+  "qualified": false,
+  "train_indices_sha256": "8b3a8d2e7587eb66b85e07016b4c22c2d934c0e074fd6eff33836ffe06120537",
+  "validation_indices_sha256": "7c02695bbd1923eef11717c6901048639392efc32e79e13286819b73ccabb84f"
+}

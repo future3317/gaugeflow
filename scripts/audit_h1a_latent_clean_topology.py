@@ -604,10 +604,13 @@ def _aggregate_decision(
         "learned_middle_mean_improvement": learned_mean,
         "learned_to_oracle_improvement_ratio": learned_mean / max(oracle_mean, 1.0e-12),
     }
-    if not checks["middle_topology_is_disrupted"]:
-        decision = "noisy_topology_not_materially_disrupted"
-    elif not checks["clean_topology_mass_is_covered"]:
+    # Coverage is an audit-validity precondition: a topology decision made on
+    # a candidate set that omits clean coordination mass is not interpretable,
+    # regardless of the other metrics.
+    if not checks["clean_topology_mass_is_covered"]:
         decision = "audit_invalid_clean_topology_mass_not_covered"
+    elif not checks["middle_topology_is_disrupted"]:
+        decision = "noisy_topology_not_materially_disrupted"
     elif not checks["clean_topology_oracle_helps"]:
         decision = "clean_topology_hypothesis_rejected"
     elif not checks["clean_topology_probe_is_predictive"]:
