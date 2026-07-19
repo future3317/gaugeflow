@@ -1,0 +1,66 @@
+{
+  "protocol": "h1a_midnoise_reciprocal_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training frozen-checkpoint attribution of middle-noise endpoint recoverability, reciprocal-shell residual power and a held-out frozen low-k linear correction; no denoiser, loss, path or sampler change",
+  "prerequisites": {
+    "active_checkpoint_protocol": "h1a_dynamic_persistent_edge_coordinate_pretraining_v1",
+    "checkpoint_protocol_sha256": "2ab71cf05f427b337761f340461a78ca4b7d875d52867de9394aedcf2d500808",
+    "checkpoint_sha256": "bc0ab5805adba3d41bb5408ecb14fb1f2cf41308d9d13b1fe2fe8af73f16372c",
+    "checkpoint_result_sha256": "c3907834ef2010243568b2a7217721cc8d4542fbf5dc6e57ad556e038b75171b",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "failed_h1a_validation_ratio": 0.5441667710112212,
+    "tensor_condition_enabled": false
+  },
+  "diagnostic": {
+    "times": [0.35, 0.425, 0.5, 0.575, 0.65],
+    "train_graphs": 512,
+    "validation_graphs": 256,
+    "train_selection_seed": 9201,
+    "validation_selection_seed": 9202,
+    "train_noise_seed": 9203,
+    "validation_noise_seed": 9204,
+    "batch_size": 8,
+    "q_max_inverse_angstrom": 4.0,
+    "spectrum_bin_edges_inverse_angstrom": [0.0, 0.75, 1.5, 2.5, 4.0],
+    "probe_bands": {
+      "low": [0.0, 1.5],
+      "high_control": [2.5, 4.0]
+    },
+    "radial_channels": 6,
+    "density_channels": ["constant", "normalized_atomic_number"],
+    "ridge_relative": 0.0001,
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 9205
+  },
+  "retrieval_oracle": {
+    "panel_graphs": 128,
+    "minimum_realized_panel_graphs": 120,
+    "minimum_group_size": 4,
+    "maximum_group_size": 8,
+    "minimum_sites": 2,
+    "selection_seed": 9206,
+    "noise_seed": 9207,
+    "batch_size": 8,
+    "descriptor": "complete type-partitioned periodic pair distances plus log volume and normalized-metric log eigenvalues",
+    "revealed_clean_composition": true,
+    "endpoint_identity": false
+  },
+  "acceptance": {
+    "retrieval_mean_accuracy_min": 0.75,
+    "retrieval_each_time_accuracy_min": 0.6,
+    "retrieval_mean_margin_min": 0.0,
+    "low_to_high_spectral_ratio_min": 1.15,
+    "pooled_low_to_high_spectral_ratio_min": 1.15,
+    "spectral_supporting_times_min": 4,
+    "low_probe_mean_improvement_min": 0.1,
+    "low_probe_each_time_improvement_min": 0.05,
+    "low_probe_each_time_ci_low_min": 0.02,
+    "low_minus_high_probe_improvement_min": 0.03,
+    "low_probe_graph_coverage_min": 0.8
+  },
+  "decision_rule": {
+    "pass": "only if all three checks pass, freeze a separate no-training mathematical/CUDA qualification for one O(NQ) reciprocal carrier before any training",
+    "fail": "do not implement a reciprocal carrier; retain the active dynamic factorized Cartesian local field and attribute the next investigation according to the failed check",
+    "boundary": "No threshold, time, panel, band, ridge or seed may be changed after viewing results. This audit cannot change H1a, revive the failed pairwise reciprocal residual, add training steps or seeds, or authorize H1b-H6, tensor/oracle training, relaxation, DFT or DFPT."
+  }
+}
