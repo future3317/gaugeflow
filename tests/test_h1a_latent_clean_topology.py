@@ -3,6 +3,7 @@ import torch
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
 from scripts.audit_h1a_latent_clean_topology import (
     ScalarRidgeAccumulator,
+    _bootstrap_improvement,
     fit_standardized_ridge,
     smooth_first_shell_probability,
     topology_carrier,
@@ -136,3 +137,12 @@ def test_standardized_ridge_recovers_a_linear_clean_field() -> None:
     prediction = fitted.predict(features)
     assert torch.mean((prediction - target).square()) < 1.0e-14
     assert fitted.rank == features.shape[-1]
+
+
+def test_bootstrap_improvement_preserves_float64_dtype() -> None:
+    baseline = torch.tensor([2.0, 3.0, 4.0, 5.0], dtype=torch.float64)
+    corrected = 0.8 * baseline
+    interval = _bootstrap_improvement(
+        baseline, corrected, seed=91, samples=64
+    )
+    assert all(abs(value - 0.2) < 1.0e-12 for value in interval)

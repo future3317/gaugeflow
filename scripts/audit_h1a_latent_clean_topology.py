@@ -392,7 +392,10 @@ def _bootstrap_improvement(
     for _ in range(samples):
         index = torch.randint(baseline.numel(), (baseline.numel(),), generator=generator)
         values.append(1.0 - corrected[index].mean() / baseline[index].mean().clamp_min(1.0e-15))
-    quantiles = torch.quantile(torch.stack(values), torch.tensor([0.025, 0.5, 0.975]))
+    stacked = torch.stack(values)
+    quantiles = torch.quantile(
+        stacked, torch.tensor([0.025, 0.5, 0.975], dtype=stacked.dtype)
+    )
     return tuple(map(float, quantiles))
 
 
