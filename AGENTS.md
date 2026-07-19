@@ -142,6 +142,15 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   `coordinate_clean_side_information=true`; joint generation must not use it.
   This does not change historical H1a or authorize ACF, H1b-H6, tensor/oracle
   work, relaxation, DFT or DFPT.
+- The unchanged repaired task has now completed one exact pass over all 540,164
+  training structures and passes every frozen check: validation ratio
+  `0.33219`, t=.6 explained fraction `0.63509`, t=.005/.1 endpoint RMS
+  `0.03756/0.04919 A`, rollout RMS `0.05123/0.07039 A` from t=.1/.2, and zero
+  failures. This qualifies only `p(F|N,C,L)`, the conditional-coordinate
+  substrate. Historical free joint H1a remains failed. Do not rerun retired
+  local/topology branches on the old mismatched task. The next generator must
+  use a separately specified non-degenerate de-novo factorization and must not
+  retain the simultaneous joint path as a runtime fallback.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
@@ -152,12 +161,10 @@ causal or operator qualification first.
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.
 They reject another deterministic local/global feature branch. The matched
-clean-side-information screen instead identifies the coordinate task contract
-as the material repair. The next coordinate experiment, if authorized, must
-be a separately frozen complete-pass qualification of that same contract; do
-not add topology, sampler, optimizer, capacity or probability-path changes at
-the same time. No result yet authorizes H1b-H6, tensor condition, oracle,
-relaxation, DFT or DFPT.
+clean-side-information screen and exact-one-pass qualification identify the
+coordinate task contract as the material repair. The conditional coordinate
+substrate is qualified; the free joint generator is not. No result yet
+authorizes H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

@@ -734,3 +734,19 @@ rollout RMS from `t=.1/.2` is `0.07684/0.12153 A`, with zero failures. This
 attributes a major part of the coordinate-only failure to corrupted observed
 side information. It does not retroactively make the old Tweedie carrier
 causal, change historical H1a, or authorize later Gates.
+
+The follow-up exact-one-pass protocol changes only exposure. From scratch at
+the same seed it presents all 540,164 training structures once in 8,441 steps.
+All frozen checks pass: validation ratio `0.332188`, absolute improvement
+`0.161635` over the quarter-pass screen, t=.005/.1 endpoint RMS
+`.037560/.049194 A`, t=.6 explained fraction `.635090`, and reverse-SDE-100
+rollout RMS `.051235/.070390 A` from t=.1/.2 with zero failures. Throughput is
+`267.57 graphs/s` and peak allocated CUDA memory is `4917.15 MiB`.
+
+This qualifies the conditional-coordinate substrate with observed chemistry
+and lattice. It does not change the historical free-joint H1a result. It also
+changes how earlier representation ablations may be interpreted: they remain
+valid for their archived mismatched task, but cannot by themselves establish a
+representation limit under the repaired contract. Retired branches are not
+restored. The next scientific object is a separately specified de-novo
+probability factorization, not another topology feature or extra exposure.

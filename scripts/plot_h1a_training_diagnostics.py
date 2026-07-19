@@ -51,15 +51,15 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _read_jsonl(path: Path) -> list[dict[str, float]]:
-    records: list[dict[str, float]] = []
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
         value = json.loads(line)
         if not isinstance(value, dict):
             raise ValueError(f"{path}:{line_number} must contain a JSON object")
-        records.append({str(key): float(item) for key, item in value.items()})
+        records.append({str(key): item for key, item in value.items()})
     if not records:
         raise ValueError(f"{path} contains no metric records")
     return records
@@ -93,7 +93,7 @@ def _save(figure: plt.Figure, output: Path, stem: str) -> list[Path]:
 
 
 def plot_learning_curve(
-    metrics: list[dict[str, float]], result: dict[str, Any], output: Path
+    metrics: list[dict[str, Any]], result: dict[str, Any], output: Path
 ) -> list[Path]:
     plt = _pyplot()
     steps = np.asarray([record["step"] for record in metrics])
@@ -109,7 +109,7 @@ def plot_learning_curve(
     _style_axis(axis)
 
     axis = axes[0, 1]
-    validation = result.get("validation_curve", {})
+    validation = result.get("validation", {})
     validation_steps = np.asarray(sorted(int(step) for step in validation))
     validation_loss = np.asarray(
         [float(validation[str(step)]["coordinate"]) for step in validation_steps]
@@ -159,7 +159,7 @@ def plot_learning_curve(
 def plot_score_and_rollout(result: dict[str, Any], output: Path) -> list[Path]:
     plt = _pyplot()
     score = result.get("score_calibration", [])
-    rollout = result.get("rollout_closure", [])
+    rollout = result.get("conditional_rollout", [])
     times = np.asarray([float(item["time"]) for item in score])
     rms = np.asarray([float(item["endpoint_rms_angstrom"]) for item in score])
     explained = np.asarray([float(item["score_explained_fraction"]) for item in score])
@@ -359,7 +359,7 @@ def plot_paper_summary(
     handles, legend_labels = axis.get_legend_handles_labels()
     axis.legend(handles + lines[1:], legend_labels + labels[1:], frameon=False, fontsize=7)
 
-    rollout = result["rollout_closure"]
+    rollout = result["conditional_rollout"]
     starts = np.asarray([float(item["start_time"]) for item in rollout])
     means = np.asarray([float(item["mean_endpoint_rms_angstrom"]) for item in rollout])
     quantiles = np.asarray([item["endpoint_rms_quantiles_angstrom"] for item in rollout], dtype=float)

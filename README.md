@@ -316,6 +316,17 @@ step（约 0.25 pass）预算下，validation ratio 从历史 `0.73837` 降至
 该小屏幕不改写历史 H1a，也不授权 tensor/oracle/物理计算。完整结果位于
 `reports/h1a_coordinate_clean_side_information_v1/`。
 
+随后同一修复合同在不改变模型、优化器、sampler 或容量的情况下，从头完成了全部
+`540,164` 条训练结构的一遍训练（seed 5705，8,441 steps）。预注册检查全部通过：
+validation ratio 为 `0.33219`，相对 0.25-pass screen 再改善 `0.16163`；
+`t=.005/.1` teacher-forced endpoint RMS 为 `0.03756/0.04919 A`，`t=.6`
+explained fraction 为 `0.63509`；从 `t=.1/.2` 开始的 reverse-SDE-100 rollout
+RMS 为 `0.05123/0.07039 A`，零失败。训练吞吐 `267.57 graphs/s`，PyTorch 峰值
+显存 `4917.15 MiB`。这正式资格化了“已知元素与晶格时的条件坐标生成基座”，但不
+改写自由联合 H1a 的失败。下一方法问题是 de-novo 变量的非退化概率分解，而不是继续
+给坐标主干堆 topology/local/global 特征。结果、归因报告与图位于
+`reports/h1a_coordinate_clean_side_information_one_pass_v1/`。
+
 ## 训练图与采样加速设计
 
 训练 JSONL/评价 JSON 是数值真源；报告末尾可生成便于阅读的 PNG 与矢量 PDF：

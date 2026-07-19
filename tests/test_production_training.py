@@ -76,6 +76,9 @@ def test_coordinate_exposure_contract_accepts_complete_passes_and_explicit_prefi
         batch_size=64,
     )
     for invalid in (
+        {"data_passes": True, "graph_presentations": 540_164},
+        {"data_passes": "1.0", "graph_presentations": 540_164},
+        {"data_passes": 1.0, "graph_presentations": 540_164.0},
         {"data_passes": 1.5, "graph_presentations": 810_246},
         {"data_passes": 2.0, "graph_presentations": 1_080_327},
         {

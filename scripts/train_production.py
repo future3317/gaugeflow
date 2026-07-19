@@ -92,13 +92,24 @@ def _validate_coordinate_exposure(
     training_spec: dict[str, object], *, dataset_size: int, steps: int, batch_size: int
 ) -> None:
     """Validate either complete passes or one preregistered prefix screen."""
-    passes = float(training_spec["data_passes"])
+    passes_value = training_spec.get("data_passes")
+    presentations_value = training_spec.get("graph_presentations")
+    if (
+        isinstance(passes_value, bool)
+        or not isinstance(passes_value, (int, float))
+        or not math.isfinite(float(passes_value))
+    ):
+        raise ValueError("coordinate data_passes must be a finite number")
+    if isinstance(presentations_value, bool) or not isinstance(presentations_value, int):
+        raise ValueError("coordinate graph_presentations must be an integer")
+    passes = float(passes_value)
+    graph_presentations = int(presentations_value)
     exposure_mode = str(training_spec.get("exposure_mode", "complete_passes"))
     if exposure_mode == "prefix_screen":
         if not 0.0 < passes < 1.0 or steps >= math.ceil(dataset_size / batch_size):
             raise ValueError("coordinate prefix screen must stop within its first shuffled pass")
         expected_presentations = steps * batch_size
-        if int(training_spec["graph_presentations"]) != expected_presentations:
+        if graph_presentations != expected_presentations:
             raise ValueError("coordinate prefix-screen presentation count is inconsistent")
         if not math.isclose(passes, expected_presentations / dataset_size, rel_tol=0.0, abs_tol=1.0e-12):
             raise ValueError("coordinate prefix-screen exposure fraction is inconsistent")
@@ -108,7 +119,7 @@ def _validate_coordinate_exposure(
     complete_passes = int(passes)
     steps_per_pass = math.ceil(dataset_size / batch_size)
     expected_presentations = complete_passes * dataset_size
-    if steps != complete_passes * steps_per_pass or int(training_spec["graph_presentations"]) != expected_presentations:
+    if steps != complete_passes * steps_per_pass or graph_presentations != expected_presentations:
         raise ValueError("coordinate training counts do not match the declared complete data passes")
 
 

@@ -17,11 +17,20 @@ def _load_script() -> ModuleType:
     return module
 
 
-def test_metric_jsonl_is_strict_and_numeric(tmp_path: Path) -> None:
+def test_metric_jsonl_preserves_nested_production_diagnostics(tmp_path: Path) -> None:
     module = _load_script()
     path = tmp_path / "training_metrics.jsonl"
-    path.write_text('{"step": 1, "coordinate_loss": 0.5}\n', encoding="utf-8")
-    assert module._read_jsonl(path) == [{"step": 1.0, "coordinate_loss": 0.5}]
+    path.write_text(
+        '{"step": 1, "coordinate_loss": 0.5, "clipped_module_gradient_norms": {"blocks": 0.2}}\n',
+        encoding="utf-8",
+    )
+    assert module._read_jsonl(path) == [
+        {
+            "step": 1,
+            "coordinate_loss": 0.5,
+            "clipped_module_gradient_norms": {"blocks": 0.2},
+        }
+    ]
     path.write_text("[]\n", encoding="utf-8")
     with pytest.raises(ValueError, match="JSON object"):
         module._read_jsonl(path)

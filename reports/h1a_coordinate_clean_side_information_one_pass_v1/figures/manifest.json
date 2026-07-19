@@ -1,0 +1,19 @@
+{
+  "canonical_sources": {
+    "/mnt/e/DATA/T2C-Flow/runs/h1a_coordinate_clean_side_information_one_pass_v1/seed_5705/training_metrics.jsonl": "e791ca0fc223b57a565e89363b14e560684776ed1d4fd8c072a1c01508ba6ba7",
+    "reports/h1a_coordinate_clean_side_information_one_pass_v1/result.json": "16c6bd94c63e34126272298a00e6afbb129ba0e177b00fe1b17d6590853d2b39"
+  },
+  "figures": [
+    "reports/h1a_coordinate_clean_side_information_one_pass_v1/figures/training_learning_curve.png",
+    "reports/h1a_coordinate_clean_side_information_one_pass_v1/figures/training_learning_curve.pdf",
+    "reports/h1a_coordinate_clean_side_information_one_pass_v1/figures/score_and_rollout.png",
+    "reports/h1a_coordinate_clean_side_information_one_pass_v1/figures/score_and_rollout.pdf"
+  ],
+  "protocol": "h1a_coordinate_clean_side_information_one_pass_v1",
+  "rendering": {
+    "pdf_vector_output": true,
+    "png_dpi": 200,
+    "raw_training_values": true,
+    "smoothing": null
+  }
+}

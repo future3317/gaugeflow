@@ -26,6 +26,42 @@ def _finite_tree(value: object) -> bool:
     return not isinstance(value, (int, float)) or math.isfinite(float(value))
 
 
+def _prerequisite_hash_contract(
+    protocol_name: str,
+    prerequisites: dict[str, Any],
+    cache_root: Path,
+) -> dict[Path, str]:
+    contract = {
+        cache_root / "manifest.json": str(prerequisites["cache_manifest_sha256"]),
+        Path("reports/h1a_dynamic_persistent_edge_v1/result.json"): str(
+            prerequisites["qualification_result_sha256"]
+        ),
+        Path("configs/gates/h1a_dynamic_persistent_edge_coordinate_pretraining_v1.json"): str(
+            prerequisites["source_architecture_protocol_sha256"]
+        ),
+    }
+    if protocol_name == "h1a_coordinate_clean_side_information_one_pass_v1":
+        contract.update(
+            {
+                Path("configs/gates/h1a_coordinate_clean_side_information_v1.json"): str(
+                    prerequisites["clean_side_screen_protocol_sha256"]
+                ),
+                Path("reports/h1a_coordinate_clean_side_information_v1/result.json"): str(
+                    prerequisites["clean_side_screen_result_sha256"]
+                ),
+            }
+        )
+    else:
+        # The quarter-pass screen directly inherits the historical learning-
+        # curve evidence.  The one-pass protocol instead inherits the frozen
+        # screen protocol and result above, so requiring the transitive key a
+        # second time would make its evaluator fail despite a valid contract.
+        contract[Path("reports/h1a_fixed_dynamic_coordinate_learning_curve_v1/result.json")] = str(
+            prerequisites["historical_learning_curve_result_sha256"]
+        )
+    return contract
+
+
 @torch.no_grad()
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -38,29 +74,23 @@ def main() -> None:
 
     protocol = load_json_object(args.protocol)
     training = protocol.get("training")
+    protocol_name = str(protocol.get("protocol"))
     if (
-        protocol.get("protocol") != "h1a_coordinate_clean_side_information_v1"
+        protocol_name
+        not in {
+            "h1a_coordinate_clean_side_information_v1",
+            "h1a_coordinate_clean_side_information_one_pass_v1",
+        }
         or protocol.get("status_before_run") != "frozen_not_run"
         or not isinstance(training, dict)
         or training.get("objective") != "coordinate"
         or training.get("coordinate_clean_side_information") is not True
-        or training.get("exposure_mode") != "prefix_screen"
+        or training.get("exposure_mode") not in {"prefix_screen", "complete_passes"}
         or training.get("seeds") != [5705]
     ):
         raise ValueError("unexpected or unfrozen clean-side-information protocol")
     prerequisites = protocol["prerequisites"]
-    hash_contract = {
-        args.cache_root / "manifest.json": prerequisites["cache_manifest_sha256"],
-        Path("reports/h1a_dynamic_persistent_edge_v1/result.json"): prerequisites[
-            "qualification_result_sha256"
-        ],
-        Path("configs/gates/h1a_dynamic_persistent_edge_coordinate_pretraining_v1.json"): prerequisites[
-            "source_architecture_protocol_sha256"
-        ],
-        Path("reports/h1a_fixed_dynamic_coordinate_learning_curve_v1/result.json"): prerequisites[
-            "historical_learning_curve_result_sha256"
-        ],
-    }
+    hash_contract = _prerequisite_hash_contract(protocol_name, prerequisites, args.cache_root)
     for path, expected in hash_contract.items():
         if sha256_file(path) != str(expected):
             raise ValueError(f"frozen prerequisite hash mismatch: {path}")
@@ -137,7 +167,9 @@ def main() -> None:
     score_by_time = {float(row["time"]): row for row in score}
     rollout_by_time = {float(row["start_time"]): row for row in rollout}
     acceptance = protocol["acceptance"]
-    historical = float(prerequisites["historical_025_validation_ratio"])
+    reference_ratio = float(
+        prerequisites.get("reference_validation_ratio", prerequisites["historical_025_validation_ratio"])
+    )
     final_log = records[-1]
     checks = {
         "finite_training": _finite_tree(records),
@@ -147,7 +179,7 @@ def main() -> None:
             ]
         ),
         "validation_coordinate_ratio": ratio <= float(acceptance["validation_coordinate_ratio_max"]),
-        "material_improvement": historical - ratio
+        "material_improvement": reference_ratio - ratio
         >= float(acceptance["material_ratio_improvement_over_historical_min"]),
         "t005_endpoint": score_by_time[0.005]["endpoint_rms_angstrom"]
         <= float(acceptance["t005_endpoint_rms_angstrom_max"]),
@@ -176,9 +208,9 @@ def main() -> None:
         "seed": seed,
         "checkpoint_sha256": sha256_file(checkpoint),
         "validation_indices_sha256": canonical_json_hash(validation_indices.tolist()),
-        "historical_025_validation_ratio": historical,
+        "reference_validation_ratio": reference_ratio,
         "validation_coordinate_ratio": ratio,
-        "absolute_ratio_improvement": historical - ratio,
+        "absolute_ratio_improvement": reference_ratio - ratio,
         "validation": validation,
         "score_calibration": score,
         "conditional_rollout": rollout,
