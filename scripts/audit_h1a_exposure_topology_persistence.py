@@ -11,7 +11,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from gaugeflow.file_utils import load_json_object, sha256_file
+from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,6 +39,40 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _complete_checkpoint_result(
+    output: Path,
+    derived_protocol: dict[str, Any],
+    checkpoint_sha256: str,
+) -> bool:
+    required = (
+        output / "result.json",
+        output / "summary.md",
+        output / "topology_oracle_carrier.csv",
+        output / "topology_probe.csv",
+        output / "topology_state.csv",
+    )
+    if not all(path.is_file() and path.stat().st_size > 0 for path in required):
+        return False
+    try:
+        result = load_json_object(output / "result.json")
+        carrier_rows = _read_csv(output / "topology_oracle_carrier.csv")
+    except (OSError, ValueError, csv.Error, json.JSONDecodeError):
+        return False
+    expected_rows = 3 * len(derived_protocol["diagnostic"]["times"])
+    return bool(
+        result.get("protocol") == derived_protocol["protocol"]
+        and result.get("protocol_sha256") == canonical_json_hash(derived_protocol)
+        and result.get("checkpoint_sha256") == checkpoint_sha256
+        and result.get("optimizer_steps") == 0
+        and result.get("checkpoint_parameters_unchanged") is True
+        and len(carrier_rows) == expected_rows
+        and all(
+            row.get("variant") in {"clean_oracle", "noisy_current", "learned_probe"}
+            for row in carrier_rows
+        )
+    )
 
 
 def main() -> None:
@@ -105,7 +139,15 @@ def main() -> None:
             "--device",
             args.device,
         ]
-        subprocess.run(command, check=True)
+        reused = _complete_checkpoint_result(
+            checkpoint_output, derived, str(checkpoint["sha256"])
+        )
+        if not reused:
+            subprocess.run(command, check=True)
+            if not _complete_checkpoint_result(
+                checkpoint_output, derived, str(checkpoint["sha256"])
+            ):
+                raise RuntimeError(f"topology audit output is incomplete at step {step}")
         result = load_json_object(checkpoint_output / "result.json")
         carrier_rows = _read_csv(checkpoint_output / "topology_oracle_carrier.csv")
         middle_clean = [
@@ -137,6 +179,7 @@ def main() -> None:
                 ],
                 "optimizer_steps": result["optimizer_steps"],
                 "parameters_unchanged": result["checkpoint_parameters_unchanged"],
+                "reused_complete_result": reused,
             }
         )
         for row in middle_clean:
@@ -176,6 +219,9 @@ def main() -> None:
         "two_pass_positive_middle_bootstrap_lower_bounds": supporting,
         "optimizer_steps": 0,
         "all_parameters_unchanged": all(bool(row["parameters_unchanged"]) for row in exposure_rows),
+        "reused_complete_checkpoint_results": sum(
+            bool(row["reused_complete_result"]) for row in exposure_rows
+        ),
         "decision_boundary": specification["decision_boundary"],
     }
     _write_csv(args.output / "exposure_summary.csv", exposure_rows)
