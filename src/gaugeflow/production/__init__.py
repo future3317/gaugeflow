@@ -47,6 +47,7 @@ from .reverse_sampler import (
     GeneratedHybridBatch,
     SamplingFailure,
     TensorFreeReverseSampler,
+    reverse_time_grid,
 )
 from .schedules import CosineNoiseSchedule
 from .space_group_router import (
@@ -109,6 +110,7 @@ __all__ = [
     "detect_cartesian_point_group",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
+    "reverse_time_grid",
     "project_hybrid_reverse_state",
     "project_lattice_state",
     "project_translation_state",

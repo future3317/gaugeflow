@@ -31,6 +31,33 @@ def _validate_continuous_mode(mode: str) -> ContinuousReverseMode:
     return cast(ContinuousReverseMode, mode)
 
 
+def reverse_time_grid(
+    schedule: CosineNoiseSchedule,
+    maximum_time: float,
+    steps: int,
+    *,
+    dtype: torch.dtype,
+    device: torch.device,
+    spacing: str,
+) -> torch.Tensor:
+    """Build the exact production reverse grid shared by runtime audits."""
+    if steps < 1:
+        raise ValueError("reverse time grid requires at least one step")
+    if not 0.0 < maximum_time < 1.0:
+        raise ValueError("maximum reverse time must lie in (0,1)")
+    if spacing == "uniform_time":
+        return torch.linspace(maximum_time, 0.0, steps + 1, dtype=dtype, device=device)
+    if spacing == "uniform_log_alpha":
+        initial_alpha = schedule.alpha(
+            torch.tensor(maximum_time, dtype=dtype, device=device)
+        )
+        alpha = torch.exp(
+            torch.linspace(initial_alpha.log(), 0.0, steps + 1, dtype=dtype, device=device)
+        )
+        return (2.0 / torch.pi) * torch.arccos(alpha.clamp(-1.0, 1.0))
+    raise ValueError("reverse time spacing must be 'uniform_time' or 'uniform_log_alpha'")
+
+
 def quotient_coordinate_reverse_step(
     coordinates: torch.Tensor,
     scaled_score: torch.Tensor,
@@ -262,18 +289,14 @@ class TensorFreeReverseSampler:
         log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, log_shape)
         condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
         condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
-        if time_grid == "uniform_time":
-            times = torch.linspace(self.maximum_time, 0.0, steps + 1, dtype=dtype, device=device)
-        elif time_grid == "uniform_log_alpha":
-            initial_alpha = self.vp_schedule.alpha(
-                torch.tensor(self.maximum_time, dtype=dtype, device=device)
-            )
-            alpha = torch.exp(
-                torch.linspace(initial_alpha.log(), 0.0, steps + 1, dtype=dtype, device=device)
-            )
-            times = (2.0 / torch.pi) * torch.arccos(alpha.clamp(-1.0, 1.0))
-        else:
-            raise ValueError("time_grid must be 'uniform_time' or 'uniform_log_alpha'")
+        times = reverse_time_grid(
+            self.vp_schedule,
+            self.maximum_time,
+            steps,
+            dtype=dtype,
+            device=device,
+            spacing=time_grid,
+        )
 
         masked_counts: list[torch.Tensor] = []
         coordinate_steps: list[torch.Tensor] = []

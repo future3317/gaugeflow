@@ -33,6 +33,11 @@
     "independent_categorical_random_stream": true,
     "categorical_seed": 8703,
     "continuous_noise_seed": 8704,
+    "minimum_distance_angstrom": 0.5,
+    "wasserstein_quantile_points": 1024,
+    "warmup_model_calls": 4,
+    "latency_measurement": "CUDA-synchronized full coordinate rollouts with initialization and host-to-device transfer excluded",
+    "condition_order": "forward on even batches and reversed on odd batches",
     "fixed_clean_atom_types": true,
     "fixed_clean_lattice": true,
     "rationale": "the only active two-pass checkpoint is coordinate-only; sampling untrained element and lattice heads would make composition and lattice non-inferiority scientifically uninterpretable"
