@@ -14,6 +14,12 @@ from gaugeflow.production.reverse_sampler import (
 )
 from gaugeflow.production.state_projection import fractional_tangent_to_cartesian
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
+from scripts.train_production import (
+    _GRADIENT_GROUPS,
+    _clipped_module_gradient_norms,
+    _gradient_group,
+    _validate_coordinate_exposure,
+)
 
 
 def _small_clean_batch():
@@ -45,9 +51,37 @@ def _small_model() -> HybridCrystalDenoiser:
 
 def _standardizer() -> P1LatticeStandardizer:
     return P1LatticeStandardizer.from_json(
-        Path(__file__).parents[1]
-        / "configs/statistics/h1a_p1_lattice_standardization.json"
+        Path(__file__).parents[1] / "configs/statistics/h1a_p1_lattice_standardization.json"
     )
+
+
+def test_coordinate_exposure_contract_accepts_complete_passes_only() -> None:
+    _validate_coordinate_exposure(
+        {"data_passes": 2.0, "graph_presentations": 1_080_328},
+        dataset_size=540_164,
+        steps=16_882,
+        batch_size=64,
+    )
+    for invalid in (
+        {"data_passes": 1.5, "graph_presentations": 810_246},
+        {"data_passes": 2.0, "graph_presentations": 1_080_327},
+    ):
+        try:
+            _validate_coordinate_exposure(invalid, dataset_size=540_164, steps=16_882, batch_size=64)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid exposure contract was accepted")
+
+
+def test_training_gradient_partition_is_complete_and_reports_clipped_norms() -> None:
+    model = _small_model()
+    for name, parameter in model.named_parameters():
+        assert _gradient_group(name) in _GRADIENT_GROUPS
+        parameter.grad = torch.ones_like(parameter)
+    norms = _clipped_module_gradient_norms(model)
+    assert set(norms) == set(_GRADIENT_GROUPS)
+    assert all(value > 0.0 for value in norms.values())
 
 
 def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
@@ -77,8 +111,7 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
         assert torch.allclose(selected.mean(0), torch.zeros(3), atol=2e-6)
     output.loss.backward()
     assert all(
-        parameter.grad is None or torch.isfinite(parameter.grad).all()
-        for parameter in diffusion.denoiser.parameters()
+        parameter.grad is None or torch.isfinite(parameter.grad).all() for parameter in diffusion.denoiser.parameters()
     )
 
 
@@ -97,9 +130,9 @@ def test_coordinate_loss_uses_volume_normalized_cartesian_chart() -> None:
         time=torch.tensor([0.2, 0.2]),
         generator=torch.Generator().manual_seed(108),
     )
-    noisy_lattice = LatticeVolumeShape(
-        output.noisy.log_volume, output.noisy.log_shape
-    ).lattice(blueprint.fractional_to_cartesian)
+    noisy_lattice = LatticeVolumeShape(output.noisy.log_volume, output.noisy.log_shape).lattice(
+        blueprint.fractional_to_cartesian
+    )
     target = fractional_tangent_to_cartesian(
         output.noisy.coordinate_scaled_score_target,
         noisy_lattice,
@@ -108,10 +141,7 @@ def test_coordinate_loss_uses_volume_normalized_cartesian_chart() -> None:
     scale = torch.exp(output.noisy.log_volume / 3.0)[blueprint.batch, None]
     error = (output.prediction.coordinate_cartesian_scaled_score - target) / scale
     graph_loss = torch.stack(
-        [
-            error[blueprint.batch == graph].square().sum(-1).mean() / 3.0
-            for graph in range(2)
-        ]
+        [error[blueprint.batch == graph].square().sum(-1).mean() / 3.0 for graph in range(2)]
     ).mean()
     torch.testing.assert_close(output.coordinate_loss, graph_loss)
 
@@ -149,9 +179,7 @@ def test_randomized_stratified_times_preserve_uniform_batch_coverage():
         torch.zeros(1),
         generator=torch.Generator().manual_seed(107),
     )
-    unit = (sampled - diffusion.minimum_time) / (
-        diffusion.maximum_time - diffusion.minimum_time
-    )
+    unit = (sampled - diffusion.minimum_time) / (diffusion.maximum_time - diffusion.minimum_time)
     observed_strata = torch.floor(unit.sort().values * graph_count).long()
     assert torch.equal(observed_strata, torch.arange(graph_count))
 
@@ -216,12 +244,8 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
 
 
 def test_quotient_coordinate_reverse_step_matches_deterministic_score_drift():
-    coordinates = torch.tensor(
-        [[-0.2, 0.1, 0.1], [0.2, -0.1, -0.1], [0.0, 0.3, -0.3]]
-    )
-    score = torch.tensor(
-        [[0.4, 0.2, -0.2], [-0.4, -0.2, 0.2], [0.0, 0.0, 0.0]]
-    )
+    coordinates = torch.tensor([[-0.2, 0.1, 0.1], [0.2, -0.1, -0.1], [0.0, 0.3, -0.3]])
+    score = torch.tensor([[0.4, 0.2, -0.2], [-0.4, -0.2, 0.2], [0.0, 0.0, 0.0]])
     batch = torch.tensor([0, 0, 1])
     observed = quotient_coordinate_reverse_step(
         coordinates,
@@ -245,9 +269,7 @@ def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
     diffusion = TensorFreeHybridDiffusion(model, _standardizer())
     trainer = ProductionTrainer(
         diffusion,
-        ProductionTrainingConfig(
-            precision="fp32", objective="coordinate", ema_decay=0.9
-        ),
+        ProductionTrainingConfig(precision="fp32", objective="coordinate", ema_decay=0.9),
     )
     inactive_before = {
         name: value.detach().clone()
@@ -278,9 +300,7 @@ def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():
     assert gradient_norm > 0.0
     current = dict(model.named_parameters())
     assert all(torch.equal(value, current[name]) for name, value in inactive_before.items())
-    assert any(
-        not torch.equal(value, current[name]) for name, value in coordinate_before.items()
-    )
+    assert any(not torch.equal(value, current[name]) for name, value in coordinate_before.items())
 
 
 def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(tmp_path: Path):

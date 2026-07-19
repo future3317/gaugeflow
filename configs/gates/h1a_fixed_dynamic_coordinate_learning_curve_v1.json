@@ -1,0 +1,89 @@
+{
+  "protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed from-scratch 0.25/0.5/1/2-pass learning curve of the unchanged dynamic persistent-edge coordinate model; distinguishes one-pass undertraining from a representation ceiling without rescuing or rewriting H1a",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "source_architecture_protocol": "h1a_dynamic_persistent_edge_coordinate_pretraining_v1",
+    "source_architecture_protocol_sha256": "2ab71cf05f427b337761f340461a78ca4b7d875d52867de9394aedcf2d500808",
+    "source_architecture_qualification": "h1a_dynamic_persistent_edge_v1",
+    "qualification_result_sha256": "dd4eb654c9010d371b071377910aa3e45b413a8b36b1c671fa326a6ccd811d55",
+    "reference_one_pass_result_sha256": "c3907834ef2010243568b2a7217721cc8d4542fbf5dc6e57ad556e038b75171b",
+    "reference_one_pass_validation_ratio": 0.5441667710112212,
+    "all_pair_topology_result_sha256": "b102c4b169ecdea1b4012429424577781178babee89aef75baca1ec82db9342f",
+    "all_pair_topology_decision": "probe_predictive_but_topology_correction_not_residual_causal",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "parameter_count": 5034297
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 16882,
+    "steps_per_complete_pass": 8441,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "coordinate",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 2111, 4221, 8441, 16882],
+    "nominal_data_passes_by_checkpoint": {
+      "0": 0.0,
+      "2111": 0.25,
+      "4221": 0.5,
+      "8441": 1.0,
+      "16882": 2.0
+    },
+    "graph_presentations": 1080328,
+    "data_passes": 2.0,
+    "from_scratch_required": true,
+    "architecture_optimizer_capacity_unchanged": true
+  },
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "score_graphs": 128,
+    "score_seed": 8503,
+    "score_noise_seed": 8504,
+    "score_times": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.9],
+    "gradient_groups": [
+      "input_state_embeddings",
+      "base_message_blocks",
+      "dynamic_edge_angular",
+      "coordinate_readout",
+      "element_readout",
+      "lattice_readout",
+      "tensor_atlas"
+    ],
+    "fixed_panel_across_checkpoints": true,
+    "ema_checkpoints": true
+  },
+  "classification": {
+    "one_to_two_pass_relative_validation_improvement_undertraining_min": 0.1,
+    "one_to_two_pass_relative_validation_improvement_plateau_max": 0.05,
+    "one_pass_reference_ratio_absolute_tolerance": 0.02,
+    "undertraining": "if the one-to-two-pass EMA validation coordinate loss improves by at least 10%, attribute the current one-pass result primarily to incomplete optimization/data exposure and optimize training or parameterization before adding a new feature",
+    "representation_ceiling": "if the one-to-two-pass improvement is at most 5%, treat the curve as approximately plateaued and allow a separately frozen jointly trained latent clean-topology proposal",
+    "ambiguous": "if the improvement lies strictly between 5% and 10%, do not modify production; report the ambiguity and design one new bounded attribution",
+    "reference_mismatch": "if the new from-scratch one-pass validation ratio differs from the archived same-seed result by more than 0.02, stop scientific interpretation and audit reproducibility"
+  },
+  "decision_boundary": "This is a diagnostic exposure curve, not an H1a rescue and not a new Gate pass. It cannot change historical thresholds or authorize H1b-H6, tensor conditioning, topology production integration, oracle work, relaxation, DFT or DFPT. No extra seed, pass, optimizer change, architecture change or threshold change is allowed after viewing results."
+}

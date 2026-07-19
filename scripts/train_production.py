@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import math
 import time
 from pathlib import Path
 
@@ -23,6 +24,82 @@ from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
+
+_GRADIENT_GROUPS = (
+    "input_state_embeddings",
+    "base_message_blocks",
+    "dynamic_edge_angular",
+    "coordinate_readout",
+    "element_readout",
+    "lattice_readout",
+    "tensor_atlas",
+)
+
+
+def _gradient_group(parameter_name: str) -> str:
+    if parameter_name.startswith(("element_embedding.", "degree_embedding.", "time_embedding.", "state_embedding.")):
+        return "input_state_embeddings"
+    if parameter_name.startswith(("gauge_atlas.", "geometry_query_encoder.")):
+        return "tensor_atlas"
+    if parameter_name.startswith("blocks."):
+        dynamic_fragments = (
+            ".angular_moments.",
+            ".edge_source_refresh.",
+            ".edge_target_refresh.",
+            ".edge_context_refresh.",
+            ".edge_vector_refresh.",
+            ".edge_update.",
+            ".edge_norm.",
+            ".angular_scalar_residual.",
+            ".angular_vector_residual.",
+        )
+        return (
+            "dynamic_edge_angular"
+            if any(fragment in parameter_name for fragment in dynamic_fragments)
+            else "base_message_blocks"
+        )
+    if parameter_name.startswith(
+        (
+            "coordinate_control_gate.",
+            "coordinate_edge_encoder.",
+            "edge_state_initializer.",
+            "coordinate_edge_residual.",
+            "coordinate_carrier.",
+            "coordinate_carrier_mixer.",
+        )
+    ):
+        return "coordinate_readout"
+    if parameter_name.startswith("element_head."):
+        return "element_readout"
+    if parameter_name.startswith(("volume_head.", "shape_head.")):
+        return "lattice_readout"
+    raise ValueError(f"unassigned production parameter: {parameter_name}")
+
+
+def _clipped_module_gradient_norms(model: torch.nn.Module) -> dict[str, float]:
+    """Return post-global-clip L2 norms for a complete parameter partition."""
+    reference = next(model.parameters())
+    squared = {name: torch.zeros((), dtype=torch.float32, device=reference.device) for name in _GRADIENT_GROUPS}
+    for parameter_name, parameter in model.named_parameters():
+        group = _gradient_group(parameter_name)
+        if parameter.grad is not None:
+            squared[group] = squared[group] + parameter.grad.detach().float().square().sum()
+    values = torch.stack(tuple(squared[name] for name in _GRADIENT_GROUPS)).sqrt().cpu()
+    return {name: float(value) for name, value in zip(_GRADIENT_GROUPS, values, strict=True)}
+
+
+def _validate_coordinate_exposure(
+    training_spec: dict[str, object], *, dataset_size: int, steps: int, batch_size: int
+) -> None:
+    """Require an exact integer number of complete shuffled data passes."""
+    passes = float(training_spec["data_passes"])
+    if passes < 1.0 or not passes.is_integer():
+        raise ValueError("coordinate training requires an integer number of complete passes")
+    complete_passes = int(passes)
+    steps_per_pass = math.ceil(dataset_size / batch_size)
+    expected_presentations = complete_passes * dataset_size
+    if steps != complete_passes * steps_per_pass or int(training_spec["graph_presentations"]) != expected_presentations:
+        raise ValueError("coordinate training counts do not match the declared complete data passes")
 
 
 def parse_args() -> argparse.Namespace:
@@ -49,14 +126,8 @@ def main() -> None:
     model_spec = protocol.get("model")
     training_spec = protocol.get("training")
     prerequisites = protocol.get("prerequisites")
-    if (
-        not isinstance(model_spec, dict)
-        or not isinstance(training_spec, dict)
-        or not isinstance(prerequisites, dict)
-    ):
-        raise ValueError(
-            "production protocol requires model, training and prerequisites objects"
-        )
+    if not isinstance(model_spec, dict) or not isinstance(training_spec, dict) or not isinstance(prerequisites, dict):
+        raise ValueError("production protocol requires model, training and prerequisites objects")
     seeds = [int(value) for value in training_spec["seeds"]]
     if args.seed not in seeds:
         raise ValueError("seed is not preregistered by the production protocol")
@@ -87,19 +158,18 @@ def main() -> None:
         raise ValueError("production protocol cache manifest mismatch")
     qualification_name = str(prerequisites["qualified_mechanism"])
     qualification_result = Path("reports") / qualification_name / "result.json"
-    if sha256_file(qualification_result) != str(
-        prerequisites["qualification_result_sha256"]
-    ):
+    if sha256_file(qualification_result) != str(prerequisites["qualification_result_sha256"]):
         raise ValueError("production protocol mechanism qualification mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
     if objective == "coordinate":
-        graph_presentations = int(training_spec["graph_presentations"])
-        if graph_presentations != len(dataset) or steps != (
-            len(dataset) + batch_size - 1
-        ) // batch_size:
-            raise ValueError(
-                "coordinate pretraining must make exactly one complete data pass"
-            )
+        _validate_coordinate_exposure(
+            training_spec,
+            dataset_size=len(dataset),
+            steps=steps,
+            batch_size=batch_size,
+        )
+    if bool(training_spec.get("from_scratch_required", False)) and args.resume is not None:
+        raise ValueError("this frozen protocol requires a from-scratch run")
     node_prior = EmpiricalNodeCountPrior.fit(dataset.node_counts)
     loader_generator = torch.Generator().manual_seed(args.seed)
     loader = DataLoader(
@@ -113,9 +183,7 @@ def main() -> None:
         pin_memory=device.type == "cuda",
         persistent_workers=num_workers > 0,
     )
-    resume_metadata = (
-        read_production_checkpoint_metadata(args.resume) if args.resume is not None else None
-    )
+    resume_metadata = read_production_checkpoint_metadata(args.resume) if args.resume is not None else None
     protocol_sha256 = canonical_json_hash(protocol)
     if resume_metadata is not None and (
         resume_metadata.get("protocol") != protocol["protocol"]
@@ -123,18 +191,14 @@ def main() -> None:
     ):
         raise ValueError("resume checkpoint does not match the frozen protocol")
     if resume_metadata is None:
-        standardization_value = json.loads(
-            args.lattice_standardization.read_text(encoding="utf-8")
-        )
+        standardization_value = json.loads(args.lattice_standardization.read_text(encoding="utf-8"))
         if standardization_value.get("source_cache_manifest_sha256") != observed_manifest_hash:
             raise ValueError("lattice standardization was not fitted on this cache manifest")
     else:
         standardization_value = resume_metadata.get("lattice_standardization")
     if not isinstance(standardization_value, dict):
         raise ValueError("training requires lattice-standardization metadata")
-    lattice_standardizer = P1LatticeStandardizer.from_mapping(
-        standardization_value
-    )
+    lattice_standardizer = P1LatticeStandardizer.from_mapping(standardization_value)
     model_config = (
         resume_metadata["model_config"]
         if resume_metadata is not None
@@ -154,9 +218,7 @@ def main() -> None:
     model = model.to(device)
     observed_parameter_count = sum(value.numel() for value in model.parameters())
     if observed_parameter_count != int(model_spec["parameter_count"]):
-        raise ValueError(
-            "production model parameter count does not match the frozen protocol"
-        )
+        raise ValueError("production model parameter count does not match the frozen protocol")
     training_config = (
         ProductionTrainingConfig(**resume_metadata["training_config"])
         if resume_metadata is not None
@@ -192,6 +254,8 @@ def main() -> None:
             restore_rng=True,
         )
         trainer.step = step
+    if args.resume is None and args.output.exists() and any(args.output.iterdir()):
+        raise FileExistsError("refusing to append a from-scratch run to a nonempty output")
     args.output.mkdir(parents=True, exist_ok=True)
     checkpoint_metadata = {
         "protocol": protocol["protocol"],
@@ -220,6 +284,7 @@ def main() -> None:
     device_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
     throughput_start = time.perf_counter()
     throughput_graphs = 0
+    graphs_seen_this_invocation = 0
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
     while trainer.step < steps:
@@ -231,9 +296,7 @@ def main() -> None:
         batch_data = batch_data.to(device, non_blocking=True)
         graph_count = int(batch_data.num_graphs)
         counts = torch.bincount(batch_data.batch, minlength=graph_count)
-        blueprint = ParentBlueprintBatch.from_node_counts(
-            counts, dtype=batch_data.frac_coords.dtype, device=device
-        )
+        blueprint = ParentBlueprintBatch.from_node_counts(counts, dtype=batch_data.frac_coords.dtype, device=device)
         output, gradient_norm = trainer.train_step(
             batch_data.atom_types,
             batch_data.frac_coords,
@@ -243,20 +306,15 @@ def main() -> None:
             generator=device_generator,
         )
         throughput_graphs += graph_count
-        if trainer.step % log_every == 0 or trainer.step in {1, steps}:
+        graphs_seen_this_invocation += graph_count
+        if trainer.step % log_every == 0 or trainer.step in checkpoint_steps or trainer.step in {1, steps}:
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             elapsed = time.perf_counter() - throughput_start
             record = {
                 "step": trainer.step,
                 "loss": float(
-                    (
-                        output.loss
-                        if training_config.objective == "joint"
-                        else output.coordinate_loss
-                    )
-                    .detach()
-                    .cpu()
+                    (output.loss if training_config.objective == "joint" else output.coordinate_loss).detach().cpu()
                 ),
                 "element_loss": float(output.element_loss.detach().cpu()),
                 "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
@@ -264,11 +322,11 @@ def main() -> None:
                 "shape_loss": float(output.shape_loss.detach().cpu()),
                 "masked_fraction": float(output.masked_fraction.detach().cpu()),
                 "gradient_norm": gradient_norm,
+                "clipped_module_gradient_norms": _clipped_module_gradient_norms(model),
+                "graphs_seen_this_invocation": graphs_seen_this_invocation,
                 "graphs_per_second": throughput_graphs / elapsed,
                 "peak_cuda_memory_mib": (
-                    float(torch.cuda.max_memory_allocated(device)) / (1024.0**2)
-                    if device.type == "cuda"
-                    else 0.0
+                    float(torch.cuda.max_memory_allocated(device)) / (1024.0**2) if device.type == "cuda" else 0.0
                 ),
             }
             with log_path.open("a", encoding="utf-8") as stream:
