@@ -1,0 +1,82 @@
+{
+  "protocol": "h1a_edge_query_angular_kernel_comparison_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-optimizer shared-parameter-matched CUDA qualification of a shell-complete K=8 explicit triplet control and R=8/16 induced edge-query angular kernels with current-layer node/vector/time/radial assignment context on the retained dynamic-edge backbone",
+  "prerequisites": {
+    "retained_backbone": "h1a_dynamic_persistent_edge_coordinate_pretraining_v1",
+    "retained_result_sha256": "c3907834ef2010243568b2a7217721cc8d4542fbf5dc6e57ad556e038b75171b",
+    "retained_validation_ratio": 0.5441667710112212,
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "synthetic_collision_audit": "h1a_persistent_edge_causal_attribution_v1",
+    "tensor_condition_enabled": false
+  },
+  "shared_model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "residual_initialization_gain": 0.01,
+    "matched_factorized_shared_initialization": true
+  },
+  "variants": {
+    "topk_triplet": {
+      "angular_operator": "topk_triplet",
+      "triplet_k": 8,
+      "shell_complete_ties": true,
+      "parameter_count": 5042553
+    },
+    "induced_r8": {
+      "angular_operator": "induced_slots",
+      "angular_slots": 8,
+      "slot_chunk": 4,
+      "parameter_count": 5096633
+    },
+    "induced_r16": {
+      "angular_operator": "induced_slots",
+      "angular_slots": 16,
+      "slot_chunk": 4,
+      "parameter_count": 5100729
+    }
+  },
+  "data": {
+    "split": "train",
+    "fixed_graphs": 16,
+    "fixed_selection_seed": 6601,
+    "noise_seed": 6602,
+    "model_seed": 5705,
+    "times": [0.005, 0.02, 0.1, 0.2, 0.4, 0.5, 0.6, 0.9]
+  },
+  "benchmark": {
+    "hardware": "RTX 4060 Ti 16 GB",
+    "warmup": 3,
+    "iterations": 10
+  },
+  "acceptance": {
+    "topk_triplet_graphs_per_second_min": 100.0,
+    "induced_r8_graphs_per_second_min": 150.0,
+    "induced_r16_graphs_per_second_min": 100.0,
+    "peak_cuda_memory_mib_max": 4096.0,
+    "bf16_fp32_output_relative_rmse_max": 0.05,
+    "bf16_fp32_output_cosine_min": 0.99,
+    "bf16_fp32_gradient_cosine_min": 0.9,
+    "first_step_angular_gradient_norm_min": 1e-8,
+    "first_step_assignment_context_gradient_norm_min": 1e-8,
+    "normalized_assignment_entropy_min": 0.5,
+    "effective_slot_count_min": 2.0,
+    "maximum_global_slot_mass_max": 0.5,
+    "minimum_selected_neighbors": 8,
+    "tensor_candidates": 0,
+    "optimizer_steps": 0,
+    "parameters_unchanged": true
+  },
+  "decision_rule": {
+    "pass": "freeze exactly three same-seed exact-one-pass coordinate-only protocols with matched shared initialization and no other change",
+    "partial": "run only variants that independently satisfy every numerical and resource criterion; a failed variant receives no training rescue",
+    "fail": "retain the dynamic factorized baseline and stop the local-kernel comparison without rank, K, capacity or threshold search",
+    "boundary": "Qualification and later comparison cannot authorize reciprocal features, joint training, H1b-H6, tensor conditioning, oracle training, relaxation, DFT or DFPT."
+  }
+}

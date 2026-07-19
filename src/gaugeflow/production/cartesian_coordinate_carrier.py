@@ -177,10 +177,10 @@ class StateAdaptiveCartesianCarrierMixer(nn.Module):
 
     ``h_i`` contains scalar node features and ``a_i`` therefore remains an
     invariant coefficient vector.  Mixing polar carriers with these scalars
-    preserves Cartesian covariance.  ``U`` is initialized to zero, so the
-    production function at initialization is exactly the preceding global
-    linear readout; there is no compatibility dispatch or second coordinate
-    branch.
+    preserves Cartesian covariance.  ``U`` uses a small orthogonal
+    initialization so both factors receive gradients on the first backward
+    pass.  This is the only initialization; there is no compatibility
+    dispatch or second coordinate branch.
     """
 
     def __init__(
@@ -199,7 +199,7 @@ class StateAdaptiveCartesianCarrierMixer(nn.Module):
         self.state_projection = nn.Linear(state_dim, rank, bias=False)
         self.carrier_projection = nn.Linear(rank, carrier_channels, bias=False)
         nn.init.kaiming_uniform_(self.base_weight.unsqueeze(0), a=5.0**0.5)
-        nn.init.zeros_(self.carrier_projection.weight)
+        nn.init.orthogonal_(self.carrier_projection.weight, gain=1.0e-2)
 
     @property
     def rank(self) -> int:

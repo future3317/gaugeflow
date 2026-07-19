@@ -1,0 +1,65 @@
+{
+  "protocol": "h1a_persistent_edge_causal_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "diagnostic-only attribution of the active l<=2 volume-normalized persistent-edge backbone; no representation, loss, sampler, seed, data-order or optimizer change",
+  "source": {
+    "training_protocol": "h1a_volume_normalized_coordinate_pretraining_v1",
+    "training_protocol_sha256": "eb669a4e39bdf4e5d3b0c7e05ac8dadda67826c398c475f2e47823ae8efb5624",
+    "checkpoint_step": 8441,
+    "checkpoint_sha256": "da4c0e71020ab65011b449beff3297ec1811a71820a0ece5712015cf79b6a3e2",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "parameter_count": 4948281,
+    "coordinate_chart": "volume_normalized_cartesian_tangent_v1"
+  },
+  "gradient_startup": {
+    "seed": 5705,
+    "steps": 1000,
+    "batch_size": 64,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "objective": "coordinate",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "activation_norm_threshold": 1e-12,
+    "summary_steps": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1000]
+  },
+  "span_probe": {
+    "split": "val",
+    "graphs": 64,
+    "selection_seed": 9101,
+    "noise_seed": 9102,
+    "times": [0.005, 0.02, 0.1, 0.2, 0.4, 0.5, 0.6, 0.9],
+    "state_counts": [16, 64],
+    "fit_dtype": "float64",
+    "graph_equal_weighting": true,
+    "isotropic_gap_max": 0.05,
+    "axial_single_gap_max": 0.05
+  },
+  "synthetic_environments": {
+    "families": ["tetrahedral", "octahedral", "cubic", "cuboctahedral", "triangular_prism"],
+    "matched_pair": ["octahedral", "triangular_prism"],
+    "moment_tolerance": 1e-10,
+    "fourth_order_separation_min": 0.01
+  },
+  "decision_rule": {
+    "optimization_delay": "if coefficient/edge/internal residual/V gradients are initially zero and activate only after their zero-initialized output maps move, qualify one small-nonzero-initialization repair",
+    "edge_staleness": "if later-layer edge/node/vector probes add material span while the persistent edge-derived probe stalls, qualify per-layer dynamic edge refresh",
+    "moment_collision": "if matched equal-count environments agree in first/second moments but differ in fourth-order fingerprints, retain collision as a demonstrated representation limitation rather than inferring it only from validation loss",
+    "boundary": "No diagnostic result changes historical H1a failure or authorizes slots, reciprocal carriers, joint training, H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT before the separately frozen next mechanism."
+  }
+}

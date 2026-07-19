@@ -285,6 +285,14 @@ def main() -> None:
     coordinate_validation_ratio = (
         validation["coordinate"] / initial_coordinate_validation
     )
+    predecessor_ratio = protocol["prerequisites"].get(
+        "predecessor_validation_ratio"
+    )
+    material_improvement = (
+        float(predecessor_ratio) - coordinate_validation_ratio
+        if predecessor_ratio is not None
+        else None
+    )
     checks = {
         "coordinate_validation_reduction": coordinate_validation_ratio
         <= float(acceptance["final_over_initial_coordinate_validation_max"]),
@@ -301,6 +309,12 @@ def main() -> None:
         "tensor_candidates": validation["tensor_candidate_count"]
         == float(acceptance["tensor_candidates"]),
     }
+    material_improvement_passed = (
+        material_improvement is not None
+        and "material_ratio_improvement_min" in acceptance
+        and material_improvement
+        >= float(acceptance["material_ratio_improvement_min"])
+    )
     training_records = [
         json.loads(line)
         for line in (run / "training_metrics.jsonl").read_text(
@@ -336,6 +350,8 @@ def main() -> None:
         "validation": validation,
         "validation_curve": validation_curve,
         "final_over_initial_coordinate_validation": coordinate_validation_ratio,
+        "validation_ratio_improvement_over_predecessor": material_improvement,
+        "material_ratio_improvement_passed": material_improvement_passed,
         "score_calibration": score,
         "posthoc_high_noise_score_diagnostic": high_noise_score,
         "posthoc_fit_diagnostic": {
@@ -353,6 +369,8 @@ def main() -> None:
         "decision": (
             protocol["decision_rule"]["pass"]
             if all(checks.values())
+            else protocol["decision_rule"].get("material_but_failed")
+            if material_improvement_passed
             else protocol["decision_rule"]["fail"]
         ),
         "decision_boundary": protocol["decision_rule"]["boundary"],

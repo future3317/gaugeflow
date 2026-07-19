@@ -1,0 +1,2439 @@
+{
+  "by_time": {
+    "0.005": {
+      "current_model_mse": 0.5863950252532959,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 23.026976180863503,
+            "effective_rank": 14.806468747614396,
+            "explained_fraction": 0.7583471981301211,
+            "probe_mse": 0.2394003082370622,
+            "rank": 80,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 9.644783528893655,
+            "effective_rank": 17.58626359050943,
+            "explained_fraction": 0.5695582677513473,
+            "probe_mse": 0.42787316602932035,
+            "rank": 80,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 3364.6844448012357,
+            "effective_rank": 7.252814326375197,
+            "explained_fraction": 0.4510504612752645,
+            "probe_mse": 0.5438326713383563,
+            "rank": 64,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 5592.711701722682,
+            "effective_rank": 6.574942893168356,
+            "explained_fraction": 0.16126772217397134,
+            "probe_mse": 0.8337273277143533,
+            "rank": 64,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 4388905.236833892,
+            "effective_rank": 1.970700440245858,
+            "explained_fraction": 0.49963270619965783,
+            "probe_mse": 0.49570327114207446,
+            "rank": 192,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 111.5510032877691,
+            "effective_rank": 2.333592140353795,
+            "explained_fraction": 0.2132190589217159,
+            "probe_mse": 0.7820859991247916,
+            "rank": 192,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 3595.305066993138,
+            "effective_rank": 3.549478374903019,
+            "explained_fraction": 0.44324782095609694,
+            "probe_mse": 0.5515625817015619,
+            "rank": 32,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 571.1230914164007,
+            "effective_rank": 4.049424033374931,
+            "explained_fraction": 0.23798095858714308,
+            "probe_mse": 0.7574718606410575,
+            "rank": 32,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 839.45244558027,
+            "effective_rank": 6.299775675516719,
+            "explained_fraction": 0.5437143002435203,
+            "probe_mse": 0.45203257036797706,
+            "rank": 64,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 349.9494408393737,
+            "effective_rank": 6.131524464969594,
+            "explained_fraction": 0.19705104850286803,
+            "probe_mse": 0.7981575305029602,
+            "rank": 64,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 7979807.266905495,
+            "effective_rank": 1.4854786016891073,
+            "explained_fraction": 0.5061163333408516,
+            "probe_mse": 0.4892800791737406,
+            "rank": 192,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 176.06777301429355,
+            "effective_rank": 1.6758894639033237,
+            "explained_fraction": 0.21587211085347024,
+            "probe_mse": 0.7794487786960247,
+            "rank": 192,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 1390.5614117932869,
+            "effective_rank": 3.182836595443574,
+            "explained_fraction": 0.43648327257028785,
+            "probe_mse": 0.5582640763919451,
+            "rank": 32,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 378.7836950410965,
+            "effective_rank": 3.683294702601653,
+            "explained_fraction": 0.27657964499842735,
+            "probe_mse": 0.7191035033883999,
+            "rank": 32,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 524.2095930630825,
+            "effective_rank": 5.643604488335091,
+            "explained_fraction": 0.5389545793816408,
+            "probe_mse": 0.45674792492889754,
+            "rank": 64,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 94.37628741369033,
+            "effective_rank": 5.638658439849637,
+            "explained_fraction": 0.1845001681858659,
+            "probe_mse": 0.8106335162063831,
+            "rank": 64,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 8555436.884773122,
+            "effective_rank": 1.421097187750488,
+            "explained_fraction": 0.4993625271169402,
+            "probe_mse": 0.49597093183204505,
+            "rank": 192,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 122.14698520504216,
+            "effective_rank": 1.4680304400659299,
+            "explained_fraction": 0.21349834711990456,
+            "probe_mse": 0.7818083775174038,
+            "rank": 192,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 999.5490035153226,
+            "effective_rank": 3.281790660969327,
+            "explained_fraction": 0.42172470511017235,
+            "probe_mse": 0.5728850763213879,
+            "rank": 32,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 307.3124844163677,
+            "effective_rank": 3.7184856376604625,
+            "explained_fraction": 0.3234870527222472,
+            "probe_mse": 0.6724760052873912,
+            "rank": 32,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 98.57035283157785,
+            "effective_rank": 5.456782110241777,
+            "explained_fraction": 0.5360177679887292,
+            "probe_mse": 0.45965736172109206,
+            "rank": 64,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 146.0220150433138,
+            "effective_rank": 5.459876642188753,
+            "explained_fraction": 0.18649372525187213,
+            "probe_mse": 0.8086518552530267,
+            "rank": 64,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 3686682.118687096,
+            "effective_rank": 1.7124092646017384,
+            "explained_fraction": 0.49548916102578344,
+            "probe_mse": 0.4998081935106297,
+            "rank": 192,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 100.81210878526906,
+            "effective_rank": 1.821517289507178,
+            "explained_fraction": 0.20271241818783658,
+            "probe_mse": 0.7925299437944981,
+            "rank": 192,
+            "target_energy": 0.994032720280364
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 1073.6813798966964,
+            "effective_rank": 3.0344442886649157,
+            "explained_fraction": 0.4461933475763412,
+            "probe_mse": 0.5486445109183948,
+            "rank": 32,
+            "target_energy": 0.9906788019199977
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 237.5239908801655,
+            "effective_rank": 3.4972737121933464,
+            "explained_fraction": 0.33454363667125575,
+            "probe_mse": 0.6614853990675499,
+            "rank": 32,
+            "target_energy": 0.994032720280364
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.6634261012077332,
+          "nodes": 149,
+          "target_energy": 1.1038596630096436
+        },
+        "descriptor_isotropic": {
+          "mse": 0.5716151595115662,
+          "nodes": 482,
+          "target_energy": 0.9985097646713257
+        },
+        "generic": {
+          "mse": 0.9581721425056458,
+          "nodes": 7,
+          "target_energy": 1.5536497831344604
+        }
+      },
+      "target_energy": 0.9940326809883118
+    },
+    "0.02": {
+      "current_model_mse": 0.5949687361717224,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 34.17235354225776,
+            "effective_rank": 14.828727962639414,
+            "explained_fraction": 0.7030316347110674,
+            "probe_mse": 0.28823299365890986,
+            "rank": 80,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 6.947540905845534,
+            "effective_rank": 18.023943907474397,
+            "explained_fraction": 0.5679182072961133,
+            "probe_mse": 0.42048846755410973,
+            "rank": 80,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 13836.295763979708,
+            "effective_rank": 7.125386676211336,
+            "explained_fraction": 0.45825637857243606,
+            "probe_mse": 0.525808146762578,
+            "rank": 64,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 2787.212705448149,
+            "effective_rank": 6.72246032882435,
+            "explained_fraction": 0.13995354260524362,
+            "probe_mse": 0.8369702750772934,
+            "rank": 64,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 2988514.04339618,
+            "effective_rank": 1.931893582907539,
+            "explained_fraction": 0.5357538538023308,
+            "probe_mse": 0.4505902720748588,
+            "rank": 192,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 120.24938528069707,
+            "effective_rank": 2.2814904836091605,
+            "explained_fraction": 0.19872169384569316,
+            "probe_mse": 0.7797789509498732,
+            "rank": 192,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 2452.797484503085,
+            "effective_rank": 3.602461665117195,
+            "explained_fraction": 0.44204423265186477,
+            "probe_mse": 0.5415434098360536,
+            "rank": 32,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 805.4118511747702,
+            "effective_rank": 4.034821962486439,
+            "explained_fraction": 0.24375922632198777,
+            "probe_mse": 0.7359498349511021,
+            "rank": 32,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 381.27809975010695,
+            "effective_rank": 6.181638734847726,
+            "explained_fraction": 0.5305752286970722,
+            "probe_mse": 0.4556165671001676,
+            "rank": 64,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 517.8717852585205,
+            "effective_rank": 6.228074371388827,
+            "explained_fraction": 0.17212882361372206,
+            "probe_mse": 0.8056582993522485,
+            "rank": 64,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 6736264.599589627,
+            "effective_rank": 1.4157250527602416,
+            "explained_fraction": 0.5375756724088184,
+            "probe_mse": 0.44882204255202546,
+            "rank": 192,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 453.36903181797646,
+            "effective_rank": 1.5973390639246676,
+            "explained_fraction": 0.20724208387542065,
+            "probe_mse": 0.7714871742375442,
+            "rank": 192,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 1043.7739696519823,
+            "effective_rank": 3.258189511570655,
+            "explained_fraction": 0.4386235126083674,
+            "probe_mse": 0.5448635088561866,
+            "rank": 32,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 337.66148129148957,
+            "effective_rank": 3.738396923036442,
+            "explained_fraction": 0.28312054599619896,
+            "probe_mse": 0.6976446314683459,
+            "rank": 32,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 304.9458535544603,
+            "effective_rank": 5.553250000911551,
+            "explained_fraction": 0.5016843981687789,
+            "probe_mse": 0.48365756925997766,
+            "rank": 64,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 582.024461250568,
+            "effective_rank": 5.680362433909432,
+            "explained_fraction": 0.17882327013169064,
+            "probe_mse": 0.7991434736757297,
+            "rank": 64,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 5694014.621415267,
+            "effective_rank": 1.3628416485617383,
+            "explained_fraction": 0.5374578061157822,
+            "probe_mse": 0.44893644178933234,
+            "rank": 192,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 177.76696897480068,
+            "effective_rank": 1.4063042461685273,
+            "explained_fraction": 0.20317957163965206,
+            "probe_mse": 0.7754406839046568,
+            "rank": 192,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 930.8790729595197,
+            "effective_rank": 3.3965462513377367,
+            "explained_fraction": 0.4588933827487164,
+            "probe_mse": 0.5251898801653132,
+            "rank": 32,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 318.1396206172103,
+            "effective_rank": 3.777475073972516,
+            "explained_fraction": 0.3295356840914896,
+            "probe_mse": 0.6524748728287437,
+            "rank": 32,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 1301.101966542767,
+            "effective_rank": 5.280934341347511,
+            "explained_fraction": 0.4919775838263124,
+            "probe_mse": 0.4930788561169068,
+            "rank": 64,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 234.09651374075216,
+            "effective_rank": 5.4528076607572675,
+            "explained_fraction": 0.19244834477782835,
+            "probe_mse": 0.7858839777770189,
+            "rank": 64,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 6141489.884148456,
+            "effective_rank": 1.6596954743437438,
+            "explained_fraction": 0.5438093549895338,
+            "probe_mse": 0.4427717247344666,
+            "rank": 192,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 138.49182167025583,
+            "effective_rank": 1.7783366102836489,
+            "explained_fraction": 0.20949055448655118,
+            "probe_mse": 0.7692990330624712,
+            "rank": 192,
+            "target_energy": 0.9731686792974357
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 879.8888952416759,
+            "effective_rank": 3.1648702842635497,
+            "explained_fraction": 0.49891411355168125,
+            "probe_mse": 0.4863463655150818,
+            "rank": 32,
+            "target_energy": 0.9705848411782055
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 178.554088683479,
+            "effective_rank": 3.574035374487065,
+            "explained_fraction": 0.34479448558619374,
+            "probe_mse": 0.6376254851304808,
+            "rank": 32,
+            "target_energy": 0.9731686792974357
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.7612365484237671,
+          "nodes": 139,
+          "target_energy": 1.0390275716781616
+        },
+        "descriptor_isotropic": {
+          "mse": 0.564265251159668,
+          "nodes": 489,
+          "target_energy": 0.995409369468689
+        },
+        "generic": {
+          "mse": 0.9311060309410095,
+          "nodes": 10,
+          "target_energy": 1.6662663221359253
+        }
+      },
+      "target_energy": 0.9731687307357788
+    },
+    "0.1": {
+      "current_model_mse": 0.46153777837753296,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 17.18763033369209,
+            "effective_rank": 16.298321134361714,
+            "explained_fraction": 0.6881876567102189,
+            "probe_mse": 0.32509410370820996,
+            "rank": 80,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 4.020602162772827,
+            "effective_rank": 18.86468616984983,
+            "explained_fraction": 0.5939171405988535,
+            "probe_mse": 0.38092180447750246,
+            "rank": 80,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 4997.652416934271,
+            "effective_rank": 7.157850758335875,
+            "explained_fraction": 0.3356958003928351,
+            "probe_mse": 0.6926004791291682,
+            "rank": 64,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 3811.014512225888,
+            "effective_rank": 6.558667974662657,
+            "explained_fraction": 0.16994579606039173,
+            "probe_mse": 0.7786237164629257,
+            "rank": 64,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 4773973.956613406,
+            "effective_rank": 1.883428678545333,
+            "explained_fraction": 0.5022603368257049,
+            "probe_mse": 0.5189410655539523,
+            "rank": 192,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 81.95081941445908,
+            "effective_rank": 2.159940764644439,
+            "explained_fraction": 0.16872376226243757,
+            "probe_mse": 0.779770032562393,
+            "rank": 192,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 3240.5209296986563,
+            "effective_rank": 3.8775215848615834,
+            "explained_fraction": 0.4573131577527406,
+            "probe_mse": 0.5658027861028341,
+            "rank": 32,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 511.97644792418055,
+            "effective_rank": 4.351797966611253,
+            "explained_fraction": 0.3199516676242905,
+            "probe_mse": 0.6379122681575077,
+            "rank": 32,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 846.7421897506222,
+            "effective_rank": 6.349096724737285,
+            "explained_fraction": 0.40675116594224425,
+            "probe_mse": 0.6185184843844097,
+            "rank": 64,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 555.8054641459395,
+            "effective_rank": 6.103671772857234,
+            "explained_fraction": 0.20157544304031438,
+            "probe_mse": 0.7489538549466175,
+            "rank": 64,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 11107779.768366173,
+            "effective_rank": 1.2998533221936446,
+            "explained_fraction": 0.5033437309694069,
+            "probe_mse": 0.5178115238418008,
+            "rank": 192,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 161.55606379392242,
+            "effective_rank": 1.3745631159863834,
+            "explained_fraction": 0.19267425061542276,
+            "probe_mse": 0.7573035259607829,
+            "rank": 192,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 838.4172547818,
+            "effective_rank": 3.5356868933757473,
+            "explained_fraction": 0.45253020432427227,
+            "probe_mse": 0.5707894711759808,
+            "rank": 32,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 196.01066750141402,
+            "effective_rank": 3.897053124343579,
+            "explained_fraction": 0.3683399726010337,
+            "probe_mse": 0.5925221217363296,
+            "rank": 32,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 72.6526755190799,
+            "effective_rank": 5.847973847292859,
+            "explained_fraction": 0.4774828432378114,
+            "probe_mse": 0.5447739655126504,
+            "rank": 64,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 506.2443759726298,
+            "effective_rank": 5.43934944128806,
+            "explained_fraction": 0.23254682542643013,
+            "probe_mse": 0.7199014716889738,
+            "rank": 64,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 16119195.254627213,
+            "effective_rank": 1.2474521117181863,
+            "explained_fraction": 0.5075191373548942,
+            "probe_mse": 0.5134582644993827,
+            "rank": 192,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 239.63628639655133,
+            "effective_rank": 1.2581040220558508,
+            "explained_fraction": 0.18758984051198546,
+            "probe_mse": 0.7620729039989527,
+            "rank": 192,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 594.7888598228949,
+            "effective_rank": 3.79404941073195,
+            "explained_fraction": 0.495467099773085,
+            "probe_mse": 0.5260236630149722,
+            "rank": 32,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 207.01864841387857,
+            "effective_rank": 4.069671660729401,
+            "explained_fraction": 0.4167913943468332,
+            "probe_mse": 0.5470727692861228,
+            "rank": 32,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 964.852577776671,
+            "effective_rank": 5.684565257925807,
+            "explained_fraction": 0.45227812146933644,
+            "probe_mse": 0.5710522915920071,
+            "rank": 64,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 159.30921029133037,
+            "effective_rank": 5.204988729730778,
+            "explained_fraction": 0.2654920553670922,
+            "probe_mse": 0.6889975412536183,
+            "rank": 64,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 10624000.983979268,
+            "effective_rank": 1.6072835319232113,
+            "explained_fraction": 0.5124814990252218,
+            "probe_mse": 0.5082845292249203,
+            "rank": 192,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 101.4393611935823,
+            "effective_rank": 1.7108674783703508,
+            "explained_fraction": 0.17673371009642724,
+            "probe_mse": 0.772256384271023,
+            "rank": 192,
+            "target_energy": 0.9380396036396385
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 610.819383400341,
+            "effective_rank": 3.668515462278318,
+            "explained_fraction": 0.5314986462073974,
+            "probe_mse": 0.4884573397267451,
+            "rank": 32,
+            "target_energy": 1.0425953645012875
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 147.5068399378789,
+            "effective_rank": 3.9557311510787327,
+            "explained_fraction": 0.44323053832568926,
+            "probe_mse": 0.5222718051476253,
+            "rank": 32,
+            "target_energy": 0.9380396036396385
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.5042040944099426,
+          "nodes": 178,
+          "target_energy": 1.0373543500900269
+        },
+        "descriptor_isotropic": {
+          "mse": 0.4754329323768616,
+          "nodes": 451,
+          "target_energy": 0.9788317680358887
+        },
+        "generic": {
+          "mse": 0.49636635184288025,
+          "nodes": 9,
+          "target_energy": 0.8807767033576965
+        }
+      },
+      "target_energy": 0.9380396604537964
+    },
+    "0.2": {
+      "current_model_mse": 0.5108524560928345,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 10.793334503352893,
+            "effective_rank": 18.93599789730629,
+            "explained_fraction": 0.6662761659072042,
+            "probe_mse": 0.3656530443623171,
+            "rank": 80,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 3.471899559799585,
+            "effective_rank": 20.337299804594082,
+            "explained_fraction": 0.5961863991657699,
+            "probe_mse": 0.4345968744575961,
+            "rank": 80,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 10719.289834364656,
+            "effective_rank": 7.371212980416739,
+            "explained_fraction": 0.29284735740250023,
+            "probe_mse": 0.7748098582696201,
+            "rank": 64,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 3695.264952152946,
+            "effective_rank": 7.180493425693331,
+            "explained_fraction": 0.1784851237908558,
+            "probe_mse": 0.8841401002426285,
+            "rank": 64,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 5692765.117466587,
+            "effective_rank": 1.8005823236331286,
+            "explained_fraction": 0.48947298461417377,
+            "probe_mse": 0.559371966681671,
+            "rank": 192,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 46.0830633925709,
+            "effective_rank": 2.207171215553521,
+            "explained_fraction": 0.18786030642292617,
+            "probe_mse": 0.87405023437147,
+            "rank": 192,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 743.4701695970233,
+            "effective_rank": 3.6498734280970613,
+            "explained_fraction": 0.38139143741031123,
+            "probe_mse": 0.6777942750011083,
+            "rank": 32,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 340.3829488974175,
+            "effective_rank": 4.261924562338652,
+            "explained_fraction": 0.3331115651145721,
+            "probe_mse": 0.7177262697798592,
+            "rank": 32,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 247.27919954697833,
+            "effective_rank": 6.281867637175946,
+            "explained_fraction": 0.3029853486219336,
+            "probe_mse": 0.7637019091979531,
+            "rank": 64,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 819.6624302390921,
+            "effective_rank": 6.290903970169422,
+            "explained_fraction": 0.20971958662388146,
+            "probe_mse": 0.8505245907735273,
+            "rank": 64,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 8589932.995305477,
+            "effective_rank": 1.2495961820831616,
+            "explained_fraction": 0.49002993196747147,
+            "probe_mse": 0.5587617330858703,
+            "rank": 192,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 166.78142679235302,
+            "effective_rank": 1.4063113528585474,
+            "explained_fraction": 0.20155212448866122,
+            "probe_mse": 0.8593146699310509,
+            "rank": 192,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 595.0843025186448,
+            "effective_rank": 3.446641958658714,
+            "explained_fraction": 0.4550349845018077,
+            "probe_mse": 0.5971048412816164,
+            "rank": 32,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 329.5271557438689,
+            "effective_rank": 4.01069628606445,
+            "explained_fraction": 0.3724775539378855,
+            "probe_mse": 0.6753593567605827,
+            "rank": 32,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 648.0424504729045,
+            "effective_rank": 5.603724782816354,
+            "explained_fraction": 0.3175902906319007,
+            "probe_mse": 0.7476996313768411,
+            "rank": 64,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 857.947395515354,
+            "effective_rank": 5.459412430993242,
+            "explained_fraction": 0.24015537652467012,
+            "probe_mse": 0.8177686381874707,
+            "rank": 64,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 16852952.102677852,
+            "effective_rank": 1.1928477770458157,
+            "explained_fraction": 0.49533534953566816,
+            "probe_mse": 0.5529487167914302,
+            "rank": 192,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 164.71107644997815,
+            "effective_rank": 1.2199131940261263,
+            "explained_fraction": 0.19207944631151275,
+            "probe_mse": 0.8695094635685772,
+            "rank": 192,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 530.7812374777637,
+            "effective_rank": 3.858751406451194,
+            "explained_fraction": 0.46832157546662156,
+            "probe_mse": 0.5825470484626291,
+            "rank": 32,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 202.16992608289578,
+            "effective_rank": 4.322058677001862,
+            "explained_fraction": 0.4079681050263173,
+            "probe_mse": 0.6371633114962681,
+            "rank": 32,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 332.81007976856415,
+            "effective_rank": 5.505006200824996,
+            "explained_fraction": 0.3578288912179878,
+            "probe_mse": 0.7036111806817349,
+            "rank": 64,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 220.46259220741476,
+            "effective_rank": 5.369542760430692,
+            "explained_fraction": 0.2800615708885852,
+            "probe_mse": 0.7748203390062989,
+            "rank": 64,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 10181253.857201759,
+            "effective_rank": 1.6419777429852425,
+            "explained_fraction": 0.4961172060949892,
+            "probe_mse": 0.5520920556783647,
+            "rank": 192,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 69.54643781427406,
+            "effective_rank": 1.7667132478484717,
+            "explained_fraction": 0.19603158662856457,
+            "probe_mse": 0.8652560460866987,
+            "rank": 192,
+            "target_energy": 1.0762313937910248
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 458.579242160439,
+            "effective_rank": 3.994895553055631,
+            "explained_fraction": 0.476536606724032,
+            "probe_mse": 0.5735460395986098,
+            "rank": 32,
+            "target_energy": 1.0956755466876333
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 132.22732578262588,
+            "effective_rank": 4.357054409612913,
+            "explained_fraction": 0.42097679741557936,
+            "probe_mse": 0.6231629483547739,
+            "rank": 32,
+            "target_energy": 1.0762313937910248
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.6489129662513733,
+          "nodes": 157,
+          "target_energy": 1.183722972869873
+        },
+        "descriptor_isotropic": {
+          "mse": 0.4823703169822693,
+          "nodes": 471,
+          "target_energy": 1.044437289237976
+        },
+        "generic": {
+          "mse": 0.9416597485542297,
+          "nodes": 10,
+          "target_energy": 1.213240385055542
+        }
+      },
+      "target_energy": 1.0762314796447754
+    },
+    "0.4": {
+      "current_model_mse": 0.6071628928184509,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 5.635973751432612,
+            "effective_rank": 18.227488174412017,
+            "explained_fraction": 0.6461460497762261,
+            "probe_mse": 0.3869951217917259,
+            "rank": 80,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 2.806860524765486,
+            "effective_rank": 19.06424228213535,
+            "explained_fraction": 0.49420753165407005,
+            "probe_mse": 0.5472451654275972,
+            "rank": 80,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 11827.11752603589,
+            "effective_rank": 5.931608327801631,
+            "explained_fraction": 0.3787228915171209,
+            "probe_mse": 0.6794645364611493,
+            "rank": 64,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 6544.252773900564,
+            "effective_rank": 6.139370095620839,
+            "explained_fraction": 0.2618230514640699,
+            "probe_mse": 0.7986749340840289,
+            "rank": 64,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 2700978.0121899694,
+            "effective_rank": 1.9525524845073674,
+            "explained_fraction": 0.5182855515265634,
+            "probe_mse": 0.5268307490644678,
+            "rank": 192,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 84.74478586564406,
+            "effective_rank": 1.9988300373064833,
+            "explained_fraction": 0.2067611921017578,
+            "probe_mse": 0.8582494398769285,
+            "rank": 192,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 433.7173135888949,
+            "effective_rank": 4.296420124990178,
+            "explained_fraction": 0.426213677166166,
+            "probe_mse": 0.6275258697750365,
+            "rank": 32,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 416.0220206454019,
+            "effective_rank": 3.923853476559284,
+            "explained_fraction": 0.3202048696100095,
+            "probe_mse": 0.7355083791653279,
+            "rank": 32,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 771.3254448303443,
+            "effective_rank": 4.922680304826743,
+            "explained_fraction": 0.4398139301901316,
+            "probe_mse": 0.6126518473935443,
+            "rank": 64,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 856.7164163121043,
+            "effective_rank": 4.929616398699952,
+            "explained_fraction": 0.30228429512866084,
+            "probe_mse": 0.7548976511698605,
+            "rank": 64,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 12036359.711431973,
+            "effective_rank": 1.357125784369307,
+            "explained_fraction": 0.5247266336320915,
+            "probe_mse": 0.5197864095782956,
+            "rank": 192,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 126.06499128938053,
+            "effective_rank": 1.355134557649078,
+            "explained_fraction": 0.21359364288349691,
+            "probe_mse": 0.8508570291703075,
+            "rank": 192,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 391.4359615574541,
+            "effective_rank": 4.123168966072926,
+            "explained_fraction": 0.45594407085660005,
+            "probe_mse": 0.5950109937368588,
+            "rank": 32,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 214.40403433946793,
+            "effective_rank": 3.9112794703778735,
+            "explained_fraction": 0.3547801569025324,
+            "probe_mse": 0.6980994417092593,
+            "rank": 32,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 163.33643738120563,
+            "effective_rank": 3.967623478963093,
+            "explained_fraction": 0.47373478107644507,
+            "probe_mse": 0.5755540452869793,
+            "rank": 64,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 335.9434442191615,
+            "effective_rank": 4.04843337237338,
+            "explained_fraction": 0.29518909258520176,
+            "probe_mse": 0.7625743477057645,
+            "rank": 64,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 13921932.88388929,
+            "effective_rank": 1.244836606823744,
+            "explained_fraction": 0.521684244600342,
+            "probe_mse": 0.5231137419795169,
+            "rank": 192,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 185.48988820933369,
+            "effective_rank": 1.2338566953287613,
+            "explained_fraction": 0.20268219383577635,
+            "probe_mse": 0.8626627362791977,
+            "rank": 192,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 226.8850140374171,
+            "effective_rank": 4.429531319484091,
+            "explained_fraction": 0.4893245244152452,
+            "probe_mse": 0.5585042013661035,
+            "rank": 32,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 120.32337750420353,
+            "effective_rank": 4.372447266794835,
+            "explained_fraction": 0.3770499492472633,
+            "probe_mse": 0.6740045076040022,
+            "rank": 32,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 179.9160366044061,
+            "effective_rank": 3.928353457791742,
+            "explained_fraction": 0.47566352324543304,
+            "probe_mse": 0.5734446614292598,
+            "rank": 64,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 210.3420483277748,
+            "effective_rank": 4.134762415719672,
+            "explained_fraction": 0.3095920268567752,
+            "probe_mse": 0.74699100742024,
+            "rank": 64,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 5433204.754840552,
+            "effective_rank": 2.0372430082739847,
+            "explained_fraction": 0.5205314199982498,
+            "probe_mse": 0.5243745375620137,
+            "rank": 192,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 78.53910548331963,
+            "effective_rank": 2.001881799413223,
+            "explained_fraction": 0.20897301775367672,
+            "probe_mse": 0.8558563419750564,
+            "rank": 192,
+            "target_energy": 1.0819559397893528
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 254.3268737094772,
+            "effective_rank": 4.629297970084811,
+            "explained_fraction": 0.513322301684631,
+            "probe_mse": 0.5322588458141204,
+            "rank": 32,
+            "target_energy": 1.0936577691078309
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 131.58770358784153,
+            "effective_rank": 4.70858771497257,
+            "explained_fraction": 0.39146235219093695,
+            "probe_mse": 0.658410922632457,
+            "rank": 32,
+            "target_energy": 1.0819559397893528
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.6885148286819458,
+          "nodes": 191,
+          "target_energy": 1.2056009769439697
+        },
+        "descriptor_isotropic": {
+          "mse": 0.6363673210144043,
+          "nodes": 442,
+          "target_energy": 1.1107840538024902
+        },
+        "generic": {
+          "mse": 0.23159141838550568,
+          "nodes": 5,
+          "target_energy": 0.36267608404159546
+        }
+      },
+      "target_energy": 1.0819560289382935
+    },
+    "0.5": {
+      "current_model_mse": 0.5983168482780457,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 9.538467853470323,
+            "effective_rank": 14.510317201392098,
+            "explained_fraction": 0.5236354021105676,
+            "probe_mse": 0.42723426083249155,
+            "rank": 80,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 4.818266962394476,
+            "effective_rank": 15.87994943799991,
+            "explained_fraction": 0.44220433626209976,
+            "probe_mse": 0.5508291361312571,
+            "rank": 80,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 1418.8812573788096,
+            "effective_rank": 5.096367698501396,
+            "explained_fraction": 0.3877416164589459,
+            "probe_mse": 0.5491125056093535,
+            "rank": 64,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 3074.4838883392754,
+            "effective_rank": 4.832358048439366,
+            "explained_fraction": 0.3041755223585457,
+            "probe_mse": 0.68713405434131,
+            "rank": 64,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 9348875.92569938,
+            "effective_rank": 1.7140850369752016,
+            "explained_fraction": 0.4710987353412952,
+            "probe_mse": 0.4743525061706616,
+            "rank": 192,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 100.89854005665534,
+            "effective_rank": 1.731421961235596,
+            "explained_fraction": 0.19218629951112798,
+            "probe_mse": 0.7977246001043903,
+            "rank": 192,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 645.9400350534308,
+            "effective_rank": 3.273015737957789,
+            "explained_fraction": 0.4019712315292858,
+            "probe_mse": 0.5363504760558504,
+            "rank": 32,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 235.85315756915432,
+            "effective_rank": 2.985076579640343,
+            "explained_fraction": 0.3131794336049375,
+            "probe_mse": 0.6782425964543536,
+            "rank": 32,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 146.9060823674077,
+            "effective_rank": 3.6803243061358533,
+            "explained_fraction": 0.4108133802024302,
+            "probe_mse": 0.528420271189076,
+            "rank": 64,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 175.65054078157638,
+            "effective_rank": 3.5812740601100983,
+            "explained_fraction": 0.322338628778699,
+            "probe_mse": 0.6691977940415631,
+            "rank": 64,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 9496698.778973546,
+            "effective_rank": 1.235428687998489,
+            "explained_fraction": 0.4673475650096024,
+            "probe_mse": 0.4777167958156481,
+            "rank": 192,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 175.5485232542042,
+            "effective_rank": 1.2487750408386527,
+            "explained_fraction": 0.1947569747832002,
+            "probe_mse": 0.7951860309984553,
+            "rank": 192,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 812.8584440464097,
+            "effective_rank": 3.444505141788279,
+            "explained_fraction": 0.4142888236561808,
+            "probe_mse": 0.5253032710559701,
+            "rank": 32,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 125.69742920009895,
+            "effective_rank": 3.199228628497738,
+            "explained_fraction": 0.34406991063732373,
+            "probe_mse": 0.6477379226381244,
+            "rank": 32,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 270.56731327783996,
+            "effective_rank": 2.6828984473041952,
+            "explained_fraction": 0.41445737405091,
+            "probe_mse": 0.5251521042740048,
+            "rank": 64,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 88.31096657649131,
+            "effective_rank": 2.7752085378173463,
+            "explained_fraction": 0.3269739942241563,
+            "probe_mse": 0.6646203214831287,
+            "rank": 64,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 23661566.066836033,
+            "effective_rank": 1.143400640924623,
+            "explained_fraction": 0.46843626279320894,
+            "probe_mse": 0.47674038196182705,
+            "rank": 192,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 260.1297656433926,
+            "effective_rank": 1.1353489691658696,
+            "explained_fraction": 0.21352129764354044,
+            "probe_mse": 0.7766560630851409,
+            "rank": 192,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 617.0163562284605,
+            "effective_rank": 3.7500830837555914,
+            "explained_fraction": 0.4283369457179659,
+            "probe_mse": 0.5127040160488958,
+            "rank": 32,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 80.36233242814846,
+            "effective_rank": 3.6120224108524193,
+            "explained_fraction": 0.375647529535452,
+            "probe_mse": 0.6165546889389266,
+            "rank": 32,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 35.58544003742498,
+            "effective_rank": 2.6476721654163518,
+            "explained_fraction": 0.41882299078129837,
+            "probe_mse": 0.5212367397713757,
+            "rank": 64,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 204.16843553872795,
+            "effective_rank": 2.8150429426975525,
+            "explained_fraction": 0.34610977560358236,
+            "probe_mse": 0.6457235343410568,
+            "rank": 64,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 8253372.141651324,
+            "effective_rank": 1.8602569481295899,
+            "explained_fraction": 0.46433179465956287,
+            "probe_mse": 0.4804215316882302,
+            "rank": 192,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 90.2687024526248,
+            "effective_rank": 1.8752336815166741,
+            "explained_fraction": 0.20168491650776643,
+            "probe_mse": 0.7883446150402565,
+            "rank": 192,
+            "target_energy": 0.9875106099607174
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 330.02056209412194,
+            "effective_rank": 3.8828913542297756,
+            "explained_fraction": 0.42121184657434196,
+            "probe_mse": 0.5190942609988174,
+            "rank": 32,
+            "target_energy": 0.8968640044314453
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 75.98479519022672,
+            "effective_rank": 3.8611997690226825,
+            "explained_fraction": 0.3827447661518093,
+            "probe_mse": 0.609546092478872,
+            "rank": 32,
+            "target_energy": 0.9875106099607174
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.6129214763641357,
+          "nodes": 208,
+          "target_energy": 0.9087693691253662
+        },
+        "descriptor_isotropic": {
+          "mse": 0.6724101901054382,
+          "nodes": 422,
+          "target_energy": 1.1016765832901
+        },
+        "generic": {
+          "mse": 0.8304533958435059,
+          "nodes": 8,
+          "target_energy": 1.0322885513305664
+        }
+      },
+      "target_energy": 0.9875106811523438
+    },
+    "0.6": {
+      "current_model_mse": 0.7306450605392456,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 11.532720922682914,
+            "effective_rank": 10.236387568527126,
+            "explained_fraction": 0.3946345016747984,
+            "probe_mse": 0.6318244977101571,
+            "rank": 80,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 4.198443187844293,
+            "effective_rank": 10.665116756481355,
+            "explained_fraction": 0.3049860300577557,
+            "probe_mse": 0.6936303736217657,
+            "rank": 80,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 12220.705085303918,
+            "effective_rank": 3.9596385669909195,
+            "explained_fraction": 0.33538189286595355,
+            "probe_mse": 0.6936668886330597,
+            "rank": 64,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 8510.54345219216,
+            "effective_rank": 3.783329396007674,
+            "explained_fraction": 0.24818498873007389,
+            "probe_mse": 0.75031833850037,
+            "rank": 64,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 5494824.617216586,
+            "effective_rank": 1.5495882262363336,
+            "explained_fraction": 0.5395615443629365,
+            "probe_mse": 0.48056305944784505,
+            "rank": 192,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 89.65675657115759,
+            "effective_rank": 1.5348143038201227,
+            "explained_fraction": 0.20462628325192966,
+            "probe_mse": 0.7937903296573195,
+            "rank": 192,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 278.3173683253053,
+            "effective_rank": 1.9472773233234697,
+            "explained_fraction": 0.2614542014424871,
+            "probe_mse": 0.7708257730255941,
+            "rank": 32,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 161.9409518164547,
+            "effective_rank": 1.8746512155619668,
+            "explained_fraction": 0.23560460001256622,
+            "probe_mse": 0.7628736828586381,
+            "rank": 32,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 129.5718246603576,
+            "effective_rank": 3.2165614105685205,
+            "explained_fraction": 0.3500753132427141,
+            "probe_mse": 0.678331255903948,
+            "rank": 64,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 148.8597865289747,
+            "effective_rank": 2.9957277986549746,
+            "explained_fraction": 0.2506507296308411,
+            "probe_mse": 0.7478575062635795,
+            "rank": 64,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 11480409.6981435,
+            "effective_rank": 1.243347666167513,
+            "explained_fraction": 0.5416966712056164,
+            "probe_mse": 0.4783346115950091,
+            "rank": 192,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 161.3255824408841,
+            "effective_rank": 1.2117718360986567,
+            "explained_fraction": 0.21244417941231775,
+            "probe_mse": 0.7859879969428897,
+            "rank": 192,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 262.96867227475576,
+            "effective_rank": 2.2228164851431966,
+            "explained_fraction": 0.27585673500860575,
+            "probe_mse": 0.7557937410360899,
+            "rank": 32,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 116.85688413122068,
+            "effective_rank": 2.159807853777489,
+            "explained_fraction": 0.2536877837229907,
+            "probe_mse": 0.7448264981748898,
+            "rank": 32,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 203.25734205084203,
+            "effective_rank": 2.47313231695712,
+            "explained_fraction": 0.3624600232233537,
+            "probe_mse": 0.6654052414805096,
+            "rank": 64,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 32.30996183338784,
+            "effective_rank": 2.4061209162972514,
+            "explained_fraction": 0.2610805577588615,
+            "probe_mse": 0.7374484412747839,
+            "rank": 64,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 13936017.848073957,
+            "effective_rank": 1.0960877246481373,
+            "explained_fraction": 0.539573452019221,
+            "probe_mse": 0.48055063133793174,
+            "rank": 192,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 311.92209476073015,
+            "effective_rank": 1.0916770365987531,
+            "explained_fraction": 0.22436784035404023,
+            "probe_mse": 0.7740880729821763,
+            "rank": 192,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 201.0833676668367,
+            "effective_rank": 2.4056424787717297,
+            "explained_fraction": 0.2777854710400087,
+            "probe_mse": 0.7537807048164373,
+            "rank": 32,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 119.55034884829415,
+            "effective_rank": 2.368654571925018,
+            "explained_fraction": 0.26397314156271534,
+            "probe_mse": 0.7345616158707332,
+            "rank": 32,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 48.011751199736295,
+            "effective_rank": 2.433202739448179,
+            "explained_fraction": 0.37042422613596326,
+            "probe_mse": 0.6570929433418765,
+            "rank": 64,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 38.91410021900478,
+            "effective_rank": 2.376685100339311,
+            "explained_fraction": 0.26683902337102705,
+            "probe_mse": 0.7317014393053323,
+            "rank": 64,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 3039059.322292458,
+            "effective_rank": 1.6521352242411012,
+            "explained_fraction": 0.5350740854525664,
+            "probe_mse": 0.485246653871187,
+            "rank": 192,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 120.16725082870738,
+            "effective_rank": 1.6448131597221338,
+            "explained_fraction": 0.24038373869775898,
+            "probe_mse": 0.7581040582249405,
+            "rank": 192,
+            "target_energy": 0.9980092539426314
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 144.1902533178761,
+            "effective_rank": 2.6214295465722257,
+            "explained_fraction": 0.27523440113521225,
+            "probe_mse": 0.7564432755537535,
+            "rank": 32,
+            "target_energy": 1.0437074783055142
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 77.09410537635172,
+            "effective_rank": 2.6068986140582986,
+            "explained_fraction": 0.25940245956747277,
+            "probe_mse": 0.7391231987988143,
+            "rank": 32,
+            "target_energy": 0.9980092539426314
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.8990288972854614,
+          "nodes": 295,
+          "target_energy": 1.0812287330627441
+        },
+        "descriptor_isotropic": {
+          "mse": 0.7795291543006897,
+          "nodes": 335,
+          "target_energy": 1.056209921836853
+        },
+        "generic": {
+          "mse": 0.9873425960540771,
+          "nodes": 8,
+          "target_energy": 1.1888439655303955
+        }
+      },
+      "target_energy": 0.9980093240737915
+    },
+    "0.9": {
+      "current_model_mse": 0.027574807405471802,
+      "linear_probes": {
+        "final_coordinate_carrier": {
+          "16": {
+            "channels": 80,
+            "coefficient_norm": 23.67396666250808,
+            "effective_rank": 3.540564003664119,
+            "explained_fraction": 0.2030864814591694,
+            "probe_mse": 0.026408611680656884,
+            "rank": 80,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 80,
+            "coefficient_norm": 6.39640669038519,
+            "effective_rank": 3.582400689631064,
+            "explained_fraction": 0.0692351056699212,
+            "probe_mse": 0.025929373076739475,
+            "rank": 80,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_1_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 484.83016878210327,
+            "effective_rank": 2.4662608117279197,
+            "explained_fraction": 0.18271284164502077,
+            "probe_mse": 0.027083765922435322,
+            "rank": 64,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 432.4619264384738,
+            "effective_rank": 2.547067894030725,
+            "explained_fraction": 0.06901999850425555,
+            "probe_mse": 0.02593536556096831,
+            "rank": 64,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_1_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 409788.42095344403,
+            "effective_rank": 1.4480559108102824,
+            "explained_fraction": 0.5398345110601861,
+            "probe_mse": 0.01524924778350152,
+            "rank": 192,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 166.07611586476662,
+            "effective_rank": 1.4044541086591689,
+            "explained_fraction": 0.21183702811703564,
+            "probe_mse": 0.021956749623581795,
+            "rank": 192,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_1_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 333.24138097777285,
+            "effective_rank": 1.2496807799617478,
+            "explained_fraction": 0.10233355099894981,
+            "probe_mse": 0.02974742443048206,
+            "rank": 32,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 193.5564345660273,
+            "effective_rank": 1.250684072245803,
+            "explained_fraction": 0.037035622817783165,
+            "probe_mse": 0.026826390582274096,
+            "rank": 32,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_2_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 58.07496923424488,
+            "effective_rank": 2.191384458395537,
+            "explained_fraction": 0.17613366797193253,
+            "probe_mse": 0.02730179063737594,
+            "rank": 64,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 14.203234403791198,
+            "effective_rank": 2.2880996673540923,
+            "explained_fraction": 0.07171649150348347,
+            "probe_mse": 0.025860246297874354,
+            "rank": 64,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_2_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 374719.430615905,
+            "effective_rank": 1.4638666940040839,
+            "explained_fraction": 0.5444833926876023,
+            "probe_mse": 0.015095190276894564,
+            "rank": 192,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 113.34857435614921,
+            "effective_rank": 1.4172047821716869,
+            "explained_fraction": 0.21726600308225674,
+            "probe_mse": 0.021805508511938004,
+            "rank": 192,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_2_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 149.23635820615277,
+            "effective_rank": 1.5164291267973096,
+            "explained_fraction": 0.1041856593870083,
+            "probe_mse": 0.029686048120414837,
+            "rank": 32,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 56.572988371729984,
+            "effective_rank": 1.5630425349860624,
+            "explained_fraction": 0.03311685634152983,
+            "probe_mse": 0.026935560103581113,
+            "rank": 32,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_3_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 44.60181562894627,
+            "effective_rank": 1.915322873333931,
+            "explained_fraction": 0.17107946713908573,
+            "probe_mse": 0.02746927986179655,
+            "rank": 64,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 11.12025521039587,
+            "effective_rank": 2.037105545101344,
+            "explained_fraction": 0.0597375010424982,
+            "probe_mse": 0.026193958618394513,
+            "rank": 64,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_3_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 405752.2720800142,
+            "effective_rank": 1.4047077081016373,
+            "explained_fraction": 0.5507452091206371,
+            "probe_mse": 0.01488768234190764,
+            "rank": 192,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 181.60093612951675,
+            "effective_rank": 1.3754449124025512,
+            "explained_fraction": 0.21425830301174054,
+            "probe_mse": 0.02188929742330158,
+            "rank": 192,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_3_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 108.87666740259142,
+            "effective_rank": 1.4702337944685875,
+            "explained_fraction": 0.08692418178396599,
+            "probe_mse": 0.030258069611388886,
+            "rank": 32,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 36.88447277557692,
+            "effective_rank": 1.5322898766304505,
+            "explained_fraction": 0.03187688639266917,
+            "probe_mse": 0.026970103352476522,
+            "rank": 32,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_4_edge_direction": {
+          "16": {
+            "channels": 64,
+            "coefficient_norm": 224.1115416541286,
+            "effective_rank": 1.8885932969132722,
+            "explained_fraction": 0.1701167205456542,
+            "probe_mse": 0.027501183952191907,
+            "rank": 64,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 64,
+            "coefficient_norm": 12.595107355574465,
+            "effective_rank": 2.050257528708401,
+            "explained_fraction": 0.06454127911947605,
+            "probe_mse": 0.02606013432539142,
+            "rank": 64,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_4_node_position": {
+          "16": {
+            "channels": 192,
+            "coefficient_norm": 313638.01116541174,
+            "effective_rank": 1.3483905003896524,
+            "explained_fraction": 0.538110635291055,
+            "probe_mse": 0.015306374641954158,
+            "rank": 192,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 192,
+            "coefficient_norm": 73.65193551569713,
+            "effective_rank": 1.3404346185805354,
+            "explained_fraction": 0.21106099250872645,
+            "probe_mse": 0.02197836852748681,
+            "rank": 192,
+            "target_energy": 0.02785813392264029
+          }
+        },
+        "layer_4_vector": {
+          "16": {
+            "channels": 32,
+            "coefficient_norm": 122.0917807920143,
+            "effective_rank": 1.4624125099257106,
+            "explained_fraction": 0.09988020263436626,
+            "probe_mse": 0.029828725001711288,
+            "rank": 32,
+            "target_energy": 0.03313861675858096
+          },
+          "64": {
+            "channels": 32,
+            "coefficient_norm": 23.5986848676008,
+            "effective_rank": 1.5133607498088595,
+            "explained_fraction": 0.031916392479203526,
+            "probe_mse": 0.02696900278662709,
+            "rank": 32,
+            "target_energy": 0.02785813392264029
+          }
+        }
+      },
+      "local_symmetry_strata": {
+        "descriptor_axial": {
+          "mse": 0.03432025760412216,
+          "nodes": 392,
+          "target_energy": 0.03426065295934677
+        },
+        "descriptor_isotropic": {
+          "mse": 0.03074054978787899,
+          "nodes": 216,
+          "target_energy": 0.030867472290992737
+        },
+        "generic": {
+          "mse": 0.03605031222105026,
+          "nodes": 30,
+          "target_energy": 0.03704465553164482
+        }
+      },
+      "target_energy": 0.027858134359121323
+    }
+  },
+  "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_volume_normalized_coordinate_pretraining_v1/seed_5705/checkpoint_step_00008441.pt",
+  "decision_boundary": "No diagnostic result changes historical H1a failure or authorizes slots, reciprocal carriers, joint training, H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT before the separately frozen next mechanism.",
+  "matched_environment_pair": {
+    "checks": {
+      "fourth_order_separated": true,
+      "matched_count": true,
+      "matched_first_moments": true,
+      "matched_second_moments": true
+    },
+    "constant_edge_state_operator_output_norm": {
+      "1": {
+        "octahedral": 2.469586206643726e-07,
+        "triangular_prism": 2.228895681355425e-07
+      },
+      "2": {
+        "octahedral": 2.2252177700465836e-07,
+        "triangular_prism": 2.1022130169967568e-07
+      },
+      "3": {
+        "octahedral": 2.807593943998654e-07,
+        "triangular_prism": 2.707199655560544e-07
+      },
+      "4": {
+        "octahedral": 2.691849658731371e-07,
+        "triangular_prism": 2.4239031404249545e-07
+      }
+    },
+    "fourth_order_fingerprint_distance": 0.36031224286848845,
+    "left": "octahedral",
+    "right": "triangular_prism"
+  },
+  "protocol": "h1a_persistent_edge_causal_attribution_v1",
+  "protocol_sha256": "b5140e34dc00c8b067e2f58e87a003837be639954f1c0236ec15aef911c2ad0f",
+  "selected_validation_indices": [
+    4277,
+    64416,
+    10460,
+    44219,
+    38196,
+    19426,
+    11524,
+    22367,
+    14445,
+    56961,
+    22536,
+    58277,
+    8345,
+    60663,
+    1995,
+    62007,
+    5628,
+    40599,
+    53844,
+    7192,
+    46326,
+    30682,
+    255,
+    15331,
+    32803,
+    11114,
+    15303,
+    13061,
+    1240,
+    35960,
+    32682,
+    18828,
+    64112,
+    18537,
+    36334,
+    33652,
+    57640,
+    8743,
+    47641,
+    38004,
+    44884,
+    60433,
+    28706,
+    2588,
+    47820,
+    13640,
+    13301,
+    45006,
+    24318,
+    37238,
+    52377,
+    45218,
+    3403,
+    8293,
+    56577,
+    42026,
+    14644,
+    31232,
+    24424,
+    59612,
+    38080,
+    33207,
+    4651,
+    40976
+  ],
+  "synthetic_environments": {
+    "cubic": {
+      "count": 8,
+      "first_moment_norm": 0.0,
+      "fourth_order_fingerprint": [
+        0.11111111111111117,
+        0.11111111111111117,
+        0.11111111111111117,
+        0.22222222222222224,
+        0.22222222222222224,
+        0.22222222222222224,
+        0.2592592592592595
+      ],
+      "second_stf_norm": 1.9229626863835638e-16
+    },
+    "cuboctahedral": {
+      "count": 12,
+      "first_moment_norm": 0.0,
+      "fourth_order_fingerprint": [
+        0.1666666666666666,
+        0.1666666666666666,
+        0.16666666666666663,
+        0.20833333333333315,
+        0.20833333333333318,
+        0.20833333333333318,
+        0.22222222222222224
+      ],
+      "second_stf_norm": 0.0
+    },
+    "octahedral": {
+      "count": 6,
+      "first_moment_norm": 0.0,
+      "fourth_order_fingerprint": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.1666666666666666,
+        0.1666666666666666,
+        0.1666666666666666,
+        0.11111111111111117
+      ],
+      "second_stf_norm": 0.0
+    },
+    "tetrahedral": {
+      "count": 4,
+      "first_moment_norm": 0.0,
+      "fourth_order_fingerprint": [
+        0.11111111111111117,
+        0.11111111111111117,
+        0.11111111111111117,
+        0.22222222222222224,
+        0.22222222222222224,
+        0.22222222222222224,
+        0.2592592592592595
+      ],
+      "second_stf_norm": 1.9229626863835638e-16
+    },
+    "triangular_prism": {
+      "count": 6,
+      "first_moment_norm": 1.0467283057891834e-16,
+      "fourth_order_fingerprint": [
+        0.1666666666666667,
+        0.1666666666666666,
+        0.11111111111111117,
+        0.16666666666666674,
+        0.23611111111111113,
+        0.23611111111111102,
+        0.23456790123456817
+      ],
+      "second_stf_norm": 2.0448491146000804e-16
+    }
+  }
+}

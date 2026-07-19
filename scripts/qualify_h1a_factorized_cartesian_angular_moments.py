@@ -1,9 +1,10 @@
-"""Zero-training CUDA qualification for factorized Cartesian angular moments."""
+"""Zero-training CUDA qualification for the dynamic persistent-edge backbone."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any
@@ -81,6 +82,25 @@ def _precision_probe(
     )
 
 
+@torch.no_grad()
+def _output_probe(
+    diffusion: TensorFreeHybridDiffusion,
+    clean: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+    blueprint: ParentBlueprintBatch,
+    times: torch.Tensor,
+    *,
+    seed: int,
+) -> torch.Tensor:
+    output = diffusion(
+        *clean,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=times,
+        generator=torch.Generator(device=times.device).manual_seed(seed),
+    )
+    return output.prediction.coordinate_cartesian_scaled_score.detach().float()
+
+
 def _benchmark(
     diffusion: TensorFreeHybridDiffusion,
     clean: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
@@ -138,6 +158,8 @@ def main() -> None:
     protocol = load_json_object(args.protocol)
     if protocol.get("status_before_run") != "frozen_not_run":
         raise ValueError("qualification protocol was not frozen before execution")
+    if protocol.get("protocol") != "h1a_dynamic_persistent_edge_v1":
+        raise ValueError("unexpected dynamic persistent-edge qualification protocol")
     device = torch.device(args.device)
     if device.type != "cuda" or not torch.cuda.is_available():
         raise RuntimeError("formal factorized-angular qualification requires CUDA")
@@ -146,6 +168,13 @@ def main() -> None:
         prerequisites["cache_manifest_sha256"]
     ):
         raise ValueError("qualified cache manifest mismatch")
+    causal_root = Path("reports") / str(prerequisites["causal_audit"])
+    if sha256_file(causal_root / "span_result.json") != str(
+        prerequisites["span_result_sha256"]
+    ) or sha256_file(causal_root / "startup_result.json") != str(
+        prerequisites["startup_result_sha256"]
+    ):
+        raise ValueError("dynamic-edge causal evidence hash mismatch")
 
     data = protocol["data"]
     dataset = PackedAlexP1Dataset(args.cache_root, str(data["split"]))
@@ -180,6 +209,7 @@ def main() -> None:
         radial_cutoff=float(model_spec["radial_cutoff_angstrom"]),
         edge_dim=int(model_spec["edge_dim"]),
         angular_channels=int(model_spec["angular_channels"]),
+        edge_refresh_rank=int(model_spec["edge_refresh_rank"]),
     ).to(device)
     standardizer = P1LatticeStandardizer.from_json(args.lattice_standardization)
     diffusion = TensorFreeHybridDiffusion(model, standardizer)
@@ -195,58 +225,42 @@ def main() -> None:
     )
     probe_output = mixer(probe_carrier, probe_state)
     probe_reference = torch.einsum("c,ncd->nd", mixer.base_weight, probe_carrier)
-    function_preserving_max_abs = float((probe_output - probe_reference).abs().max())
-
-    initial_output, _, _, initial_candidates = _precision_probe(
-        diffusion,
-        clean,
-        blueprint,
-        times,
-        seed=int(data["noise_seed"]),
-        bf16=False,
-    )
-    carrier_projection_gradient = model.coordinate_carrier_mixer.carrier_projection.weight.grad
-    if carrier_projection_gradient is None:
-        raise RuntimeError("adaptive carrier projection has no gradient")
-    carrier_projection_gradient_norm = float(carrier_projection_gradient.norm().cpu())
-    angular_output_gradients = [
-        block.angular_scalar_residual[-1].weight.grad
-        for block in model.blocks
-    ] + [
-        block.angular_vector_residual[-1].weight.grad
-        for block in model.blocks
-    ] + [model.coordinate_edge_residual[-1].weight.grad]
-    if any(gradient is None for gradient in angular_output_gradients):
-        raise RuntimeError("factorized angular residual has a disconnected output projection")
-    initial_angular_output_gradient_norm = sum(
-        float(gradient.norm().cpu())
-        for gradient in angular_output_gradients
-        if gradient is not None
-    )
-    initial_angular_internal_gradient_norm = sum(
-        float(block.angular_moments.coefficient_projection.weight.grad.norm().cpu())
-        if block.angular_moments.coefficient_projection.weight.grad is not None
-        else 0.0
-        for block in model.blocks
+    mixer_relative_perturbation = float(
+        (
+            (probe_output - probe_reference).square().mean().sqrt()
+            / probe_reference.square().mean().sqrt().clamp_min(1.0e-30)
+        ).cpu()
     )
 
-    # Activate only the zero-initialized residual outputs for a no-optimizer
-    # precision and gradient probe.  This makes the angular path observable
-    # while preserving the preregistered architecture and random state.
-    activation_generator = torch.Generator(device=device).manual_seed(
-        int(data["model_seed"]) + 2
+    residual_names = tuple(
+        name
+        for name in parameters_before
+        if name.endswith(
+            (
+                "angular_scalar_residual.2.weight",
+                "angular_vector_residual.2.weight",
+                "coordinate_edge_residual.2.weight",
+                "coordinate_carrier_mixer.carrier_projection.weight",
+            )
+        )
+    )
+    active_output = _output_probe(
+        diffusion, clean, blueprint, times, seed=int(data["noise_seed"])
     )
     with torch.no_grad():
-        for block in model.blocks:
-            block.angular_scalar_residual[-1].weight.normal_(
-                std=0.01, generator=activation_generator
-            )
-            block.angular_vector_residual[-1].weight.normal_(
-                std=0.01, generator=activation_generator
-            )
-        model.coordinate_edge_residual[-1].weight.normal_(
-            std=0.01, generator=activation_generator
-        )
+        state = model.state_dict()
+        for name in residual_names:
+            state[name].zero_()
+    zero_residual_output = _output_probe(
+        diffusion, clean, blueprint, times, seed=int(data["noise_seed"])
+    )
+    model.load_state_dict(parameters_before, strict=True)
+    output_relative_perturbation = float(
+        (
+            (active_output - zero_residual_output).square().mean().sqrt()
+            / zero_residual_output.square().mean().sqrt().clamp_min(1.0e-30)
+        ).cpu()
+    )
 
     fp32_output, fp32_gradient, fp32_loss, fp32_candidates = _precision_probe(
         diffusion,
@@ -256,16 +270,31 @@ def main() -> None:
         seed=int(data["noise_seed"]),
         bf16=False,
     )
-    angular_internal_gradients = [
-        block.angular_moments.coefficient_projection.weight.grad
-        for block in model.blocks
+    requested_gradient_fragments = (
+        "angular_moments.coefficient_projection",
+        "edge_source_refresh",
+        "edge_target_refresh",
+        "edge_context_refresh",
+        "edge_vector_refresh",
+        "edge_update",
+        "angular_scalar_residual.0",
+        "angular_vector_residual.0",
+        "coordinate_edge_residual.0",
+        "coordinate_carrier_mixer.state_projection",
+    )
+    internal_gradients = [
+        parameter.grad
+        for name, parameter in model.named_parameters()
+        if any(fragment in name for fragment in requested_gradient_fragments)
     ]
-    if any(gradient is None for gradient in angular_internal_gradients):
-        raise RuntimeError("active factorized angular moments have no internal gradient")
-    angular_internal_gradient_norm = sum(
-        float(gradient.norm().cpu())
-        for gradient in angular_internal_gradients
-        if gradient is not None
+    if not internal_gradients or any(gradient is None for gradient in internal_gradients):
+        raise RuntimeError("dynamic edge internals do not all receive first-step gradients")
+    internal_gradient_norm = math.sqrt(
+        sum(
+            float(gradient.detach().float().square().sum().cpu())
+            for gradient in internal_gradients
+            if gradient is not None
+        )
     )
     bf16_output, bf16_gradient, bf16_loss, bf16_candidates = _precision_probe(
         diffusion,
@@ -293,7 +322,6 @@ def main() -> None:
     names = tuple(name for name, _ in model.named_parameters())
     parameter_count = sum(value.numel() for value in model.parameters())
     initial_nonzero = int(torch.count_nonzero(mixer.carrier_projection.weight))
-    model.load_state_dict(parameters_before, strict=True)
     parameters_unchanged = all(
         torch.equal(value, model.state_dict()[name]) for name, value in parameters_before.items()
     )
@@ -303,12 +331,14 @@ def main() -> None:
     ) and all(torch.isfinite(torch.tensor(value)) for value in (fp32_loss, bf16_loss))
 
     metrics: dict[str, Any] = {
-        "function_preserving_max_abs": function_preserving_max_abs,
+        "mixer_relative_initial_perturbation": mixer_relative_perturbation,
+        "coordinate_relative_initial_perturbation": output_relative_perturbation,
         "parameter_count": parameter_count,
         "added_parameter_count": parameter_count - 4_481_337,
         "adaptive_rank": mixer.rank,
         "edge_dim": model.edge_dim,
         "angular_channels": model.angular_channels,
+        "edge_refresh_rank": model.edge_refresh_rank,
         "coordinate_chart": model.coordinate_chart,
         "explicit_triplet_indices": sum(
             1 for name, _ in model.named_buffers() if "triplet" in name
@@ -324,17 +354,13 @@ def main() -> None:
                 )
             )
         ),
-        "initial_angular_output_gradient_norm": initial_angular_output_gradient_norm,
-        "initial_angular_internal_gradient_norm": initial_angular_internal_gradient_norm,
-        "active_angular_internal_gradient_norm": angular_internal_gradient_norm,
-        "initial_coordinate_output_rms": float(initial_output.square().mean().sqrt().cpu()),
+        "first_step_internal_gradient_norm": internal_gradient_norm,
         "legacy_global_head_parameters": sum(
             parameter.numel()
             for name, parameter in model.named_parameters()
             if "coordinate_carrier_head" in name
         ),
         "carrier_projection_initial_nonzero": initial_nonzero,
-        "carrier_projection_gradient_norm": carrier_projection_gradient_norm,
         "finite_coordinate_output_and_gradient": finite,
         "fp32_coordinate_loss": fp32_loss,
         "bf16_coordinate_loss": bf16_loss,
@@ -345,7 +371,7 @@ def main() -> None:
         "forward_graphs_per_second": graphs_per_second,
         "peak_cuda_memory_mib": peak_mib,
         "tensor_free_atlas_candidates": max(
-            initial_candidates, fp32_candidates, bf16_candidates
+            fp32_candidates, bf16_candidates
         ),
         "optimizer_steps": 0,
         "parameters_unchanged": parameters_unchanged,
@@ -357,8 +383,12 @@ def main() -> None:
     }
     acceptance = protocol["acceptance"]
     checks = {
-        "function_preserving": metrics["function_preserving_max_abs"]
-        <= float(acceptance["function_preserving_max_abs"]),
+        "mixer_initial_perturbation": metrics["mixer_relative_initial_perturbation"]
+        <= float(acceptance["mixer_relative_initial_perturbation_max"]),
+        "coordinate_initial_perturbation": metrics[
+            "coordinate_relative_initial_perturbation"
+        ]
+        <= float(acceptance["coordinate_relative_initial_perturbation_max"]),
         "parameter_count": metrics["parameter_count"] == int(acceptance["parameter_count_exact"]),
         "added_parameter_count": metrics["added_parameter_count"]
         == int(acceptance["added_parameter_count_exact"]),
@@ -366,24 +396,24 @@ def main() -> None:
         "edge_dim": metrics["edge_dim"] == int(acceptance["edge_dim_exact"]),
         "angular_channels": metrics["angular_channels"]
         == int(acceptance["angular_channels_exact"]),
+        "edge_refresh_rank": metrics["edge_refresh_rank"]
+        == int(acceptance["edge_refresh_rank_exact"]),
         "coordinate_chart": metrics["coordinate_chart"]
         == str(acceptance["coordinate_chart_exact"]),
         "no_explicit_triplets": metrics["explicit_triplet_indices"]
         == int(acceptance["explicit_triplet_indices"]),
-        "zero_angular_residual": metrics["initial_angular_residual_nonzero"]
-        == int(acceptance["initial_angular_residual_nonzero"]),
-        "angular_output_gradient": metrics["initial_angular_output_gradient_norm"]
-        >= float(acceptance["angular_output_gradient_norm_min"]),
-        "zero_initial_internal_gradient": metrics["initial_angular_internal_gradient_norm"]
-        == float(acceptance["initial_angular_internal_gradient_norm"]),
-        "active_angular_internal_gradient": metrics["active_angular_internal_gradient_norm"]
-        >= float(acceptance["active_angular_internal_gradient_norm_min"]),
+        "nonzero_residual_initialization": metrics[
+            "initial_angular_residual_nonzero"
+        ]
+        >= int(acceptance["initial_angular_residual_nonzero_min"]),
+        "first_step_internal_gradient": metrics["first_step_internal_gradient_norm"]
+        >= float(acceptance["first_step_internal_gradient_norm_min"]),
         "no_legacy_head": metrics["legacy_global_head_parameters"]
         == int(acceptance["legacy_global_head_parameters"]),
-        "zero_residual_initialization": metrics["carrier_projection_initial_nonzero"]
-        == int(acceptance["carrier_projection_initial_nonzero"]),
-        "adaptive_gradient": metrics["carrier_projection_gradient_norm"]
-        >= float(acceptance["carrier_projection_gradient_norm_min"]),
+        "adaptive_nonzero_initialization": metrics[
+            "carrier_projection_initial_nonzero"
+        ]
+        >= int(acceptance["carrier_projection_initial_nonzero_min"]),
         "finite": bool(metrics["finite_coordinate_output_and_gradient"]),
         "output_relative_rmse": metrics["bf16_fp32_output_relative_rmse"]
         <= float(acceptance["bf16_fp32_output_relative_rmse_max"]),

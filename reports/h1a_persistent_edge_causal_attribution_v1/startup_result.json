@@ -1,0 +1,246 @@
+{
+  "all_finite": true,
+  "cumulative_raw_gradient_energy": {
+    "adaptive_mixer_u": 1732.156778715551,
+    "adaptive_mixer_v": 17.096255780939828,
+    "angular_coefficient_projection": 0.007823145380811525,
+    "angular_scalar_internal": 0.00345309495775348,
+    "angular_scalar_output": 0.004645857051555069,
+    "angular_vector_internal": 0.056876478342690884,
+    "angular_vector_output": 1.603878879774129,
+    "coordinate_edge_internal": 2.068174421691083,
+    "coordinate_edge_output": 97.76542667439207,
+    "edge_update": 2.8943274969693746
+  },
+  "decision_boundary": "No diagnostic result changes historical H1a failure or authorizes slots, reciprocal carriers, joint training, H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT before the separately frozen next mechanism.",
+  "first_active_step": {
+    "adaptive_mixer_u": 1,
+    "adaptive_mixer_v": 2,
+    "angular_coefficient_projection": 2,
+    "angular_scalar_internal": 2,
+    "angular_scalar_output": 1,
+    "angular_vector_internal": 2,
+    "angular_vector_output": 1,
+    "coordinate_edge_internal": 2,
+    "coordinate_edge_output": 1,
+    "edge_update": 2
+  },
+  "graphs_presented": 64000,
+  "parameter_delta_norm": {
+    "adaptive_mixer_u": 0.2052576278565472,
+    "adaptive_mixer_v": 0.30292878830245634,
+    "angular_coefficient_projection": 1.819697755145643,
+    "angular_scalar_internal": 2.9307055220933402,
+    "angular_scalar_output": 3.181970343883766,
+    "angular_vector_internal": 7.4201708172871825,
+    "angular_vector_output": 2.636059680090195,
+    "coordinate_edge_internal": 0.7989697377471869,
+    "coordinate_edge_output": 0.8609732937165552,
+    "edge_update": 2.8158692098577127
+  },
+  "protocol": "h1a_persistent_edge_causal_attribution_v1",
+  "protocol_sha256": "b5140e34dc00c8b067e2f58e87a003837be639954f1c0236ec15aef911c2ad0f",
+  "seed": 5705,
+  "selected_records": [
+    {
+      "coordinate_loss": 1.0219972133636475,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.9593793750874418,
+        "adaptive_mixer_v": 0.0,
+        "angular_coefficient_projection": 0.0,
+        "angular_scalar_internal": 0.0,
+        "angular_scalar_output": 0.017881525776691234,
+        "angular_vector_internal": 0.0,
+        "angular_vector_output": 0.03305012345165234,
+        "coordinate_edge_internal": 0.0,
+        "coordinate_edge_output": 2.874709073149668,
+        "edge_update": 0.0
+      },
+      "step": 1,
+      "total_gradient_norm_before_clip": 9.31447696685791
+    },
+    {
+      "coordinate_loss": 0.9321022033691406,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 1.1628454617977755,
+        "adaptive_mixer_v": 0.009755645809041185,
+        "angular_coefficient_projection": 0.0006316649299146093,
+        "angular_scalar_internal": 7.259565851787668e-05,
+        "angular_scalar_output": 0.010279280182078826,
+        "angular_vector_internal": 0.0007493595588014781,
+        "angular_vector_output": 0.05111925774644195,
+        "coordinate_edge_internal": 0.010372502509282962,
+        "coordinate_edge_output": 1.7641242747138086,
+        "edge_update": 0.008310824124317145
+      },
+      "step": 2,
+      "total_gradient_norm_before_clip": 5.581989765167236
+    },
+    {
+      "coordinate_loss": 0.945697009563446,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.7855562168743846,
+        "adaptive_mixer_v": 0.014215475374397369,
+        "angular_coefficient_projection": 0.0005448501495420107,
+        "angular_scalar_internal": 8.191719445425142e-05,
+        "angular_scalar_output": 0.006383216483827152,
+        "angular_vector_internal": 0.0012939077157560306,
+        "angular_vector_output": 0.048597099220978254,
+        "coordinate_edge_internal": 0.012311392881309034,
+        "coordinate_edge_output": 1.017214895134406,
+        "edge_update": 0.01108271941660168
+      },
+      "step": 4,
+      "total_gradient_norm_before_clip": 3.2626118659973145
+    },
+    {
+      "coordinate_loss": 0.9665417075157166,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.48593661624055334,
+        "adaptive_mixer_v": 0.018348604229809325,
+        "angular_coefficient_projection": 0.0009349996399506887,
+        "angular_scalar_internal": 0.00010392616633714512,
+        "angular_scalar_output": 0.005713381047969645,
+        "angular_vector_internal": 0.0012525799314742744,
+        "angular_vector_output": 0.03180426789684323,
+        "coordinate_edge_internal": 0.018049213374282443,
+        "coordinate_edge_output": 0.983416378156856,
+        "edge_update": 0.016324527781251968
+      },
+      "step": 8,
+      "total_gradient_norm_before_clip": 2.8950068950653076
+    },
+    {
+      "coordinate_loss": 0.8596956133842468,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.9696272293031752,
+        "adaptive_mixer_v": 0.07760937227107444,
+        "angular_coefficient_projection": 0.0012330682418104652,
+        "angular_scalar_internal": 0.00014009213510007433,
+        "angular_scalar_output": 0.004145270918031556,
+        "angular_vector_internal": 0.002133837132981232,
+        "angular_vector_output": 0.04297114868133763,
+        "coordinate_edge_internal": 0.02482769345276589,
+        "coordinate_edge_output": 0.8439692459650208,
+        "edge_update": 0.02147617361161817
+      },
+      "step": 16,
+      "total_gradient_norm_before_clip": 2.3729755878448486
+    },
+    {
+      "coordinate_loss": 0.8472985029220581,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.6946860716921339,
+        "adaptive_mixer_v": 0.08573526460944876,
+        "angular_coefficient_projection": 0.0009847140330638221,
+        "angular_scalar_internal": 0.00017566150318252565,
+        "angular_scalar_output": 0.002816357609828603,
+        "angular_vector_internal": 0.001163119784233004,
+        "angular_vector_output": 0.015342865696069633,
+        "coordinate_edge_internal": 0.03218867146321764,
+        "coordinate_edge_output": 0.49204288356252684,
+        "edge_update": 0.02943402720091861
+      },
+      "step": 32,
+      "total_gradient_norm_before_clip": 1.9190093278884888
+    },
+    {
+      "coordinate_loss": 0.7617250680923462,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 1.7009644409266393,
+        "adaptive_mixer_v": 0.24515821865791457,
+        "angular_coefficient_projection": 0.001406799387199209,
+        "angular_scalar_internal": 0.00016787772845830386,
+        "angular_scalar_output": 0.002342934378939564,
+        "angular_vector_internal": 0.005113414248732678,
+        "angular_vector_output": 0.044862954420739336,
+        "coordinate_edge_internal": 0.02944038126315363,
+        "coordinate_edge_output": 0.41909220150027254,
+        "edge_update": 0.0276587243627086
+      },
+      "step": 64,
+      "total_gradient_norm_before_clip": 2.4882588386535645
+    },
+    {
+      "coordinate_loss": 0.7347773313522339,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 2.130643195524709,
+        "adaptive_mixer_v": 0.23647034519343618,
+        "angular_coefficient_projection": 0.0017312693667971908,
+        "angular_scalar_internal": 0.00024246231571569096,
+        "angular_scalar_output": 0.002185650046097619,
+        "angular_vector_internal": 0.005492632454019634,
+        "angular_vector_output": 0.04335711846246964,
+        "coordinate_edge_internal": 0.025429850922595518,
+        "coordinate_edge_output": 0.3083314384367856,
+        "edge_update": 0.025291974594225095
+      },
+      "step": 128,
+      "total_gradient_norm_before_clip": 2.7358624935150146
+    },
+    {
+      "coordinate_loss": 0.6949476003646851,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 1.8327019933767463,
+        "adaptive_mixer_v": 0.16682090675492195,
+        "angular_coefficient_projection": 0.0007885142139053145,
+        "angular_scalar_internal": 0.00022495299000647786,
+        "angular_scalar_output": 0.0010645725420088757,
+        "angular_vector_internal": 0.0047140960912703455,
+        "angular_vector_output": 0.033432912618396746,
+        "coordinate_edge_internal": 0.013294325497015513,
+        "coordinate_edge_output": 0.14164650302563508,
+        "edge_update": 0.014244824981574573
+      },
+      "step": 256,
+      "total_gradient_norm_before_clip": 2.226919651031494
+    },
+    {
+      "coordinate_loss": 0.6604498028755188,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 1.3657449141520632,
+        "adaptive_mixer_v": 0.1563868400275021,
+        "angular_coefficient_projection": 0.002183107498848129,
+        "angular_scalar_internal": 0.000559285822817808,
+        "angular_scalar_output": 0.0012119592131797866,
+        "angular_vector_internal": 0.004824861549798108,
+        "angular_vector_output": 0.028197769474839787,
+        "coordinate_edge_internal": 0.037910535508680517,
+        "coordinate_edge_output": 0.2102428938359896,
+        "edge_update": 0.04099685378969061
+      },
+      "step": 512,
+      "total_gradient_norm_before_clip": 1.9876147508621216
+    },
+    {
+      "coordinate_loss": 0.67035311460495,
+      "raw_group_gradient_norm": {
+        "adaptive_mixer_u": 0.9763273337453252,
+        "adaptive_mixer_v": 0.06542437090553044,
+        "angular_coefficient_projection": 0.0035447841501895236,
+        "angular_scalar_internal": 0.002647230332209675,
+        "angular_scalar_output": 0.0017704517165336858,
+        "angular_vector_internal": 0.011826483798450619,
+        "angular_vector_output": 0.03343791204381351,
+        "coordinate_edge_internal": 0.043789086560417176,
+        "coordinate_edge_output": 0.15770648190088954,
+        "edge_update": 0.05195845034080829
+      },
+      "step": 1000,
+      "total_gradient_norm_before_clip": 1.3567898273468018
+    }
+  ],
+  "steps": 1000,
+  "training_config": {
+    "coordinate_sigma_max": 0.5,
+    "coordinate_sigma_min": 0.005,
+    "ema_decay": 0.999,
+    "gradient_clip_norm": 1.0,
+    "learning_rate": 0.0002,
+    "maximum_time": 0.999,
+    "minimum_time": 0.001,
+    "objective": "coordinate",
+    "precision": "bf16",
+    "weight_decay": 1e-06
+  }
+}

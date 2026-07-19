@@ -100,15 +100,24 @@ def test_compact_carrier_is_finite_and_differentiable_at_zero() -> None:
     assert hidden.grad is not None and torch.isfinite(hidden.grad).all()
 
 
-def test_state_adaptive_mixer_is_function_preserving_at_initialization() -> None:
+def test_state_adaptive_mixer_has_small_orthogonal_initial_residual() -> None:
     generator = torch.Generator().manual_seed(167)
     mixer = StateAdaptiveCartesianCarrierMixer(9, 12, rank=3)
     carrier = torch.randn((7, 9, 3), generator=generator)
     state = torch.randn((7, 12), generator=generator)
     observed = mixer(carrier, state)
     expected = torch.einsum("c,ncd->nd", mixer.base_weight, carrier)
-    assert torch.equal(mixer.carrier_projection.weight, torch.zeros_like(mixer.carrier_projection.weight))
-    torch.testing.assert_close(observed, expected, atol=0.0, rtol=0.0)
+    weight = mixer.carrier_projection.weight.detach()
+    torch.testing.assert_close(
+        weight.T @ weight,
+        torch.eye(3) * 1.0e-4,
+        atol=2e-11,
+        rtol=2e-6,
+    )
+    relative_change = torch.linalg.vector_norm(observed - expected) / torch.linalg.vector_norm(
+        expected
+    )
+    assert 0.0 < float(relative_change) < 0.05
 
 
 def test_state_adaptive_mixer_preserves_o3_and_node_permutation_covariance() -> None:
@@ -138,10 +147,8 @@ def test_state_adaptive_mixer_has_finite_trainable_low_rank_path() -> None:
     assert torch.isfinite(mixer.carrier_projection.weight.grad).all()
     assert float(mixer.carrier_projection.weight.grad.norm()) > 0.0
     assert mixer.state_projection.weight.grad is not None
-    assert torch.equal(
-        mixer.state_projection.weight.grad,
-        torch.zeros_like(mixer.state_projection.weight.grad),
-    )
+    assert torch.isfinite(mixer.state_projection.weight.grad).all()
+    assert float(mixer.state_projection.weight.grad.norm()) > 0.0
 
 
 def test_production_model_contains_only_the_adaptive_compact_coordinate_readout() -> None:
@@ -149,7 +156,7 @@ def test_production_model_contains_only_the_adaptive_compact_coordinate_readout(
 
     model = HybridCrystalDenoiser()
     names = tuple(name for name, _ in model.named_parameters())
-    assert sum(parameter.numel() for parameter in model.parameters()) == 4_948_281
+    assert sum(parameter.numel() for parameter in model.parameters()) == 5_034_297
     assert not any("coordinate_vector_head" in name for name in names)
     assert not any("coordinate_edge_head" in name for name in names)
     assert not any("coordinate_carrier_head" in name for name in names)
@@ -157,8 +164,14 @@ def test_production_model_contains_only_the_adaptive_compact_coordinate_readout(
     assert model.coordinate_carrier_mixer.rank == 8
     assert model.edge_dim == 64
     assert model.angular_channels == 8
+    assert model.edge_refresh_rank == 16
     for block in model.blocks:
         assert block.angular_moments.channels == 8
-        assert torch.count_nonzero(block.angular_scalar_residual[-1].weight) == 0
-        assert torch.count_nonzero(block.angular_vector_residual[-1].weight) == 0
-    assert torch.count_nonzero(model.coordinate_edge_residual[-1].weight) == 0
+        assert block.edge_refresh_rank == 16
+        assert torch.count_nonzero(block.angular_scalar_residual[-1].weight) > 0
+        assert torch.count_nonzero(block.angular_vector_residual[-1].weight) > 0
+        assert hasattr(block, "edge_source_refresh")
+        assert hasattr(block, "edge_target_refresh")
+        assert hasattr(block, "edge_context_refresh")
+        assert hasattr(block, "edge_vector_refresh")
+    assert torch.count_nonzero(model.coordinate_edge_residual[-1].weight) > 0
