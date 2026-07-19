@@ -120,6 +120,28 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   fraction rises to `0.65384`, while the fixed learned carrier remains harmful
   (`-0.04325`). This neither authorizes a full ACF branch nor supports more
   exposure as a sufficient repair.
+- The subsequent zero-training quotient-Tweedie audit also closes the simple
+  staged self-conditioning hypothesis. At `t=0.6` its topology MSE improves
+  `31.27%` over the noisy field, but AUC is `0.77003 < 0.8`; more importantly,
+  inserting it through the shared clean-oracle Cartesian carrier worsens the
+  held-out coordinate residual by `4.95%`, with the full structure-bootstrap
+  95% interval below zero. The stronger frozen linear probe is likewise
+  non-causal. Do not add ACF, a one-step Tweedie topology branch, or the old
+  linear carrier to production.
+- Variant-specific optimal ridge carriers remain non-causal, and a matched
+  nonlinear pair-to-vector MLP yields only `+0.00537` held-out topology
+  increment with a structure-bootstrap interval crossing zero while both
+  readouts overfit. Do not add another deterministic topology conversion.
+- A separate production audit found that historical coordinate-only training
+  corrupted elements and lattice although conditional rollouts fixed both to
+  their true values. The repaired clean-side-information contract passes its
+  frozen 2,111-step screen: validation ratio `0.49382` versus historical
+  `0.73837`, `t=.6` explained fraction `0.39070` versus `0.13024`, rollout RMS
+  `0.07684/0.12153 A` from `t=.1/.2`, and zero failures. Future coordinate-only
+  training/evaluation must set and verify
+  `coordinate_clean_side_information=true`; joint generation must not use it.
+  This does not change historical H1a or authorize ACF, H1b-H6, tensor/oracle
+  work, relaxation, DFT or DFPT.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
@@ -127,20 +149,15 @@ either failed reciprocal-score residual, or initialize joint training from a
 failed coordinate checkpoint. A new mechanism requires a separately frozen
 causal or operator qualification first.
 
-The middle-noise oracle curve, score-residual reciprocal-shell spectrum, and
-frozen low-k linear probe have now rejected a reciprocal global carrier. A
-future H1a protocol must separately preregister an attribution involving
-conditional target variance, data exposure, probability-path information, or
-staged/self-conditioned coordinate generation; do not silently turn this
-diagnosis into architecture search.
-
-The clean-topology audit, fixed-model 0.25/0.5/1/2-pass curve, and
-exposure-conditioned persistence audit are complete. The remaining evidence
-supports one separately frozen zero-training, time-localized
-self-conditioning/conditional-variance audit: test whether a Tweedie endpoint
-estimate can recover and causally use the persistent `t=0.6` clean coordination
-signal. Do not add a production ACF branch, optimizer step, seed, data pass,
-H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT before that result.
+The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
+variant-specific carrier and nonlinear pair-conversion audits are complete.
+They reject another deterministic local/global feature branch. The matched
+clean-side-information screen instead identifies the coordinate task contract
+as the material repair. The next coordinate experiment, if authorized, must
+be a separately frozen complete-pass qualification of that same contract; do
+not add topology, sampler, optimizer, capacity or probability-path changes at
+the same time. No result yet authorizes H1b-H6, tensor condition, oracle,
+relaxation, DFT or DFPT.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

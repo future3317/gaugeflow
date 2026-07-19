@@ -681,7 +681,56 @@ coordinate module retains finite gradients through the second pass. The
 post-hoc two-pass ratio below `0.5` does not rewrite H1a because the diagnostic
 does not rerun the complete historical acceptance suite.
 
-The smallest next attribution is read-only: rerun the exact v2 clean-topology
-oracle on the frozen `.25/.5/1/2` checkpoints and ask whether its residual gain
-disappears with data exposure. No additional pass, seed, production branch,
-tensor condition or later Gate is authorized.
+The read-only exposure-conditioned rerun is complete. Its two-pass middle
+clean-oracle gain is `0.09293`, retaining `0.6640` of the quarter-pass effect,
+with time-resolved values `0.04099/.09577/.14203` at `t=.4/.5/.6`. This is the
+preregistered `mixed` case: exposure absorbs much of the lower-middle-noise
+residual but not the high-noise effect. It authorizes neither more exposure nor
+a full ACF branch.
+
+### Quotient-Tweedie self-conditioning attribution
+
+A final zero-optimizer attribution uses the same two-pass EMA checkpoint,
+512/256 v2 panels, all-pair topology, and original per-time noise streams. It
+forms `xhat_0=P_Q[x_t+sigma*predicted_scaled_score]` without reading the clean
+endpoint. One clean-oracle-fitted Cartesian carrier coefficient is shared by
+all validation topology fields so that variant-specific readout fitting cannot
+manufacture causality.
+
+At `t=.6`, the Tweedie field improves topology MSE by `0.31269` over the noisy
+field but reaches only `AUC=0.77003 < 0.8`. Its periodic endpoint RMS is
+`0.65437 A`. More decisively, its shared-carrier residual improvement is
+`-0.04955`, with structure-bootstrap 95% interval
+`[-0.06020,-0.03890]`, whereas the clean oracle reproduces `+0.14203`. The
+frozen linear probe reaches `AUC=0.81964` but remains non-causal at `-0.05405`.
+The decision is
+`self_conditioned_topology_not_predictive_revisit_conditional_variance`.
+No production ACF, staged Tweedie branch, optimizer step, additional exposure,
+sampler search, tensor condition, oracle, relaxation, DFT, or DFPT is added.
+
+### Coordinate clean-side-information contract repair
+
+Two follow-up attributions first show that neither per-variant optimal ridge
+carriers nor a matched nonlinear pair-to-vector MLP can turn probe/Tweedie
+topology into a held-out residual improvement. The nonlinear incremental gain
+is only `0.00537` with a structure-bootstrap interval crossing zero; both MLP
+readouts overfit their training panel. This closes deterministic topology
+conversion rather than motivating another topology branch.
+
+A separate code-path audit then finds a real task-contract mismatch. Every
+coordinate-only rollout holds the true element tokens and lattice fixed, but
+the historical coordinate-only DSM trainer still corrupted both variables and
+optimized only the coordinate loss. The resulting model was trained on a
+strictly harder, mismatched conditional distribution. The repair records
+`coordinate_clean_side_information=true` in checkpoint metadata, bypasses the
+categorical and VP lattice corruption in both training and fixed-noise
+validation, and makes score diagnostics read the same metadata. Coordinate
+noise, target, chart, architecture and sampler remain unchanged.
+
+The preregistered seed-5705, 2,111-step screen passes every check. At matched
+0.25-pass exposure, validation ratio changes from `0.7383705` to `0.4938223`;
+`t=.6` explained fraction changes from `0.1302396` to `0.3907047`. Conditional
+rollout RMS from `t=.1/.2` is `0.07684/0.12153 A`, with zero failures. This
+attributes a major part of the coordinate-only failure to corrupted observed
+side information. It does not retroactively make the old Tweedie carrier
+causal, change historical H1a, or authorize later Gates.

@@ -1,0 +1,73 @@
+{
+  "protocol": "h1a_self_conditioned_topology_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training time-localized attribution of whether a quotient Tweedie endpoint estimate recovers and causally supplies the persistent high-noise clean-coordination signal",
+  "prerequisites": {
+    "checkpoint_protocol_sha256": "656423a7fad0a2dabf9f2672ea51995ad3a653b2e555681c3b2813da40f3960f",
+    "checkpoint_result_sha256": "7b492477a0bf031fba7ad6060e512a2ff83d1287f29f8fd63d3ce37d70edbab1",
+    "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+    "checkpoint_step": 16882,
+    "checkpoint_passes": 2.0,
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "topology_protocol_sha256": "843c9f770fd6d3cf02e63eb8ee1c92e29488f2ed567ea57c3e4c9523b1e3e7fa",
+    "persistence_protocol_sha256": "7ac19f77979b11127dd6081cdfadb9cca86662a784f3ed1f26e8954b3a5684b4",
+    "persistence_result_sha256": "b8a9fb27febc148c7893335005d6b4ffaaa346a248dfd3fa46d864c755bd5cfe",
+    "persistence_decision": "mixed",
+    "tensor_condition_enabled": false
+  },
+  "diagnostic": {
+    "times": [0.4, 0.5, 0.6],
+    "source_v2_time_indices": {"0.4": 1, "0.5": 2, "0.6": 3},
+    "focus_time": 0.6,
+    "minimum_sites": 2,
+    "train_graphs": 512,
+    "validation_graphs": 256,
+    "train_selection_seed": 9301,
+    "validation_selection_seed": 9302,
+    "train_noise_seed": 9303,
+    "validation_noise_seed": 9304,
+    "bootstrap_seed": 9511,
+    "bootstrap_samples": 2000,
+    "batch_size": 8,
+    "optimizer_steps": 0
+  },
+  "topology": {
+    "production_cutoff_angstrom": 8.0,
+    "first_shell_multiplier": 1.25,
+    "transition_relative_width": 0.08,
+    "hard_probability_threshold": 0.5,
+    "image_mixture_temperature_angstrom": 0.2,
+    "pair_support": "all directed non-self atom pairs, at most N(N-1)=380 for Alex-MP-20",
+    "variants": ["noisy_current", "frozen_linear_probe", "tweedie_self_conditioned", "clean_oracle"]
+  },
+  "probe": {
+    "fixed_node_projection_channels": 16,
+    "ridge_relative": 0.001,
+    "prediction_clip": [0.0, 1.0]
+  },
+  "carrier": {
+    "ridge_relative": 0.0001,
+    "coefficient_policy": "one clean-oracle coefficient is fitted on the train panel and reused unchanged for all four validation fields"
+  },
+  "tweedie": {
+    "definition": "xhat_0 = P_Q[x_t + sigma(t) * predicted_scaled_score]",
+    "score_source": "frozen EMA coordinate score only",
+    "clean_endpoint_is_not_an_input": true,
+    "wrapping_policy": "topology distances use exact closest periodic images; no intermediate coordinate clipping"
+  },
+  "acceptance": {
+    "focus_topology_auc_min": 0.8,
+    "focus_topology_mse_improvement_over_noisy_min": 0.1,
+    "focus_carrier_relative_improvement_min": 0.05,
+    "focus_carrier_oracle_gain_fraction_min": 0.5,
+    "focus_carrier_bootstrap_95_low_min": 0.0,
+    "all_outputs_finite": true,
+    "checkpoint_parameters_unchanged": true
+  },
+  "decision_rule": {
+    "causal": "if the Tweedie field passes both focus-time topology criteria and all carrier criteria, authorize only a separately frozen staged/self-conditioned coordinate proposal",
+    "predictive_not_causal": "if the topology criteria pass but any carrier criterion fails, attribute the remaining limitation to nonlinear topology-to-vector-field conversion before considering a narrowly time-gated learned latent-pair field",
+    "not_predictive": "if either topology criterion fails, do not build ACF and revisit probability-path conditional variance",
+    "boundary": "This audit performs zero optimizer steps on the existing two-pass checkpoint and keeps the v2 panels, pair definition and structure bootstrap fixed. It cannot modify production, rescue H1a, add exposure/seeds, resume sampler search, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT."
+  }
+}

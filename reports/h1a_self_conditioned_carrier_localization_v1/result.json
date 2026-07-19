@@ -1,0 +1,19 @@
+{
+  "checkpoint_parameters_unchanged": true,
+  "decision": "scalar_topology_carrier_rejected_revisit_conditional_variance",
+  "decision_boundary": "This is a closed-form read-only localization. It adds no neural optimizer step, production branch, exposure, seed, sampler search, H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT.",
+  "elapsed_seconds": 40.397999389999995,
+  "optimizer_steps": 0,
+  "passed": {
+    "clean_specific": true,
+    "noisy_plus_probe": false,
+    "noisy_plus_tweedie": false,
+    "noisy_specific": false,
+    "probe_specific": false,
+    "tweedie_specific": false
+  },
+  "protocol": "h1a_self_conditioned_carrier_localization_v1",
+  "protocol_sha256": "eb7eef7b0ab94b28c39a4231e26b77f77c43358e58ca25552350aab09a114dd9",
+  "train_indices_sha256": "bb94e89d69266af8bc3c2a2045430f1bca120a70ce621d3622fe61e10938ff70",
+  "validation_indices_sha256": "7c02695bbd1923eef11717c6901048639392efc32e79e13286819b73ccabb84f"
+}

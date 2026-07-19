@@ -614,9 +614,13 @@ def _forward_batch(
         "vector_radial": pairs.vector_radial,
         "features": features,
         "clean_field": clean_field,
+        "clean_distance": clean_distance,
         "noisy_field": noisy_field,
         "coverage": coverage,
         "residual": target_score - predicted_score,
+        "noisy": noisy,
+        "prediction": prediction,
+        "noisy_lattice": noisy_lattice,
     }
 
 

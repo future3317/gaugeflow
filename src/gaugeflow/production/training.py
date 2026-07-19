@@ -24,6 +24,7 @@ class ProductionTrainingConfig:
     maximum_time: float = 0.999
     precision: str = "bf16"
     objective: str = "joint"
+    coordinate_clean_side_information: bool = False
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
@@ -38,6 +39,8 @@ class ProductionTrainingConfig:
             raise ValueError("training precision must be fp32 or bf16")
         if self.objective not in {"joint", "coordinate"}:
             raise ValueError("training objective must be joint or coordinate")
+        if self.coordinate_clean_side_information and self.objective != "coordinate":
+            raise ValueError("clean element/lattice side information is coordinate-only")
 
 
 class ExponentialMovingAverage:
@@ -91,9 +94,7 @@ class ProductionTrainer:
         self.diffusion = diffusion
         self.config = config
         parameters = list(diffusion.denoiser.parameters())
-        use_fused_adamw = bool(parameters) and all(
-            parameter.device.type == "cuda" for parameter in parameters
-        )
+        use_fused_adamw = bool(parameters) and all(parameter.device.type == "cuda" for parameter in parameters)
         if use_fused_adamw:
             # The RTX execution qualification compares this tensor-core path
             # against highest-precision FP32 matmuls on the same real batch.
@@ -135,10 +136,9 @@ class ProductionTrainer:
                 blueprint.shape_projector,
                 blueprint.fractional_to_cartesian,
                 generator=generator,
+                clean_side_information=self.config.coordinate_clean_side_information,
             )
-        optimization_loss = (
-            output.loss if self.config.objective == "joint" else output.coordinate_loss
-        )
+        optimization_loss = output.loss if self.config.objective == "joint" else output.coordinate_loss
         if not torch.isfinite(optimization_loss):
             raise FloatingPointError("selected training loss is non-finite")
         optimization_loss.backward()

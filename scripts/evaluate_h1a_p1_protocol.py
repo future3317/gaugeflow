@@ -70,22 +70,14 @@ def _validation_losses_for_runtime(
     totals = {name: 0.0 for name in ("total", "element", "coordinate", "volume", "shape")}
     graphs_seen = 0
     candidate_count = 0
-    use_bf16 = (
-        runtime.training_config.get("precision") == "bf16" and device.type == "cuda"
-    )
+    use_bf16 = runtime.training_config.get("precision") == "bf16" and device.type == "cuda"
     for start in range(0, indices.numel(), batch_size):
         selected = indices[start : start + batch_size]
-        packed = Batch.from_data_list(
-            [dataset[int(index)] for index in selected]
-        ).to(device)
+        packed = Batch.from_data_list([dataset[int(index)] for index in selected]).to(device)
         graphs = int(packed.num_graphs)
         counts = torch.bincount(packed.batch, minlength=graphs)
-        blueprint = ParentBlueprintBatch.from_node_counts(
-            counts, dtype=packed.frac_coords.dtype, device=device
-        )
-        with torch.autocast(
-            device_type=device.type, dtype=torch.bfloat16, enabled=use_bf16
-        ):
+        blueprint = ParentBlueprintBatch.from_node_counts(counts, dtype=packed.frac_coords.dtype, device=device)
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=use_bf16):
             output = diffusion(
                 packed.atom_types,
                 packed.frac_coords,
@@ -94,6 +86,7 @@ def _validation_losses_for_runtime(
                 blueprint.shape_projector,
                 blueprint.fractional_to_cartesian,
                 generator=generator,
+                clean_side_information=bool(runtime.training_config.get("coordinate_clean_side_information", False)),
             )
         values = {
             "total": output.loss,
@@ -142,9 +135,7 @@ def _sample_checkpoint(
     initialization_generator = torch.Generator(device=device).manual_seed(seed + 1)
     categorical_generator = torch.Generator(device=device).manual_seed(seed + 2)
     continuous_generator = torch.Generator(device=device).manual_seed(seed + 3)
-    node_counts = runtime.node_count_prior.sample(
-        samples, generator=count_generator, device=device
-    )
+    node_counts = runtime.node_count_prior.sample(samples, generator=count_generator, device=device)
     failures = 0
     masks = 0
     finite_positive = 0
@@ -152,9 +143,7 @@ def _sample_checkpoint(
     volume_per_atom: list[float] = []
     for start in range(0, samples, batch_size):
         counts = node_counts[start : start + batch_size]
-        blueprint = ParentBlueprintBatch.from_node_counts(
-            counts, dtype=torch.float32, device=device
-        )
+        blueprint = ParentBlueprintBatch.from_node_counts(counts, dtype=torch.float32, device=device)
         try:
             generated = sampler.sample(
                 blueprint,
@@ -170,9 +159,7 @@ def _sample_checkpoint(
             continue
         masks += int(generated.diagnostics.masked_count[-1])
         determinant = torch.linalg.det(generated.lattice)
-        valid = torch.isfinite(generated.lattice).all(dim=(-2, -1)) & (
-            determinant > 0.0
-        )
+        valid = torch.isfinite(generated.lattice).all(dim=(-2, -1)) & (determinant > 0.0)
         finite_positive += int(valid.sum())
         volume_per_atom.extend((determinant / counts).cpu().tolist())
         edges = periodic_radius_multigraph(
@@ -183,11 +170,7 @@ def _sample_checkpoint(
         )
         for graph in range(counts.numel()):
             selected = generated.batch[edges.target] == graph
-            minimum_distances.append(
-                float(edges.distance[selected].min().cpu())
-                if bool(selected.any())
-                else math.inf
-            )
+            minimum_distances.append(float(edges.distance[selected].min().cpu()) if bool(selected.any()) else math.inf)
     distance = torch.tensor(minimum_distances, dtype=torch.float64)
     volume = torch.tensor(volume_per_atom, dtype=torch.float64)
     return {
@@ -196,9 +179,7 @@ def _sample_checkpoint(
         "terminal_masks": masks,
         "finite_positive_lattices_fraction": finite_positive / samples,
         "minimum_distance_threshold_angstrom": minimum_distance_threshold,
-        "minimum_distance_guardrail_fraction": float(
-            (distance >= minimum_distance_threshold).double().mean()
-        ),
+        "minimum_distance_guardrail_fraction": float((distance >= minimum_distance_threshold).double().mean()),
         "minimum_distance_quantiles_angstrom": torch.quantile(
             distance, torch.tensor([0.0, 0.5, 1.0], dtype=torch.float64)
         ).tolist(),
@@ -210,11 +191,12 @@ def _sample_checkpoint(
 
 def _training_log_is_finite(path: Path, expected_step: int) -> bool:
     records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-    return bool(records) and int(records[-1]["step"]) == expected_step and all(
-        math.isfinite(float(value))
-        for record in records
-        for key, value in record.items()
-        if key not in {"step"}
+    return (
+        bool(records)
+        and int(records[-1]["step"]) == expected_step
+        and all(
+            math.isfinite(float(value)) for record in records for key, value in record.items() if key not in {"step"}
+        )
     )
 
 
@@ -249,16 +231,10 @@ def main() -> None:
         raise RuntimeError("CUDA was requested but unavailable")
     evaluation = protocol["fixed_evaluation"]
     training = protocol["training"]
-    acceptance = (
-        protocol["screen_acceptance"]
-        if arguments.stage == "screen"
-        else protocol["acceptance"]
-    )
+    acceptance = protocol["screen_acceptance"] if arguments.stage == "screen" else protocol["acceptance"]
     distance_guardrail = acceptance.get("minimum_distance_guardrail")
     distance_threshold = (
-        float(distance_guardrail["threshold_angstrom"])
-        if isinstance(distance_guardrail, dict)
-        else 0.5
+        float(distance_guardrail["threshold_angstrom"]) if isinstance(distance_guardrail, dict) else 0.5
     )
     dataset = PackedAlexP1Dataset(arguments.cache_root, "val")
     indices = torch.randperm(
@@ -312,28 +288,18 @@ def main() -> None:
             "validation_curve": validation_curve,
             "final_over_initial_total": ratio,
             "final_over_initial_coordinate": coordinate_ratios[-1],
-            "training_log_finite": _training_log_is_finite(
-                run / "training_metrics.jsonl", int(training["steps"])
-            ),
+            "training_log_finite": _training_log_is_finite(run / "training_metrics.jsonl", int(training["steps"])),
             "sampling": samples,
         }
     checks = {
-        "training_finite": all(
-            bool(value["training_log_finite"]) for value in seed_results.values()
-        ),
+        "training_finite": all(bool(value["training_log_finite"]) for value in seed_results.values()),
         "mean_validation_ratio": sum(ratios) / len(ratios)
         <= float(acceptance["mean_final_validation_total_over_initial_max"]),
         "all_seed_validation_ratio": max(ratios)
         <= float(acceptance["three_seed_final_validation_total_over_initial_max"]),
-        "terminal_masks": sum(
-            int(value["sampling"]["terminal_masks"])
-            for value in seed_results.values()
-        )
+        "terminal_masks": sum(int(value["sampling"]["terminal_masks"]) for value in seed_results.values())
         == int(acceptance["terminal_masks"]),
-        "sampling_failures": sum(
-            int(value["sampling"]["sampling_failures"])
-            for value in seed_results.values()
-        )
+        "sampling_failures": sum(int(value["sampling"]["sampling_failures"]) for value in seed_results.values())
         == int(acceptance["sampling_failures"]),
         "finite_positive_lattices": all(
             value["sampling"]["finite_positive_lattices_fraction"]
@@ -341,55 +307,36 @@ def main() -> None:
             for value in seed_results.values()
         ),
         "tensor_bypass": all(
-            value["final_validation"]["tensor_candidate_count"]
-            == float(acceptance["tensor_candidates_when_absent"])
+            value["final_validation"]["tensor_candidate_count"] == float(acceptance["tensor_candidates_when_absent"])
             for value in seed_results.values()
         ),
     }
-    coordinate_mean_bound = acceptance.get(
-        "mean_final_coordinate_over_initial_max"
-    )
-    coordinate_seed_bound = acceptance.get(
-        "three_seed_final_coordinate_over_initial_max"
-    )
+    coordinate_mean_bound = acceptance.get("mean_final_coordinate_over_initial_max")
+    coordinate_seed_bound = acceptance.get("three_seed_final_coordinate_over_initial_max")
     if coordinate_mean_bound is not None and coordinate_seed_bound is not None:
-        checks["mean_coordinate_ratio"] = sum(coordinate_ratios) / len(
-            coordinate_ratios
-        ) <= float(coordinate_mean_bound)
-        checks["all_seed_coordinate_ratio"] = max(coordinate_ratios) <= float(
-            coordinate_seed_bound
+        checks["mean_coordinate_ratio"] = sum(coordinate_ratios) / len(coordinate_ratios) <= float(
+            coordinate_mean_bound
         )
+        checks["all_seed_coordinate_ratio"] = max(coordinate_ratios) <= float(coordinate_seed_bound)
     coordinate_loss_mean_bound = acceptance.get("mean_final_coordinate_loss_max")
     coordinate_loss_seed_bound = acceptance.get("each_final_coordinate_loss_max")
     if coordinate_loss_mean_bound is not None and coordinate_loss_seed_bound is not None:
-        checks["mean_final_coordinate_loss"] = sum(final_coordinate_losses) / len(
-            final_coordinate_losses
-        ) <= float(coordinate_loss_mean_bound)
-        checks["each_final_coordinate_loss"] = max(final_coordinate_losses) <= float(
-            coordinate_loss_seed_bound
+        checks["mean_final_coordinate_loss"] = sum(final_coordinate_losses) / len(final_coordinate_losses) <= float(
+            coordinate_loss_mean_bound
         )
+        checks["each_final_coordinate_loss"] = max(final_coordinate_losses) <= float(coordinate_loss_seed_bound)
     if isinstance(distance_guardrail, dict):
-        fractions = [
-            float(value["sampling"]["minimum_distance_guardrail_fraction"])
-            for value in seed_results.values()
-        ]
-        checks["minimum_distance_each_seed"] = min(fractions) >= float(
-            distance_guardrail["each_seed_fraction_min"]
-        )
+        fractions = [float(value["sampling"]["minimum_distance_guardrail_fraction"]) for value in seed_results.values()]
+        checks["minimum_distance_each_seed"] = min(fractions) >= float(distance_guardrail["each_seed_fraction_min"])
         checks["minimum_distance_aggregate"] = sum(fractions) / len(fractions) >= float(
             distance_guardrail["aggregate_fraction_min"]
         )
-    median_distance_bound = acceptance.get(
-        "generated_minimum_distance_median_angstrom_min"
-    )
+    median_distance_bound = acceptance.get("generated_minimum_distance_median_angstrom_min")
     if median_distance_bound is not None:
         medians = [
-            float(value["sampling"]["minimum_distance_quantiles_angstrom"][1])
-            for value in seed_results.values()
+            float(value["sampling"]["minimum_distance_quantiles_angstrom"][1]) for value in seed_results.values()
         ]
-        checks["generated_minimum_distance_median"] = min(medians) >= float(
-            median_distance_bound
-        )
+        checks["generated_minimum_distance_median"] = min(medians) >= float(median_distance_bound)
     qualified = all(checks.values())
     result = {
         "protocol": protocol_name,
@@ -397,18 +344,15 @@ def main() -> None:
         "protocol_sha256": protocol_sha256,
         "seed_results": seed_results,
         "mean_final_over_initial_total": sum(ratios) / len(ratios),
-        "mean_final_over_initial_coordinate": sum(coordinate_ratios)
-        / len(coordinate_ratios),
+        "mean_final_over_initial_coordinate": sum(coordinate_ratios) / len(coordinate_ratios),
         "checks": checks,
         "qualified": qualified,
-        "decision": protocol[
-            "screen_decision_rule" if arguments.stage == "screen" else "decision_rule"
-        ]["pass" if qualified else "fail"],
+        "decision": protocol["screen_decision_rule" if arguments.stage == "screen" else "decision_rule"][
+            "pass" if qualified else "fail"
+        ],
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
-    arguments.output.write_text(
-        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    arguments.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, sort_keys=True))
     if not qualified:
         raise RuntimeError("H1a P1 protocol failed its frozen acceptance checks")

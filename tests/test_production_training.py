@@ -58,16 +58,36 @@ def _standardizer() -> P1LatticeStandardizer:
     )
 
 
-def test_coordinate_exposure_contract_accepts_complete_passes_only() -> None:
+def test_coordinate_exposure_contract_accepts_complete_passes_and_explicit_prefix() -> None:
     _validate_coordinate_exposure(
         {"data_passes": 2.0, "graph_presentations": 1_080_328},
         dataset_size=540_164,
         steps=16_882,
         batch_size=64,
     )
+    _validate_coordinate_exposure(
+        {
+            "exposure_mode": "prefix_screen",
+            "data_passes": 135_104 / 540_164,
+            "graph_presentations": 135_104,
+        },
+        dataset_size=540_164,
+        steps=2111,
+        batch_size=64,
+    )
     for invalid in (
         {"data_passes": 1.5, "graph_presentations": 810_246},
         {"data_passes": 2.0, "graph_presentations": 1_080_327},
+        {
+            "exposure_mode": "prefix_screen",
+            "data_passes": 0.25,
+            "graph_presentations": 135_104,
+        },
+        {
+            "exposure_mode": "prefix_screen",
+            "data_passes": 135_104 / 540_164,
+            "graph_presentations": 135_103,
+        },
     ):
         try:
             _validate_coordinate_exposure(invalid, dataset_size=540_164, steps=16_882, batch_size=64)
@@ -147,6 +167,65 @@ def test_coordinate_loss_uses_volume_normalized_cartesian_chart() -> None:
         [error[blueprint.batch == graph].square().sum(-1).mean() / 3.0 for graph in range(2)]
     ).mean()
     torch.testing.assert_close(output.coordinate_loss, graph_loss)
+
+
+def test_coordinate_clean_side_information_noises_only_coordinates() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(
+        _small_model(), _standardizer(), coordinate_sigma_min=0.005, coordinate_sigma_max=0.5
+    )
+    noisy = diffusion.noise_clean_batch(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=torch.tensor([0.4, 0.7]),
+        generator=torch.Generator().manual_seed(109),
+        clean_side_information=True,
+    )
+    clean_lattice_state = LatticeVolumeShape.from_lattice(lattice, blueprint.fractional_to_cartesian)
+    assert torch.equal(noisy.element_tokens, elements)
+    assert not bool(noisy.element_was_masked.any())
+    torch.testing.assert_close(noisy.log_volume, clean_lattice_state.log_volume)
+    torch.testing.assert_close(noisy.log_shape, clean_lattice_state.log_shape)
+    assert not torch.allclose(noisy.fractional_coordinates, coordinates)
+
+    # The observed-side-information branch must not consume categorical or
+    # lattice random draws.  Coordinate noise is therefore reproducible from
+    # the first draw of an otherwise identical generator.
+    repeated = diffusion.noise_clean_batch(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=torch.tensor([0.4, 0.7]),
+        generator=torch.Generator().manual_seed(109),
+        clean_side_information=True,
+    )
+    torch.testing.assert_close(noisy.fractional_coordinates, repeated.fractional_coordinates)
+
+
+def test_coordinate_trainer_uses_clean_noncoordinate_side_information() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
+    trainer = ProductionTrainer(
+        diffusion,
+        ProductionTrainingConfig(objective="coordinate", coordinate_clean_side_information=True),
+    )
+    output, _ = trainer.train_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(110),
+    )
+    assert torch.equal(output.noisy.element_tokens, elements)
+    assert not bool(output.noisy.element_was_masked.any())
 
 
 def test_tensor_free_path_skips_geometry_query_encoder():
@@ -329,9 +408,7 @@ def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
         _standardizer(),
         maximum_time=0.8,
     )
-    initial = sampler.initialize_continuous_state(
-        blueprint, generator=torch.Generator().manual_seed(108)
-    )
+    initial = sampler.initialize_continuous_state(blueprint, generator=torch.Generator().manual_seed(108))
     outputs = []
     for mode in ("reverse_sde", "probability_flow"):
         outputs.append(

@@ -1,0 +1,42 @@
+{
+  "checkpoint_parameters_unchanged": true,
+  "checks": {
+    "all_outputs_finite": true,
+    "checkpoint_parameters_unchanged": true,
+    "focus_carrier_bootstrap_supported": false,
+    "focus_carrier_improves_residual": false,
+    "focus_carrier_retains_oracle_gain": false,
+    "focus_topology_auc": false,
+    "focus_topology_improves_over_noisy": true
+  },
+  "decision": "self_conditioned_topology_not_predictive_revisit_conditional_variance",
+  "decision_boundary": "This audit performs zero optimizer steps on the existing two-pass checkpoint and keeps the v2 panels, pair definition and structure bootstrap fixed. It cannot modify production, rescue H1a, add exposure/seeds, resume sampler search, or authorize H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT.",
+  "elapsed_seconds": 71.68648014600001,
+  "focus_carrier": {
+    "baseline_mse": 2.1613089894817676,
+    "bootstrap_95_high": -0.03889569817758225,
+    "bootstrap_95_low": -0.06019931444882012,
+    "bootstrap_median": -0.04938550870488756,
+    "corrected_mse": 2.268392967322143,
+    "oracle_gain_fraction": -0.34884009462901167,
+    "relative_improvement": -0.049545890181140306,
+    "time": 0.6,
+    "variant": "tweedie_self_conditioned"
+  },
+  "focus_time": 0.6,
+  "focus_topology": {
+    "auc": 0.7700315016248767,
+    "explained_fraction": 0.08614556407522,
+    "mse_improvement_over_noisy": 0.31269039258056486,
+    "soft_jaccard": 0.523861228430178,
+    "time": 0.6,
+    "topology_mse": 0.08427180345313445,
+    "variant": "tweedie_self_conditioned"
+  },
+  "optimizer_steps": 0,
+  "peak_cuda_mib": 136.7060546875,
+  "protocol": "h1a_self_conditioned_topology_attribution_v1",
+  "protocol_sha256": "b5660ec689d117d5bd58a9a7898a25d4da03be3c940875c373afe5e04e77e3be",
+  "train_indices_sha256": "bb94e89d69266af8bc3c2a2045430f1bca120a70ce621d3622fe61e10938ff70",
+  "validation_indices_sha256": "7c02695bbd1923eef11717c6901048639392efc32e79e13286819b73ccabb84f"
+}

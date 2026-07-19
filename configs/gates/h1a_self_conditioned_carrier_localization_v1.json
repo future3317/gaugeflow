@@ -1,0 +1,55 @@
+{
+  "protocol": "h1a_self_conditioned_carrier_localization_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training focus-time localization of whether the negative quotient-Tweedie result is caused by sharing the clean-oracle carrier coefficient or by an insufficient topology-to-vector representation",
+  "prerequisites": {
+    "self_conditioning_protocol_sha256": "4d287831d0d1e038f096201bbad17da92508ab7a85738d2ec64584156f5750f1",
+    "self_conditioning_result_sha256": "8db15288848ce28ca4029672ee30785e3b9038c3f10fc294548d7f2d2760d989",
+    "self_conditioning_decision": "self_conditioned_topology_not_predictive_revisit_conditional_variance",
+    "checkpoint_protocol_sha256": "656423a7fad0a2dabf9f2672ea51995ad3a653b2e555681c3b2813da40f3960f",
+    "checkpoint_result_sha256": "7b492477a0bf031fba7ad6060e512a2ff83d1287f29f8fd63d3ce37d70edbab1",
+    "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "diagnostic": {
+    "time": 0.6,
+    "minimum_sites": 2,
+    "train_graphs": 512,
+    "validation_graphs": 256,
+    "train_selection_seed": 9301,
+    "validation_selection_seed": 9302,
+    "train_noise_seed": 9306,
+    "validation_noise_seed": 9307,
+    "bootstrap_seed": 9611,
+    "bootstrap_samples": 2000,
+    "batch_size": 8,
+    "optimizer_steps": 0
+  },
+  "topology": {
+    "production_cutoff_angstrom": 8.0,
+    "first_shell_multiplier": 1.25,
+    "transition_relative_width": 0.08,
+    "hard_probability_threshold": 0.5,
+    "image_mixture_temperature_angstrom": 0.2
+  },
+  "probe": {
+    "fixed_node_projection_channels": 16,
+    "ridge_relative": 0.001
+  },
+  "carrier": {
+    "ridge_relative": 0.0001,
+    "variants": ["clean_specific", "noisy_specific", "probe_specific", "tweedie_specific", "noisy_plus_probe", "noisy_plus_tweedie"],
+    "fit_policy": "each listed readout is fitted by closed-form ridge on the fixed train panel and evaluated once on the disjoint validation panel"
+  },
+  "acceptance": {
+    "validation_relative_improvement_min": 0.05,
+    "bootstrap_95_low_min": 0.0
+  },
+  "decision_rule": {
+    "tweedie_specific_passes": "shared clean-oracle coefficient mismatch is sufficient; qualify a separately trained calibrated Tweedie carrier",
+    "noisy_plus_tweedie_passes": "a dual-state linear conversion is sufficient; qualify only that bounded conversion",
+    "probe_variant_passes": "hidden topology is usable but scalar Tweedie topology is insufficient; qualify a narrowly time-gated learned latent-pair vector field",
+    "all_nonoracle_fail": "the scalar topology-carrier hypothesis is rejected; do not implement ACF/self-conditioning and move to probability-path conditional variance",
+    "boundary": "This is a closed-form read-only localization. It adds no neural optimizer step, production branch, exposure, seed, sampler search, H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT."
+  }
+}

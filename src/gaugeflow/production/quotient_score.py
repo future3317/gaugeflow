@@ -10,6 +10,39 @@ from .schedules import wrapped_normal_log_density_and_score
 from .state_projection import graph_mean, project_translation_state
 
 
+def quotient_tweedie_endpoint(
+    noisy_coordinates: torch.Tensor,
+    scaled_score: torch.Tensor,
+    sigma: torch.Tensor,
+    batch: torch.Tensor,
+    graph_count: int,
+) -> torch.Tensor:
+    """Return the local Tweedie endpoint estimate on the translation quotient.
+
+    The coordinate denoiser predicts ``sigma * grad(log p_sigma)``.  Hence the
+    additive heat-kernel Tweedie displacement is ``sigma * scaled_score``.
+    Projection removes only the unobservable graphwise translation; wrapping
+    is deliberately deferred to consumers that require a torus representative.
+    """
+    if noisy_coordinates.ndim != 2 or noisy_coordinates.shape[1] != 3:
+        raise ValueError("Tweedie coordinates must have shape [nodes,3]")
+    if scaled_score.shape != noisy_coordinates.shape:
+        raise ValueError("Tweedie score must match coordinate shape")
+    if batch.shape != noisy_coordinates.shape[:1] or batch.dtype != torch.long:
+        raise ValueError("Tweedie batch must provide one int64 graph index per node")
+    if sigma.shape != (graph_count,):
+        raise ValueError("Tweedie sigma must provide one value per graph")
+    if (
+        not torch.isfinite(noisy_coordinates).all()
+        or not torch.isfinite(scaled_score).all()
+        or not torch.isfinite(sigma).all()
+        or bool((sigma < 0.0).any())
+    ):
+        raise ValueError("Tweedie inputs must be finite and sigma nonnegative")
+    estimate = noisy_coordinates + sigma[batch, None] * scaled_score
+    return project_translation_state(estimate, batch, graph_count)
+
+
 def factorized_translation_quotient_log_density_and_scaled_score(
     displacement: torch.Tensor,
     sigma: torch.Tensor,
@@ -41,29 +74,24 @@ def factorized_translation_quotient_log_density_and_scaled_score(
     circular_sine = graph_mean(angle.sin(), batch, graph_count)
     circular_cosine = graph_mean(angle.cos(), batch, graph_count)
     center = torch.atan2(circular_sine, circular_cosine) / (2.0 * math.pi)
-    grid = torch.arange(
-        quadrature_points,
-        dtype=displacement.dtype,
-        device=displacement.device,
-    ) / quadrature_points
+    grid = (
+        torch.arange(
+            quadrature_points,
+            dtype=displacement.dtype,
+            device=displacement.device,
+        )
+        / quadrature_points
+    )
     translation = center[:, None, :] + grid[None, :, None]
     residual = displacement[:, None, :] - translation[batch]
     node_sigma = sigma[batch, None, None]
-    log_kernel, site_score = wrapped_normal_log_density_and_score(
-        residual, node_sigma
-    )
-    posterior_log = displacement.new_zeros(
-        (graph_count, quadrature_points, 3)
-    )
+    log_kernel, site_score = wrapped_normal_log_density_and_score(residual, node_sigma)
+    posterior_log = displacement.new_zeros((graph_count, quadrature_points, 3))
     posterior_log.index_add_(0, batch, log_kernel.to(posterior_log.dtype))
-    log_integral = torch.logsumexp(posterior_log, dim=1) - math.log(
-        quadrature_points
-    )
+    log_integral = torch.logsumexp(posterior_log, dim=1) - math.log(quadrature_points)
     posterior = torch.softmax(posterior_log, dim=1)
     quotient_score = (site_score * posterior[batch]).sum(dim=1)
-    quotient_score = project_translation_state(
-        quotient_score, batch, graph_count
-    )
+    quotient_score = project_translation_state(quotient_score, batch, graph_count)
     return log_integral.sum(dim=-1), sigma[batch].unsqueeze(-1) * quotient_score
 
 

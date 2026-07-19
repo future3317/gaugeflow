@@ -1,0 +1,21 @@
+{
+  "checkpoint_parameters_unchanged": true,
+  "decision": "state_derived_pair_conversion_insufficient_conditional_variance",
+  "decision_boundary": "This one-seed fixed-time readout is a mechanism qualification, not production training or H1a rescue. It cannot initialize the generator or authorize H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT.",
+  "elapsed_seconds": 57.74115823100001,
+  "generator_optimizer_steps": 0,
+  "optimizer_steps": 1500,
+  "passed": {
+    "base": false,
+    "topology": false
+  },
+  "protocol": "h1a_nonlinear_pair_conversion_qualification_v1",
+  "protocol_sha256": "cb27670639370d73e73883b23043b9a2b6a18796fa63c08e8d949a0c1f428899",
+  "topology_incremental_bootstrap_95": [
+    -0.00503038676561206,
+    0.005639186598809298,
+    0.015699296495944464
+  ],
+  "topology_incremental_mean": 0.00537497299010925,
+  "topology_incremental_passed": false
+}

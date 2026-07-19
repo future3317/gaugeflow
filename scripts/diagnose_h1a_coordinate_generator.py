@@ -129,6 +129,9 @@ def _score_calibration(
                 blueprint.fractional_to_cartesian,
                 time=time,
                 generator=generator,
+                clean_side_information=bool(
+                    runtime.training_config.get("coordinate_clean_side_information", False)
+                ),
             )
             condition = time.new_zeros((graphs, 18))
             condition_present = torch.zeros(

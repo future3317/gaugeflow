@@ -91,10 +91,20 @@ def _clipped_module_gradient_norms(model: torch.nn.Module) -> dict[str, float]:
 def _validate_coordinate_exposure(
     training_spec: dict[str, object], *, dataset_size: int, steps: int, batch_size: int
 ) -> None:
-    """Require an exact integer number of complete shuffled data passes."""
+    """Validate either complete passes or one preregistered prefix screen."""
     passes = float(training_spec["data_passes"])
-    if passes < 1.0 or not passes.is_integer():
-        raise ValueError("coordinate training requires an integer number of complete passes")
+    exposure_mode = str(training_spec.get("exposure_mode", "complete_passes"))
+    if exposure_mode == "prefix_screen":
+        if not 0.0 < passes < 1.0 or steps >= math.ceil(dataset_size / batch_size):
+            raise ValueError("coordinate prefix screen must stop within its first shuffled pass")
+        expected_presentations = steps * batch_size
+        if int(training_spec["graph_presentations"]) != expected_presentations:
+            raise ValueError("coordinate prefix-screen presentation count is inconsistent")
+        if not math.isclose(passes, expected_presentations / dataset_size, rel_tol=0.0, abs_tol=1.0e-12):
+            raise ValueError("coordinate prefix-screen exposure fraction is inconsistent")
+        return
+    if exposure_mode != "complete_passes" or passes < 1.0 or not passes.is_integer():
+        raise ValueError("coordinate training requires complete passes unless prefix_screen is explicit")
     complete_passes = int(passes)
     steps_per_pass = math.ceil(dataset_size / batch_size)
     expected_presentations = complete_passes * dataset_size
@@ -134,6 +144,8 @@ def main() -> None:
     steps = int(training_spec["steps"])
     batch_size = int(training_spec["batch_size"])
     objective = str(training_spec["objective"])
+    if objective == "coordinate" and "coordinate_clean_side_information" not in training_spec:
+        raise ValueError("coordinate training must explicitly declare its observed-side-information contract")
     log_every = int(training_spec["log_every"])
     num_workers = int(training_spec["num_workers"])
     checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
@@ -233,6 +245,7 @@ def main() -> None:
             maximum_time=float(training_spec["maximum_time"]),
             precision=str(training_spec["precision"]),
             objective=objective,
+            coordinate_clean_side_information=bool(training_spec.get("coordinate_clean_side_information", False)),
         )
     )
     diffusion = TensorFreeHybridDiffusion(
