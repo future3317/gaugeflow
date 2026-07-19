@@ -1,0 +1,31 @@
+{
+  "protocol": "h1a_cuda_execution_optimization_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "scientifically equivalent CUDA execution optimization of the frozen H1a coordinate trainer; no model, objective, probability path, data order, seed, exposure, or checkpoint state changes",
+  "source_protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+  "source_checkpoint_step": 16882,
+  "device": "NVIDIA GeForce RTX 4060 Ti 16 GB",
+  "optimization": {
+    "single_candidate": "fused AdamW parameter update with gradient-norm scalar materialized only at the existing synchronized logging boundary",
+    "production_has_no_unfused_runtime_fallback": true,
+    "reference_unfused_path_is_benchmark_only": true
+  },
+  "benchmark": {
+    "batch_size": 64,
+    "warmup_steps": 8,
+    "measure_steps": 32,
+    "alternating_repeats": 3,
+    "same_checkpoint_batches_noise_and_order": true,
+    "minimum_median_speedup": 1.10,
+    "maximum_peak_memory_ratio": 1.05
+  },
+  "equivalence": {
+    "same_forward_loss_absolute_tolerance": 0.0,
+    "same_preclip_gradient_absolute_tolerance": 0.0,
+    "updated_parameter_max_absolute_tolerance": 1e-6,
+    "updated_parameter_max_relative_tolerance": 1e-6,
+    "optimizer_moment_max_absolute_tolerance": 1e-6,
+    "finite_loss_gradient_and_parameters_required": true
+  },
+  "decision_boundary": "Retain the optimized production step only if every equivalence check passes and the median synchronized throughput improves by at least 10% without more than 5% peak-memory growth. Failure leaves the archived scientific checkpoint and all H1a conclusions unchanged. This protocol does not authorize more training, tensor conditioning, H1b-H6, oracle work, relaxation, DFT, or DFPT."
+}

@@ -90,10 +90,21 @@ class ProductionTrainer:
         config.validate()
         self.diffusion = diffusion
         self.config = config
+        parameters = list(diffusion.denoiser.parameters())
+        use_fused_adamw = bool(parameters) and all(
+            parameter.device.type == "cuda" for parameter in parameters
+        )
+        if use_fused_adamw:
+            # The RTX execution qualification compares this tensor-core path
+            # against highest-precision FP32 matmuls on the same real batch.
+            # Geometry/state tensors remain FP32; only eligible matmul kernels
+            # use TF32 accumulation hardware.
+            torch.set_float32_matmul_precision("high")
         self.optimizer = torch.optim.AdamW(
-            diffusion.denoiser.parameters(),
+            parameters,
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
+            fused=use_fused_adamw,
         )
         self.ema = ExponentialMovingAverage(diffusion.denoiser, config.ema_decay)
         self.step = 0
@@ -107,7 +118,7 @@ class ProductionTrainer:
         blueprint: ParentBlueprintBatch,
         *,
         generator: torch.Generator | None = None,
-    ) -> tuple[HybridLossOutput, float]:
+    ) -> tuple[HybridLossOutput, torch.Tensor]:
         self.diffusion.train()
         self.optimizer.zero_grad(set_to_none=True)
         use_bf16 = self.config.precision == "bf16" and clean_lattice.device.type == "cuda"
@@ -139,4 +150,7 @@ class ProductionTrainer:
         self.optimizer.step()
         self.ema.update(self.diffusion.denoiser)
         self.step = self.step + 1
-        return output, float(gradient_norm.detach().cpu())
+        # Keep the scalar on-device.  Production logging materializes it only
+        # at the existing synchronized log boundary; converting it here would
+        # serialize every CUDA training step.
+        return output, gradient_norm.detach()

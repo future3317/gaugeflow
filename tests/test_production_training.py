@@ -9,9 +9,12 @@ from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.reverse_sampler import (
+    ContinuousReverseInitialState,
     TensorFreeReverseSampler,
     quotient_coordinate_reverse_step,
+    vp_reverse_step,
 )
+from gaugeflow.production.schedules import CosineNoiseSchedule
 from gaugeflow.production.state_projection import fractional_tangent_to_cartesian
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 from scripts.train_production import (
@@ -227,8 +230,9 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     generated = sampler.sample(
         blueprint,
         steps=4,
-        stochastic=False,
-        generator=torch.Generator().manual_seed(105),
+        initialization_generator=torch.Generator().manual_seed(105),
+        categorical_generator=torch.Generator().manual_seed(106),
+        continuous_mode="probability_flow",
     )
     assert generated.atomic_numbers.min() >= 1 and generated.atomic_numbers.max() <= 118
     assert generated.fractional_coordinates.shape == (5, 3)
@@ -243,24 +247,120 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
         )
 
 
-def test_quotient_coordinate_reverse_step_matches_deterministic_score_drift():
+def test_quotient_coordinate_reverse_modes_use_full_and_half_score_drift():
     coordinates = torch.tensor([[-0.2, 0.1, 0.1], [0.2, -0.1, -0.1], [0.0, 0.3, -0.3]])
     score = torch.tensor([[0.4, 0.2, -0.2], [-0.4, -0.2, 0.2], [0.0, 0.0, 0.0]])
     batch = torch.tensor([0, 0, 1])
-    observed = quotient_coordinate_reverse_step(
+    reverse_sde = quotient_coordinate_reverse_step(
         coordinates,
         score,
         torch.tensor([0.25, 0.25]),
-        torch.tensor([0.16, 0.16]),
+        torch.tensor([0.0, 0.0]),
         batch,
         2,
         generator=None,
-        stochastic=False,
+        mode="reverse_sde",
     )
-    expected = coordinates + 0.09 * score / 0.5
-    expected[:2] -= expected[:2].mean(0)
-    expected[2] = 0.0
-    assert torch.allclose(observed, expected)
+    probability_flow = quotient_coordinate_reverse_step(
+        coordinates,
+        score,
+        torch.tensor([0.25, 0.25]),
+        torch.tensor([0.0, 0.0]),
+        batch,
+        2,
+        generator=None,
+        mode="probability_flow",
+    )
+    full_drift = coordinates + 0.25 * score / 0.5
+    full_drift[:2] -= full_drift[:2].mean(0)
+    full_drift[2] = 0.0
+    half_drift = coordinates + 0.5 * 0.25 * score / 0.5
+    half_drift[:2] -= half_drift[:2].mean(0)
+    half_drift[2] = 0.0
+    assert torch.allclose(reverse_sde, full_drift)
+    assert torch.allclose(probability_flow, half_drift)
+
+
+def test_vp_probability_flow_step_matches_ddim_algebra():
+    schedule = CosineNoiseSchedule()
+    clean = torch.tensor([[0.2, -0.4], [0.7, 0.1]])
+    noise = torch.tensor([[-0.3, 0.8], [0.5, -0.2]])
+    time_from = torch.tensor([[0.8], [0.6]])
+    time_to = torch.tensor([[0.3], [0.0]])
+    state = schedule.alpha(time_from) * clean + schedule.sigma(time_from) * noise
+    observed = vp_reverse_step(
+        schedule,
+        state,
+        clean,
+        time_from,
+        time_to,
+        generator=None,
+        mode="probability_flow",
+    )
+    expected = schedule.alpha(time_to) * clean + schedule.sigma(time_to) * noise
+    assert torch.allclose(observed, expected, atol=1.0e-6)
+    assert torch.allclose(observed[1], clean[1], atol=1.0e-6)
+
+
+def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
+    torch.manual_seed(107)
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
+    sampler = TensorFreeReverseSampler(
+        _small_model(),
+        _standardizer(),
+        maximum_time=0.8,
+    )
+    initial = sampler.initialize_continuous_state(
+        blueprint, generator=torch.Generator().manual_seed(108)
+    )
+    outputs = []
+    for mode in ("reverse_sde", "probability_flow"):
+        outputs.append(
+            sampler.sample(
+                blueprint,
+                steps=3,
+                initial_state=initial,
+                categorical_generator=torch.Generator().manual_seed(109),
+                continuous_generator=torch.Generator().manual_seed(110),
+                continuous_mode=mode,
+            )
+        )
+    for generated in outputs:
+        assert generated.fractional_coordinates.shape == (5, 3)
+        assert generated.lattice.shape == (2, 3, 3)
+        assert torch.isfinite(generated.fractional_coordinates).all()
+        assert torch.isfinite(generated.lattice).all()
+        assert generated.diagnostics.masked_count[-1] == 0
+
+
+def test_reverse_sampler_keeps_universal_cover_until_terminal_decode():
+    model = _small_model()
+    seen_coordinates: list[torch.Tensor] = []
+
+    def record_coordinates(_module, inputs):
+        seen_coordinates.append(inputs[1].detach().clone())
+
+    handle = model.register_forward_pre_hook(record_coordinates)
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2]))
+    sampler = TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8)
+    initial = ContinuousReverseInitialState(
+        fractional_coordinates=torch.tensor([[-0.75, 0.0, 0.0], [0.75, 0.0, 0.0]]),
+        volume_latent=torch.zeros(1),
+        shape_latent=torch.zeros(1, 5),
+    )
+    try:
+        generated = sampler.sample(
+            blueprint,
+            steps=1,
+            initial_state=initial,
+            categorical_generator=torch.Generator().manual_seed(111),
+            continuous_mode="probability_flow",
+        )
+    finally:
+        handle.remove()
+    assert len(seen_coordinates) == 1
+    assert torch.equal(seen_coordinates[0], initial.fractional_coordinates)
+    assert bool(((generated.fractional_coordinates >= 0.0) & (generated.fractional_coordinates < 1.0)).all())
 
 
 def test_coordinate_pretraining_updates_coordinate_path_without_other_heads():

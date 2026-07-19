@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal, TypeAlias, cast
 
 import torch
 
@@ -21,6 +22,15 @@ class SamplingFailure(RuntimeError):
     """Fail-closed signal for an invalid joint reverse trajectory."""
 
 
+ContinuousReverseMode: TypeAlias = Literal["reverse_sde", "probability_flow"]
+
+
+def _validate_continuous_mode(mode: str) -> ContinuousReverseMode:
+    if mode not in {"reverse_sde", "probability_flow"}:
+        raise ValueError("continuous reverse mode must be 'reverse_sde' or 'probability_flow'")
+    return cast(ContinuousReverseMode, mode)
+
+
 def quotient_coordinate_reverse_step(
     coordinates: torch.Tensor,
     scaled_score: torch.Tensor,
@@ -30,9 +40,16 @@ def quotient_coordinate_reverse_step(
     graph_count: int,
     *,
     generator: torch.Generator | None,
-    stochastic: bool,
+    mode: ContinuousReverseMode,
 ) -> torch.Tensor:
-    """Apply one exact Brownian reverse bridge step on the translation quotient."""
+    """Apply one reverse-SDE or probability-flow step on the translation quotient.
+
+    The network returns ``sigma_t * score_t``.  In Brownian variance time, the
+    reverse SDE uses the full score drift, whereas the probability-flow ODE
+    uses one half of that drift.  Both stay on the horizontal universal-cover
+    lift; periodic wrapping is a terminal decoding operation.
+    """
+    mode = _validate_continuous_mode(mode)
     if coordinates.shape != scaled_score.shape or coordinates.ndim != 2 or coordinates.shape[1] != 3:
         raise ValueError("coordinate reverse state and score must share shape [nodes,3]")
     if variance_from.shape != (graph_count,) or variance_to.shape != (graph_count,):
@@ -46,8 +63,9 @@ def quotient_coordinate_reverse_step(
         scaled_score
         / variance_from[batch].sqrt().clamp_min(1.0e-8).unsqueeze(-1)
     )
-    updated = coordinates + variance_drop[batch].unsqueeze(-1) * score
-    if stochastic and bool((variance_to > 0.0).any()):
+    drift_multiplier = 1.0 if mode == "reverse_sde" else 0.5
+    updated = coordinates + drift_multiplier * variance_drop[batch].unsqueeze(-1) * score
+    if mode == "reverse_sde" and bool((variance_to > 0.0).any()):
         bridge_variance = (
             variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
         )
@@ -57,6 +75,53 @@ def quotient_coordinate_reverse_step(
     return project_translation_state(updated, batch, graph_count)
 
 
+def vp_reverse_step(
+    schedule: CosineNoiseSchedule,
+    state: torch.Tensor,
+    clean_estimate: torch.Tensor,
+    time_from: torch.Tensor,
+    time_to: torch.Tensor,
+    *,
+    generator: torch.Generator | None,
+    mode: ContinuousReverseMode,
+) -> torch.Tensor:
+    """Advance one variance-preserving reverse transition.
+
+    ``reverse_sde`` is the ancestral DDPM transition. ``probability_flow`` is
+    the deterministic DDIM transport induced by the same clean-state estimate;
+    returning the DDPM posterior mean with its noise disabled would define
+    neither of these dynamics.
+    """
+    mode = _validate_continuous_mode(mode)
+    if state.shape != clean_estimate.shape:
+        raise ValueError("VP reverse state and clean estimate must share shape")
+    if time_from.shape != time_to.shape or bool((time_to > time_from).any()):
+        raise ValueError("VP reverse endpoints must have equal shape and time_to <= time_from")
+    alpha_from = schedule.alpha(time_from)
+    alpha_to = schedule.alpha(time_to)
+    sigma_from = schedule.sigma(time_from)
+    sigma_to = schedule.sigma(time_to)
+    if mode == "probability_flow":
+        predicted_noise = (state - alpha_from * clean_estimate) / sigma_from.clamp_min(
+            schedule.minimum_sigma
+        )
+        return alpha_to * clean_estimate + sigma_to * predicted_noise
+
+    survival_from = alpha_from.square()
+    survival_to = alpha_to.square()
+    noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
+    step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
+    clean_coefficient = alpha_to * step_noise / noise_from
+    state_coefficient = (
+        (survival_from / survival_to.clamp_min(1.0e-12)).sqrt()
+        * (1.0 - survival_to)
+        / noise_from
+    )
+    mean = clean_coefficient * clean_estimate + state_coefficient * state
+    variance = schedule.posterior_variance(time_from, time_to)
+    return mean + variance.sqrt() * standard_normal(state.shape, state, generator)
+
+
 @dataclass(frozen=True)
 class ReverseTrajectoryDiagnostics:
     time: torch.Tensor
@@ -64,6 +129,15 @@ class ReverseTrajectoryDiagnostics:
     coordinate_step_rms: torch.Tensor
     volume_step_rms: torch.Tensor
     shape_step_rms: torch.Tensor
+
+
+@dataclass(frozen=True)
+class ContinuousReverseInitialState:
+    """Common continuous prior draw that can be reused across solver modes."""
+
+    fractional_coordinates: torch.Tensor
+    volume_latent: torch.Tensor
+    shape_latent: torch.Tensor
 
 
 @dataclass(frozen=True)
@@ -79,7 +153,7 @@ class GeneratedHybridBatch:
 
 
 class TensorFreeReverseSampler:
-    """Ancestral reverse process over categorical, torus and lattice states."""
+    """Hybrid categorical and continuous reverse process for crystal states."""
 
     def __init__(
         self,
@@ -104,44 +178,65 @@ class TensorFreeReverseSampler:
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
 
-    def _vp_reverse_step(
+    def initialize_continuous_state(
         self,
-        state: torch.Tensor,
-        clean_estimate: torch.Tensor,
-        time_from: torch.Tensor,
-        time_to: torch.Tensor,
+        blueprint: ParentBlueprintBatch,
         *,
-        generator: torch.Generator | None,
-        stochastic: bool,
-    ) -> torch.Tensor:
-        alpha_to = self.vp_schedule.alpha(time_to)
-        survival_from = self.vp_schedule.alpha(time_from).square()
-        survival_to = alpha_to.square()
-        noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
-        step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
-        clean_coefficient = alpha_to * step_noise / noise_from
-        state_coefficient = (
-            (survival_from / survival_to.clamp_min(1.0e-12)).sqrt()
-            * (1.0 - survival_to)
-            / noise_from
+        generator: torch.Generator | None = None,
+    ) -> ContinuousReverseInitialState:
+        """Draw one reusable continuous prior state for common-noise audits."""
+        device = blueprint.batch.device
+        dtype = blueprint.shape_projector.dtype
+        graphs = blueprint.node_counts.numel()
+        nodes = blueprint.batch.numel()
+        coordinates = torch.rand((nodes, 3), dtype=dtype, device=device, generator=generator)
+        return ContinuousReverseInitialState(
+            fractional_coordinates=project_translation_state(
+                coordinates, blueprint.batch, graphs
+            ),
+            volume_latent=torch.randn(
+                (graphs,), dtype=dtype, device=device, generator=generator
+            ),
+            shape_latent=torch.randn(
+                (graphs, 5), dtype=dtype, device=device, generator=generator
+            ),
         )
-        mean = clean_coefficient * clean_estimate + state_coefficient * state
-        if not stochastic:
-            return mean
-        variance = self.vp_schedule.posterior_variance(time_from, time_to)
-        return mean + variance.sqrt() * standard_normal(state.shape, state, generator)
+
+    @staticmethod
+    def _validate_initial_state(
+        state: ContinuousReverseInitialState,
+        blueprint: ParentBlueprintBatch,
+    ) -> None:
+        graphs = blueprint.node_counts.numel()
+        nodes = blueprint.batch.numel()
+        dtype = blueprint.shape_projector.dtype
+        device = blueprint.batch.device
+        expected = (
+            (state.fractional_coordinates, (nodes, 3), "fractional coordinates"),
+            (state.volume_latent, (graphs,), "volume latent"),
+            (state.shape_latent, (graphs, 5), "shape latent"),
+        )
+        for value, shape, name in expected:
+            if value.shape != shape or value.dtype != dtype or value.device != device:
+                raise ValueError(f"initial {name} must match the blueprint shape, dtype and device")
+            if not bool(torch.isfinite(value).all()):
+                raise ValueError(f"initial {name} must be finite")
 
     def sample(
         self,
         blueprint: ParentBlueprintBatch,
         *,
         steps: int = 100,
-        generator: torch.Generator | None = None,
-        stochastic: bool = True,
+        initial_state: ContinuousReverseInitialState | None = None,
+        initialization_generator: torch.Generator | None = None,
+        categorical_generator: torch.Generator | None = None,
+        continuous_generator: torch.Generator | None = None,
+        continuous_mode: ContinuousReverseMode = "reverse_sde",
         time_grid: str = "uniform_log_alpha",
     ) -> GeneratedHybridBatch:
         if steps < 1:
             raise ValueError("reverse sampler requires at least one step")
+        continuous_mode = _validate_continuous_mode(continuous_mode)
         device = blueprint.batch.device
         dtype = blueprint.shape_projector.dtype
         graphs = blueprint.node_counts.numel()
@@ -149,14 +244,17 @@ class TensorFreeReverseSampler:
         tokens = torch.full(
             (nodes,), self.categorical.mask_index, dtype=torch.long, device=device
         )
-        coordinates = torch.rand((nodes, 3), dtype=dtype, device=device, generator=generator)
-        coordinates = project_translation_state(coordinates, blueprint.batch, graphs)
-        volume_latent = torch.randn(
-            (graphs,), dtype=dtype, device=device, generator=generator
+        if initial_state is None:
+            initial_state = self.initialize_continuous_state(
+                blueprint, generator=initialization_generator
+            )
+        else:
+            self._validate_initial_state(initial_state, blueprint)
+        coordinates = project_translation_state(
+            initial_state.fractional_coordinates.clone(), blueprint.batch, graphs
         )
-        shape_latent = torch.randn(
-            (graphs, 5), dtype=dtype, device=device, generator=generator
-        )
+        volume_latent = initial_state.volume_latent.clone()
+        shape_latent = initial_state.shape_latent.clone()
         log_volume = self.lattice_standardizer.decode_volume(
             volume_latent, blueprint.node_counts
         )
@@ -212,7 +310,10 @@ class TensorFreeReverseSampler:
                         blueprint.batch,
                     )
                     tokens = torch.multinomial(
-                        probabilities, 1, replacement=True, generator=generator
+                        probabilities,
+                        1,
+                        replacement=True,
+                        generator=categorical_generator,
                     ).squeeze(-1)
 
                     variance_from = self.coordinate_schedule.variance(time_from)
@@ -224,25 +325,27 @@ class TensorFreeReverseSampler:
                         variance_to,
                         blueprint.batch,
                         graphs,
-                        generator=generator,
-                        stochastic=stochastic and float(scalar_to) > 0.0,
+                        generator=continuous_generator,
+                        mode=continuous_mode,
                     )
 
-                    next_volume_latent = self._vp_reverse_step(
+                    next_volume_latent = vp_reverse_step(
+                        self.vp_schedule,
                         volume_latent,
                         prediction.clean_volume_latent,
                         time_from,
                         time_to,
-                        generator=generator,
-                        stochastic=stochastic,
+                        generator=continuous_generator,
+                        mode=continuous_mode,
                     )
-                    next_shape_latent = self._vp_reverse_step(
+                    next_shape_latent = vp_reverse_step(
+                        self.vp_schedule,
                         shape_latent,
                         prediction.clean_shape_latent,
                         time_from.unsqueeze(-1),
                         time_to.unsqueeze(-1),
-                        generator=generator,
-                        stochastic=stochastic,
+                        generator=continuous_generator,
+                        mode=continuous_mode,
                     )
                     next_volume = self.lattice_standardizer.decode_volume(
                         next_volume_latent, blueprint.node_counts

@@ -276,8 +276,14 @@ def _sample_sensitivity_point(
     samples = int(counts.numel())
     distances: list[torch.Tensor] = []
     terminal_coordinate_steps: list[float] = []
-    generator = torch.Generator(device=device).manual_seed(
+    initialization_generator = torch.Generator(device=device).manual_seed(
         int(specification["sample_seed"]) + 1
+    )
+    categorical_generator = torch.Generator(device=device).manual_seed(
+        int(specification["sample_seed"]) + 2
+    )
+    continuous_generator = torch.Generator(device=device).manual_seed(
+        int(specification["sample_seed"]) + 3
     )
     for start in range(0, samples, 8):
         selected_counts = counts[start : start + 8].to(device)
@@ -287,8 +293,14 @@ def _sample_sensitivity_point(
         generated = sampler.sample(
             blueprint,
             steps=steps,
-            generator=generator,
-            stochastic=bool(specification["stochastic"]),
+            initialization_generator=initialization_generator,
+            categorical_generator=categorical_generator,
+            continuous_generator=continuous_generator,
+            continuous_mode=(
+                "reverse_sde"
+                if bool(specification["stochastic"])
+                else "probability_flow"
+            ),
             time_grid=time_grid,
         )
         distances.append(

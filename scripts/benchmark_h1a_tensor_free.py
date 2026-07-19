@@ -142,8 +142,14 @@ def _sample_seed(
         coordinate_sigma_max=float(runtime.training_config["coordinate_sigma_max"]),
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
-    generator = torch.Generator(device=device).manual_seed(
+    initialization_generator = torch.Generator(device=device).manual_seed(
         int(specification["seed"]) + seed + 1
+    )
+    categorical_generator = torch.Generator(device=device).manual_seed(
+        int(specification["seed"]) + seed + 2
+    )
+    continuous_generator = torch.Generator(device=device).manual_seed(
+        int(specification["seed"]) + seed + 3
     )
     element_histogram = torch.zeros(118, dtype=torch.float64)
     volumes: list[torch.Tensor] = []
@@ -161,8 +167,14 @@ def _sample_seed(
             generated = sampler.sample(
                 blueprint,
                 steps=int(specification["steps"]),
-                generator=generator,
-                stochastic=bool(specification["stochastic"]),
+                initialization_generator=initialization_generator,
+                categorical_generator=categorical_generator,
+                continuous_generator=continuous_generator,
+                continuous_mode=(
+                    "reverse_sde"
+                    if bool(specification["stochastic"])
+                    else "probability_flow"
+                ),
                 time_grid=str(specification["time_grid"]),
             )
         except SamplingFailure:

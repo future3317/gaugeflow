@@ -321,7 +321,7 @@ def main() -> None:
                 "volume_loss": float(output.volume_loss.detach().cpu()),
                 "shape_loss": float(output.shape_loss.detach().cpu()),
                 "masked_fraction": float(output.masked_fraction.detach().cpu()),
-                "gradient_norm": gradient_norm,
+                "gradient_norm": float(gradient_norm.cpu()),
                 "clipped_module_gradient_norms": _clipped_module_gradient_norms(model),
                 "graphs_seen_this_invocation": graphs_seen_this_invocation,
                 "graphs_per_second": throughput_graphs / elapsed,

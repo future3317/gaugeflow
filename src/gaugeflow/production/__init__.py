@@ -41,7 +41,13 @@ from .lattice_volume_shape import (
     SymmetryShapeBasis,
     project_lattice_state,
 )
-from .reverse_sampler import GeneratedHybridBatch, SamplingFailure, TensorFreeReverseSampler
+from .reverse_sampler import (
+    ContinuousReverseInitialState,
+    ContinuousReverseMode,
+    GeneratedHybridBatch,
+    SamplingFailure,
+    TensorFreeReverseSampler,
+)
 from .schedules import CosineNoiseSchedule
 from .space_group_router import (
     ReachableChildCompatibilityRouter,
@@ -63,6 +69,8 @@ __all__ = [
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
     "CompactCartesianKrylovCarrier",
+    "ContinuousReverseInitialState",
+    "ContinuousReverseMode",
     "ChildReconstructor",
     "CosineNoiseSchedule",
     "DistortionBlueprint",

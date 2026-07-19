@@ -1,0 +1,32 @@
+{
+  "protocol": "h1a_cuda_execution_optimization_v2",
+  "status_before_run": "frozen_not_run",
+  "scope": "CUDA tensor-core execution qualification for the frozen H1a coordinate trainer; model, objective, probability path, data order, batch size, seed, exposure, and checkpoint tensors remain unchanged",
+  "source_protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+  "source_checkpoint_step": 16882,
+  "device": "NVIDIA GeForce RTX 4060 Ti 16 GB",
+  "optimization": {
+    "single_candidate": "high float32 matmul precision (TF32 tensor cores) plus fused AdamW and deferred scalar logging",
+    "geometry_state_and_probability_path_remain_fp32": true,
+    "production_has_no_unfused_or_highest-matmul_runtime_fallback": true,
+    "reference_backend_is_qualification_only": true
+  },
+  "benchmark": {
+    "batch_size": 64,
+    "warmup_steps": 8,
+    "measure_steps": 32,
+    "alternating_repeats": 3,
+    "same_checkpoint_batches_noise_and_order": true,
+    "minimum_median_speedup": 1.10,
+    "maximum_peak_memory_ratio": 1.05
+  },
+  "equivalence": {
+    "selected_loss_relative_difference_max": 0.0005,
+    "coordinate_prediction_cosine_min": 0.999,
+    "full_gradient_cosine_min": 0.997,
+    "parameter_update_cosine_min": 0.999,
+    "parameter_update_relative_norm_difference_max": 0.01,
+    "finite_loss_gradient_parameters_and_optimizer_state_required": true
+  },
+  "decision_boundary": "Enable the tensor-core production path only if every equivalence check passes and the median synchronized throughput improves by at least 10% without more than 5% peak-memory growth. Failure keeps the original execution path. This protocol does not authorize additional training, a changed scientific checkpoint, tensor conditioning, H1b-H6, oracle work, relaxation, DFT, or DFPT."
+}

@@ -139,7 +139,9 @@ def _sample_checkpoint(
         maximum_time=float(runtime.training_config["maximum_time"]),
     )
     count_generator = torch.Generator().manual_seed(seed)
-    sample_generator = torch.Generator(device=device).manual_seed(seed + 1)
+    initialization_generator = torch.Generator(device=device).manual_seed(seed + 1)
+    categorical_generator = torch.Generator(device=device).manual_seed(seed + 2)
+    continuous_generator = torch.Generator(device=device).manual_seed(seed + 3)
     node_counts = runtime.node_count_prior.sample(
         samples, generator=count_generator, device=device
     )
@@ -157,8 +159,10 @@ def _sample_checkpoint(
             generated = sampler.sample(
                 blueprint,
                 steps=steps,
-                generator=sample_generator,
-                stochastic=True,
+                initialization_generator=initialization_generator,
+                categorical_generator=categorical_generator,
+                continuous_generator=continuous_generator,
+                continuous_mode="reverse_sde",
                 time_grid=time_grid,
             )
         except SamplingFailure:

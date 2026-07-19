@@ -1,0 +1,77 @@
+{
+  "protocol": "h1a_sde_probability_flow_sampler_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training coordinate-solver comparison on the unchanged two-pass coordinate checkpoint; no full-hybrid generation claim",
+  "source": {
+    "protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+    "protocol_sha256": "6ae8e93677857d27989ac55ab0e42fd2c7c715901e9a7a13f700d773fbe1e9ba",
+    "checkpoint_seed": 5705,
+    "checkpoint_step": 16882,
+    "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+    "checkpoint_objective": "coordinate",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "solver_contract": {
+    "coordinate_reverse_sde": "full Brownian score drift plus translation-horizontal bridge noise",
+    "coordinate_probability_flow": "one-half Brownian score drift with no continuous noise",
+    "lattice_reverse_sde": "ancestral VP DDPM transition",
+    "lattice_probability_flow": "deterministic VP DDIM transition from the same clean-state estimate",
+    "categorical_path": "absorbing categorical reverse process remains stochastic and is not renamed an ODE",
+    "coordinate_chart": "translation-horizontal universal-cover lift with graph geometry wrapping internally and wrap01 only at terminal decode",
+    "forbidden_stage_operation": "no per-stage wrap01 because it reintroduces periodic-image branch switches"
+  },
+  "evaluation": {
+    "split": "val",
+    "graphs": 256,
+    "validation_seed": 8701,
+    "batch_size": 8,
+    "step_counts": [25, 50, 100],
+    "time_grid": "uniform_log_alpha",
+    "modes": ["reverse_sde", "probability_flow"],
+    "common_continuous_initial_state": true,
+    "initialization_seed": 8702,
+    "independent_categorical_random_stream": true,
+    "categorical_seed": 8703,
+    "continuous_noise_seed": 8704,
+    "fixed_clean_atom_types": true,
+    "fixed_clean_lattice": true,
+    "rationale": "the only active two-pass checkpoint is coordinate-only; sampling untrained element and lattice heads would make composition and lattice non-inferiority scientifically uninterpretable"
+  },
+  "metrics": {
+    "coordinate": [
+      "nearest_neighbour_wasserstein_normalized_by_clean_iqr",
+      "minimum_distance_valid_fraction",
+      "translation_aligned_endpoint_rms_diagnostic",
+      "terminal_finite_fraction",
+      "sampling_failures"
+    ],
+    "controlled_invariants": [
+      "composition_exact_identity_fraction",
+      "lattice_exact_identity_fraction"
+    ],
+    "efficiency": [
+      "latency_seconds",
+      "graphs_per_second",
+      "peak_cuda_memory_mib",
+      "nfe"
+    ],
+    "warning": "composition and lattice identity are fixed controls, not evidence that their reverse samplers are qualified"
+  },
+  "acceptance": {
+    "candidate_step_counts": [25, 50],
+    "reference": "reverse_sde_100_nfe",
+    "nearest_neighbour_normalized_wasserstein_additive_degradation_max": 0.05,
+    "minimum_distance_valid_fraction_degradation_max": 0.01,
+    "terminal_finite_fraction": 1.0,
+    "sampling_failures": 0,
+    "composition_exact_identity_fraction": 1.0,
+    "lattice_exact_identity_fraction": 1.0,
+    "latency_ratio_to_reverse_sde_100_max": 0.6
+  },
+  "decision_rule": {
+    "retain_probability_flow": "at least one probability-flow candidate at 25 or 50 NFE passes every frozen coordinate quality, finite-state, failure and latency check",
+    "retain_reverse_sde_only": "neither probability-flow candidate passes, including if deterministic transport further contracts nearest-neighbour geometry",
+    "full_hybrid_follow_up": "composition and lattice non-inferiority require a separately qualified jointly trained checkpoint; they cannot be inferred from this coordinate-only checkpoint",
+    "boundary": "No optimizer step, new model, extra seed, tensor condition, H1b-H6, oracle, relaxation, DFT or DFPT is authorized. The protocol is frozen but must remain unrun while sampling is paused."
+  }
+}

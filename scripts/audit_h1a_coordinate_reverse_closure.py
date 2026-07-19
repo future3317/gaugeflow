@@ -148,7 +148,11 @@ def main() -> None:
                     packed.batch,
                     graphs,
                     generator=generator,
-                    stochastic=bool(protocol["stochastic"]),
+                    mode=(
+                        "reverse_sde"
+                        if bool(protocol["stochastic"])
+                        else "probability_flow"
+                    ),
                 )
             endpoint_values.append(
                 _endpoint_rms(coordinates, clean, packed.lattice, packed.batch).cpu()

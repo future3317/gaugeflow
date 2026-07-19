@@ -226,7 +226,7 @@ def main() -> None:
             record: dict[str, object] = {
                 "step": trainer.step,
                 "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
-                "total_gradient_norm_before_clip": total_gradient_norm,
+                "total_gradient_norm_before_clip": float(total_gradient_norm.cpu()),
                 "raw_group_gradient_norm": recorder.norms(),
             }
             records.append(record)

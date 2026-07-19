@@ -28,7 +28,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sampler-steps", type=int, default=100)
     parser.add_argument("--seed", type=int, default=6201)
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--deterministic", action="store_true")
+    parser.add_argument(
+        "--continuous-mode",
+        choices=("reverse_sde", "probability_flow"),
+        default="reverse_sde",
+        help="Continuous coordinate/lattice dynamics; elements remain categorical stochastic.",
+    )
     return parser.parse_args()
 
 
@@ -67,7 +72,9 @@ def main() -> None:
     )
     args.output.mkdir(parents=True, exist_ok=True)
     count_generator = torch.Generator().manual_seed(args.seed)
-    sample_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
+    initialization_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
+    categorical_generator = torch.Generator(device=device).manual_seed(args.seed + 2)
+    continuous_generator = torch.Generator(device=device).manual_seed(args.seed + 3)
     records: list[dict[str, object]] = []
     failures = 0
     for index in range(args.num_samples):
@@ -77,8 +84,10 @@ def main() -> None:
             generated = sampler.sample(
                 blueprint,
                 steps=args.sampler_steps,
-                generator=sample_generator,
-                stochastic=not args.deterministic,
+                initialization_generator=initialization_generator,
+                categorical_generator=categorical_generator,
+                continuous_generator=continuous_generator,
+                continuous_mode=args.continuous_mode,
                 time_grid="uniform_log_alpha",
             )
             atomic_numbers = generated.atomic_numbers.cpu().tolist()
@@ -110,6 +119,7 @@ def main() -> None:
         "samples": args.num_samples,
         "failures": failures,
         "sampler_steps": args.sampler_steps,
+        "continuous_mode": args.continuous_mode,
         "records": records,
     }
     (args.output / "sampling_summary.json").write_text(

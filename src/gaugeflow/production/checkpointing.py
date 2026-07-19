@@ -110,7 +110,22 @@ def load_production_checkpoint(
     if ema is not None:
         ema.load_state_dict(payload["ema"])
     if optimizer is not None:
+        # Optimizer arithmetic state and scientific hyperparameters are
+        # checkpointed.  The CUDA execution backend is a property of the
+        # current runtime, however, and an older unfused checkpoint must not
+        # silently disable a qualified fused production step.
+        execution_backend = [
+            (group.get("fused"), group.get("foreach"))
+            for group in optimizer.param_groups
+        ]
         optimizer.load_state_dict(payload["optimizer"])
+        if len(execution_backend) != len(optimizer.param_groups):
+            raise ValueError("checkpoint optimizer group count changed during restore")
+        for group, (fused, foreach) in zip(
+            optimizer.param_groups, execution_backend, strict=True
+        ):
+            group["fused"] = fused
+            group["foreach"] = foreach
     if restore_rng:
         torch.set_rng_state(payload["cpu_rng_state"].cpu())
         cuda_state = payload["cuda_rng_state"]

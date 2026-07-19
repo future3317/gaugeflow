@@ -109,8 +109,11 @@ def _rollout_closure(
                     packed.batch,
                     graphs,
                     generator=generator,
-                    stochastic=bool(specification["rollout_stochastic"])
-                    and float(times[step + 1]) > 0.0,
+                    mode=(
+                        "reverse_sde"
+                        if bool(specification["rollout_stochastic"])
+                        else "probability_flow"
+                    ),
                 )
             if not bool(torch.isfinite(coordinates).all()):
                 failure = "nonfinite_terminal_coordinate"

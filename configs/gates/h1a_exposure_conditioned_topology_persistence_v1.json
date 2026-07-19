@@ -1,0 +1,37 @@
+{
+  "protocol": "h1a_exposure_conditioned_topology_persistence_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training attribution of whether the exact all-pair v2 clean-topology oracle residual persists across the already-frozen 0.25/0.5/1/2-pass checkpoints",
+  "prerequisites": {
+    "topology_protocol": "h1a_all_pair_clean_topology_attribution_v2",
+    "topology_protocol_sha256": "843c9f770fd6d3cf02e63eb8ee1c92e29488f2ed567ea57c3e4c9523b1e3e7fa",
+    "learning_curve_protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+    "learning_curve_protocol_sha256": "656423a7fad0a2dabf9f2672ea51995ad3a653b2e555681c3b2813da40f3960f",
+    "learning_curve_result_sha256": "7b492477a0bf031fba7ad6060e512a2ff83d1287f29f8fd63d3ce37d70edbab1",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "tensor_condition_enabled": false
+  },
+  "checkpoints": [
+    {"step": 0, "passes": 0.0, "role": "sanity_only", "sha256": "c0fdef1a1d3da29fce2c7c4dbe390c3b5cf867daa32ac686a75549e3602e7ba6"},
+    {"step": 2111, "passes": 0.25, "role": "classification", "sha256": "28480380a7973ee759363a8451d7b71188dd4e9f7a6db4360dc52eeeb0480674"},
+    {"step": 4221, "passes": 0.5, "role": "classification", "sha256": "b641d93157d53903012e8aaa4dc6f0594ecfde94863360ed290ae0f0b92e8cb0"},
+    {"step": 8441, "passes": 1.0, "role": "classification", "sha256": "a2fa8db11c89adc1203bb58e8620f3dd3b02ea73ba3e43db8a60647a2c66a48f"},
+    {"step": 16882, "passes": 2.0, "role": "classification", "sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f"}
+  ],
+  "inherited_exact_v2_contract": {
+    "train_graphs": 512,
+    "validation_graphs": 256,
+    "times": [0.2, 0.4, 0.5, 0.6],
+    "middle_times": [0.4, 0.5, 0.6],
+    "seeds": [9301, 9302, 9303, 9304, 9305],
+    "panel_pair_support_image_mixture_features_ridge_and_bootstrap_unchanged": true,
+    "optimizer_steps": 0
+  },
+  "classification": {
+    "exposure_dominant": "two-pass middle clean-oracle normalized gain <= 0.05 or retention versus 0.25 pass <= 0.50",
+    "topology_persistent": "two-pass gain >= 0.10, retention versus 0.25 pass >= 0.75, and at least two of three middle-time structure-bootstrap 95% lower bounds are positive",
+    "mixed": "all other outcomes",
+    "zero_pass_excluded_from_classification": true
+  },
+  "decision_boundary": "This audit may only read existing checkpoints and run the exact v2 panel. It adds no optimizer step, checkpoint, data pass, calibration, rollout, topology branch, tensor condition, H1b-H6, oracle, relaxation, DFT, or DFPT."
+}
