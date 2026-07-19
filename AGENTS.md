@@ -82,6 +82,23 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   `-0.001368`, and low-shell excess over the permutation null `0.007755`.
   Its source hash and relationship to the main audit are recorded in
   `bridge_no_go_synthesis.md`. Do not rerun either low-k protocol.
+- The complete all-pair clean-topology v2 audit covers `1.0` of the clean
+  coordination mass. Middle-noise clean/noisy soft Jaccard is `0.50413`, hard
+  switch fraction is `0.26469`, and the clean oracle improves residual energy
+  by `0.10716` while the noisy control gives `-0.00354`. The frozen probe is
+  predictive (`AUC=0.87923`, explained fraction `0.61362`) but its direct
+  plug-in carrier worsens the residual by `0.04391`. The decision is
+  `probe_predictive_but_topology_correction_not_residual_causal`; do not add
+  the frozen probe or linear topology carrier to production.
+- The unchanged dynamic coordinate model completed one separately frozen
+  from-scratch two-pass exposure curve at seed 5705. Validation ratios at
+  `0/0.25/0.5/1/2` passes are
+  `1.00000/0.73837/0.63348/0.54371/0.49103`. One-to-two-pass improvement is
+  `0.096876`, between the preregistered plateau (`<=0.05`) and undertraining
+  (`>=0.10`) boundaries, so the decision is `ambiguous`. The one-pass point
+  reproduces the archived `0.54417`; H1a remains failed. Do not add another
+  pass or seed, and do not use the post-hoc crossing of ratio `0.5` to claim a
+  Gate pass.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
@@ -96,13 +113,13 @@ conditional target variance, data exposure, probability-path information, or
 staged/self-conditioned coordinate generation; do not silently turn this
 diagnosis into architecture search.
 
-The next bounded zero-training attribution is a latent clean-topology audit:
-measure noisy/clean coordination disagreement, test an oracle clean-topology
-residual carrier, and fit a frozen probe from current noisy node/edge states.
-Only if the oracle materially helps and the probe predicts the clean field may
-a production topology mechanism be proposed. A separately frozen fixed-model
-0.25/0.5/1/2-pass learning curve may follow to distinguish one-pass
-undertraining from a representation ceiling; it must not rewrite H1a.
+The clean-topology audit and fixed-model 0.25/0.5/1/2-pass curve are complete.
+The only next bounded attribution currently supported is a zero-training
+exposure-conditioned topology residual persistence audit on those frozen
+checkpoints, using the exact v2 pair panels and carrier definitions. It should
+ask whether clean-oracle gain disappears with exposure. It must not add an
+optimizer step, seed, data pass, production topology branch, H1b-H6, tensor
+condition, oracle, relaxation, DFT or DFPT.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

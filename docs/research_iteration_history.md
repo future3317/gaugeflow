@@ -637,3 +637,51 @@ reason to rerun or tune low-k diagnostics. Combined with TopK/slot failure, the
 remaining bounded hypothesis is that the model is forming increasingly rich
 features on a noise-corrupted neighbor relation. This motivates a separately
 frozen clean-topology oracle/probe before any new operator or extra-pass run.
+
+### Complete all-pair clean-topology attribution
+
+The first clean-topology audit was invalid for scientific attribution because
+it carried clean labels only on the current noisy production edge set and
+covered `0.58261` of clean coordination mass. It is preserved as an audit
+failure rather than interpreted as a negative topology result. The versioned
+v2 audit repairs only candidate support: it evaluates every directed non-self
+atom pair (`N(N-1)<=380`), uses exact float64 periodic CVP for clean labels,
+and aggregates all production periodic images with a fixed soft mixture.
+
+Coverage is exactly `1.0`. Across `t=.4/.5/.6`, mean clean/noisy soft Jaccard
+is `0.50413` and hard topology switch fraction is `0.26469`. A clean-topology
+oracle carrier improves held-out coordinate residual energy by `0.10716`,
+compared with `-0.00354` for the current noisy-topology control. Frozen node
+and edge states predict clean coordination with middle-noise AUC `0.87923` and
+explained fraction `0.61362`. However, substituting probe probabilities into
+the oracle linear carrier yields `-0.04391` improvement, or `-0.40976` times
+the oracle gain. The decision is therefore
+`probe_predictive_but_topology_correction_not_residual_causal`. No production
+branch or optimizer step is added.
+
+### Fixed dynamic-architecture two-pass exposure curve
+
+A separately committed protocol then trains the unchanged 5,034,297-parameter
+dynamic coordinate model from scratch at seed 5705 for exactly two complete
+passes over the 540,164-structure train split. Model, optimizer, EMA, batch
+size, time/noise sampling and data-generator order are unchanged. The trainer
+records a complete post-global-clip gradient partition and saves checkpoints
+at nominal `0/.25/.5/1/2` passes. Validation ratios are respectively
+`1.00000/0.73837/0.63348/0.54371/0.49103`. The one-pass point differs from
+the archived `0.54417` by only `0.00046`, so the reproduction precondition
+passes.
+
+The one-to-two-pass relative validation improvement is `0.096876`. This is
+above the preregistered `<=0.05` representation-plateau rule but below the
+`>=0.10` undertraining rule, so the frozen classification is `ambiguous`.
+Teacher-forced endpoint RMS continues to improve from one to two passes at
+`t=.005/.1/.5` (`.03835->.03546`, `.05484->.04980`, and
+`.40305->.37155 A`) while remaining uninformative at `t=.9`. Every active
+coordinate module retains finite gradients through the second pass. The
+post-hoc two-pass ratio below `0.5` does not rewrite H1a because the diagnostic
+does not rerun the complete historical acceptance suite.
+
+The smallest next attribution is read-only: rerun the exact v2 clean-topology
+oracle on the frozen `.25/.5/1/2` checkpoints and ask whether its residual gain
+disappears with data exposure. No additional pass, seed, production branch,
+tensor condition or later Gate is authorized.
