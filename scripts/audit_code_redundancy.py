@@ -46,6 +46,10 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "audit_h1a_primal_dual_metric.py",
     ROOT / "scripts" / "diagnose_h1a_coordinate_generator.py",
     ROOT / "scripts" / "benchmark_h1a_tensor_free.py",
+    ROOT / "scripts" / "audit_h1a_exposure_topology_persistence.py",
+    ROOT / "scripts" / "profile_h1a_training_execution.py",
+    ROOT / "scripts" / "compare_h1a_execution_snapshots.py",
+    ROOT / "scripts" / "audit_h1a_sde_probability_flow_sampler.py",
 )
 
 

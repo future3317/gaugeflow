@@ -99,6 +99,14 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   reproduces the archived `0.54417`; H1a remains failed. Do not add another
   pass or seed, and do not use the post-hoc crossing of ratio `0.5` to claim a
   Gate pass.
+- The zero-training coordinate sampler comparison is complete on the same
+  two-pass checkpoint and a fixed 256-graph validation panel. Probability flow
+  at 25/50 NFE meets the latency checks but fails nearest-neighbour Wasserstein
+  non-inferiority (`1.02007/0.79848` versus reverse-SDE-100 `0.56626`); 25 NFE
+  also degrades the >=0.5 A minimum-distance fraction. All paths are finite
+  with zero failures. Retain reverse SDE; do not promote deterministic
+  probability flow. Reverse-SDE-50 (`0.56892`, about half the latency) is a
+  post-hoc follow-up hypothesis, not a qualified production replacement.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive

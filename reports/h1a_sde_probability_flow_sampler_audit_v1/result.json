@@ -1,0 +1,31 @@
+{
+  "protocol": "h1a_sde_probability_flow_sampler_audit_v1",
+  "protocol_file_sha256": "28d164cd0c92a447c5c0ea92a74819ebdc317d33104a1217ee4f2377e87fc9db",
+  "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+  "graphs": 256,
+  "optimizer_steps": 0,
+  "qualified": false,
+  "decision": "retain_reverse_sde_only",
+  "clean_nearest_neighbour_iqr_angstrom": 0.6327505707740784,
+  "probability_flow_candidates": [
+    {
+      "nfe": 25,
+      "qualified": false,
+      "latency_ratio_to_reverse_sde_100": 0.24461027192250215,
+      "nearest_neighbour_noninferior": false,
+      "minimum_distance_noninferior": false,
+      "finite": true,
+      "sampling_failures": 0
+    },
+    {
+      "nfe": 50,
+      "qualified": false,
+      "latency_ratio_to_reverse_sde_100": 0.5016800896818525,
+      "nearest_neighbour_noninferior": false,
+      "minimum_distance_noninferior": true,
+      "finite": true,
+      "sampling_failures": 0
+    }
+  ],
+  "scientific_scope": "coordinate-only oracle-context solver audit; composition and lattice are fixed controls"
+}

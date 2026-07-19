@@ -1,6 +1,7 @@
 # H1a SDE–probability-flow sampler audit v1
 
-Status: **implemented and preregistered; not run**.
+Status: **completed; probability-flow candidates failed the frozen quality
+non-inferiority checks**.
 
 ## Decision encoded in the implementation
 
@@ -60,5 +61,40 @@ composition and lattice are reported as exact controlled invariants, not as
 qualified generated metrics. A full-hybrid SDE–ODE comparison must wait for a
 separately qualified jointly trained checkpoint.
 
-The formal 25/50/100-NFE CUDA sampling comparison has not been started because
-sampling and training are paused. No result or Gate status is claimed.
+## Frozen CUDA result
+
+The committed protocol was executed once on the RTX 4060 Ti using the fixed
+256-graph validation panel, the step-16,882 EMA checkpoint, common continuous
+initial states, and no optimizer step.
+
+| continuous solver | NFE | normalized NN W1 | distance >=0.5 A | latency (s) | graphs/s |
+|---|---:|---:|---:|---:|---:|
+| reverse SDE | 25 | 0.75170 | 1.00000 | 44.28 | 5.78 |
+| reverse SDE | 50 | 0.56892 | 0.99609 | 82.54 | 3.10 |
+| reverse SDE | 100 | **0.56626** | **1.00000** | 170.98 | 1.50 |
+| probability flow | 25 | 1.02007 | 0.98438 | 41.82 | 6.12 |
+| probability flow | 50 | 0.79848 | 0.99609 | 85.78 | 2.98 |
+| probability flow | 100 | 0.67502 | 0.99609 | 170.26 | 1.50 |
+
+All six paths produced finite states with zero failures. Peak CUDA allocation
+was approximately 120 MiB for every path. Composition and lattice identity are
+one by construction and remain controls rather than generated-quality claims.
+
+The 25-NFE probability-flow path meets the latency requirement at `0.2446` of
+the reverse-SDE-100 latency, but fails both nearest-neighbour Wasserstein and
+minimum-distance non-inferiority. The 50-NFE path meets latency (`0.5017`) and
+minimum-distance requirements but still fails nearest-neighbour Wasserstein:
+its normalized W1 is `0.79848`, versus `0.56626` for the reference and a frozen
+maximum additive degradation of `0.05`.
+
+## Decision
+
+Do not promote probability flow to the production fast sampler. Removing
+continuous reverse stochasticity makes the generated local-distance
+distribution worse under the current learned score, and even 100-NFE
+probability flow remains worse than 100-NFE reverse SDE.
+
+The observed reverse-SDE-50 value (`0.56892`) is close to reverse-SDE-100 while
+using about half the latency, but it was not a preregistered candidate in this
+Gate. It is recorded as a follow-up hypothesis only and cannot silently replace
+the production NFE without a new held-out qualification.

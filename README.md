@@ -224,6 +224,13 @@ teacher-forced 与 `t=.1/.2` rollout 分别为 `0.05675/0.05963/0.08444 A`，零
 matched-initialization 实验入口已从 active code 删除，只在本报告、研究历史和 Git 中
 保留。H1a 仍失败，不初始化 joint model，也不进入 H1b 或 tensor/oracle/物理计算。
 
+同一两遍 coordinate checkpoint 上的零训练采样器审计也已完成。25/50 NFE
+probability-flow 虽分别只需 reverse-SDE-100 的 24.5%/50.2% 延迟，但最近邻
+Wasserstein 非劣性失败（归一化值 1.02007/0.79848，对照 0.56626）。因此当前
+production 继续保留 reverse SDE，不把“关闭随机性”当作无损加速。观察到
+reverse-SDE-50 的 0.56892 接近 100 NFE，但这只是事后候选，尚未通过独立
+held-out 资格测试。
+
 局部算子收口后，`h1a_midnoise_reciprocal_attribution_v1` 在同一 seed 5705、step 8441
 checkpoint 上完成了不训练的三重归因。`t=.35--.65` 的同 composition endpoint
 top-1 检索均值为 `0.40315 < 0.75`，并从 `0.53543` 降至 `0.25984`；低频
