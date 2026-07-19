@@ -69,6 +69,19 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   removed. Do not restore them or search slot rank/balance iterations.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
+- The frozen-checkpoint middle-noise reciprocal attribution is complete and all
+  three preregistered checks fail: endpoint retrieval is `0.40315 < 0.75`, the
+  low/high normalized reciprocal-residual ratio is `1.05348 < 1.15` with
+  `0/5` supporting times, and the frozen low-k probe improves held-out MSE by
+  only `0.002257` with low-minus-high `0.002939 < 0.03`. The decision is
+  `do_not_implement_reciprocal_carrier`. Do not revive either reciprocal
+  residual or add a new reciprocal production carrier.
+- The independent Bridge audit reaches the same NO-GO on the earlier
+  volume-normalized checkpoint: middle-noise held-out low-frequency explained
+  fraction `-0.001368`, low-minus-random `0.000695`, low-minus-graph-token
+  `-0.001368`, and low-shell excess over the permutation null `0.007755`.
+  Its source hash and relationship to the main audit are recorded in
+  `bridge_no_go_synthesis.md`. Do not rerun either low-k protocol.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
@@ -76,9 +89,20 @@ either failed reciprocal-score residual, or initialize joint training from a
 failed coordinate checkpoint. A new mechanism requires a separately frozen
 causal or operator qualification first.
 
-The next permitted diagnosis is the fixed middle-noise oracle curve, score
-residual reciprocal-shell spectrum, and frozen low-k linear probe. Implement a
-reciprocal global carrier only if all three support the same low-k deficiency.
+The middle-noise oracle curve, score-residual reciprocal-shell spectrum, and
+frozen low-k linear probe have now rejected a reciprocal global carrier. A
+future H1a protocol must separately preregister an attribution involving
+conditional target variance, data exposure, probability-path information, or
+staged/self-conditioned coordinate generation; do not silently turn this
+diagnosis into architecture search.
+
+The next bounded zero-training attribution is a latent clean-topology audit:
+measure noisy/clean coordination disagreement, test an oracle clean-topology
+residual carrier, and fit a frozen probe from current noisy node/edge states.
+Only if the oracle materially helps and the probe predicts the clean field may
+a production topology mechanism be proposed. A separately frozen fixed-model
+0.25/0.5/1/2-pass learning curve may follow to distinguish one-pass
+undertraining from a representation ceiling; it must not rewrite H1a.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

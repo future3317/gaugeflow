@@ -19,8 +19,9 @@ Cartesian Gauge Atlas。项目没有旧 continuous-logit flow、harmonic conditi
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
 项目当前停在 H1a 坐标生成器诊断。P1 cache 已完整构建并独立审计；H1b 和后续
-Gate 仍被阻止。局部算子筛选已经收口；下一步只允许用中噪声 oracle、残差频谱和
-frozen low-k probe 判断是否确有 reciprocal 全局缺口，不增加训练 seed 或步数。
+Gate 仍被阻止。局部算子筛选已经收口。随后完成的冻结 checkpoint 归因审计中，
+中噪声 endpoint 检索、reciprocal 残差频谱与 frozen low-k probe 三项均未支持
+低频全局缺口，因此不实现 reciprocal carrier，也不增加训练 seed 或步数。
 
 ## 当前方法
 
@@ -220,6 +221,27 @@ teacher-forced 与 `t=.1/.2` rollout 分别为 `0.05675/0.05963/0.08444 A`，零
 最大 inter-slot cosine `0.99974`，仍未形成稳定的低秩邻域分解。TopK/induced/R16 与
 matched-initialization 实验入口已从 active code 删除，只在本报告、研究历史和 Git 中
 保留。H1a 仍失败，不初始化 joint model，也不进入 H1b 或 tensor/oracle/物理计算。
+
+局部算子收口后，`h1a_midnoise_reciprocal_attribution_v1` 在同一 seed 5705、step 8441
+checkpoint 上完成了不训练的三重归因。`t=.35--.65` 的同 composition endpoint
+top-1 检索均值为 `0.40315 < 0.75`，并从 `0.53543` 降至 `0.25984`；低频
+`0--1.5 A^-1` 与高频 `2.5--4.0 A^-1` 的归一化残差比均值为
+`1.05348 < 1.15`，支持时间点为 `0/5`；冻结 12-channel low-k ridge probe 的
+held-out 改善仅 `0.002257`，高频匹配对照为 `-0.000682`，二者差
+`0.002939 < 0.03`。低频图覆盖率为 `0.9766--0.9883`，排除了空频带解释。
+因此三项预注册检查全部失败，正式决策为 `do_not_implement_reciprocal_carrier`。
+报告、独立哈希复核和可复现三联图位于
+`reports/h1a_midnoise_reciprocal_attribution_v1/`。当前证据把下一问题指向
+中高噪声条件方差、数据暴露、probability path 或 staged/self-conditioned
+coordinate generation，而不是另一个 local/global feature branch。
+
+这一结论同时合并独立 Bridge worktree 的零优化器 NO-GO：其中
+`t=.4--.6` low-frequency held-out explained fraction 为 `-0.001368`，相对
+random Fourier 仅 `+0.000695`，相对 graph token 为 `-0.001368`，最低壳层
+超出 atom-permutation null 仅 `0.007755`。其原始 result SHA-256 与两套实验的
+职责边界记录在同一报告目录的 `bridge_no_go_synthesis.md`；不再重复 low-k
+实验。局部聚合和低频全局 Fourier 两条假设均收口后，下一项只允许先做
+clean-topology oracle/probe 的零训练诊断。
 
 ## 训练图与采样加速设计
 

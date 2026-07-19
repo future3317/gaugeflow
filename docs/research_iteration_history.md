@@ -602,7 +602,38 @@ matched initialization, and their runners/configuration dispatch are removed
 from active code; the result remains in this history, its compact report, and
 Git provenance.
 
-The only next authorized attribution is a middle-noise oracle curve, a
-score-residual reciprocal-shell spectrum, and a frozen low-k linear probe. A
-global reciprocal carrier is justified only if all three independently point
-to the same low-frequency deficiency.
+### Middle-noise reciprocal attribution
+
+The next attribution was preregistered before results in commit `70ecfea` and
+then run read-only on the frozen dynamic-edge seed-5705 step-8441 checkpoint.
+It did not retrain the generator or change H1a. Across
+`t={.35,.425,.5,.575,.65}`, same-composition endpoint retrieval averages
+`0.403150 < 0.75` and falls from `0.53543` to `0.25984`. The mean normalized
+low/high reciprocal-residual ratio is `1.053482 < 1.15`, with `0/5` supporting
+times. A closed-form frozen 12-channel low-k ridge probe improves held-out MSE
+by only `0.002257`; its matched high-k control is `-0.000682`, giving
+`0.002939 < 0.03` low-minus-high improvement. Low-band graph coverage remains
+`0.9766--0.9883`, so empty low-frequency shells do not explain the result.
+
+All three independent checks therefore fail and the frozen decision is
+`do_not_implement_reciprocal_carrier`. An independent auditor recomputes the
+CSV metrics, decision, protocol hash, and artifact hashes and finds no
+checkpoint or optimizer artifact in the report. No reciprocal carrier is
+implemented and neither failed reciprocal residual is restored. The evidence
+redirects future, separately versioned H1a diagnosis toward middle/high-noise
+conditional target variance, finite data exposure, probability-path
+information, or staged/self-conditioned coordinate generation. It does not
+authorize H1b, H2--H6, tensor/oracle training, relaxation, DFT, or DFPT.
+
+An earlier independent Bridge worktree had already reached the same NO-GO on
+the volume-normalized step-8441 checkpoint. Its middle-noise low-shell excess
+over an atom-permutation null is `0.007755 < 0.10`; the held-out low-frequency
+probe explained fraction is `-0.001368`, with only `0.000695` advantage over
+random Fourier and `-0.001368` relative to a graph-only token. That audit uses
+zero optimizer steps, preserves the checkpoint fingerprint, and passes
+translation, permutation, O(3), and GL(3,Z) checks. The main-worktree result is
+therefore confirmatory and adds endpoint-identifiability evidence; it is not a
+reason to rerun or tune low-k diagnostics. Combined with TopK/slot failure, the
+remaining bounded hypothesis is that the model is forming increasingly rich
+features on a noise-corrupted neighbor relation. This motivates a separately
+frozen clean-topology oracle/probe before any new operator or extra-pass run.

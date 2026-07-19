@@ -1,0 +1,36 @@
+{
+  "artifact_sha256": {
+    "frozen_low_k_probe.csv": "6c9f64a94d72b3cbbf44b3892c68564f8aa8e645241e73e28a3d9afbbafdd7bd",
+    "middle_noise_retrieval.csv": "227e09cc78dd6c86bb1d947fc8c71dd76c94ed344b4724b6f6083398f7a925a4",
+    "reciprocal_spectrum.csv": "fbe58dacacc6caa40e37ebae0f8f62dca5d446a52869fb17a20648fc3a29581c",
+    "result.json": "46d3adf212ec5fb9dac8ace4c0567f081600ad6b481d0c70462fd9a56e9c42a4"
+  },
+  "checks": {
+    "no_checkpoint_or_optimizer_artifact": true,
+    "protocol_hash_matches": true,
+    "recorded_checks_match_recomputation": true,
+    "recorded_decision_matches_checks": true,
+    "recorded_metrics_match_recomputation": true
+  },
+  "protocol": "h1a_midnoise_reciprocal_attribution_v1_independent_audit",
+  "qualified": true,
+  "recomputed_metrics": {
+    "high_control_probe_mean_improvement": -0.0006823930035608106,
+    "low_probe_mean_improvement": 0.002256695491307603,
+    "retrieval_mean_accuracy": 0.4031496062992126,
+    "spectral_low_to_high_ratios": [
+      1.126534301816575,
+      1.1165417773730477,
+      1.1225872021275767,
+      1.0062622599300919,
+      0.8954862979606281
+    ],
+    "spectral_mean_low_to_high_ratio": 1.0534823678415839,
+    "spectral_supporting_times": 0
+  },
+  "recomputed_scientific_checks": {
+    "frozen_low_k_probe_generalizes": false,
+    "low_k_residual_spectral_excess": false,
+    "middle_noise_endpoint_recoverable": false
+  }
+}

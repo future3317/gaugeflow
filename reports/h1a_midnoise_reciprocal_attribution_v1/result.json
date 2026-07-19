@@ -1,0 +1,43 @@
+{
+  "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_dynamic_persistent_edge_coordinate_pretraining_v1/seed_5705/checkpoint_step_00008441.pt",
+  "checkpoint_sha256": "bc0ab5805adba3d41bb5408ecb14fb1f2cf41308d9d13b1fe2fe8af73f16372c",
+  "checks": {
+    "frozen_low_k_probe_generalizes": false,
+    "low_k_residual_spectral_excess": false,
+    "middle_noise_endpoint_recoverable": false
+  },
+  "decision": "do_not_implement_reciprocal_carrier",
+  "decision_boundary": "No threshold, time, panel, band, ridge or seed may be changed after viewing results. This audit cannot change H1a, revive the failed pairwise reciprocal residual, add training steps or seeds, or authorize H1b-H6, tensor/oracle training, relaxation, DFT or DFPT.",
+  "decision_metrics": {
+    "high_control_probe_mean_improvement": -0.0006823930035608106,
+    "low_minus_high_probe_improvement": 0.002939088494868414,
+    "low_probe_mean_improvement": 0.002256695491307603,
+    "retrieval_mean_accuracy": 0.4031496062992126,
+    "spectral_low_to_high_ratios": [
+      1.126534301816575,
+      1.1165417773730477,
+      1.1225872021275767,
+      1.0062622599300919,
+      0.8954862979606281
+    ],
+    "spectral_mean_low_to_high_ratio": 1.0534823678415839,
+    "spectral_supporting_times": 0
+  },
+  "protocol": "h1a_midnoise_reciprocal_attribution_v1",
+  "protocol_sha256": "1ddaeac4810326bff47bc6ef5a7c954b477aa0875798368f7f7523160aa16114",
+  "qualified": false,
+  "reciprocal_audit": {
+    "maximum_complete_integer_index": 14
+  },
+  "retrieval_audit": {
+    "composition_groups": 25,
+    "endpoint_identity_used": false,
+    "indices_sha256": "ed99902d43d8e655afc1bf264f40c44e95f9dfd3abe377834a45796a9bf01e27",
+    "maximum_group_size": 8,
+    "minimum_group_size": 4,
+    "realized_panel_graphs": 127,
+    "revealed_clean_composition": true
+  },
+  "train_indices_sha256": "6b9d30614c514266cb62fa33634b4d2418b1754fcdb29406d00452de777541dc",
+  "validation_indices_sha256": "30a0ed3fbb699171754d0e00362c3ce1359412d7dd0e33a4329a00bd6f0cc1c9"
+}
