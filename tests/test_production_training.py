@@ -281,6 +281,25 @@ def test_quotient_coordinate_reverse_modes_use_full_and_half_score_drift():
     assert torch.allclose(probability_flow, half_drift)
 
 
+def test_quotient_coordinate_reverse_step_accepts_prescribed_horizontal_noise():
+    coordinates = torch.tensor([[-0.2, 0.0, 0.0], [0.2, 0.0, 0.0]])
+    scaled_score = torch.zeros_like(coordinates)
+    prescribed = torch.tensor([[1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]])
+    observed = quotient_coordinate_reverse_step(
+        coordinates,
+        scaled_score,
+        torch.tensor([0.25]),
+        torch.tensor([0.16]),
+        torch.tensor([0, 0]),
+        1,
+        generator=None,
+        mode="reverse_sde",
+        standard_noise=prescribed,
+    )
+    bridge_scale = (0.16 * 0.09 / 0.25) ** 0.5
+    assert torch.allclose(observed, coordinates + bridge_scale * prescribed)
+
+
 def test_vp_probability_flow_step_matches_ddim_algebra():
     schedule = CosineNoiseSchedule()
     clean = torch.tensor([[0.2, -0.4], [0.7, 0.1]])

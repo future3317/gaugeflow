@@ -68,6 +68,7 @@ def quotient_coordinate_reverse_step(
     *,
     generator: torch.Generator | None,
     mode: ContinuousReverseMode,
+    standard_noise: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Apply one reverse-SDE or probability-flow step on the translation quotient.
 
@@ -96,7 +97,14 @@ def quotient_coordinate_reverse_step(
         bridge_variance = (
             variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
         )
-        noise = standard_normal(coordinates.shape, coordinates, generator)
+        if standard_noise is not None:
+            if generator is not None:
+                raise ValueError("provide either a generator or prescribed coordinate noise")
+            if standard_noise.shape != coordinates.shape:
+                raise ValueError("prescribed coordinate noise must match the coordinate state")
+            noise = standard_noise.to(dtype=coordinates.dtype, device=coordinates.device)
+        else:
+            noise = standard_normal(coordinates.shape, coordinates, generator)
         noise = project_translation_state(noise, batch, graph_count)
         updated = updated + bridge_variance[batch].sqrt().unsqueeze(-1) * noise
     return project_translation_state(updated, batch, graph_count)

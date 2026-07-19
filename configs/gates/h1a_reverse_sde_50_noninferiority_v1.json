@@ -1,0 +1,75 @@
+{
+  "protocol": "h1a_reverse_sde_50_noninferiority_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training held-out non-inferiority qualification of reverse-SDE-50 against reverse-SDE-100 for coordinate-only oracle-context audits",
+  "source": {
+    "solver_commit": "4b9b5b2fa9dcf2dd64b4936a17547075394cf9f3",
+    "prior_sampler_protocol": "h1a_sde_probability_flow_sampler_audit_v1",
+    "prior_sampler_protocol_sha256": "28d164cd0c92a447c5c0ea92a74819ebdc317d33104a1217ee4f2377e87fc9db",
+    "prior_sampler_result_sha256": "603bf2030964f52766536c4dbe0c53cf28dd3a07842ba8b9af1d8d6e2e771480",
+    "checkpoint_protocol": "h1a_fixed_dynamic_coordinate_learning_curve_v1",
+    "checkpoint_protocol_sha256": "6ae8e93677857d27989ac55ab0e42fd2c7c715901e9a7a13f700d773fbe1e9ba",
+    "checkpoint_seed": 5705,
+    "checkpoint_step": 16882,
+    "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+    "checkpoint_objective": "coordinate",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "held_out_panel": {
+    "split": "val",
+    "graphs": 512,
+    "prior_panel_seed": 8701,
+    "prior_panel_graphs": 256,
+    "candidate_permutation_seed": 8801,
+    "selection": "take the first 512 entries of the candidate permutation after exact exclusion of every prior-panel index",
+    "required_overlap_with_prior_panel": 0
+  },
+  "sampling": {
+    "batch_size": 8,
+    "nfe": [50, 100],
+    "time_grid": "uniform_log_alpha",
+    "initialization_seed": 8802,
+    "fine_brownian_seed": 8804,
+    "common_continuous_initial_state": true,
+    "fixed_clean_atom_types": true,
+    "fixed_clean_lattice": true,
+    "ema": true,
+    "dtype": "checkpoint_bf16_with_fp32_geometry",
+    "warmup_model_calls": 4,
+    "condition_order": "forward on even batches and reversed on odd batches",
+    "latency_measurement": "CUDA-synchronized full coordinate rollouts with initialization and host-to-device transfer excluded"
+  },
+  "brownian_coupling": {
+    "kind": "nested_ancestral_bridge",
+    "fine_steps_per_coarse_step": 2,
+    "definition": "for variances h>m>l, z_coarse=a*z_first+b*z_second with a^2=l(h-m)/(m(h-l)) and b^2=h(m-l)/(m(h-l)); terminal l=0 has zero bridge noise",
+    "rationale": "this is the measure-preserving nesting for the production ancestral Brownian-bridge kernel; unweighted Euler increment addition would change the active solver"
+  },
+  "bootstrap": {
+    "unit": "structure",
+    "replicates": 2000,
+    "seed": 8805,
+    "confidence": 0.95,
+    "wasserstein": "exact one-dimensional empirical W1 after paired structure resampling"
+  },
+  "metrics": {
+    "minimum_distance_angstrom": 0.5,
+    "lower_tail_quantiles": [0.01, 0.05],
+    "composition_and_lattice": "fixed identity controls only"
+  },
+  "acceptance": {
+    "wasserstein_difference_structure_bootstrap_ucb95_angstrom_max": 0.03,
+    "valid_distance_rate_degradation_max": 0.005,
+    "endpoint_periodic_rms_relative_degradation_max": 0.05,
+    "lower_tail_quantile_degradation_angstrom_max": 0.03,
+    "lower_tail_difference_structure_bootstrap_lcb95_angstrom_min": -0.03,
+    "sampling_failures": 0,
+    "terminal_finite_fraction": 1.0,
+    "latency_ratio_to_sde_100_max": 0.6
+  },
+  "decision_rule": {
+    "pass": "qualify reverse-SDE-50 only as the default solver for subsequent coordinate-only audits on this checkpoint class; a future qualified joint checkpoint requires a new full-hybrid NFE Gate",
+    "fail": "retain reverse-SDE-100 for coordinate-only audits and stop sampler search",
+    "boundary": "No result changes the failed H1a conclusion, qualifies free generation, changes the full production hybrid NFE, or authorizes H1b-H6, tensor conditioning, oracle work, relaxation, DFT or DFPT. After this Gate, sampler search stops and the exposure-conditioned topology persistence audit resumes."
+  }
+}
