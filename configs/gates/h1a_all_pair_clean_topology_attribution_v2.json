@@ -1,0 +1,76 @@
+{
+  "protocol": "h1a_all_pair_clean_topology_attribution_v2",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training frozen-checkpoint attribution on the complete directed non-self atom-pair set; repairs only v1 candidate-support incompleteness and does not change its scientific thresholds",
+  "prerequisites": {
+    "active_checkpoint_protocol": "h1a_dynamic_persistent_edge_coordinate_pretraining_v1",
+    "checkpoint_protocol_sha256": "2ab71cf05f427b337761f340461a78ca4b7d875d52867de9394aedcf2d500808",
+    "checkpoint_sha256": "bc0ab5805adba3d41bb5408ecb14fb1f2cf41308d9d13b1fe2fe8af73f16372c",
+    "checkpoint_result_sha256": "c3907834ef2010243568b2a7217721cc8d4542fbf5dc6e57ad556e038b75171b",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "invalid_v1_protocol_sha256": "f549d3af3cd78473c1ffad55f5369a535e3006ec917dcec58027109f37287ba4",
+    "invalid_v1_result_sha256": "dba4d2461021835a9bd57ee91d99e360195e5c61ac58b8111b94ca27009e2956",
+    "invalid_v1_clean_mass_coverage": 0.5826054240460508,
+    "tensor_condition_enabled": false
+  },
+  "diagnostic": {
+    "times": [0.2, 0.4, 0.5, 0.6],
+    "middle_times": [0.4, 0.5, 0.6],
+    "minimum_sites": 2,
+    "train_graphs": 512,
+    "validation_graphs": 256,
+    "train_selection_seed": 9301,
+    "validation_selection_seed": 9302,
+    "train_noise_seed": 9303,
+    "validation_noise_seed": 9304,
+    "bootstrap_seed": 9305,
+    "bootstrap_samples": 2000,
+    "batch_size": 8
+  },
+  "topology": {
+    "production_cutoff_angstrom": 8.0,
+    "first_shell_multiplier": 1.25,
+    "transition_relative_width": 0.08,
+    "hard_probability_threshold": 0.5,
+    "pair_support": "all directed non-self atom pairs, at most N(N-1)=380 for Alex-MP-20",
+    "distance": "exact closest periodic image by the production float64 sphere-decoded CVP",
+    "image_mixture_temperature_angstrom": 0.2,
+    "image_features": "softmax mixture over every production periodic image inside 8 Angstrom; exact closest-image feature is used only when the production multigraph has no image for a pair",
+    "definition": "a smooth first-shell probability is a logistic transition around 1.25 times the target site's clean/current exact nearest non-self atom-pair distance, multiplied by the production cosine cutoff envelope"
+  },
+  "probe": {
+    "features": "soft image-mixture of final persistent edge states; symmetric sum and absolute difference of a fixed 16-channel cosine projection of final source/target node states; soft image-mixture radial basis; current soft-shell probability; production-edge-presence indicator",
+    "fixed_node_projection_channels": 16,
+    "ridge_relative": 0.001,
+    "prediction_clip": [0.0, 1.0]
+  },
+  "oracle_carrier": {
+    "features": "soft periodic-image mixture of current radial basis times current direction on every directed non-self pair, weighted by clean, noisy or probe-predicted coordination and graphwise translation-mean removed",
+    "normalization": "per-target square root of summed squared coordination mass",
+    "ridge_relative": 0.0001,
+    "learned_probe_uses_clean_oracle_coefficients": true
+  },
+  "acceptance": {
+    "middle_soft_jaccard_max": 0.8,
+    "middle_hard_switch_fraction_min": 0.2,
+    "clean_topology_mass_coverage_min": 0.95,
+    "oracle_middle_mean_improvement_min": 0.1,
+    "oracle_minus_noisy_middle_mean_min": 0.05,
+    "oracle_middle_supporting_times_min": 2,
+    "oracle_each_supporting_time_improvement_min": 0.05,
+    "probe_middle_mean_explained_fraction_min": 0.2,
+    "probe_middle_mean_auc_min": 0.8,
+    "probe_middle_mean_improvement_over_noisy_min": 0.1,
+    "learned_middle_mean_improvement_min": 0.05,
+    "learned_to_oracle_improvement_ratio_min": 0.5
+  },
+  "decision_rule": {
+    "support": "complete all-pair support is an audit-validity precondition and is evaluated before any scientific decision",
+    "topology_not_disrupted": "if clean/noisy topology disagreement fails either frozen disruption criterion, do not add a topology mechanism",
+    "oracle_fails": "if the clean-topology oracle fails, reject the topology hypothesis and turn to objective or optimization diagnosis",
+    "oracle_passes_probe_fails": "if the oracle helps but the probe is not predictive, propose a separately frozen topology encoder or staged generator, not direct production integration",
+    "oracle_and_probe_pass": "only if topology is disrupted, the oracle helps, the probe predicts and the probe-weighted carrier retains at least half the oracle gain, authorize a separate no-training production qualification",
+    "low_noise_only": "improvement restricted to t=0.2 does not authorize added complexity",
+    "boundary": "No threshold, pair definition, image temperature, panel, feature, ridge, time, seed or checkpoint may change after viewing results. This audit performs zero optimizer steps, adds no production branch, does not rewrite H1a, and cannot authorize extra training, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

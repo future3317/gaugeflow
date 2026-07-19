@@ -19,12 +19,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 from torch import nn
 from torch_geometric.data import Batch
 
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
-from gaugeflow.geometry import PeriodicEdges, periodic_radius_multigraph
+from gaugeflow.geometry import (
+    PeriodicEdges,
+    closest_image_displacements_numpy,
+    periodic_radius_multigraph,
+)
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
@@ -120,6 +125,20 @@ class CarrierAccumulator:
         ).double().cpu()
 
 
+@dataclass(frozen=True)
+class AllPairGeometry:
+    """Complete directed non-self atom-pair geometry and image mixtures."""
+
+    source: torch.Tensor
+    target: torch.Tensor
+    distance: torch.Tensor
+    direction: torch.Tensor
+    radial: torch.Tensor
+    vector_radial: torch.Tensor
+    edge_state: torch.Tensor
+    production_edge_present: torch.Tensor
+
+
 class FinalEdgeCapture:
     """Read-only hook for the final production message block."""
 
@@ -183,21 +202,115 @@ def smooth_first_shell_probability(
     return shell * envelope
 
 
-def _clean_distance_on_edges(
-    clean_coordinates: torch.Tensor,
-    clean_lattice: torch.Tensor,
+def exact_all_pair_geometry(
+    coordinates: torch.Tensor,
+    lattice: torch.Tensor,
     batch: torch.Tensor,
-    edges: PeriodicEdges,
-) -> torch.Tensor:
-    relative = (
-        clean_coordinates[edges.target]
-        - clean_coordinates[edges.source]
-        + edges.image_shift.to(clean_coordinates)
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Return exact closest-image geometry for every directed non-self pair."""
+    graphs = lattice.shape[0]
+    counts = torch.bincount(batch, minlength=graphs)
+    if bool((counts < 2).any()):
+        raise ValueError("all-pair topology requires at least two sites per graph")
+    offsets = torch.cat((counts.new_zeros(1), counts.cumsum(0)))
+    sources: list[torch.Tensor] = []
+    targets: list[torch.Tensor] = []
+    displacements: list[torch.Tensor] = []
+    for graph in range(graphs):
+        nodes = torch.arange(offsets[graph], offsets[graph + 1], device=batch.device)
+        target = nodes.repeat_interleave(nodes.numel())
+        source = nodes.repeat(nodes.numel())
+        nonself = source != target
+        source = source[nonself]
+        target = target[nonself]
+        delta = (
+            coordinates[target] - coordinates[source]
+        ).detach().double().cpu().numpy()
+        displacement, _ = closest_image_displacements_numpy(
+            delta, lattice[graph].detach().double().cpu().numpy()
+        )
+        sources.append(source)
+        targets.append(target)
+        displacements.append(
+            torch.from_numpy(np.asarray(displacement)).to(
+                device=coordinates.device, dtype=coordinates.dtype
+            )
+        )
+    source = torch.cat(sources)
+    target = torch.cat(targets)
+    displacement = torch.cat(displacements)
+    distance = torch.linalg.vector_norm(displacement, dim=-1)
+    if bool((distance <= 1.0e-10).any()):
+        raise ValueError("all-pair geometry contains coincident distinct sites")
+    return source, target, distance, displacement / distance.unsqueeze(-1)
+
+
+def all_pair_image_features(
+    coordinates: torch.Tensor,
+    lattice: torch.Tensor,
+    batch: torch.Tensor,
+    model_edges: PeriodicEdges,
+    edge_state: torch.Tensor,
+    radial_basis: nn.Module,
+    *,
+    temperature: float,
+) -> AllPairGeometry:
+    """Aggregate all production images onto a complete stable atom-pair set."""
+    if temperature <= 0.0:
+        raise ValueError("image-mixture temperature must be positive")
+    source, target, distance, direction = exact_all_pair_geometry(
+        coordinates, lattice, batch
     )
-    displacement = torch.einsum(
-        "ni,nij->nj", relative, clean_lattice[batch[edges.target]]
+    radial = radial_basis(distance).float()
+    vector_radial = radial[:, :, None] * direction[:, None, :]
+    pair_edge_state = edge_state.new_zeros((source.numel(), edge_state.shape[-1])).float()
+    presence = torch.zeros(source.numel(), dtype=torch.bool, device=source.device)
+
+    nodes = coordinates.shape[0]
+    pair_index = torch.full((nodes, nodes), -1, dtype=torch.long, device=source.device)
+    pair_index[source, target] = torch.arange(source.numel(), device=source.device)
+    nonself = model_edges.source != model_edges.target
+    model_pair = pair_index[
+        model_edges.source[nonself], model_edges.target[nonself]
+    ]
+    valid = model_pair >= 0
+    model_pair = model_pair[valid]
+    if model_pair.numel():
+        model_distance = model_edges.distance[nonself][valid].float()
+        model_direction = model_edges.direction[nonself][valid].float()
+        model_state = edge_state[nonself][valid].float()
+        model_radial = radial_basis(model_distance).float()
+        logits = -model_distance / temperature
+        maximum = logits.new_full((source.numel(),), -torch.inf)
+        maximum.scatter_reduce_(0, model_pair, logits, reduce="amax", include_self=True)
+        unnormalized = torch.exp(logits - maximum[model_pair])
+        denominator = logits.new_zeros(source.numel())
+        denominator.index_add_(0, model_pair, unnormalized)
+        weight = unnormalized / denominator[model_pair].clamp_min(1.0e-12)
+        radial_mixture = radial.new_zeros(radial.shape)
+        radial_mixture.index_add_(0, model_pair, weight[:, None] * model_radial)
+        vector_mixture = vector_radial.new_zeros(vector_radial.shape)
+        vector_mixture.index_add_(
+            0,
+            model_pair,
+            weight[:, None, None] * model_radial[:, :, None] * model_direction[:, None, :],
+        )
+        pair_edge_state.index_add_(0, model_pair, weight[:, None] * model_state)
+        presence.scatter_(0, model_pair, True)
+        radial = torch.where(presence[:, None], radial_mixture, radial)
+        vector_radial = torch.where(
+            presence[:, None, None], vector_mixture, vector_radial
+        )
+    return AllPairGeometry(
+        source=source,
+        target=target,
+        distance=distance,
+        direction=direction,
+        radial=radial,
+        vector_radial=vector_radial,
+        edge_state=pair_edge_state,
+        production_edge_present=presence,
     )
-    return torch.linalg.vector_norm(displacement, dim=-1)
 
 
 def _edge_graph_sum(
@@ -209,55 +322,37 @@ def _edge_graph_sum(
 
 
 def topology_fields(
-    clean_coordinates: torch.Tensor,
-    clean_lattice: torch.Tensor,
-    noisy_edges: PeriodicEdges,
+    clean_distance: torch.Tensor,
+    noisy_distance: torch.Tensor,
+    target: torch.Tensor,
     batch: torch.Tensor,
     *,
     cutoff: float,
     multiplier: float,
     relative_width: float,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Return clean/noisy fields on noisy edges and clean-mass coverage."""
-    nodes = clean_coordinates.shape[0]
-    graphs = clean_lattice.shape[0]
-    clean_edges = periodic_radius_multigraph(
-        clean_coordinates, clean_lattice, batch, cutoff=cutoff
-    )
-    clean_nearest = _segment_min(clean_edges.distance, clean_edges.target, nodes)
-    noisy_nearest = _segment_min(noisy_edges.distance, noisy_edges.target, nodes)
-    clean_full = smooth_first_shell_probability(
-        clean_edges.distance,
-        clean_edges.target,
-        clean_nearest,
-        multiplier=multiplier,
-        relative_width=relative_width,
-        cutoff=cutoff,
-    )
-    clean_on_noisy = smooth_first_shell_probability(
-        _clean_distance_on_edges(clean_coordinates, clean_lattice, batch, noisy_edges),
-        noisy_edges.target,
+    """Return clean/noisy fields on the complete non-self atom-pair set."""
+    nodes = batch.numel()
+    graphs = int(batch.max()) + 1
+    clean_nearest = _segment_min(clean_distance, target, nodes)
+    noisy_nearest = _segment_min(noisy_distance, target, nodes)
+    clean_field = smooth_first_shell_probability(
+        clean_distance,
+        target,
         clean_nearest,
         multiplier=multiplier,
         relative_width=relative_width,
         cutoff=cutoff,
     )
     noisy_field = smooth_first_shell_probability(
-        noisy_edges.distance,
-        noisy_edges.target,
+        noisy_distance,
+        target,
         noisy_nearest,
         multiplier=multiplier,
         relative_width=relative_width,
         cutoff=cutoff,
     )
-    clean_graph = batch[clean_edges.target]
-    noisy_graph = batch[noisy_edges.target]
-    denominator = _edge_graph_sum(clean_full, clean_graph, graphs).clamp_min(1.0e-12)
-    numerator = _edge_graph_sum(clean_on_noisy, noisy_graph, graphs)
-    coverage = numerator / denominator
-    if bool((coverage > 1.0002).any()):
-        raise RuntimeError("noisy edge set duplicates clean coordination mass")
-    return clean_on_noisy, noisy_field, coverage.clamp_max(1.0)
+    return clean_field, noisy_field, clean_field.new_ones(graphs)
 
 
 def fixed_cosine_projection(hidden: int, channels: int, reference: torch.Tensor) -> torch.Tensor:
@@ -272,28 +367,25 @@ def fixed_cosine_projection(hidden: int, channels: int, reference: torch.Tensor)
 
 def probe_features(
     captured: dict[str, torch.Tensor],
+    pairs: AllPairGeometry,
     noisy_field: torch.Tensor,
-    image_shift: torch.Tensor,
     channels: int,
 ) -> torch.Tensor:
     nodes = captured["nodes"].float()
-    source = captured["source"]
-    target = captured["target"]
+    source = pairs.source
+    target = pairs.target
     projection = fixed_cosine_projection(nodes.shape[-1], channels, nodes)
     projected = nodes @ projection
     pair_sum = projected[source] + projected[target]
     pair_difference = (projected[source] - projected[target]).abs()
-    self_image = (
-        (source == target) & image_shift.ne(0).any(dim=-1)
-    ).to(nodes).unsqueeze(-1)
     return torch.cat(
         (
-            captured["edge_state"].float(),
+            pairs.edge_state,
             pair_sum,
             pair_difference,
-            captured["radial"].float(),
+            pairs.radial,
             noisy_field.unsqueeze(-1),
-            self_image,
+            pairs.production_edge_present.to(nodes).unsqueeze(-1),
         ),
         dim=-1,
     )
@@ -334,14 +426,13 @@ def fit_standardized_ridge(
 
 def topology_carrier(
     weights: torch.Tensor,
-    radial: torch.Tensor,
-    direction: torch.Tensor,
+    vector_radial: torch.Tensor,
     target: torch.Tensor,
     batch: torch.Tensor,
     nodes: int,
     graphs: int,
 ) -> torch.Tensor:
-    weighted = weights[:, None, None] * radial[:, :, None] * direction[:, None, :]
+    weighted = weights[:, None, None] * vector_radial
     carrier = sorted_segment_sum(weighted, target, nodes)
     normalizer = sorted_segment_sum(
         weights.square().unsqueeze(-1), target, nodes
@@ -460,24 +551,44 @@ def _forward_batch(
     if not capture.values:
         raise RuntimeError("final edge hook did not run")
     cutoff = float(specification["topology"]["production_cutoff_angstrom"])
-    noisy_edges = periodic_radius_multigraph(
+    model_edges = periodic_radius_multigraph(
         noisy.fractional_coordinates,
         noisy_lattice,
         packed.batch,
         cutoff=cutoff,
     )
     if not (
-        torch.equal(noisy_edges.source, capture.values["source"])
-        and torch.equal(noisy_edges.target, capture.values["target"])
+        torch.equal(model_edges.source, capture.values["source"])
+        and torch.equal(model_edges.target, capture.values["target"])
         and torch.allclose(
-            noisy_edges.direction, capture.values["direction"], atol=2.0e-6, rtol=2.0e-6
+            model_edges.direction, capture.values["direction"], atol=2.0e-6, rtol=2.0e-6
         )
     ):
         raise RuntimeError("external topology graph does not match model edge order")
+    radial_basis = getattr(runtime.model, "radial", None)
+    if not isinstance(radial_basis, nn.Module):
+        raise TypeError("production model does not expose its radial basis")
+    pairs = all_pair_image_features(
+        noisy.fractional_coordinates,
+        noisy_lattice,
+        packed.batch,
+        model_edges,
+        capture.values["edge_state"],
+        radial_basis,
+        temperature=float(specification["topology"]["image_mixture_temperature_angstrom"]),
+    )
+    clean_source, clean_target, clean_distance, _ = exact_all_pair_geometry(
+        packed.frac_coords.float(), packed.lattice.float(), packed.batch
+    )
+    if not (
+        torch.equal(clean_source, pairs.source)
+        and torch.equal(clean_target, pairs.target)
+    ):
+        raise RuntimeError("clean and noisy all-pair support differs")
     clean_field, noisy_field, coverage = topology_fields(
-        packed.frac_coords.float(),
-        packed.lattice.float(),
-        noisy_edges,
+        clean_distance,
+        pairs.distance,
+        pairs.target,
         packed.batch,
         cutoff=cutoff,
         multiplier=float(specification["topology"]["first_shell_multiplier"]),
@@ -485,8 +596,8 @@ def _forward_batch(
     )
     features = probe_features(
         capture.values,
+        pairs,
         noisy_field,
-        noisy_edges.image_shift,
         int(specification["probe"]["fixed_node_projection_channels"]),
     )
     target_cartesian = fractional_tangent_to_cartesian(
@@ -498,8 +609,9 @@ def _forward_batch(
     return {
         "packed": packed,
         "graphs": graphs,
-        "edges": noisy_edges,
-        "radial": capture.values["radial"].float(),
+        "edges": pairs,
+        "radial": pairs.radial,
+        "vector_radial": pairs.vector_radial,
         "features": features,
         "clean_field": clean_field,
         "noisy_field": noisy_field,
@@ -634,7 +746,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     specification = load_json_object(args.protocol)
-    if specification.get("protocol") != "h1a_latent_clean_topology_attribution_v1":
+    if specification.get("protocol") != "h1a_all_pair_clean_topology_attribution_v2":
         raise ValueError("unexpected clean-topology protocol")
     prerequisites = specification["prerequisites"]
     checkpoint_protocol = load_json_object(args.checkpoint_protocol)
@@ -673,14 +785,30 @@ def main() -> None:
     train_dataset = PackedAlexP1Dataset(args.cache_root, "train")
     validation_dataset = PackedAlexP1Dataset(args.cache_root, "val")
     diagnostic = specification["diagnostic"]
-    train_indices = torch.randperm(
-        len(train_dataset),
+    minimum_sites = int(diagnostic["minimum_sites"])
+    train_eligible = torch.nonzero(
+        train_dataset.node_counts >= minimum_sites, as_tuple=False
+    ).flatten()
+    validation_eligible = torch.nonzero(
+        validation_dataset.node_counts >= minimum_sites, as_tuple=False
+    ).flatten()
+    train_order = torch.randperm(
+        train_eligible.numel(),
         generator=torch.Generator().manual_seed(int(diagnostic["train_selection_seed"])),
-    )[: int(diagnostic["train_graphs"])]
-    validation_indices = torch.randperm(
-        len(validation_dataset),
+    )
+    validation_order = torch.randperm(
+        validation_eligible.numel(),
         generator=torch.Generator().manual_seed(int(diagnostic["validation_selection_seed"])),
-    )[: int(diagnostic["validation_graphs"])]
+    )
+    train_indices = train_eligible[train_order[: int(diagnostic["train_graphs"])]]
+    validation_indices = validation_eligible[
+        validation_order[: int(diagnostic["validation_graphs"])]
+    ]
+    if (
+        train_indices.numel() != int(diagnostic["train_graphs"])
+        or validation_indices.numel() != int(diagnostic["validation_graphs"])
+    ):
+        raise RuntimeError("not enough multi-site structures for all-pair audit")
     fingerprint_before = _parameter_fingerprint(runtime.model)
     capture = FinalEdgeCapture(runtime.model)
     topology_rows: list[dict[str, Any]] = []
@@ -735,8 +863,7 @@ def main() -> None:
                 ):
                     carrier = topology_carrier(
                         field,
-                        batch_data["radial"],
-                        edges.direction,
+                        batch_data["vector_radial"],
                         edges.target,
                         packed.batch,
                         packed.num_nodes,
@@ -872,8 +999,7 @@ def main() -> None:
                 ):
                     carrier = topology_carrier(
                         field,
-                        batch_data["radial"],
-                        edges.direction,
+                        batch_data["vector_radial"],
                         edges.target,
                         packed.batch,
                         packed.num_nodes,
@@ -991,7 +1117,7 @@ def main() -> None:
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     summary = [
-        "# H1a latent clean-topology attribution v1",
+        "# H1a all-pair clean-topology attribution v2",
         "",
         f"Decision: **{decision}**.",
         "",
