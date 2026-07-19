@@ -19,7 +19,8 @@ Cartesian Gauge Atlas。项目没有旧 continuous-logit flow、harmonic conditi
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
 项目当前停在 H1a 坐标生成器诊断。P1 cache 已完整构建并独立审计；H1b 和后续
-Gate 仍被阻止。当前证据不支持继续增加 reciprocal 输出分支、训练 seed 或步数。
+Gate 仍被阻止。局部算子筛选已经收口；下一步只允许用中噪声 oracle、残差频谱和
+frozen low-k probe 判断是否确有 reciprocal 全局缺口，不增加训练 seed 或步数。
 
 ## 当前方法
 
@@ -182,8 +183,10 @@ eta_1 = n_ij . m_jc,       eta_2 = n_ij^T Q_jc n_ij.
 张量，并把 3+6 个 Cartesian moment 分量合并为一次 target-contiguous reduction。
 复杂度和存储为 `O(E*C)`，不构造 `sum_j d_j^2` 个 triplet。periodic
 self-image 作为独立不变量输入；未经归一化的 `eta_1/eta_2` 直接进入 residual，避免
-再次静默删除局部配位幅值。新增 466,944 个参数，总计 4,948,281；所有新输出投影为
-零初始化，因此没有旧 runtime 分支，初始函数仍严格等于上一基线。FP64 显式 triplet
+再次静默删除局部配位幅值。新增 466,944 个参数，总计 4,948,281。后续因果审计发现
+串联零投影会延迟内部算子的首步梯度，当前 residual 输出统一使用固定 `1e-2` 小非零
+正交初始化，并在每层用当前 node/vector/time/context 刷新 persistent edge state。
+它没有旧 runtime 分支或初始化 fallback。FP64 显式 triplet
 参考、O(3)（含反射）、节点/边置换、平移、GL(3,Z)、有限梯度和完整 CPU 回归均已
 通过。正式 RTX 4060 Ti 资格为 `489.10 graphs/s / 182.86 MiB`，BF16/FP32
 output/gradient cosine 为 `0.999916/0.999038`，零 tensor candidates。
@@ -204,11 +207,36 @@ v_tilde = V^(-1/3) v_r,    v_r = V^(1/3) v_tilde,
 teacher-forced 与 `t=.1/.2` rollout 分别为 `0.05675/0.05963/0.08444 A`，零失败，
 但 `t=.005=0.040084 A` 和 ratio 仍按原阈值失败。
 
-作为唯一后继，三阶 STF factorized moment 在相同 seed/steps/data 上只把 ratio 改善到
+三阶 STF factorized moment 在相同 seed/steps/data 上只把 ratio 改善到
 `0.57240`，虽使 `t=.005` 降到 `0.03938 A`，却把训练吞吐从约 `273` 降到约
 `221--235 graphs/s`，仍未通过 Gate。三阶分支因此不在 active runtime；代码保留
-更简洁的 `l<=2` operator。H1a 仍失败，不增加 seed/steps，不初始化 joint model，
-也不进入 H1b 或 tensor/oracle/物理计算。
+更简洁的 `l<=2` operator。
+
+随后 dynamic edge refresh 将 ratio 降到 `0.54417`，但仍未通过。固定硬 TopK triplet
+为 `0.56794`，更差且对 noisy-neighbor 排序不连续。未平衡 induced R=8 为 `0.54583`，
+深层最大 slot mass 达 `0.951`。最后的固定六次 balanced-transport R=8 为 `0.53314`，
+相对 dynamic 只改善 `0.01103 < 0.02`；关闭其分支会使 validation loss 恶化 `82.61%`，
+说明分支被使用，但最终最大 slot mass `0.19579`、最小表示 effective rank `1.351`、
+最大 inter-slot cosine `0.99974`，仍未形成稳定的低秩邻域分解。TopK/induced/R16 与
+matched-initialization 实验入口已从 active code 删除，只在本报告、研究历史和 Git 中
+保留。H1a 仍失败，不初始化 joint model，也不进入 H1b 或 tensor/oracle/物理计算。
+
+## 训练图与采样加速设计
+
+训练 JSONL/评价 JSON 是数值真源；报告末尾可生成便于阅读的 PNG 与矢量 PDF：
+
+```bash
+$PY scripts/plot_h1a_training_diagnostics.py \
+  --run /mnt/e/DATA/T2C-Flow/runs/<protocol>/seed_<seed> \
+  --report reports/<protocol>
+```
+
+图中保留原始 training loss、固定 EMA validation、不同噪声时间的 score/endpoint
+误差、rollout 分位数，以及 slot checkpoint/layer/time 热图，不用过度平滑替代原数据。
+TensorBoard 不是 production 依赖。少步采样的只读设计见
+`docs/chart_consistent_fast_sampling.md`：先做 common-random-number NFE/grid 审计，
+只有确认粗时间跳跃是主误差后，才资格化周期平移商、离散元素和晶格 chart 各自正确的
+finite transition-map distillation；当前不加速一个尚未通过 H1a 的生成器。
 
 ## 环境
 

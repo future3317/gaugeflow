@@ -59,6 +59,14 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   low-noise endpoint to `0.03938 A`, at lower training throughput. It is not in
   active runtime. The only active operator is the vectorized degree-one/two
   implementation; do not restore cubic, harmonic, or compatibility branches.
+- Refreshing persistent edges from current layer state improves the ratio to
+  `0.54417` but still fails. Explicit shell-complete TopK triplets (`0.56794`),
+  unbalanced induced R=8 (`0.54583`), and fixed-six-iteration balanced induced
+  R=8 (`0.53314`) all fail. The balanced branch is causally used but remains
+  non-specialized: maximum slot mass `0.19579`, minimum representation rank
+  `1.351`, and maximum inter-slot cosine `0.99974`. TopK, induced/R16, matched
+  initialization, their active dispatch, and their experiment runners are
+  removed. Do not restore them or search slot rank/balance iterations.
 - H1b and H2--H6, tensor conditioning, oracle work, relaxation, DFT, and DFPT
   have not started.
 
@@ -67,6 +75,10 @@ prohibited. Do not add seeds or steps to rescue completed protocols, revive
 either failed reciprocal-score residual, or initialize joint training from a
 failed coordinate checkpoint. A new mechanism requires a separately frozen
 causal or operator qualification first.
+
+The next permitted diagnosis is the fixed middle-noise oracle curve, score
+residual reciprocal-shell spectrum, and frozen low-k linear probe. Implement a
+reciprocal global carrier only if all three support the same low-k deficiency.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

@@ -19,12 +19,6 @@ from .cartesian_gauge_atlas import (
     CartesianSTFGeometryQueryEncoder,
     StratifiedCartesianGaugeAtlas,
 )
-from .edge_query_angular_kernel import (
-    InducedEdgeQueryAngularKernel,
-    ShellCompleteNeighbors,
-    ShellCompleteTopKTripletKernel,
-    shell_complete_nearest_neighbors,
-)
 from .factorized_angular_moments import FactorizedCartesianAngularMoments
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 from .state_projection import (
@@ -66,9 +60,6 @@ class EquivariantDenoisingBlock(nn.Module):
         edge_dim: int,
         angular_channels: int,
         edge_refresh_rank: int,
-        angular_operator: str,
-        angular_slots: int,
-        triplet_k: int,
     ) -> None:
         super().__init__()
         scalar_inputs = 2 * hidden_dim + 2 * vector_dim + radial_dim + 2
@@ -87,25 +78,12 @@ class EquivariantDenoisingBlock(nn.Module):
         self.vector_gate = nn.Sequential(
             nn.Linear(3 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim)
         )
-        if angular_operator == "factorized":
-            self.angular_moments: nn.Module = FactorizedCartesianAngularMoments(
-                edge_dim, angular_channels
-            )
-        elif angular_operator == "topk_triplet":
-            self.angular_moments = ShellCompleteTopKTripletKernel(
-                edge_dim, angular_channels, k=triplet_k
-            )
-        elif angular_operator == "induced_slots":
-            self.angular_moments = InducedEdgeQueryAngularKernel(
-                edge_dim, angular_channels, slots=angular_slots
-            )
-        else:
-            raise ValueError("unknown Cartesian angular operator")
-        self.angular_operator = angular_operator
+        self.angular_moments = FactorizedCartesianAngularMoments(
+            edge_dim, angular_channels
+        )
         angular_dim = self.angular_moments.output_dim
         if edge_refresh_rank < 1:
             raise ValueError("edge refresh rank must be positive")
-        self.edge_refresh_rank = int(edge_refresh_rank)
         # Project node-leading context before gathering it onto edges.  This
         # keeps the refresh O(NH+ER) instead of repeating wide H-dimensional
         # transforms for every periodic image.
@@ -121,22 +99,6 @@ class EquivariantDenoisingBlock(nn.Module):
         self.edge_vector_refresh = nn.Linear(
             2 * vector_dim, edge_refresh_rank, bias=False
         )
-        self.induced_assignment_refresh: nn.Module | None = None
-        if angular_operator == "induced_slots":
-            # Slot assignment must see the current layer, not only the
-            # persistent state produced by the preceding block.  Reuse the
-            # low-rank node/vector projections below so this remains
-            # O(NH + ER), then inject a small nonzero residual into the edge
-            # state.  The nonzero map gives the context branch gradients on
-            # the first optimization step without an exact-zero bottleneck.
-            refresh_inputs = edge_dim + radial_dim + 4 * edge_refresh_rank
-            assignment_refresh = nn.Sequential(
-                nn.Linear(refresh_inputs, edge_dim),
-                nn.SiLU(),
-                nn.Linear(edge_dim, edge_dim, bias=False),
-            )
-            nn.init.orthogonal_(assignment_refresh[-1].weight, gain=1.0e-2)
-            self.induced_assignment_refresh = assignment_refresh
         self.edge_update = nn.Sequential(
             nn.Linear(
                 edge_dim + angular_dim + radial_dim + 4 * edge_refresh_rank,
@@ -164,6 +126,11 @@ class EquivariantDenoisingBlock(nn.Module):
         nn.init.orthogonal_(self.angular_vector_residual[-1].weight, gain=1.0e-2)
         self.norm = nn.LayerNorm(hidden_dim)
 
+    @property
+    def edge_refresh_rank(self) -> int:
+        """Low-rank refresh width, derived from the active projection."""
+        return self.edge_source_refresh.out_features
+
     def forward(
         self,
         nodes: torch.Tensor,
@@ -178,7 +145,6 @@ class EquivariantDenoisingBlock(nn.Module):
         node_condition: torch.Tensor,
         node_state: torch.Tensor,
         edge_state: torch.Tensor,
-        triplet_neighbors: ShellCompleteNeighbors | None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         scalar_aggregate = torch.zeros_like(nodes)
         vector_aggregate = torch.zeros_like(vectors)
@@ -197,48 +163,13 @@ class EquivariantDenoisingBlock(nn.Module):
             vector_refresh = self.edge_vector_refresh(
                 torch.cat((source_projection, target_projection), dim=-1)
             )
-            if isinstance(self.angular_moments, FactorizedCartesianAngularMoments):
-                angular = self.angular_moments(
-                    edge_state,
-                    target,
-                    directions,
-                    edge_envelope,
-                    nodes.shape[0],
-                )
-            elif isinstance(self.angular_moments, InducedEdgeQueryAngularKernel):
-                if self.induced_assignment_refresh is None:
-                    raise RuntimeError("induced slots require current-layer context")
-                assignment_context = torch.cat(
-                    (
-                        edge_state,
-                        radial,
-                        node_refresh,
-                        target_refresh,
-                        graph_refresh,
-                        vector_refresh,
-                    ),
-                    dim=-1,
-                )
-                angular_edge_state = edge_state + self.induced_assignment_refresh(
-                    assignment_context
-                )
-                angular = self.angular_moments(
-                    angular_edge_state,
-                    target,
-                    directions,
-                    edge_envelope,
-                    nodes.shape[0],
-                )
-            else:
-                if triplet_neighbors is None:
-                    raise ValueError("explicit triplet operator has no neighbor table")
-                angular = self.angular_moments(
-                    edge_state,
-                    target,
-                    directions,
-                    edge_envelope,
-                    triplet_neighbors,
-                )
+            angular = self.angular_moments(
+                edge_state,
+                target,
+                directions,
+                edge_envelope,
+                nodes.shape[0],
+            )
             refresh_context = torch.cat(
                 (
                     edge_state,
@@ -341,9 +272,6 @@ class HybridCrystalDenoiser(nn.Module):
         edge_dim: int = 64,
         angular_channels: int = 8,
         edge_refresh_rank: int = 16,
-        angular_operator: str = "factorized",
-        angular_slots: int = 8,
-        triplet_k: int = 8,
     ) -> None:
         super().__init__()
         if layers < 1:
@@ -351,10 +279,6 @@ class HybridCrystalDenoiser(nn.Module):
         if edge_dim < 1 or angular_channels < 1 or edge_refresh_rank < 1:
             raise ValueError("edge, angular and refresh dimensions must be positive")
         self.edge_dim = int(edge_dim)
-        self.edge_refresh_rank = int(edge_refresh_rank)
-        self.angular_operator = str(angular_operator)
-        self.angular_slots = int(angular_slots)
-        self.triplet_k = int(triplet_k)
         self.element_embedding = nn.Embedding(119, hidden_dim)
         self.degree_embedding = nn.Sequential(
             nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
@@ -383,9 +307,6 @@ class HybridCrystalDenoiser(nn.Module):
                     edge_dim,
                     angular_channels,
                     edge_refresh_rank,
-                    angular_operator,
-                    angular_slots,
-                    triplet_k,
                 )
                 for _ in range(layers)
             ]
@@ -425,6 +346,10 @@ class HybridCrystalDenoiser(nn.Module):
     @property
     def angular_channels(self) -> int:
         return self.blocks[0].angular_moments.channels
+
+    @property
+    def edge_refresh_rank(self) -> int:
+        return self.blocks[0].edge_refresh_rank
 
     def forward(
         self,
@@ -481,16 +406,6 @@ class HybridCrystalDenoiser(nn.Module):
             radial = self.radial(edges.distance)
             edge_envelope = self.radial.envelope(edges.distance)
         source, target = edges.source, edges.target
-        triplet_neighbors = (
-            shell_complete_nearest_neighbors(
-                edges.distance,
-                target,
-                element_tokens.numel(),
-                k=self.triplet_k,
-            )
-            if self.angular_operator == "topk_triplet"
-            else None
-        )
         degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
         node_time = self.time_embedding(time)[batch]
         initial_nodes = self.element_embedding(element_tokens) + self.degree_embedding(
@@ -571,7 +486,6 @@ class HybridCrystalDenoiser(nn.Module):
                     node_condition.float(),
                     node_state.float(),
                     edge_state.float(),
-                    triplet_neighbors,
                 )
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_time = self.time_embedding(time)

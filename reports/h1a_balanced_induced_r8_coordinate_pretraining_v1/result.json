@@ -1,0 +1,193 @@
+{
+  "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_balanced_induced_r8_coordinate_pretraining_v1/seed_5705/checkpoint_step_00008441.pt",
+  "checks": {
+    "coordinate_validation_reduction": false,
+    "sampling_failures": true,
+    "t005_teacher_forced": true,
+    "t01_rollout": true,
+    "t01_teacher_forced": true,
+    "t02_rollout": true,
+    "tensor_candidates": true
+  },
+  "decision": "if slots remain noncollapsed, stop local-operator expansion and proceed only to the preregistered middle-noise oracle/residual/probe diagnosis; if representations collapse despite balanced mass, diagnose value/readout symmetry without adding rank",
+  "decision_boundary": "No extra seed, step, balancing iteration, rank or capacity search; no joint, tensor, oracle-training, relaxation, DFT or DFPT authorization.",
+  "final_over_initial_coordinate_validation": 0.5331413974139683,
+  "material_ratio_improvement_passed": false,
+  "posthoc_fit_diagnostic": {
+    "ema_train_coordinate": 0.4592517614364624,
+    "ema_validation_coordinate": 0.518064996227622,
+    "graphs_per_split": 256,
+    "noise_seed": 8612,
+    "raw_train_coordinate": 0.4684994127601385,
+    "raw_validation_coordinate": 0.5228728838264942,
+    "train_index_seed": 8610
+  },
+  "posthoc_high_noise_score_diagnostic": [
+    {
+      "endpoint_rms_angstrom": 0.08312939021935069,
+      "oracle_endpoint_rms_angstrom": 2.3751524858919156e-07,
+      "prediction_target_cosine": 0.779193907542422,
+      "prediction_to_target_norm": 0.8353555165644383,
+      "score_explained_fraction": 0.6039890192232868,
+      "score_mse_per_component": 2370.1121504934213,
+      "time": 0.2,
+      "zero_score_mse_per_component": 5984.965734649123
+    },
+    {
+      "endpoint_rms_angstrom": 0.3948895779372672,
+      "oracle_endpoint_rms_angstrom": 2.405089016228902e-07,
+      "prediction_target_cosine": 0.6331031139133974,
+      "prediction_to_target_norm": 0.7596953215820631,
+      "score_explained_fraction": 0.3847939905514377,
+      "score_mse_per_component": 212.95742101836623,
+      "time": 0.5,
+      "zero_score_mse_per_component": 346.1562756990132
+    },
+    {
+      "endpoint_rms_angstrom": 2.577634626049154,
+      "oracle_endpoint_rms_angstrom": 2.176956407293655,
+      "prediction_target_cosine": 0.05644543753745336,
+      "prediction_to_target_norm": 0.12535621275746542,
+      "score_explained_fraction": -0.001562591894686216,
+      "score_mse_per_component": 0.2743486730675948,
+      "time": 0.9,
+      "zero_score_mse_per_component": 0.27392064688498513
+    }
+  ],
+  "protocol": "h1a_balanced_induced_r8_coordinate_pretraining_v1",
+  "qualified": false,
+  "rollout_closure": [
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.005833371076732874,
+        0.06171220354735851,
+        0.08278151527047158,
+        0.0894880961626768,
+        0.10908372700214386
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.054275352507829666,
+      "sampling_failures": 0,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.005013180430978537,
+        0.06871715933084488,
+        0.13018118739128112,
+        0.1467525705695152,
+        0.19232061505317688
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.0766671672463417,
+      "sampling_failures": 0,
+      "start_time": 0.2,
+      "steps": 100
+    }
+  ],
+  "score_calibration": [
+    {
+      "endpoint_rms_angstrom": 0.03776060746955897,
+      "oracle_endpoint_rms_angstrom": 2.3806235505245897e-07,
+      "prediction_target_cosine": 0.6916418001047085,
+      "prediction_to_target_norm": 0.766759135691251,
+      "score_explained_fraction": 0.4727257777201843,
+      "score_mse_per_component": 17809.409402412282,
+      "time": 0.005,
+      "zero_score_mse_per_component": 33776.37033991228
+    },
+    {
+      "endpoint_rms_angstrom": 0.03771461410504403,
+      "oracle_endpoint_rms_angstrom": 2.2878272233138143e-07,
+      "prediction_target_cosine": 0.7179591236217144,
+      "prediction_to_target_norm": 0.759218549166517,
+      "score_explained_fraction": 0.5137629752399004,
+      "score_mse_per_component": 16328.354851973685,
+      "time": 0.01,
+      "zero_score_mse_per_component": 33581.06030701754
+    },
+    {
+      "endpoint_rms_angstrom": 0.04179903156714195,
+      "oracle_endpoint_rms_angstrom": 2.1436235816538202e-07,
+      "prediction_target_cosine": 0.7072843990111569,
+      "prediction_to_target_norm": 0.7659762664750878,
+      "score_explained_fraction": 0.4968064452708164,
+      "score_mse_per_component": 15323.532209429824,
+      "time": 0.02,
+      "zero_score_mse_per_component": 30452.56058114035
+    },
+    {
+      "endpoint_rms_angstrom": 0.04364596024584674,
+      "oracle_endpoint_rms_angstrom": 2.2198310556081214e-07,
+      "prediction_target_cosine": 0.7247226593380154,
+      "prediction_to_target_norm": 0.7959512355819065,
+      "score_explained_fraction": 0.5201494603165033,
+      "score_mse_per_component": 10542.07853618421,
+      "time": 0.05,
+      "zero_score_mse_per_component": 21969.504385964912
+    },
+    {
+      "endpoint_rms_angstrom": 0.053898710694583477,
+      "oracle_endpoint_rms_angstrom": 2.2569455229788711e-07,
+      "prediction_target_cosine": 0.7391943168771976,
+      "prediction_to_target_norm": 0.8328633298115757,
+      "score_explained_fraction": 0.5376343590772655,
+      "score_mse_per_component": 6391.164884868421,
+      "time": 0.1,
+      "zero_score_mse_per_component": 13822.750479714912
+    }
+  ],
+  "seed": 5705,
+  "training": {
+    "data_passes": 1.0,
+    "final_logged_coordinate_loss": 0.3348507881164551,
+    "graph_presentations": 540164,
+    "peak_cuda_memory_mib": 6787.697265625,
+    "steps": 8441,
+    "training_log_finite": true
+  },
+  "validation": {
+    "coordinate": 0.518064996227622,
+    "element": 4.7883411049842834,
+    "shape": 1.202718161046505,
+    "tensor_candidate_count": 0.0,
+    "total": 7.562694936990738,
+    "volume": 1.0535705760121346
+  },
+  "validation_curve": {
+    "0": {
+      "coordinate": 0.9717215709388256,
+      "element": 4.783908188343048,
+      "shape": 1.233284369111061,
+      "tensor_candidate_count": 0.0,
+      "total": 8.129237323999405,
+      "volume": 1.1403231844305992
+    },
+    "1250": {
+      "coordinate": 0.7818129025399685,
+      "element": 4.777808725833893,
+      "shape": 1.2287927269935608,
+      "tensor_candidate_count": 0.0,
+      "total": 7.842362642288208,
+      "volume": 1.0539482273161411
+    },
+    "5000": {
+      "coordinate": 0.5673799924552441,
+      "element": 4.781950384378433,
+      "shape": 1.1977491341531277,
+      "tensor_candidate_count": 0.0,
+      "total": 7.600210011005402,
+      "volume": 1.053130380809307
+    },
+    "8441": {
+      "coordinate": 0.518064996227622,
+      "element": 4.7883411049842834,
+      "shape": 1.202718161046505,
+      "tensor_candidate_count": 0.0,
+      "total": 7.562694936990738,
+      "volume": 1.0535705760121346
+    }
+  },
+  "validation_ratio_improvement_over_predecessor": 0.011025373597252974
+}

@@ -22,7 +22,6 @@ from gaugeflow.production.checkpointing import (
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from gaugeflow.production.matched_initialization import matched_angular_model
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
 
@@ -149,22 +148,9 @@ def main() -> None:
             "edge_dim": int(model_spec["edge_dim"]),
             "angular_channels": int(model_spec["angular_channels"]),
             "edge_refresh_rank": int(model_spec["edge_refresh_rank"]),
-            "angular_operator": str(model_spec.get("angular_operator", "factorized")),
-            "angular_slots": int(model_spec.get("angular_slots", 8)),
-            "triplet_k": int(model_spec.get("triplet_k", 8)),
         }
     )
-    matched_shared_initialization = bool(
-        training_spec.get("matched_shared_initialization", False)
-    )
-    if resume_metadata is not None and bool(
-        resume_metadata.get("matched_shared_initialization", False)
-    ) != matched_shared_initialization:
-        raise ValueError("resume checkpoint matched-initialization contract differs")
-    if matched_shared_initialization and resume_metadata is None:
-        model, _ = matched_angular_model(model_config, seed=args.seed)
-    else:
-        model = HybridCrystalDenoiser(**model_config)
+    model = HybridCrystalDenoiser(**model_config)
     model = model.to(device)
     observed_parameter_count = sum(value.numel() for value in model.parameters())
     if observed_parameter_count != int(model_spec["parameter_count"]):
@@ -218,7 +204,6 @@ def main() -> None:
         "coordinate_chart": model.coordinate_chart,
         "blueprint": "P1_empirical_node_count",
         "training_stage": training_config.objective,
-        "matched_shared_initialization": matched_shared_initialization,
     }
     if args.resume is None:
         save_production_checkpoint(

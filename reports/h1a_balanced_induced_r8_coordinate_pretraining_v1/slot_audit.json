@@ -1,0 +1,2328 @@
+{
+  "checkpoints": {
+    "0": {
+      "0.005": [
+        {
+          "distance_shell_assignment_variation": 0.002051932504400611,
+          "effective_slot_count": 7.880576133728027,
+          "element_assignment_variation": 0.05132543668150902,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.997063934803009,
+          "mean_slot_directional_polarization": 9.124305506702513e-05,
+          "normalized_assignment_entropy": 0.9927139282226562,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.627012826786418
+        },
+        {
+          "distance_shell_assignment_variation": 0.0021320078521966934,
+          "effective_slot_count": 7.895596504211426,
+          "element_assignment_variation": 0.04747552424669266,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9978819489479065,
+          "mean_slot_directional_polarization": 7.235565863084048e-05,
+          "normalized_assignment_entropy": 0.9936496019363403,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 6.059065709391117
+        },
+        {
+          "distance_shell_assignment_variation": 0.0031659717205911875,
+          "effective_slot_count": 7.873794078826904,
+          "element_assignment_variation": 0.05206657573580742,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9968875646591187,
+          "mean_slot_directional_polarization": 9.339131065644324e-05,
+          "normalized_assignment_entropy": 0.9923012852668762,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 5.886018874331165
+        },
+        {
+          "distance_shell_assignment_variation": 0.002357272896915674,
+          "effective_slot_count": 7.882534980773926,
+          "element_assignment_variation": 0.04985371604561806,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9946284890174866,
+          "mean_slot_directional_polarization": 9.047679486684501e-05,
+          "normalized_assignment_entropy": 0.992844820022583,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.7246017044042015
+        }
+      ],
+      "0.1": [
+        {
+          "distance_shell_assignment_variation": 0.002068416215479374,
+          "effective_slot_count": 7.87620735168457,
+          "element_assignment_variation": 0.05233189836144447,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9970667362213135,
+          "mean_slot_directional_polarization": 7.597973308293149e-05,
+          "normalized_assignment_entropy": 0.992445707321167,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.731315162005672
+        },
+        {
+          "distance_shell_assignment_variation": 0.002012027660384774,
+          "effective_slot_count": 7.88710880279541,
+          "element_assignment_variation": 0.04965013638138771,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9977173805236816,
+          "mean_slot_directional_polarization": 9.866942127700895e-05,
+          "normalized_assignment_entropy": 0.9931246042251587,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.9936535725027325
+        },
+        {
+          "distance_shell_assignment_variation": 0.003137294203042984,
+          "effective_slot_count": 7.867856502532959,
+          "element_assignment_variation": 0.05331074818968773,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9967005252838135,
+          "mean_slot_directional_polarization": 0.00010719103738665581,
+          "normalized_assignment_entropy": 0.9919372200965881,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.906530992874691
+        },
+        {
+          "distance_shell_assignment_variation": 0.0024043116718530655,
+          "effective_slot_count": 7.871951103210449,
+          "element_assignment_variation": 0.05284244567155838,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9944456219673157,
+          "mean_slot_directional_polarization": 0.00013232653145678341,
+          "normalized_assignment_entropy": 0.9921888113021851,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.831443591244274
+        }
+      ],
+      "0.2": [
+        {
+          "distance_shell_assignment_variation": 0.002089395420625806,
+          "effective_slot_count": 7.8769659996032715,
+          "element_assignment_variation": 0.05161541327834129,
+          "maximum_global_slot_mass": 0.1249999925494194,
+          "mean_absolute_inter_slot_cosine": 0.9968929886817932,
+          "mean_slot_directional_polarization": 0.00014874697080813348,
+          "normalized_assignment_entropy": 0.9925005435943604,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 5.729058883016283
+        },
+        {
+          "distance_shell_assignment_variation": 0.0018641819478943944,
+          "effective_slot_count": 7.88070011138916,
+          "element_assignment_variation": 0.051158711314201355,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9975106120109558,
+          "mean_slot_directional_polarization": 0.0001864548830781132,
+          "normalized_assignment_entropy": 0.9927363991737366,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.863581374487519
+        },
+        {
+          "distance_shell_assignment_variation": 0.0029798727482557297,
+          "effective_slot_count": 7.861198902130127,
+          "element_assignment_variation": 0.05477632209658623,
+          "maximum_global_slot_mass": 0.1249999925494194,
+          "mean_absolute_inter_slot_cosine": 0.9959413409233093,
+          "mean_slot_directional_polarization": 0.0002471305488143116,
+          "normalized_assignment_entropy": 0.9915353655815125,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 5.85092659771799
+        },
+        {
+          "distance_shell_assignment_variation": 0.0022644198033958673,
+          "effective_slot_count": 7.860663414001465,
+          "element_assignment_variation": 0.05650947988033295,
+          "maximum_global_slot_mass": 0.1249999925494194,
+          "mean_absolute_inter_slot_cosine": 0.9940543174743652,
+          "mean_slot_directional_polarization": 0.00017673545517027378,
+          "normalized_assignment_entropy": 0.9915027022361755,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 5.670063396412748
+        }
+      ],
+      "0.4": [
+        {
+          "distance_shell_assignment_variation": 0.0020386625546962023,
+          "effective_slot_count": 7.882519245147705,
+          "element_assignment_variation": 0.05171118304133415,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.996147632598877,
+          "mean_slot_directional_polarization": 0.00018711457960307598,
+          "normalized_assignment_entropy": 0.9928420782089233,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.853267947066672
+        },
+        {
+          "distance_shell_assignment_variation": 0.0017675980925559998,
+          "effective_slot_count": 7.866704940795898,
+          "element_assignment_variation": 0.05598217993974686,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9970585703849792,
+          "mean_slot_directional_polarization": 0.00017775387095753103,
+          "normalized_assignment_entropy": 0.9918792247772217,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.605934925823414
+        },
+        {
+          "distance_shell_assignment_variation": 0.002807987853884697,
+          "effective_slot_count": 7.860558032989502,
+          "element_assignment_variation": 0.0558447390794754,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9957801699638367,
+          "mean_slot_directional_polarization": 0.00019220157992094755,
+          "normalized_assignment_entropy": 0.9915053248405457,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 5.687933331328222
+        },
+        {
+          "distance_shell_assignment_variation": 0.0019496739841997623,
+          "effective_slot_count": 7.846353054046631,
+          "element_assignment_variation": 0.060676801949739456,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9925201535224915,
+          "mean_slot_directional_polarization": 0.00017532228957861662,
+          "normalized_assignment_entropy": 0.9906280040740967,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.92259538921439
+        }
+      ],
+      "0.5": [
+        {
+          "distance_shell_assignment_variation": 0.002115165116265416,
+          "effective_slot_count": 7.910074234008789,
+          "element_assignment_variation": 0.045444924384355545,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9971169233322144,
+          "mean_slot_directional_polarization": 0.0002123158919857815,
+          "normalized_assignment_entropy": 0.9945270419120789,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.614167063028866
+        },
+        {
+          "distance_shell_assignment_variation": 0.0018140148604288697,
+          "effective_slot_count": 7.88911247253418,
+          "element_assignment_variation": 0.05191083624958992,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9979578256607056,
+          "mean_slot_directional_polarization": 0.00016958272317424417,
+          "normalized_assignment_entropy": 0.9932438731193542,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.463086235364901
+        },
+        {
+          "distance_shell_assignment_variation": 0.002813394647091627,
+          "effective_slot_count": 7.880129337310791,
+          "element_assignment_variation": 0.05294594168663025,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9966564774513245,
+          "mean_slot_directional_polarization": 0.0002316262834938243,
+          "normalized_assignment_entropy": 0.9927034974098206,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.111891944836634
+        },
+        {
+          "distance_shell_assignment_variation": 0.0020563588477671146,
+          "effective_slot_count": 7.8777689933776855,
+          "element_assignment_variation": 0.054275982081890106,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9944754838943481,
+          "mean_slot_directional_polarization": 0.0002087610773742199,
+          "normalized_assignment_entropy": 0.992555558681488,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.721055815437441
+        }
+      ],
+      "0.6": [
+        {
+          "distance_shell_assignment_variation": 0.001969316741451621,
+          "effective_slot_count": 7.936619281768799,
+          "element_assignment_variation": 0.03926261514425278,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9976496696472168,
+          "mean_slot_directional_polarization": 0.0002271737321279943,
+          "normalized_assignment_entropy": 0.9961422085762024,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.886944190446977
+        },
+        {
+          "distance_shell_assignment_variation": 0.0015425957972183824,
+          "effective_slot_count": 7.9173431396484375,
+          "element_assignment_variation": 0.045067355036735535,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9983154535293579,
+          "mean_slot_directional_polarization": 0.00029307533986866474,
+          "normalized_assignment_entropy": 0.9949623942375183,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 3.5542294276750863
+        },
+        {
+          "distance_shell_assignment_variation": 0.0024651666171848774,
+          "effective_slot_count": 7.914586544036865,
+          "element_assignment_variation": 0.04579714685678482,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9976188540458679,
+          "mean_slot_directional_polarization": 0.00019369364599697292,
+          "normalized_assignment_entropy": 0.9947941899299622,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 5.446851736838462
+        },
+        {
+          "distance_shell_assignment_variation": 0.0018369397148489952,
+          "effective_slot_count": 7.902602672576904,
+          "element_assignment_variation": 0.049015507102012634,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9955369234085083,
+          "mean_slot_directional_polarization": 0.0003486445639282465,
+          "normalized_assignment_entropy": 0.9940564036369324,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.425731014064551
+        }
+      ],
+      "0.9": [
+        {
+          "distance_shell_assignment_variation": 0.0019396570278331637,
+          "effective_slot_count": 7.995529651641846,
+          "element_assignment_variation": 0.01086844690144062,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9998680949211121,
+          "mean_slot_directional_polarization": 0.00011865493434015661,
+          "normalized_assignment_entropy": 0.9997289776802063,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.975654058897967
+        },
+        {
+          "distance_shell_assignment_variation": 0.001730229938402772,
+          "effective_slot_count": 7.990855693817139,
+          "element_assignment_variation": 0.01604446768760681,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.999891996383667,
+          "mean_slot_directional_polarization": 0.00020464041153900325,
+          "normalized_assignment_entropy": 0.9994391202926636,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 3.0080474286038084
+        },
+        {
+          "distance_shell_assignment_variation": 0.0022967159748077393,
+          "effective_slot_count": 7.991566181182861,
+          "element_assignment_variation": 0.015214281156659126,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9998425245285034,
+          "mean_slot_directional_polarization": 0.0001533769245725125,
+          "normalized_assignment_entropy": 0.999484658241272,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.53926773775822
+        },
+        {
+          "distance_shell_assignment_variation": 0.002017101040109992,
+          "effective_slot_count": 7.989439487457275,
+          "element_assignment_variation": 0.016868919134140015,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9996853470802307,
+          "mean_slot_directional_polarization": 0.00016974177560769022,
+          "normalized_assignment_entropy": 0.9993517398834229,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.97498946319201
+        }
+      ]
+    },
+    "1250": {
+      "0.005": [
+        {
+          "distance_shell_assignment_variation": 0.0024206959642469883,
+          "effective_slot_count": 7.97389554977417,
+          "element_assignment_variation": 0.024506311863660812,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9997900724411011,
+          "mean_slot_directional_polarization": 4.653022551792674e-05,
+          "normalized_assignment_entropy": 0.9984254240989685,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.710880979455927
+        },
+        {
+          "distance_shell_assignment_variation": 0.02413143403828144,
+          "effective_slot_count": 7.870553970336914,
+          "element_assignment_variation": 0.0513167567551136,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9981949925422668,
+          "mean_slot_directional_polarization": 5.7196248235413805e-05,
+          "normalized_assignment_entropy": 0.9919827580451965,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1249999850988388,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612,
+            0.1249999925494194,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 1.3235778517772838
+        },
+        {
+          "distance_shell_assignment_variation": 0.04366785287857056,
+          "effective_slot_count": 7.762617111206055,
+          "element_assignment_variation": 0.06580187380313873,
+          "maximum_global_slot_mass": 0.1250000298023224,
+          "mean_absolute_inter_slot_cosine": 0.9940323829650879,
+          "mean_slot_directional_polarization": 8.080262341536582e-05,
+          "normalized_assignment_entropy": 0.9849859476089478,
+          "occupancy": [
+            0.12499997019767761,
+            0.1250000149011612,
+            0.1250000298023224,
+            0.1250000298023224,
+            0.12499996274709702,
+            0.1250000298023224,
+            0.1250000149011612,
+            0.12499997764825821
+          ],
+          "slot_representation_effective_rank": 1.230226313440966
+        },
+        {
+          "distance_shell_assignment_variation": 0.05624227225780487,
+          "effective_slot_count": 7.642573833465576,
+          "element_assignment_variation": 0.07897517085075378,
+          "maximum_global_slot_mass": 0.1250004768371582,
+          "mean_absolute_inter_slot_cosine": 0.9862223267555237,
+          "mean_slot_directional_polarization": 0.00011498514504637569,
+          "normalized_assignment_entropy": 0.9767960906028748,
+          "occupancy": [
+            0.12500044703483582,
+            0.12500010430812836,
+            0.12499944865703583,
+            0.12499946355819702,
+            0.1250004768371582,
+            0.12499936670064926,
+            0.12500044703483582,
+            0.12500029802322388
+          ],
+          "slot_representation_effective_rank": 1.140733456907518
+        }
+      ],
+      "0.1": [
+        {
+          "distance_shell_assignment_variation": 0.0023981942795217037,
+          "effective_slot_count": 7.973601341247559,
+          "element_assignment_variation": 0.02473134547472,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9997838139533997,
+          "mean_slot_directional_polarization": 4.379935853648931e-05,
+          "normalized_assignment_entropy": 0.998407781124115,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.734573711552235
+        },
+        {
+          "distance_shell_assignment_variation": 0.02431984804570675,
+          "effective_slot_count": 7.871454238891602,
+          "element_assignment_variation": 0.05121191591024399,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9981957077980042,
+          "mean_slot_directional_polarization": 0.00011978868133155629,
+          "normalized_assignment_entropy": 0.9920423626899719,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1249999850988388,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612,
+            0.1249999925494194,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 1.3372530932946989
+        },
+        {
+          "distance_shell_assignment_variation": 0.04384750872850418,
+          "effective_slot_count": 7.762884616851807,
+          "element_assignment_variation": 0.06585714221000671,
+          "maximum_global_slot_mass": 0.1250000298023224,
+          "mean_absolute_inter_slot_cosine": 0.9940848350524902,
+          "mean_slot_directional_polarization": 0.0001189407630590722,
+          "normalized_assignment_entropy": 0.9850134253501892,
+          "occupancy": [
+            0.12499997764825821,
+            0.1250000298023224,
+            0.1250000149011612,
+            0.1250000298023224,
+            0.12499997019767761,
+            0.1250000298023224,
+            0.1250000149011612,
+            0.12499997764825821
+          ],
+          "slot_representation_effective_rank": 1.2420065439787165
+        },
+        {
+          "distance_shell_assignment_variation": 0.056604985147714615,
+          "effective_slot_count": 7.639619827270508,
+          "element_assignment_variation": 0.07950051128864288,
+          "maximum_global_slot_mass": 0.1250004768371582,
+          "mean_absolute_inter_slot_cosine": 0.9853275418281555,
+          "mean_slot_directional_polarization": 0.00015360357065219432,
+          "normalized_assignment_entropy": 0.9766087532043457,
+          "occupancy": [
+            0.12500043213367462,
+            0.12500007450580597,
+            0.12499944865703583,
+            0.12499947845935822,
+            0.1250004768371582,
+            0.12499937415122986,
+            0.12500044703483582,
+            0.12500028312206268
+          ],
+          "slot_representation_effective_rank": 1.1399489356846035
+        }
+      ],
+      "0.2": [
+        {
+          "distance_shell_assignment_variation": 0.0023909497540444136,
+          "effective_slot_count": 7.97445821762085,
+          "element_assignment_variation": 0.024407222867012024,
+          "maximum_global_slot_mass": 0.1249999925494194,
+          "mean_absolute_inter_slot_cosine": 0.9997501373291016,
+          "mean_slot_directional_polarization": 5.3329513320932165e-05,
+          "normalized_assignment_entropy": 0.9984598755836487,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 4.835284449273904
+        },
+        {
+          "distance_shell_assignment_variation": 0.02555179037153721,
+          "effective_slot_count": 7.879454135894775,
+          "element_assignment_variation": 0.04820873960852623,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9980232119560242,
+          "mean_slot_directional_polarization": 0.0001436457096133381,
+          "normalized_assignment_entropy": 0.9925426244735718,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999850988388,
+            0.1250000149011612,
+            0.1249999925494194,
+            0.1250000149011612,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 1.3475255761636116
+        },
+        {
+          "distance_shell_assignment_variation": 0.04504021629691124,
+          "effective_slot_count": 7.780669212341309,
+          "element_assignment_variation": 0.06133360415697098,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9940580129623413,
+          "mean_slot_directional_polarization": 0.00014817281044088304,
+          "normalized_assignment_entropy": 0.9861202239990234,
+          "occupancy": [
+            0.12499997764825821,
+            0.1250000149011612,
+            0.1250000149011612,
+            0.1250000149011612,
+            0.12499997764825821,
+            0.1250000149011612,
+            0.125,
+            0.12499997764825821
+          ],
+          "slot_representation_effective_rank": 1.2809483600205993
+        },
+        {
+          "distance_shell_assignment_variation": 0.057714156806468964,
+          "effective_slot_count": 7.670792102813721,
+          "element_assignment_variation": 0.07356690615415573,
+          "maximum_global_slot_mass": 0.12500028312206268,
+          "mean_absolute_inter_slot_cosine": 0.9862130284309387,
+          "mean_slot_directional_polarization": 0.00020991757628507912,
+          "normalized_assignment_entropy": 0.9785725474357605,
+          "occupancy": [
+            0.1250002533197403,
+            0.12500004470348358,
+            0.12499966472387314,
+            0.12499967962503433,
+            0.12500028312206268,
+            0.12499962002038956,
+            0.12500028312206268,
+            0.12500016391277313
+          ],
+          "slot_representation_effective_rank": 1.148884416523802
+        }
+      ],
+      "0.4": [
+        {
+          "distance_shell_assignment_variation": 0.002388943685218692,
+          "effective_slot_count": 7.977955341339111,
+          "element_assignment_variation": 0.02288041263818741,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9997615814208984,
+          "mean_slot_directional_polarization": 7.622256089234725e-05,
+          "normalized_assignment_entropy": 0.9986714124679565,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.593218950988791
+        },
+        {
+          "distance_shell_assignment_variation": 0.026577623561024666,
+          "effective_slot_count": 7.892232418060303,
+          "element_assignment_variation": 0.04419828951358795,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9979612231254578,
+          "mean_slot_directional_polarization": 9.620297350920737e-05,
+          "normalized_assignment_entropy": 0.9933470487594604,
+          "occupancy": [
+            0.125,
+            0.1249999925494194,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 1.3193120550771866
+        },
+        {
+          "distance_shell_assignment_variation": 0.04534658044576645,
+          "effective_slot_count": 7.804559230804443,
+          "element_assignment_variation": 0.05629228800535202,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9937958717346191,
+          "mean_slot_directional_polarization": 0.00016622571274638176,
+          "normalized_assignment_entropy": 0.9876507520675659,
+          "occupancy": [
+            0.1249999925494194,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612,
+            0.1249999925494194,
+            0.125,
+            0.125,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 1.2707170586144803
+        },
+        {
+          "distance_shell_assignment_variation": 0.059045854955911636,
+          "effective_slot_count": 7.700436115264893,
+          "element_assignment_variation": 0.06814427673816681,
+          "maximum_global_slot_mass": 0.12500016391277313,
+          "mean_absolute_inter_slot_cosine": 0.9808337092399597,
+          "mean_slot_directional_polarization": 0.000287304341327399,
+          "normalized_assignment_entropy": 0.9804651737213135,
+          "occupancy": [
+            0.12500013411045074,
+            0.1250000298023224,
+            0.12499980628490448,
+            0.12499984353780746,
+            0.12500014901161194,
+            0.12499979138374329,
+            0.12500016391277313,
+            0.12500010430812836
+          ],
+          "slot_representation_effective_rank": 1.1280811581440084
+        }
+      ],
+      "0.5": [
+        {
+          "distance_shell_assignment_variation": 0.0023842232767492533,
+          "effective_slot_count": 7.982431411743164,
+          "element_assignment_variation": 0.020519372075796127,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9997798204421997,
+          "mean_slot_directional_polarization": 7.574184564873576e-05,
+          "normalized_assignment_entropy": 0.9989414215087891,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.397565371749758
+        },
+        {
+          "distance_shell_assignment_variation": 0.028198672458529472,
+          "effective_slot_count": 7.913214683532715,
+          "element_assignment_variation": 0.03790803253650665,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.997927725315094,
+          "mean_slot_directional_polarization": 0.00017207974451594055,
+          "normalized_assignment_entropy": 0.9946396350860596,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.285408106451253
+        },
+        {
+          "distance_shell_assignment_variation": 0.04718994349241257,
+          "effective_slot_count": 7.835514545440674,
+          "element_assignment_variation": 0.0482245571911335,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9937846660614014,
+          "mean_slot_directional_polarization": 0.00014381669461727142,
+          "normalized_assignment_entropy": 0.989574670791626,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.2525821750293684
+        },
+        {
+          "distance_shell_assignment_variation": 0.06112849339842796,
+          "effective_slot_count": 7.749616622924805,
+          "element_assignment_variation": 0.05670339614152908,
+          "maximum_global_slot_mass": 0.1250000298023224,
+          "mean_absolute_inter_slot_cosine": 0.979557991027832,
+          "mean_slot_directional_polarization": 0.00018610844563227147,
+          "normalized_assignment_entropy": 0.9835827946662903,
+          "occupancy": [
+            0.1250000298023224,
+            0.1250000149011612,
+            0.1249999850988388,
+            0.12499997764825821,
+            0.1250000298023224,
+            0.12499997019767761,
+            0.1250000149011612,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 1.111941219674666
+        }
+      ],
+      "0.6": [
+        {
+          "distance_shell_assignment_variation": 0.0024041004944592714,
+          "effective_slot_count": 7.987895488739014,
+          "element_assignment_variation": 0.017387082800269127,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9998183250427246,
+          "mean_slot_directional_polarization": 8.012687612790614e-05,
+          "normalized_assignment_entropy": 0.9992704391479492,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 4.860273998734224
+        },
+        {
+          "distance_shell_assignment_variation": 0.02948390319943428,
+          "effective_slot_count": 7.925892353057861,
+          "element_assignment_variation": 0.033200494945049286,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9973388314247131,
+          "mean_slot_directional_polarization": 0.00025875697610899806,
+          "normalized_assignment_entropy": 0.9954112768173218,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.1989966362938393
+        },
+        {
+          "distance_shell_assignment_variation": 0.04796991124749184,
+          "effective_slot_count": 7.859152793884277,
+          "element_assignment_variation": 0.04073990508913994,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9927433729171753,
+          "mean_slot_directional_polarization": 0.00022507841640617698,
+          "normalized_assignment_entropy": 0.991028368473053,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.187845950688509
+        },
+        {
+          "distance_shell_assignment_variation": 0.062257830053567886,
+          "effective_slot_count": 7.780880928039551,
+          "element_assignment_variation": 0.048328518867492676,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.971449613571167,
+          "mean_slot_directional_polarization": 0.00024235995078925043,
+          "normalized_assignment_entropy": 0.985478937625885,
+          "occupancy": [
+            0.1250000149011612,
+            0.1250000149011612,
+            0.12499997764825821,
+            0.1249999850988388,
+            0.1250000149011612,
+            0.12499997019767761,
+            0.1250000149011612,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 1.0840610030086963
+        }
+      ],
+      "0.9": [
+        {
+          "distance_shell_assignment_variation": 0.0025909272953867912,
+          "effective_slot_count": 7.998911380767822,
+          "element_assignment_variation": 0.00474451994523406,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9999713897705078,
+          "mean_slot_directional_polarization": 4.4122280087322e-05,
+          "normalized_assignment_entropy": 0.9999345541000366,
+          "occupancy": [
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.923181173549752
+        },
+        {
+          "distance_shell_assignment_variation": 0.03303093835711479,
+          "effective_slot_count": 7.957277297973633,
+          "element_assignment_variation": 0.010348548181355,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9967394471168518,
+          "mean_slot_directional_polarization": 7.067361002555117e-05,
+          "normalized_assignment_entropy": 0.9973403811454773,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.0248265752362273
+        },
+        {
+          "distance_shell_assignment_variation": 0.05220829322934151,
+          "effective_slot_count": 7.901149272918701,
+          "element_assignment_variation": 0.01271333359181881,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9911946058273315,
+          "mean_slot_directional_polarization": 0.00017892092000693083,
+          "normalized_assignment_entropy": 0.9936132431030273,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.0285591432391006
+        },
+        {
+          "distance_shell_assignment_variation": 0.06707257777452469,
+          "effective_slot_count": 7.834150791168213,
+          "element_assignment_variation": 0.014009250327944756,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9653483629226685,
+          "mean_slot_directional_polarization": 0.000342360173817724,
+          "normalized_assignment_entropy": 0.9887279272079468,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 1.0297327706656465
+        }
+      ]
+    },
+    "5000": {
+      "0.005": [
+        {
+          "distance_shell_assignment_variation": 0.008054244332015514,
+          "effective_slot_count": 7.949971675872803,
+          "element_assignment_variation": 0.0323832742869854,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9996482729911804,
+          "mean_slot_directional_polarization": 7.421117334160954e-05,
+          "normalized_assignment_entropy": 0.9969627857208252,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.986935394802483
+        },
+        {
+          "distance_shell_assignment_variation": 0.11712078750133514,
+          "effective_slot_count": 6.444080352783203,
+          "element_assignment_variation": 0.08072955906391144,
+          "maximum_global_slot_mass": 0.12549453973770142,
+          "mean_absolute_inter_slot_cosine": 0.9721229076385498,
+          "mean_slot_directional_polarization": 0.00021861042478121817,
+          "normalized_assignment_entropy": 0.8867778778076172,
+          "occupancy": [
+            0.12472987920045853,
+            0.12480223178863525,
+            0.12471083551645279,
+            0.12539637088775635,
+            0.12475742399692535,
+            0.12547628581523895,
+            0.12463244795799255,
+            0.12549453973770142
+          ],
+          "slot_representation_effective_rank": 1.221297955543725
+        },
+        {
+          "distance_shell_assignment_variation": 0.2102264016866684,
+          "effective_slot_count": 4.107933044433594,
+          "element_assignment_variation": 0.1510464996099472,
+          "maximum_global_slot_mass": 0.20012594759464264,
+          "mean_absolute_inter_slot_cosine": 0.9152670502662659,
+          "mean_slot_directional_polarization": 0.00037175058969296515,
+          "normalized_assignment_entropy": 0.6647371053695679,
+          "occupancy": [
+            0.0458420030772686,
+            0.1574273407459259,
+            0.15371853113174438,
+            0.20012594759464264,
+            0.04136991128325462,
+            0.19396129250526428,
+            0.16445821523666382,
+            0.043096788227558136
+          ],
+          "slot_representation_effective_rank": 1.9787667603352108
+        },
+        {
+          "distance_shell_assignment_variation": 0.1640205979347229,
+          "effective_slot_count": 4.519248962402344,
+          "element_assignment_variation": 0.10450223833322525,
+          "maximum_global_slot_mass": 0.18418702483177185,
+          "mean_absolute_inter_slot_cosine": 0.7224403023719788,
+          "mean_slot_directional_polarization": 0.0007310529472306371,
+          "normalized_assignment_entropy": 0.7202765345573425,
+          "occupancy": [
+            0.18418702483177185,
+            0.16867370903491974,
+            0.03397312015295029,
+            0.03533783555030823,
+            0.1821853369474411,
+            0.03541950508952141,
+            0.18117952346801758,
+            0.1790439635515213
+          ],
+          "slot_representation_effective_rank": 1.2627234404838523
+        }
+      ],
+      "0.1": [
+        {
+          "distance_shell_assignment_variation": 0.00816323421895504,
+          "effective_slot_count": 7.942441940307617,
+          "element_assignment_variation": 0.035674694925546646,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9995884895324707,
+          "mean_slot_directional_polarization": 4.905398600385524e-05,
+          "normalized_assignment_entropy": 0.9964984655380249,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 3.070010326696932
+        },
+        {
+          "distance_shell_assignment_variation": 0.11739178746938705,
+          "effective_slot_count": 6.423544406890869,
+          "element_assignment_variation": 0.0811929702758789,
+          "maximum_global_slot_mass": 0.12552548944950104,
+          "mean_absolute_inter_slot_cosine": 0.9731045365333557,
+          "mean_slot_directional_polarization": 0.0001921849325299263,
+          "normalized_assignment_entropy": 0.8849870562553406,
+          "occupancy": [
+            0.12471532821655273,
+            0.12479189038276672,
+            0.12469203770160675,
+            0.1254158318042755,
+            0.1247442439198494,
+            0.12550681829452515,
+            0.1246083676815033,
+            0.12552548944950104
+          ],
+          "slot_representation_effective_rank": 1.2453090239077451
+        },
+        {
+          "distance_shell_assignment_variation": 0.2127932459115982,
+          "effective_slot_count": 4.12444543838501,
+          "element_assignment_variation": 0.1494307816028595,
+          "maximum_global_slot_mass": 0.1974932998418808,
+          "mean_absolute_inter_slot_cosine": 0.9012477993965149,
+          "mean_slot_directional_polarization": 0.0006276806816458702,
+          "normalized_assignment_entropy": 0.666804850101471,
+          "occupancy": [
+            0.04749948903918266,
+            0.15734900534152985,
+            0.1539013534784317,
+            0.1974932998418808,
+            0.04310698062181473,
+            0.1916007697582245,
+            0.1638915240764618,
+            0.04515760764479637
+          ],
+          "slot_representation_effective_rank": 1.9151847813616079
+        },
+        {
+          "distance_shell_assignment_variation": 0.16601239144802094,
+          "effective_slot_count": 4.510944843292236,
+          "element_assignment_variation": 0.10645061731338501,
+          "maximum_global_slot_mass": 0.18371950089931488,
+          "mean_absolute_inter_slot_cosine": 0.729110062122345,
+          "mean_slot_directional_polarization": 0.0012728923466056585,
+          "normalized_assignment_entropy": 0.7193193435668945,
+          "occupancy": [
+            0.18371950089931488,
+            0.16758060455322266,
+            0.03508647903800011,
+            0.036527227610349655,
+            0.181605726480484,
+            0.03666010499000549,
+            0.1805063784122467,
+            0.1783139705657959
+          ],
+          "slot_representation_effective_rank": 1.281088745719243
+        }
+      ],
+      "0.2": [
+        {
+          "distance_shell_assignment_variation": 0.008099263533949852,
+          "effective_slot_count": 7.9202799797058105,
+          "element_assignment_variation": 0.04518597573041916,
+          "maximum_global_slot_mass": 0.1249999925494194,
+          "mean_absolute_inter_slot_cosine": 0.9993700981140137,
+          "mean_slot_directional_polarization": 0.00012981361942365766,
+          "normalized_assignment_entropy": 0.995134711265564,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194
+          ],
+          "slot_representation_effective_rank": 2.7436010663897847
+        },
+        {
+          "distance_shell_assignment_variation": 0.12360212951898575,
+          "effective_slot_count": 6.481216907501221,
+          "element_assignment_variation": 0.07558920979499817,
+          "maximum_global_slot_mass": 0.12559455633163452,
+          "mean_absolute_inter_slot_cosine": 0.9733936786651611,
+          "mean_slot_directional_polarization": 0.0004431133856996894,
+          "normalized_assignment_entropy": 0.889175295829773,
+          "occupancy": [
+            0.12467680871486664,
+            0.1247546449303627,
+            0.12465815991163254,
+            0.12547047436237335,
+            0.12471112608909607,
+            0.12556959688663483,
+            0.12456458061933517,
+            0.12559455633163452
+          ],
+          "slot_representation_effective_rank": 1.2592652465482894
+        },
+        {
+          "distance_shell_assignment_variation": 0.20682519674301147,
+          "effective_slot_count": 4.192014694213867,
+          "element_assignment_variation": 0.1394749879837036,
+          "maximum_global_slot_mass": 0.19231297075748444,
+          "mean_absolute_inter_slot_cosine": 0.8603258728981018,
+          "mean_slot_directional_polarization": 0.001278626499697566,
+          "normalized_assignment_entropy": 0.6751077175140381,
+          "occupancy": [
+            0.0495309978723526,
+            0.1582964062690735,
+            0.1550995111465454,
+            0.19231297075748444,
+            0.04540631175041199,
+            0.1872720718383789,
+            0.16432039439678192,
+            0.04776129871606827
+          ],
+          "slot_representation_effective_rank": 1.70554386124874
+        },
+        {
+          "distance_shell_assignment_variation": 0.15873751044273376,
+          "effective_slot_count": 4.536754608154297,
+          "element_assignment_variation": 0.10706907510757446,
+          "maximum_global_slot_mass": 0.18338803946971893,
+          "mean_absolute_inter_slot_cosine": 0.7420400381088257,
+          "mean_slot_directional_polarization": 0.0011842144886031747,
+          "normalized_assignment_entropy": 0.7216230034828186,
+          "occupancy": [
+            0.18338803946971893,
+            0.16704395413398743,
+            0.03544345125555992,
+            0.03687331825494766,
+            0.1812780797481537,
+            0.03738909587264061,
+            0.18026745319366455,
+            0.17831654846668243
+          ],
+          "slot_representation_effective_rank": 1.3001322888710156
+        }
+      ],
+      "0.4": [
+        {
+          "distance_shell_assignment_variation": 0.007759431842714548,
+          "effective_slot_count": 7.9008049964904785,
+          "element_assignment_variation": 0.049313999712467194,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9992243647575378,
+          "mean_slot_directional_polarization": 0.00023070836323313415,
+          "normalized_assignment_entropy": 0.993963897228241,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.424916590180211
+        },
+        {
+          "distance_shell_assignment_variation": 0.1303892582654953,
+          "effective_slot_count": 6.514432907104492,
+          "element_assignment_variation": 0.07567989081144333,
+          "maximum_global_slot_mass": 0.1256783902645111,
+          "mean_absolute_inter_slot_cosine": 0.9743585586547852,
+          "mean_slot_directional_polarization": 0.0005655830027535558,
+          "normalized_assignment_entropy": 0.8906978964805603,
+          "occupancy": [
+            0.12464387714862823,
+            0.12471627444028854,
+            0.12462499737739563,
+            0.12549962103366852,
+            0.1246643140912056,
+            0.12564346194267273,
+            0.12452907115221024,
+            0.1256783902645111
+          ],
+          "slot_representation_effective_rank": 1.3064568487200798
+        },
+        {
+          "distance_shell_assignment_variation": 0.2008868306875229,
+          "effective_slot_count": 4.281412124633789,
+          "element_assignment_variation": 0.11425185203552246,
+          "maximum_global_slot_mass": 0.18883797526359558,
+          "mean_absolute_inter_slot_cosine": 0.8682379722595215,
+          "mean_slot_directional_polarization": 0.0013796123676002026,
+          "normalized_assignment_entropy": 0.6846486926078796,
+          "occupancy": [
+            0.05421655252575874,
+            0.1564406454563141,
+            0.15381787717342377,
+            0.18883797526359558,
+            0.0491873137652874,
+            0.18363098800182343,
+            0.16122488677501678,
+            0.0526437908411026
+          ],
+          "slot_representation_effective_rank": 1.7665940593716187
+        },
+        {
+          "distance_shell_assignment_variation": 0.16236384212970734,
+          "effective_slot_count": 4.503601551055908,
+          "element_assignment_variation": 0.09729518741369247,
+          "maximum_global_slot_mass": 0.18375834822654724,
+          "mean_absolute_inter_slot_cosine": 0.7864876985549927,
+          "mean_slot_directional_polarization": 0.0023687356151640415,
+          "normalized_assignment_entropy": 0.7173161506652832,
+          "occupancy": [
+            0.18375834822654724,
+            0.1619318723678589,
+            0.037460021674633026,
+            0.039093658328056335,
+            0.18060198426246643,
+            0.04043954610824585,
+            0.17926444113254547,
+            0.17745019495487213
+          ],
+          "slot_representation_effective_rank": 1.4132126577456243
+        }
+      ],
+      "0.5": [
+        {
+          "distance_shell_assignment_variation": 0.007768822368234396,
+          "effective_slot_count": 7.8901872634887695,
+          "element_assignment_variation": 0.05222994461655617,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9991005659103394,
+          "mean_slot_directional_polarization": 0.000254196667810902,
+          "normalized_assignment_entropy": 0.9933088421821594,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.2490802476066762
+        },
+        {
+          "distance_shell_assignment_variation": 0.13526181876659393,
+          "effective_slot_count": 6.549667835235596,
+          "element_assignment_variation": 0.07052348554134369,
+          "maximum_global_slot_mass": 0.1258021742105484,
+          "mean_absolute_inter_slot_cosine": 0.9734163880348206,
+          "mean_slot_directional_polarization": 0.0006134746363386512,
+          "normalized_assignment_entropy": 0.8925516605377197,
+          "occupancy": [
+            0.12458250671625137,
+            0.12466416507959366,
+            0.12456779181957245,
+            0.12557406723499298,
+            0.12460153549909592,
+            0.1257505863904953,
+            0.1244572103023529,
+            0.1258021742105484
+          ],
+          "slot_representation_effective_rank": 1.3253376430325983
+        },
+        {
+          "distance_shell_assignment_variation": 0.18867738544940948,
+          "effective_slot_count": 4.319040775299072,
+          "element_assignment_variation": 0.10144612193107605,
+          "maximum_global_slot_mass": 0.18704746663570404,
+          "mean_absolute_inter_slot_cosine": 0.859211802482605,
+          "mean_slot_directional_polarization": 0.0021558054722845554,
+          "normalized_assignment_entropy": 0.6879758238792419,
+          "occupancy": [
+            0.05711359530687332,
+            0.15483883023262024,
+            0.152238667011261,
+            0.18704746663570404,
+            0.0518084391951561,
+            0.18170592188835144,
+            0.1594068706035614,
+            0.05584021285176277
+          ],
+          "slot_representation_effective_rank": 1.7523833205867028
+        },
+        {
+          "distance_shell_assignment_variation": 0.1570085883140564,
+          "effective_slot_count": 4.5131683349609375,
+          "element_assignment_variation": 0.090790294110775,
+          "maximum_global_slot_mass": 0.18411870300769806,
+          "mean_absolute_inter_slot_cosine": 0.8167861700057983,
+          "mean_slot_directional_polarization": 0.0012922955211251974,
+          "normalized_assignment_entropy": 0.7176552414894104,
+          "occupancy": [
+            0.18411870300769806,
+            0.15841425955295563,
+            0.03894543647766113,
+            0.04114006087183952,
+            0.1800321638584137,
+            0.042746156454086304,
+            0.17825539410114288,
+            0.17634786665439606
+          ],
+          "slot_representation_effective_rank": 1.4695011046114395
+        }
+      ],
+      "0.6": [
+        {
+          "distance_shell_assignment_variation": 0.007983426563441753,
+          "effective_slot_count": 7.921249866485596,
+          "element_assignment_variation": 0.04329594597220421,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.9992535710334778,
+          "mean_slot_directional_polarization": 9.770945325726643e-05,
+          "normalized_assignment_entropy": 0.9951980113983154,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.7904200347824575
+        },
+        {
+          "distance_shell_assignment_variation": 0.135145366191864,
+          "effective_slot_count": 6.529207706451416,
+          "element_assignment_variation": 0.06706080585718155,
+          "maximum_global_slot_mass": 0.12622451782226562,
+          "mean_absolute_inter_slot_cosine": 0.9709441661834717,
+          "mean_slot_directional_polarization": 0.0006417116965167224,
+          "normalized_assignment_entropy": 0.8899684548377991,
+          "occupancy": [
+            0.12437031418085098,
+            0.12449152767658234,
+            0.12435058504343033,
+            0.12585532665252686,
+            0.1243872418999672,
+            0.1261424869298935,
+            0.12417802214622498,
+            0.12622451782226562
+          ],
+          "slot_representation_effective_rank": 1.3521720647763487
+        },
+        {
+          "distance_shell_assignment_variation": 0.1721414476633072,
+          "effective_slot_count": 4.494711875915527,
+          "element_assignment_variation": 0.08370693773031235,
+          "maximum_global_slot_mass": 0.17343102395534515,
+          "mean_absolute_inter_slot_cosine": 0.8256627321243286,
+          "mean_slot_directional_polarization": 0.0022955378517508507,
+          "normalized_assignment_entropy": 0.7030518054962158,
+          "occupancy": [
+            0.07867994904518127,
+            0.1423151195049286,
+            0.14047788083553314,
+            0.17343102395534515,
+            0.07353486120700836,
+            0.16791656613349915,
+            0.1460144817829132,
+            0.07763013243675232
+          ],
+          "slot_representation_effective_rank": 1.6605973500549378
+        },
+        {
+          "distance_shell_assignment_variation": 0.1601349115371704,
+          "effective_slot_count": 4.4231133460998535,
+          "element_assignment_variation": 0.07702019810676575,
+          "maximum_global_slot_mass": 0.18303638696670532,
+          "mean_absolute_inter_slot_cosine": 0.8207343816757202,
+          "mean_slot_directional_polarization": 0.0022858178708702326,
+          "normalized_assignment_entropy": 0.7063199877738953,
+          "occupancy": [
+            0.18303638696670532,
+            0.1487385779619217,
+            0.04644491896033287,
+            0.04843638092279434,
+            0.17712099850177765,
+            0.050622619688510895,
+            0.17405463755130768,
+            0.17154549062252045
+          ],
+          "slot_representation_effective_rank": 1.4900194844519217
+        }
+      ],
+      "0.9": [
+        {
+          "distance_shell_assignment_variation": 0.008405039086937904,
+          "effective_slot_count": 7.989034652709961,
+          "element_assignment_variation": 0.011815301142632961,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9998380541801453,
+          "mean_slot_directional_polarization": 8.872902253642678e-05,
+          "normalized_assignment_entropy": 0.9993358254432678,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 2.695905171027792
+        },
+        {
+          "distance_shell_assignment_variation": 0.1494477093219757,
+          "effective_slot_count": 6.793314456939697,
+          "element_assignment_variation": 0.02569187805056572,
+          "maximum_global_slot_mass": 0.1254538893699646,
+          "mean_absolute_inter_slot_cosine": 0.9589707851409912,
+          "mean_slot_directional_polarization": 0.00025189906591549516,
+          "normalized_assignment_entropy": 0.9099315404891968,
+          "occupancy": [
+            0.1247694343328476,
+            0.12480809539556503,
+            0.12476525455713272,
+            0.12529617547988892,
+            0.12477505952119827,
+            0.12542080879211426,
+            0.1247113049030304,
+            0.1254538893699646
+          ],
+          "slot_representation_effective_rank": 1.2701571816342787
+        },
+        {
+          "distance_shell_assignment_variation": 0.18493039906024933,
+          "effective_slot_count": 4.888680458068848,
+          "element_assignment_variation": 0.027675606310367584,
+          "maximum_global_slot_mass": 0.1638599932193756,
+          "mean_absolute_inter_slot_cosine": 0.8196591138839722,
+          "mean_slot_directional_polarization": 0.0020824242383241653,
+          "normalized_assignment_entropy": 0.7436360120773315,
+          "occupancy": [
+            0.08799510449171066,
+            0.13923007249832153,
+            0.13771094381809235,
+            0.1638599932193756,
+            0.08223318308591843,
+            0.15967361629009247,
+            0.1421615481376648,
+            0.08713557571172714
+          ],
+          "slot_representation_effective_rank": 1.4974708115180524
+        },
+        {
+          "distance_shell_assignment_variation": 0.16912885010242462,
+          "effective_slot_count": 4.794105052947998,
+          "element_assignment_variation": 0.021337149664759636,
+          "maximum_global_slot_mass": 0.17625848948955536,
+          "mean_absolute_inter_slot_cosine": 0.7857535481452942,
+          "mean_slot_directional_polarization": 0.0023755826987326145,
+          "normalized_assignment_entropy": 0.7448970079421997,
+          "occupancy": [
+            0.17625848948955536,
+            0.14796176552772522,
+            0.052924927324056625,
+            0.05488787218928337,
+            0.1722819209098816,
+            0.05832280218601227,
+            0.16981758177280426,
+            0.16754470765590668
+          ],
+          "slot_representation_effective_rank": 1.3232931421004974
+        }
+      ]
+    },
+    "8441": {
+      "0.005": [
+        {
+          "distance_shell_assignment_variation": 0.009306438267230988,
+          "effective_slot_count": 7.863273620605469,
+          "element_assignment_variation": 0.05478019639849663,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.999012291431427,
+          "mean_slot_directional_polarization": 0.00011172164522577077,
+          "normalized_assignment_entropy": 0.991526186466217,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.187259069429971
+        },
+        {
+          "distance_shell_assignment_variation": 0.13316798210144043,
+          "effective_slot_count": 6.061244487762451,
+          "element_assignment_variation": 0.06273006647825241,
+          "maximum_global_slot_mass": 0.12541742622852325,
+          "mean_absolute_inter_slot_cosine": 0.9722040295600891,
+          "mean_slot_directional_polarization": 0.00020067962759640068,
+          "normalized_assignment_entropy": 0.8544074296951294,
+          "occupancy": [
+            0.12534348666667938,
+            0.12530295550823212,
+            0.12538976967334747,
+            0.12450288236141205,
+            0.12541742622852325,
+            0.12433218955993652,
+            0.12537521123886108,
+            0.12433608621358871
+          ],
+          "slot_representation_effective_rank": 2.2091716359986484
+        },
+        {
+          "distance_shell_assignment_variation": 0.1980385184288025,
+          "effective_slot_count": 3.8996756076812744,
+          "element_assignment_variation": 0.16849689185619354,
+          "maximum_global_slot_mass": 0.1912393718957901,
+          "mean_absolute_inter_slot_cosine": 0.8742246627807617,
+          "mean_slot_directional_polarization": 0.000759601651225239,
+          "normalized_assignment_entropy": 0.6421598792076111,
+          "occupancy": [
+            0.0444086417555809,
+            0.17163632810115814,
+            0.15420860052108765,
+            0.1912393718957901,
+            0.03350028023123741,
+            0.18855653703212738,
+            0.18021990358829498,
+            0.03623034432530403
+          ],
+          "slot_representation_effective_rank": 2.2655900762191723
+        },
+        {
+          "distance_shell_assignment_variation": 0.16941170394420624,
+          "effective_slot_count": 4.442535400390625,
+          "element_assignment_variation": 0.09443569928407669,
+          "maximum_global_slot_mass": 0.18536323308944702,
+          "mean_absolute_inter_slot_cosine": 0.6801741719245911,
+          "mean_slot_directional_polarization": 0.000721621501725167,
+          "normalized_assignment_entropy": 0.7110724449157715,
+          "occupancy": [
+            0.18536323308944702,
+            0.16518397629261017,
+            0.03237989917397499,
+            0.03355161100625992,
+            0.18360021710395813,
+            0.03571515902876854,
+            0.18225090205669403,
+            0.181955024600029
+          ],
+          "slot_representation_effective_rank": 1.3512229626359848
+        }
+      ],
+      "0.1": [
+        {
+          "distance_shell_assignment_variation": 0.00939362682402134,
+          "effective_slot_count": 7.858911514282227,
+          "element_assignment_variation": 0.05618249624967575,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9990839958190918,
+          "mean_slot_directional_polarization": 9.120786853600293e-05,
+          "normalized_assignment_entropy": 0.9912628531455994,
+          "occupancy": [
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.308146188994171
+        },
+        {
+          "distance_shell_assignment_variation": 0.1374218761920929,
+          "effective_slot_count": 6.050619602203369,
+          "element_assignment_variation": 0.06240485981106758,
+          "maximum_global_slot_mass": 0.12549324333667755,
+          "mean_absolute_inter_slot_cosine": 0.9715131521224976,
+          "mean_slot_directional_polarization": 0.00031523939105682075,
+          "normalized_assignment_entropy": 0.8532629609107971,
+          "occupancy": [
+            0.12541091442108154,
+            0.12535996735095978,
+            0.1254524439573288,
+            0.12442652881145477,
+            0.1254717856645584,
+            0.12420869618654251,
+            0.12549324333667755,
+            0.12417642027139664
+          ],
+          "slot_representation_effective_rank": 2.2436418908564386
+        },
+        {
+          "distance_shell_assignment_variation": 0.20059290528297424,
+          "effective_slot_count": 3.8741445541381836,
+          "element_assignment_variation": 0.1681654304265976,
+          "maximum_global_slot_mass": 0.19088855385780334,
+          "mean_absolute_inter_slot_cosine": 0.8604021668434143,
+          "mean_slot_directional_polarization": 0.0008206545608118176,
+          "normalized_assignment_entropy": 0.6389655470848083,
+          "occupancy": [
+            0.043663106858730316,
+            0.17165900766849518,
+            0.15446837246418,
+            0.19088855385780334,
+            0.03469093516469002,
+            0.18761476874351501,
+            0.17954909801483154,
+            0.03746616095304489
+          ],
+          "slot_representation_effective_rank": 2.1165504852278145
+        },
+        {
+          "distance_shell_assignment_variation": 0.17150382697582245,
+          "effective_slot_count": 4.41306209564209,
+          "element_assignment_variation": 0.09902406483888626,
+          "maximum_global_slot_mass": 0.18457485735416412,
+          "mean_absolute_inter_slot_cosine": 0.6913198232650757,
+          "mean_slot_directional_polarization": 0.0012289411388337612,
+          "normalized_assignment_entropy": 0.7071619033813477,
+          "occupancy": [
+            0.18457485735416412,
+            0.16431142389774323,
+            0.03345021605491638,
+            0.03477195277810097,
+            0.18291857838630676,
+            0.0370827279984951,
+            0.1814621239900589,
+            0.18142811954021454
+          ],
+          "slot_representation_effective_rank": 1.385425337375829
+        }
+      ],
+      "0.2": [
+        {
+          "distance_shell_assignment_variation": 0.00922232773154974,
+          "effective_slot_count": 7.840498924255371,
+          "element_assignment_variation": 0.06200256571173668,
+          "maximum_global_slot_mass": 0.125,
+          "mean_absolute_inter_slot_cosine": 0.999062716960907,
+          "mean_slot_directional_polarization": 0.0001880252966657281,
+          "normalized_assignment_entropy": 0.9901169538497925,
+          "occupancy": [
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.5482690883145596
+        },
+        {
+          "distance_shell_assignment_variation": 0.14231394231319427,
+          "effective_slot_count": 6.107669353485107,
+          "element_assignment_variation": 0.0659676194190979,
+          "maximum_global_slot_mass": 0.12530863285064697,
+          "mean_absolute_inter_slot_cosine": 0.9693295955657959,
+          "mean_slot_directional_polarization": 0.0004338670114520937,
+          "normalized_assignment_entropy": 0.8570062518119812,
+          "occupancy": [
+            0.12525515258312225,
+            0.12523706257343292,
+            0.12527577579021454,
+            0.12465031445026398,
+            0.12530863285064697,
+            0.12449926882982254,
+            0.1252886950969696,
+            0.1244850605726242
+          ],
+          "slot_representation_effective_rank": 2.181630235729735
+        },
+        {
+          "distance_shell_assignment_variation": 0.19260260462760925,
+          "effective_slot_count": 3.9090356826782227,
+          "element_assignment_variation": 0.16195519268512726,
+          "maximum_global_slot_mass": 0.19108133018016815,
+          "mean_absolute_inter_slot_cosine": 0.8401677012443542,
+          "mean_slot_directional_polarization": 0.0012568456586450338,
+          "normalized_assignment_entropy": 0.6428661346435547,
+          "occupancy": [
+            0.0417335145175457,
+            0.1719500720500946,
+            0.15480628609657288,
+            0.19108133018016815,
+            0.03560473769903183,
+            0.1867893785238266,
+            0.17953814566135406,
+            0.03849649429321289
+          ],
+          "slot_representation_effective_rank": 1.985656770020092
+        },
+        {
+          "distance_shell_assignment_variation": 0.16507011651992798,
+          "effective_slot_count": 4.384347438812256,
+          "element_assignment_variation": 0.10327691584825516,
+          "maximum_global_slot_mass": 0.18498574197292328,
+          "mean_absolute_inter_slot_cosine": 0.704975962638855,
+          "mean_slot_directional_polarization": 0.001149064744822681,
+          "normalized_assignment_entropy": 0.7030333876609802,
+          "occupancy": [
+            0.18498574197292328,
+            0.16271302103996277,
+            0.03327019140124321,
+            0.035033468157052994,
+            0.18280403316020966,
+            0.03827126324176788,
+            0.18153204023838043,
+            0.18139022588729858
+          ],
+          "slot_representation_effective_rank": 1.4653172612656686
+        }
+      ],
+      "0.4": [
+        {
+          "distance_shell_assignment_variation": 0.00904000736773014,
+          "effective_slot_count": 7.844579219818115,
+          "element_assignment_variation": 0.05901695415377617,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9991827607154846,
+          "mean_slot_directional_polarization": 0.0002844736445695162,
+          "normalized_assignment_entropy": 0.9904167652130127,
+          "occupancy": [
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.1249999925494194,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 2.7621314455951853
+        },
+        {
+          "distance_shell_assignment_variation": 0.14982785284519196,
+          "effective_slot_count": 6.196041107177734,
+          "element_assignment_variation": 0.060451362282037735,
+          "maximum_global_slot_mass": 0.12547069787979126,
+          "mean_absolute_inter_slot_cosine": 0.9675647616386414,
+          "mean_slot_directional_polarization": 0.0003128411481156945,
+          "normalized_assignment_entropy": 0.8618888854980469,
+          "occupancy": [
+            0.12482229620218277,
+            0.12487704306840897,
+            0.12481013685464859,
+            0.12518376111984253,
+            0.12484077364206314,
+            0.1253720223903656,
+            0.12462327629327774,
+            0.12547069787979126
+          ],
+          "slot_representation_effective_rank": 2.1902380434023128
+        },
+        {
+          "distance_shell_assignment_variation": 0.1869959831237793,
+          "effective_slot_count": 3.9088971614837646,
+          "element_assignment_variation": 0.13899590075016022,
+          "maximum_global_slot_mass": 0.19368383288383484,
+          "mean_absolute_inter_slot_cosine": 0.8461130857467651,
+          "mean_slot_directional_polarization": 0.0018185034859925508,
+          "normalized_assignment_entropy": 0.6415651440620422,
+          "occupancy": [
+            0.04033680632710457,
+            0.1704581081867218,
+            0.1543632447719574,
+            0.19368383288383484,
+            0.03634001687169075,
+            0.18580399453639984,
+            0.1785687953233719,
+            0.04044520482420921
+          ],
+          "slot_representation_effective_rank": 2.292444030736116
+        },
+        {
+          "distance_shell_assignment_variation": 0.16818246245384216,
+          "effective_slot_count": 4.260242938995361,
+          "element_assignment_variation": 0.09703889489173889,
+          "maximum_global_slot_mass": 0.1901620775461197,
+          "mean_absolute_inter_slot_cosine": 0.7428585290908813,
+          "mean_slot_directional_polarization": 0.0021131793037056923,
+          "normalized_assignment_entropy": 0.6874759197235107,
+          "occupancy": [
+            0.1901620775461197,
+            0.14902929961681366,
+            0.03274564817547798,
+            0.034967921674251556,
+            0.18550114333629608,
+            0.04030824080109596,
+            0.1839415580034256,
+            0.18334417045116425
+          ],
+          "slot_representation_effective_rank": 1.694496761777798
+        }
+      ],
+      "0.5": [
+        {
+          "distance_shell_assignment_variation": 0.009139961563050747,
+          "effective_slot_count": 7.820980548858643,
+          "element_assignment_variation": 0.0630582645535469,
+          "maximum_global_slot_mass": 0.1250000298023224,
+          "mean_absolute_inter_slot_cosine": 0.9989675283432007,
+          "mean_slot_directional_polarization": 0.0002680456091184169,
+          "normalized_assignment_entropy": 0.988892138004303,
+          "occupancy": [
+            0.1250000149011612,
+            0.1250000298023224,
+            0.1249999850988388,
+            0.1249999925494194,
+            0.1249999925494194,
+            0.1249999850988388,
+            0.1249999850988388,
+            0.1250000298023224
+          ],
+          "slot_representation_effective_rank": 2.677211583569542
+        },
+        {
+          "distance_shell_assignment_variation": 0.1470324695110321,
+          "effective_slot_count": 6.239552021026611,
+          "element_assignment_variation": 0.059743285179138184,
+          "maximum_global_slot_mass": 0.12571555376052856,
+          "mean_absolute_inter_slot_cosine": 0.9664879441261292,
+          "mean_slot_directional_polarization": 0.0005113785155117512,
+          "normalized_assignment_entropy": 0.862949013710022,
+          "occupancy": [
+            0.12472875416278839,
+            0.12479227036237717,
+            0.12471582740545273,
+            0.1252589374780655,
+            0.12474246323108673,
+            0.12553969025611877,
+            0.12450652569532394,
+            0.12571555376052856
+          ],
+          "slot_representation_effective_rank": 2.1717780090746555
+        },
+        {
+          "distance_shell_assignment_variation": 0.17350569367408752,
+          "effective_slot_count": 3.906604290008545,
+          "element_assignment_variation": 0.12641894817352295,
+          "maximum_global_slot_mass": 0.19578874111175537,
+          "mean_absolute_inter_slot_cosine": 0.8448342680931091,
+          "mean_slot_directional_polarization": 0.003739960491657257,
+          "normalized_assignment_entropy": 0.6405971050262451,
+          "occupancy": [
+            0.039471328258514404,
+            0.1694643646478653,
+            0.15324270725250244,
+            0.19578874111175537,
+            0.03612795099616051,
+            0.18619833886623383,
+            0.17856307327747345,
+            0.041143547743558884
+          ],
+          "slot_representation_effective_rank": 2.417739417757786
+        },
+        {
+          "distance_shell_assignment_variation": 0.15927496552467346,
+          "effective_slot_count": 4.277279853820801,
+          "element_assignment_variation": 0.08660544455051422,
+          "maximum_global_slot_mass": 0.1915663480758667,
+          "mean_absolute_inter_slot_cosine": 0.7742383480072021,
+          "mean_slot_directional_polarization": 0.0036817011423408985,
+          "normalized_assignment_entropy": 0.6897116899490356,
+          "occupancy": [
+            0.1915663480758667,
+            0.1470864713191986,
+            0.0322289913892746,
+            0.034852128475904465,
+            0.18562005460262299,
+            0.04160841926932335,
+            0.18406881392002106,
+            0.18296878039836884
+          ],
+          "slot_representation_effective_rank": 1.7581433537919238
+        }
+      ],
+      "0.6": [
+        {
+          "distance_shell_assignment_variation": 0.009393561631441116,
+          "effective_slot_count": 7.855838298797607,
+          "element_assignment_variation": 0.054096899926662445,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9989816546440125,
+          "mean_slot_directional_polarization": 0.00013173031038604677,
+          "normalized_assignment_entropy": 0.9910386800765991,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.1250000149011612
+          ],
+          "slot_representation_effective_rank": 2.832253447273408
+        },
+        {
+          "distance_shell_assignment_variation": 0.136697918176651,
+          "effective_slot_count": 6.247670650482178,
+          "element_assignment_variation": 0.05116615816950798,
+          "maximum_global_slot_mass": 0.12706562876701355,
+          "mean_absolute_inter_slot_cosine": 0.9640265703201294,
+          "mean_slot_directional_polarization": 0.0008041610708460212,
+          "normalized_assignment_entropy": 0.8606624007225037,
+          "occupancy": [
+            0.12427131086587906,
+            0.12440061569213867,
+            0.1242455467581749,
+            0.12559428811073303,
+            0.12426991015672684,
+            0.12637761235237122,
+            0.12377512454986572,
+            0.12706562876701355
+          ],
+          "slot_representation_effective_rank": 2.213037165962398
+        },
+        {
+          "distance_shell_assignment_variation": 0.16288286447525024,
+          "effective_slot_count": 3.9589176177978516,
+          "element_assignment_variation": 0.11434933543205261,
+          "maximum_global_slot_mass": 0.19201534986495972,
+          "mean_absolute_inter_slot_cosine": 0.8435667157173157,
+          "mean_slot_directional_polarization": 0.0022083092480897903,
+          "normalized_assignment_entropy": 0.6431229114532471,
+          "occupancy": [
+            0.04895233362913132,
+            0.16137419641017914,
+            0.14813897013664246,
+            0.19201534986495972,
+            0.0460779070854187,
+            0.17923204600811005,
+            0.1712018996477127,
+            0.053007304668426514
+          ],
+          "slot_representation_effective_rank": 2.6638132622691266
+        },
+        {
+          "distance_shell_assignment_variation": 0.1616855412721634,
+          "effective_slot_count": 4.192299842834473,
+          "element_assignment_variation": 0.0768589898943901,
+          "maximum_global_slot_mass": 0.19402523338794708,
+          "mean_absolute_inter_slot_cosine": 0.8010801672935486,
+          "mean_slot_directional_polarization": 0.003369477577507496,
+          "normalized_assignment_entropy": 0.6803579330444336,
+          "occupancy": [
+            0.19402523338794708,
+            0.13596946001052856,
+            0.034810613840818405,
+            0.03728412836790085,
+            0.1864701360464096,
+            0.04549597576260567,
+            0.18356084823608398,
+            0.18238362669944763
+          ],
+          "slot_representation_effective_rank": 1.8920338581743414
+        }
+      ],
+      "0.9": [
+        {
+          "distance_shell_assignment_variation": 0.00982251763343811,
+          "effective_slot_count": 7.960574626922607,
+          "element_assignment_variation": 0.016381163150072098,
+          "maximum_global_slot_mass": 0.1250000149011612,
+          "mean_absolute_inter_slot_cosine": 0.9997382164001465,
+          "mean_slot_directional_polarization": 7.545394328190014e-05,
+          "normalized_assignment_entropy": 0.9975801110267639,
+          "occupancy": [
+            0.125,
+            0.125,
+            0.1250000149011612,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.125
+          ],
+          "slot_representation_effective_rank": 2.773786593398148
+        },
+        {
+          "distance_shell_assignment_variation": 0.13526180386543274,
+          "effective_slot_count": 6.549276351928711,
+          "element_assignment_variation": 0.020174648612737656,
+          "maximum_global_slot_mass": 0.12610986828804016,
+          "mean_absolute_inter_slot_cosine": 0.9637008905410767,
+          "mean_slot_directional_polarization": 0.0004963000537827611,
+          "normalized_assignment_entropy": 0.8854555487632751,
+          "occupancy": [
+            0.12460437417030334,
+            0.12466952204704285,
+            0.12459788471460342,
+            0.12527534365653992,
+            0.12460942566394806,
+            0.12573809921741486,
+            0.12439552694559097,
+            0.12610986828804016
+          ],
+          "slot_representation_effective_rank": 1.9423094959821494
+        },
+        {
+          "distance_shell_assignment_variation": 0.16953253746032715,
+          "effective_slot_count": 4.613241195678711,
+          "element_assignment_variation": 0.02648819237947464,
+          "maximum_global_slot_mass": 0.17933149635791779,
+          "mean_absolute_inter_slot_cosine": 0.9008886218070984,
+          "mean_slot_directional_polarization": 0.0015742219984531403,
+          "normalized_assignment_entropy": 0.7186188101768494,
+          "occupancy": [
+            0.06234154850244522,
+            0.15619921684265137,
+            0.14656007289886475,
+            0.17933149635791779,
+            0.05500310659408569,
+            0.16973279416561127,
+            0.16378217935562134,
+            0.06704958528280258
+          ],
+          "slot_representation_effective_rank": 2.5788762724084435
+        },
+        {
+          "distance_shell_assignment_variation": 0.17589232325553894,
+          "effective_slot_count": 4.510448455810547,
+          "element_assignment_variation": 0.018143167719244957,
+          "maximum_global_slot_mass": 0.1870194375514984,
+          "mean_absolute_inter_slot_cosine": 0.7814342975616455,
+          "mean_slot_directional_polarization": 0.0015594849828630686,
+          "normalized_assignment_entropy": 0.7177160382270813,
+          "occupancy": [
+            0.1870194375514984,
+            0.1469731330871582,
+            0.03509555011987686,
+            0.0369754284620285,
+            0.18409781157970428,
+            0.04763002693653107,
+            0.18169963359832764,
+            0.1805090457201004
+          ],
+          "slot_representation_effective_rank": 1.6250425712831529
+        }
+      ]
+    }
+  },
+  "final_ablated_validation_coordinate": 0.9460260681807995,
+  "final_collapse_checks": {
+    "assignment_entropy": true,
+    "effective_slots": true,
+    "inter_slot_cosine": false,
+    "representation_rank": false,
+    "slot_mass": false
+  },
+  "final_full_validation_coordinate": 0.5180649925023317,
+  "induced_branch_ablation_relative_change": 0.8260760365438928,
+  "optimizer_steps": 0,
+  "protocol": "h1a_balanced_induced_r8_coordinate_pretraining_v1",
+  "protocol_sha256": "4ef1ab9d87cc965f7aaaf656f5990e8ebc28de7843c019a124f32eb6196443af",
+  "required_collapse_checks": [
+    "slot_mass",
+    "representation_rank",
+    "inter_slot_cosine"
+  ],
+  "slots_noncollapsed": false,
+  "tensor_candidates": 0.0
+}

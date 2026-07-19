@@ -1,0 +1,24 @@
+{
+  "canonical_sources": {
+    "/mnt/e/DATA/T2C-Flow/runs/h1a_balanced_induced_r8_coordinate_pretraining_v1/seed_5705/training_metrics.jsonl": "e7c2f2be067b7c5c4c811b15e4aa56cacf1fc9b7e8aa608a4128be26fcef70bd",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/result.json": "147fa74c9348de48643df78e69fd975b182059b8b456f1c81379af7a08136066",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/slot_audit.json": "61156afec7bdaa21c8a3f5d21efcf26955df73d6239a09d72c0dadb1ddde013e"
+  },
+  "figures": [
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/training_learning_curve.png",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/training_learning_curve.pdf",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/score_and_rollout.png",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/score_and_rollout.pdf",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/slot_diagnostics.png",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/slot_diagnostics.pdf",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/paper_h1a_local_operator_closure.png",
+    "reports/h1a_balanced_induced_r8_coordinate_pretraining_v1/figures/paper_h1a_local_operator_closure.pdf"
+  ],
+  "protocol": "h1a_balanced_induced_r8_coordinate_pretraining_v1",
+  "rendering": {
+    "pdf_vector_output": true,
+    "png_dpi": 200,
+    "raw_training_values": true,
+    "smoothing": null
+  }
+}

@@ -563,3 +563,46 @@ useful negative evidence that angular order alone does not pay for its added
 complexity. The cubic parameter and runtime path were removed; production
 retains only the vectorized degree-one/two operator. No joint initialization,
 later Gate, tensor condition, oracle, relaxation, DFT, or DFPT was run.
+
+### Dynamic edges, explicit triplets, and induced slots
+
+A fixed causal sequence then tested whether the remaining gap came from stale
+edge state or from compressing all incoming edges into one moment set. Updating
+the persistent edge state from current node, vector, radial, graph-state, and
+time context at every block, together with small `1e-2` nonzero orthogonal
+residual initialization, improves the one-pass ratio to `0.54417`. The low
+noise and rollout checks pass, but the `0.5` validation gate does not.
+
+An explicit shell-complete TopK triplet kernel produces ratio `0.56794`, worse
+than the dynamic predecessor. Besides the negative result, its neighbor order
+can switch under small noisy-coordinate perturbations. A soft R=8 induced-slot
+operator uses all edges and is causally active, but its unbalanced run reaches
+only `0.54583`; by the final checkpoint deep layers allocate as much as `0.951`
+of assignment mass to one slot.
+
+The final local experiment applies six fixed vectorized alternating row/column
+normalizations per center, with no auxiliary loss. Its zero-step qualification
+has exact global occupancy `0.125`, effective slots `7.916/8`, immediate
+assignment/value gradients, BF16/FP32 output/gradient cosines
+`0.99994/0.99956`, `218.31 graphs/s`, and `215.72 MiB`. The exact-one-pass run
+reaches ratio `0.533141`: an improvement of only `0.011025` over the dynamic
+predecessor, below both the `0.5` gate and the preregistered `0.02` material
+improvement. Teacher-forced RMS at `t=.005/.1` is `0.037761/0.053899 A`;
+rollout RMS from `.1/.2` is `0.054275/0.076667 A`; failures are zero.
+
+Ablating the induced branch worsens validation loss by `82.61%`, so it is used.
+Nevertheless it fails all required specialization checks: maximum slot mass
+`0.195789 > 0.14`, minimum representation effective rank `1.351 < 2`, and
+maximum inter-slot cosine `0.999738 > 0.95`. Shallow assignments are nearly
+uniform but produce nearly parallel slot values; deeper learned logits become
+sharp enough that six fixed balancing iterations no longer attain their mass
+target. This closes the local-aggregation hypothesis. R=16, more balancing
+iterations, and additional local operators are not run. TopK, induced slots,
+matched initialization, and their runners/configuration dispatch are removed
+from active code; the result remains in this history, its compact report, and
+Git provenance.
+
+The only next authorized attribution is a middle-noise oracle curve, a
+score-residual reciprocal-shell spectrum, and a frozen low-k linear probe. A
+global reciprocal carrier is justified only if all three independently point
+to the same low-frequency deficiency.
