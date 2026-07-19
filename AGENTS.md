@@ -107,6 +107,19 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   with zero failures. Retain reverse SDE; do not promote deterministic
   probability flow. Reverse-SDE-50 (`0.56892`, about half the latency) is a
   post-hoc follow-up hypothesis, not a qualified production replacement.
+- The independent 512-structure nested-Brownian qualification rejects that
+  reverse-SDE-50 hypothesis: its W1-difference UCB95 is `0.05767 A > 0.03 A`
+  and its 1%/5% minimum-distance lower tails degrade, despite a `0.4957`
+  latency ratio, finite states, zero failures, and non-inferior endpoint RMS.
+  Retain reverse-SDE-100 for coordinate-only audits and stop sampler search.
+- The exposure-conditioned exact all-pair topology audit is complete with a
+  frozen `mixed` decision. The two-pass middle clean-oracle gain is `0.09293`,
+  retention versus 0.25 pass is `0.6640`, and all three middle-time bootstrap
+  lower bounds remain positive. The effect is time-localized: gain falls to
+  `0.04099` at `t=0.4` but remains `0.14203` at `t=0.6`. Probe explained
+  fraction rises to `0.65384`, while the fixed learned carrier remains harmful
+  (`-0.04325`). This neither authorizes a full ACF branch nor supports more
+  exposure as a sufficient repair.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
@@ -121,13 +134,13 @@ conditional target variance, data exposure, probability-path information, or
 staged/self-conditioned coordinate generation; do not silently turn this
 diagnosis into architecture search.
 
-The clean-topology audit and fixed-model 0.25/0.5/1/2-pass curve are complete.
-The only next bounded attribution currently supported is a zero-training
-exposure-conditioned topology residual persistence audit on those frozen
-checkpoints, using the exact v2 pair panels and carrier definitions. It should
-ask whether clean-oracle gain disappears with exposure. It must not add an
-optimizer step, seed, data pass, production topology branch, H1b-H6, tensor
-condition, oracle, relaxation, DFT or DFPT.
+The clean-topology audit, fixed-model 0.25/0.5/1/2-pass curve, and
+exposure-conditioned persistence audit are complete. The remaining evidence
+supports one separately frozen zero-training, time-localized
+self-conditioning/conditional-variance audit: test whether a Tweedie endpoint
+estimate can recover and causally use the persistent `t=0.6` clean coordination
+signal. Do not add a production ACF branch, optimizer step, seed, data pass,
+H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT before that result.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

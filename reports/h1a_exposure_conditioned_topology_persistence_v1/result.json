@@ -1,0 +1,10 @@
+{
+  "protocol": "h1a_exposure_conditioned_topology_persistence_v1",
+  "decision": "mixed",
+  "two_pass_middle_normalized_gain": 0.09292913226611917,
+  "two_pass_retention_vs_quarter_pass": 0.6640027258238907,
+  "two_pass_positive_middle_bootstrap_lower_bounds": 3,
+  "optimizer_steps": 0,
+  "all_parameters_unchanged": true,
+  "reused_complete_checkpoint_results": 2
+}

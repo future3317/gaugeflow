@@ -1,0 +1,29 @@
+{
+  "protocol": "h1a_reverse_sde_50_noninferiority_v1",
+  "protocol_file_sha256": "2d1f874b296c0164fe33e8b560a15ef2e20ffceb9447d5e856a83a5b99be52e5",
+  "checkpoint_sha256": "2f7cc4f9778284ebb96faf1ab346652f3cfa989c718d7734aa89b6a39d290d0f",
+  "graphs": 512,
+  "prior_panel_overlap": 0,
+  "optimizer_steps": 0,
+  "qualified": false,
+  "decision": "retain_reverse_sde_100_and_stop_sampler_search",
+  "latency_ratio_50_to_100": 0.4957364544701957,
+  "bootstrap": {
+    "wasserstein_difference_median_angstrom": 0.04388299968559295,
+    "wasserstein_difference_ucb95_angstrom": 0.05766525602666661,
+    "endpoint_mean_ratio_median": 1.0062804379641912,
+    "endpoint_mean_ratio_ucb95": 1.0144127458630843,
+    "q01_difference_lcb95_angstrom": -0.09507270812988278,
+    "q05_difference_lcb95_angstrom": -0.12191542953252792
+  },
+  "checks": {
+    "wasserstein_ucb": false,
+    "valid_distance": true,
+    "endpoint_rms": true,
+    "lower_tail_direct": false,
+    "lower_tail_bootstrap": false,
+    "failures": true,
+    "finite": true,
+    "latency": true
+  }
+}

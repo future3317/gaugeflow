@@ -231,6 +231,16 @@ production 继续保留 reverse SDE，不把“关闭随机性”当作无损加
 reverse-SDE-50 的 0.56892 接近 100 NFE，但这只是事后候选，尚未通过独立
 held-out 资格测试。
 
+该事后候选随后在零重叠的 512-structure panel 上被否定：SDE-50 的结构级
+W1 差异 UCB95 为 `0.05767 A > 0.03 A`，并恶化 1%/5% 最近邻下尾，因此即使
+延迟减半也不能替换 SDE-100。Sampler 搜索至此停止。
+
+exposure-conditioned clean-topology audit 的正式分类为 `mixed`。两遍时总体
+oracle gain 为 `0.09293`、相对 0.25-pass 保留率为 `0.6640`；其效应明显随时间
+变化，在 `t=0.4` 降至 `0.04099`，但在 `t=0.6` 仍为 `0.14203`。这不允许直接
+加入完整 ACF，也不支持单纯继续增加 exposure；下一步只应做零训练、按时间
+定位的 Tweedie self-conditioning/conditional-variance 诊断。
+
 局部算子收口后，`h1a_midnoise_reciprocal_attribution_v1` 在同一 seed 5705、step 8441
 checkpoint 上完成了不训练的三重归因。`t=.35--.65` 的同 composition endpoint
 top-1 检索均值为 `0.40315 < 0.75`，并从 `0.53543` 降至 `0.25984`；低频
