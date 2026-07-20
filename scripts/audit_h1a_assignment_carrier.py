@@ -115,8 +115,14 @@ def main() -> None:
         raise ValueError("assignment-carrier auditor source changed")
     manifest = load_json_object(args.o1_root / "manifest.json")
     independent = load_json_object(args.o1_root / "independent_audit.json")
-    if not manifest.get("qualified") or not independent.get("qualified"):
-        raise ValueError("H0 occupational source did not pass both audits")
+    if manifest.get("qualified") is not True or not all(manifest["checks"].values()):
+        raise ValueError("H0 occupational manifest did not pass all frozen checks")
+    if (
+        independent.get("audit_passed") is not True
+        or independent.get("gate_qualified") is not True
+        or not all(independent["checks"].values())
+    ):
+        raise ValueError("H0 occupational independent audit did not verify the Gate")
     with gzip.open(args.o1_root / "results.json.gz", "rt", encoding="utf-8") as handle:
         records = json.load(handle)
 
