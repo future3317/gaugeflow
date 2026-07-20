@@ -11,6 +11,11 @@ from .assignment_scorer import (
     parent_action_site_features,
     parent_carrier_graph_features,
 )
+from .autoregressive_assignment import (
+    GeometryAwareRemainingCountScorer,
+    RemainingCountAssignmentLaw,
+    complete_pair_rbf,
+)
 from .blueprint import (
     DistortionBlueprint,
     EmpiricalNodeCountPrior,
@@ -116,6 +121,8 @@ from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotien
 __all__ = [
     "AbsorbingMaskDiffusion",
     "OrbitAwareAssignmentScorer",
+    "GeometryAwareRemainingCountScorer",
+    "RemainingCountAssignmentLaw",
     "AssignmentLogProbability",
     "AssignmentSample",
     "UniformCategoricalDiffusion",
@@ -124,6 +131,7 @@ __all__ = [
     "CompactCartesianKrylovCarrier",
     "CountConstrainedAssignmentLaw",
     "composition_counts_from_tokens",
+    "complete_pair_rbf",
     "count_constrained_assignment",
     "count_projected_assignment",
     "ContinuousReverseInitialState",

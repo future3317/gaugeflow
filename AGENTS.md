@@ -274,6 +274,35 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   not failed Q1; it authorizes only the frozen geometry-aware zero-training
   expressivity audit. Assignment training remains blocked until that audit
   passes and an exactly normalized successor law is separately qualified.
+- The geometry-aware zero-training successor audit now passes its frozen
+  aggregate criteria on all 454 carriers. Expanded-geometry unary signatures
+  alone resolve `47.36%`; among the remaining 239 exact collision classes, the
+  transferable complete two-point distance descriptor resolves `87.87%` with
+  mean target ceiling `0.93933`. Exact enumeration coverage is `1.0`, and node
+  relabeling, `GL(3,Z)` basis, and target-orbit containment have zero failures.
+  The stratified result is important: OOD validation/test pair resolution is
+  `0.9565/1.0`, while IID test is only `0.6364` with ceiling `0.81818`.
+  Geometry is therefore a necessary material repair but a static pair-energy
+  histogram is not the production law. The next permitted work is a bounded
+  software qualification of a count-exact, permutation-equivariant
+  remaining-count autoregressive law with target-independent reveal-order
+  marginalization and auditable normalization; no assignment training is yet
+  authorized.
+- The ensuing no-training remaining-count Q0 now passes every frozen
+  mathematical and CUDA check. Complete-distribution normalization and
+  subset-DP/brute-force errors are `4.44e-16/1.04e-17`; FP64/FP32 node
+  equivariance errors are `1.11e-15/4.77e-7`; residual-stabilizer error is
+  `2.98e-7`; exact-count sampling is `1.0`; and BF16 output cosine is
+  `0.999974`. On an RTX 4090 the explicitly no-grad 64-graph forward is
+  `5.07 ms / 99.05 MiB`. An initial software attempt incorrectly retained
+  simultaneous FP32 and BF16 autograd graphs and reported `720.06 MiB`; its
+  result is preserved, the `512 MiB` threshold was not changed, and training
+  memory remains a separate future metric.
+- Q0 authorizes exactly one separately frozen, single-seed IID
+  oracle-composition assignment training Gate. The original validation/test
+  panels remain untouched OOD stress panels. It still does not authorize
+  generated composition, `p(N)`, L1/M1, free joint H1a, tensor/oracle work,
+  relaxation, DFT or DFPT.
 - Future successor probability/relabel metrics must cast frozen FP32 model
   scores to FP64 before exact DP evaluation. This resolves the archived
   `1.1444e-5` reduction-order residual without weakening its frozen threshold;

@@ -1,0 +1,50 @@
+{
+  "protocol": "h1a_assignment_orderless_law_q0_v1",
+  "frozen_at_utc": "2026-07-21T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training mathematical and CUDA software qualification of the remaining-count orderless autoregressive occupation law",
+  "prerequisite": {
+    "geometry_expressivity_result": "reports/h1a_assignment_geometry_expressivity_audit_v1/result.json",
+    "geometry_expressivity_result_sha256": "f16eda33a1cb984c02dd9113e7ff5a0723031e94d242c015bed490225c17a069",
+    "required_qualified": true
+  },
+  "contract": {
+    "reveal_order": "uniform target-independent node permutation; no CIF-row or positional embedding",
+    "step_base_measure": "remaining count n_k times exp(logit_ik)",
+    "normalization": "the joint assignment/order path is normalized locally; small-system assignment marginals are checked by subset DP and complete enumeration",
+    "composition": "counts are decremented exactly; no terminal repair, mask or Hungarian projection",
+    "symmetry": "the scorer is node-permutation equivariant and residual-stabilizer-related unresolved sites receive equal probabilities",
+    "quotient": "probability sums unique orbit labelings, never crystallographic-operation multiplicity",
+    "no_training": true
+  },
+  "audit": {
+    "seed": 5705,
+    "exhaustive_counts": [2, 2, 2],
+    "sample_count": 512,
+    "cuda_batch_graphs": 64,
+    "cuda_sites_per_graph": 20,
+    "cuda_warmup": 10,
+    "cuda_iterations": 30
+  },
+  "acceptance": {
+    "uniform_assignment_error_max": 1e-12,
+    "subset_dp_bruteforce_error_max": 1e-10,
+    "complete_distribution_normalization_error_max": 1e-10,
+    "sample_exact_count_fraction": 1.0,
+    "relabel_marginal_error_max": 1e-10,
+    "duplicate_orbit_probability_error_max": 1e-12,
+    "fp64_neural_equivariance_error_max": 1e-8,
+    "fp32_neural_equivariance_error_max": 1e-5,
+    "residual_stabilizer_error_max": 1e-5,
+    "finite_nonzero_gradient_required": true,
+    "bf16_output_cosine_min": 0.99,
+    "cuda_forward_latency_ms_max": 50.0,
+    "cuda_peak_memory_mib_max": 512.0,
+    "failures": 0
+  },
+  "decision_rule": {
+    "pass": "freeze one single-seed IID oracle-composition training Gate; untouched formula/prototype-disjoint panels remain OOD stress only",
+    "fail": "stop before assignment training and repair the probability law or equivariant scorer",
+    "boundary": "Q0 cannot qualify assignment, generated-C, p(N), L1/M1, tensor conditioning, relaxation, DFT or DFPT."
+  }
+}
