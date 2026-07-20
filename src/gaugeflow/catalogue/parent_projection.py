@@ -41,6 +41,24 @@ class GeometryParentProjection:
     projected_group_max_error_angstrom: float
 
 
+@dataclass(frozen=True)
+class CompleteGeometryParentProjection:
+    """Primitive carrier plus its aligned supercell realization.
+
+    ``expanded_fractional`` retains the node order on which ``parent``'s
+    permutation action was certified.  The integral embedding is kept so an
+    offline compiler can change to a canonical HNF chart without consulting
+    terminal species or a child-space-group label.
+    """
+
+    parent: GeometryParentProjection
+    expanded_lattice: FloatArray
+    expanded_fractional: FloatArray
+    embedding_basis: IntArray
+    embedding_origin: FloatArray
+    full_action_order: int
+
+
 def _strip_internal_carrier_labels(projection: ParentProjection) -> GeometryParentProjection:
     return GeometryParentProjection(
         lattice=projection.lattice,
@@ -383,9 +401,7 @@ def klassengleiche_supercell_operations(
     if not np.allclose(changed, rounded, atol=1e-9, rtol=0.0):
         raise ValueError("parent rotations do not preserve the embedded child lattice")
     offsets = (
-        np.einsum("gij,j->gi", rotations.astype(np.float64), origin, optimize=True)
-        + translations
-        - origin[None, :]
+        np.einsum("gij,j->gi", rotations.astype(np.float64), origin, optimize=True) + translations - origin[None, :]
     )
     lifted_translations = np.einsum(
         "ij,grj->gri",
@@ -419,8 +435,7 @@ def _quotient_parent_sites(
     tolerance_angstrom: float = 1e-7,
 ) -> tuple[FloatArray, IntArray]:
     mapped = (
-        np.asarray(supercell_fractional, dtype=np.float64)
-        @ np.asarray(embedding_basis, dtype=np.float64).T
+        np.asarray(supercell_fractional, dtype=np.float64) @ np.asarray(embedding_basis, dtype=np.float64).T
         + np.asarray(embedding_origin, dtype=np.float64)
     ) % 1.0
     numbers = np.asarray(species, dtype=np.int64)
@@ -437,7 +452,7 @@ def _quotient_parent_sites(
     return mapped[keep], numbers[keep]
 
 
-def project_klassengleiche_parent(
+def _project_klassengleiche_parent_complete(
     child_lattice: FloatArray,
     child_fractional: FloatArray,
     species: IntArray,
@@ -447,8 +462,8 @@ def project_klassengleiche_parent(
     *,
     maximum_source_displacement_angstrom: float,
     maximum_index: int = 4,
-) -> tuple[ParentProjection, int] | None:
-    """Project an index-2..4 child supercell onto its primitive parent."""
+) -> tuple[ParentProjection, ParentProjection, IntArray, FloatArray] | None:
+    """Return primitive and aligned-supercell projections in one pass."""
     child_cell = np.asarray(child_lattice, dtype=np.float64)
     child_positions = np.asarray(child_fractional, dtype=np.float64) % 1.0
     numbers = np.asarray(species, dtype=np.int64)
@@ -496,19 +511,45 @@ def project_klassengleiche_parent(
         )
     except ValueError:
         return None
-    return (
-        ParentProjection(
-            lattice=projected_parent_lattice,
-            fractional=parent_fractional,
-            species=parent_species,
-            permutations=projected.permutations,
-            source_max_displacement_angstrom=projected.source_max_displacement_angstrom,
-            source_rms_displacement_angstrom=projected.source_rms_displacement_angstrom,
-            source_hencky_norm=projected.source_hencky_norm,
-            projected_group_max_error_angstrom=projected.projected_group_max_error_angstrom,
-        ),
-        lifted_rotations.shape[0],
+    parent = ParentProjection(
+        lattice=projected_parent_lattice,
+        fractional=parent_fractional,
+        species=parent_species,
+        permutations=projected.permutations,
+        source_max_displacement_angstrom=projected.source_max_displacement_angstrom,
+        source_rms_displacement_angstrom=projected.source_rms_displacement_angstrom,
+        source_hencky_norm=projected.source_hencky_norm,
+        projected_group_max_error_angstrom=projected.projected_group_max_error_angstrom,
     )
+    return parent, projected, basis, transform[:3, 3].copy()
+
+
+def project_klassengleiche_parent(
+    child_lattice: FloatArray,
+    child_fractional: FloatArray,
+    species: IntArray,
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    primitive_embedding: RationalAffineTransform,
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_index: int = 4,
+) -> tuple[ParentProjection, int] | None:
+    """Project an index-2..4 child supercell onto its primitive parent."""
+    complete = _project_klassengleiche_parent_complete(
+        child_lattice,
+        child_fractional,
+        species,
+        parent_rotations,
+        parent_translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_index=maximum_index,
+    )
+    if complete is None:
+        return None
+    parent, expanded, _, _ = complete
+    return parent, int(expanded.permutations.shape[0])
 
 
 def project_geometry_klassengleiche_parent(
@@ -525,8 +566,37 @@ def project_geometry_klassengleiche_parent(
     """Project a k-parent geometry without assigning a dummy physical species."""
     if node_count < 1 or np.asarray(child_fractional).shape != (node_count, 3):
         raise ValueError("geometry carrier node count does not match child coordinates")
+    complete = project_complete_geometry_klassengleiche_parent(
+        child_lattice,
+        child_fractional,
+        node_count,
+        parent_rotations,
+        parent_translations,
+        primitive_embedding,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_index=maximum_index,
+    )
+    if complete is None:
+        return None
+    return complete.parent, complete.full_action_order
+
+
+def project_complete_geometry_klassengleiche_parent(
+    child_lattice: FloatArray,
+    child_fractional: FloatArray,
+    node_count: int,
+    parent_rotations: IntArray,
+    parent_translations: FloatArray,
+    primitive_embedding: RationalAffineTransform,
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_index: int = 4,
+) -> CompleteGeometryParentProjection | None:
+    """Retain the expanded ideal geometry discarded by the legacy serializer."""
+    if node_count < 1 or np.asarray(child_fractional).shape != (node_count, 3):
+        raise ValueError("geometry carrier node count does not match child coordinates")
     internal_labels = np.zeros(node_count, dtype=np.int64)
-    projected = project_klassengleiche_parent(
+    projected = _project_klassengleiche_parent_complete(
         child_lattice,
         child_fractional,
         internal_labels,
@@ -538,8 +608,15 @@ def project_geometry_klassengleiche_parent(
     )
     if projected is None:
         return None
-    parent, action_order = projected
-    return _strip_internal_carrier_labels(parent), action_order
+    parent, expanded, basis, origin = projected
+    return CompleteGeometryParentProjection(
+        parent=_strip_internal_carrier_labels(parent),
+        expanded_lattice=expanded.lattice,
+        expanded_fractional=expanded.fractional,
+        embedding_basis=basis,
+        embedding_origin=origin,
+        full_action_order=int(expanded.permutations.shape[0]),
+    )
 
 
 def project_translationengleiche_parent(

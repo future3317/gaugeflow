@@ -13,6 +13,11 @@ from .affine_quotient import (
     real_irrep_multiplicity,
     standard_hall_numbers,
 )
+from .assignment_carrier import (
+    CanonicalAssignmentCarrier,
+    CanonicalCarrierAlignment,
+    canonicalize_assignment_carrier,
+)
 from .finite_group import (
     FiniteGroup,
     OPDClass,
@@ -37,8 +42,10 @@ from .parent_decomposition import (
 )
 from .parent_occurrence import (
     EmbeddingParentOccurrence,
+    GeometryCompleteOccupationalOccurrence,
     OccupationalParentOccurrence,
     PrimitiveSetting,
+    project_geometry_complete_occupational_embedding,
     project_maximal_k_embedding,
     project_maximal_t_embedding,
     project_occupational_maximal_k_embedding,
@@ -51,10 +58,12 @@ from .parent_occurrence import (
     standardize_child_to_e0_setting,
 )
 from .parent_projection import (
+    CompleteGeometryParentProjection,
     GeometryParentProjection,
     ParentProjection,
     conjugate_embedding_to_primitive,
     conventional_to_primitive_structure,
+    project_complete_geometry_klassengleiche_parent,
     project_geometry_klassengleiche_parent,
     project_geometry_translationengleiche_parent,
     project_klassengleiche_parent,
@@ -75,9 +84,13 @@ __all__ = [
     "AffineQuotient",
     "AffineInclusionCertificate",
     "CompactDisplacementAction",
+    "CanonicalAssignmentCarrier",
+    "CanonicalCarrierAlignment",
+    "CompleteGeometryParentProjection",
     "FiniteGroup",
     "EmbeddingParentOccurrence",
     "GeometryParentProjection",
+    "GeometryCompleteOccupationalOccurrence",
     "OccupationalParentOccurrence",
     "OPDClass",
     "PrimitiveSpaceGroup",
@@ -94,6 +107,7 @@ __all__ = [
     "allocate_reference_measure",
     "balanced_selection",
     "canonical_stabilizer_key",
+    "canonicalize_assignment_carrier",
     "certify_parent_candidate",
     "certify_affine_subgroup_inclusion",
     "conjugate_embedding_to_primitive",
@@ -113,6 +127,8 @@ __all__ = [
     "project_lattice_metric",
     "project_klassengleiche_parent",
     "project_geometry_klassengleiche_parent",
+    "project_complete_geometry_klassengleiche_parent",
+    "project_geometry_complete_occupational_embedding",
     "project_geometry_translationengleiche_parent",
     "project_maximal_k_embedding",
     "project_maximal_t_embedding",

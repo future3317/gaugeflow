@@ -3,8 +3,10 @@ from __future__ import annotations
 import numpy as np
 
 from gaugeflow.catalogue.affine_quotient import integer_lattice_coset_representatives
+from gaugeflow.catalogue.assignment_carrier import canonicalize_assignment_carrier
 from gaugeflow.catalogue.parent_decomposition import StandardCrystal
 from gaugeflow.catalogue.parent_occurrence import (
+    project_geometry_complete_occupational_embedding,
     project_maximal_k_embedding,
     project_maximal_t_embedding,
     project_occupational_maximal_k_embedding,
@@ -225,9 +227,7 @@ def test_occupational_off_diagonal_k_projection_uses_full_translation_quotient()
         dtype=np.float64,
     )
     cosets = integer_lattice_coset_representatives(basis)
-    child_fractional = np.concatenate(
-        [(parent_fractional + coset) @ np.linalg.inv(basis).T for coset in cosets]
-    ) % 1.0
+    child_fractional = np.concatenate([(parent_fractional + coset) @ np.linalg.inv(basis).T for coset in cosets]) % 1.0
     child = StandardCrystal(
         lattice=basis.T @ parent_lattice,
         fractional=child_fractional,
@@ -236,18 +236,19 @@ def test_occupational_off_diagonal_k_projection_uses_full_translation_quotient()
         rotations=np.eye(3, dtype=np.int64)[None],
         translations=np.zeros((1, 3), dtype=np.float64),
     )
+    record = {
+        "cell_index": 2,
+        "child_space_group": 1,
+        "embedding_key": "synthetic-off-diagonal-index-two-colored-p1",
+        "kind": "k",
+        "parent_space_group": 1,
+        "subgroup_index": 2,
+        "transform_denominator": 1,
+        "transform_numerators": [1, -1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0],
+    }
     occurrence = project_occupational_maximal_k_embedding(
         child,
-        {
-            "cell_index": 2,
-            "child_space_group": 1,
-            "embedding_key": "synthetic-off-diagonal-index-two-colored-p1",
-            "kind": "k",
-            "parent_space_group": 1,
-            "subgroup_index": 2,
-            "transform_denominator": 1,
-            "transform_numerators": [1, -1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0],
-        },
+        record,
         maximum_source_displacement_angstrom=0.2,
         maximum_source_hencky_norm=0.15,
         angle_tolerance=5.0,
@@ -260,3 +261,19 @@ def test_occupational_off_diagonal_k_projection_uses_full_translation_quotient()
     assert occurrence.occupational_stabilizer_indices.tolist() == [0]
     assert occurrence.stabilizer_order_matches_child
     assert occurrence.exact_coloring_reconstruction
+
+    complete = project_geometry_complete_occupational_embedding(
+        child,
+        record,
+        maximum_source_displacement_angstrom=0.2,
+        maximum_source_hencky_norm=0.15,
+        angle_tolerance=5.0,
+    )
+    assert complete is not None
+    aligned = canonicalize_assignment_carrier(complete)
+    carrier = aligned.carrier
+    assert carrier.expanded_parent_fractional.shape == (6, 3)
+    assert abs(round(np.linalg.det(carrier.supercell_hnf))) == 2
+    assert carrier.translation_cosets.shape == (2, 3)
+    assert carrier.parent_action_permutations.shape == (2, 6)
+    assert aligned.maximum_periodic_alignment_error_angstrom <= 1e-8

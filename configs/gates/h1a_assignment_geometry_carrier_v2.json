@@ -1,0 +1,46 @@
+{
+  "protocol": "h1a_assignment_geometry_carrier_v2",
+  "frozen_at_utc": "2026-07-21T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "scope": "recompile the qualified O1 occupational census into a geometry-complete, species-free assignment carrier without changing archived O1 or Q1",
+  "source": {
+    "o1_config": "configs/gates/h0_e_v4_occupational_order_o1_v1.json",
+    "o1_config_sha256": "854a2be60f5103dcced08e26f6b89f7005cb007b170d9c507ffb29ef7728b56c",
+    "o1_root": "processed/gaugeflow_h0_v8/occupational_order_o1_v1",
+    "o1_artifact_sha256": {
+      "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
+      "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+      "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961"
+    },
+    "embedding_catalogue": "processed/gaugeflow_h0_v5/maximal_subgroup_embeddings_v2/catalogue_records.json.gz",
+    "embedding_catalogue_sha256": "3a1bb3ad08ce576fe11bfa0515314da9d8ecb42346805f2cdfa3b975602c4747"
+  },
+  "mathematical_contract": {
+    "carrier": "the primitive species-free parent, its canonical row-HNF supercell, one expanded coordinate per action node, exact translation-coset labels and the conjugated parent action",
+    "canonicalization": "H=UB with U unimodular; the aligned supercell geometry and finite-site action are changed to H coordinates once and never inferred from target coloring",
+    "node_order": "coset-major then primitive-parent-site order; a periodic species-free assignment supplies an offline alignment certificate only",
+    "target_separation": "terminal assignment tokens and composition counts are stored under a disjoint target object and are absent from carrier keys",
+    "history": "archived O1 and failed Q1 artifacts, thresholds and conclusions remain byte-for-byte unchanged"
+  },
+  "thresholds": {
+    "source_candidate_count": 454,
+    "candidate_rebuild_fraction": 1.0,
+    "archived_identity_fraction": 1.0,
+    "hnf_index_closure_fraction": 1.0,
+    "expanded_node_closure_fraction": 1.0,
+    "action_node_alignment_fraction": 1.0,
+    "target_reconstruction_fraction": 1.0,
+    "source_relabel_consistency_fraction": 1.0,
+    "carrier_target_key_overlap_count": 0,
+    "maximum_periodic_alignment_error_angstrom": 1e-6,
+    "nonfinite_value_count": 0,
+    "processing_failure_count": 0
+  },
+  "outputs": {
+    "data_root": "processed/gaugeflow_h1a_assignment_v2/assignment_carrier_v2",
+    "records": "records.json.gz",
+    "manifest": "manifest.json",
+    "report_root": "reports/h1a_assignment_geometry_carrier_v2"
+  },
+  "advancement_rule": "Only a complete pass permits a geometry-aware zero-training occupation expressivity audit. It does not authorize assignment training, generated-C, p(N), L1/M1, tensor conditioning, relaxation, DFT or DFPT."
+}

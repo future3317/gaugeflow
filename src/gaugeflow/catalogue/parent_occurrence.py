@@ -20,7 +20,7 @@ from gaugeflow.catalogue.parent_projection import (
     ParentProjection,
     conjugate_embedding_to_primitive,
     conventional_to_primitive_structure,
-    project_geometry_klassengleiche_parent,
+    project_complete_geometry_klassengleiche_parent,
     project_geometry_translationengleiche_parent,
     project_klassengleiche_parent,
     project_translationengleiche_parent,
@@ -77,6 +77,17 @@ class OccupationalParentOccurrence:
     @property
     def stabilizer_order_matches_child(self) -> bool:
         return int(self.occupational_stabilizer_indices.size) == self.child_operation_order
+
+
+@dataclass(frozen=True)
+class GeometryCompleteOccupationalOccurrence:
+    """An occupational occurrence with the discarded expanded carrier restored."""
+
+    occurrence: OccupationalParentOccurrence
+    expanded_lattice: FloatArray
+    expanded_fractional: FloatArray
+    embedding_basis: IntArray
+    embedding_origin: FloatArray
 
 
 def _strict_geometry_parent_reidentified(
@@ -403,10 +414,7 @@ def project_maximal_k_embedding(
         construction="maximal_k_embedding_v3",
         symprec=1e-5,
     )
-    if (
-        candidate is None
-        or abs(int(round(np.linalg.det(candidate.supercell_hnf)))) != cell_index
-    ):
+    if candidate is None or abs(int(round(np.linalg.det(candidate.supercell_hnf)))) != cell_index:
         return None
     return EmbeddingParentOccurrence(
         embedding_key=str(record["embedding_key"]),
@@ -430,37 +438,14 @@ def project_occupational_maximal_t_embedding(
     """Project a t-parent geometry, then reduce it by ordered coloring."""
     if str(record["kind"]) != "t" or int(record["cell_index"]) != 1:
         raise ValueError("occupational t projection accepts maximal-t records only")
-    if int(record["child_space_group"]) != child.space_group:
-        raise ValueError("embedding child group does not match the material")
-    if maximum_source_hencky_norm <= 0.0:
-        raise ValueError("source Hencky bound must be positive")
-    parent_space_group = int(record["parent_space_group"])
-    parent_setting = pyxtal_primitive_setting(parent_space_group)
-    child_setting = pyxtal_primitive_setting(child.space_group)
-    primitive_embedding = conjugate_embedding_to_primitive(
-        _embedding_transform(record),
-        parent_setting.primitive_basis,
-        child_setting.primitive_basis,
-    )
-    projection = project_geometry_translationengleiche_parent(
-        child.lattice,
-        child.fractional,
-        int(child.species.size),
-        parent_setting.rotations,
-        parent_setting.translations,
-        primitive_embedding,
-        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
-    )
-    if projection is None:
-        return None
-    return _occupational_occurrence(
+    complete = project_geometry_complete_occupational_embedding(
         child,
         record,
-        projection,
-        full_action_order=int(parent_setting.rotations.shape[0]),
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
         maximum_source_hencky_norm=maximum_source_hencky_norm,
         angle_tolerance=angle_tolerance,
     )
+    return None if complete is None else complete.occurrence
 
 
 def project_occupational_maximal_k_embedding(
@@ -475,6 +460,29 @@ def project_occupational_maximal_k_embedding(
     cell_index = int(record["cell_index"])
     if str(record["kind"]) != "k" or not 2 <= cell_index <= 4:
         raise ValueError("occupational k projection accepts index-2..4 maximal-k records only")
+    complete = project_geometry_complete_occupational_embedding(
+        child,
+        record,
+        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        maximum_source_hencky_norm=maximum_source_hencky_norm,
+        angle_tolerance=angle_tolerance,
+    )
+    return None if complete is None else complete.occurrence
+
+
+def project_geometry_complete_occupational_embedding(
+    child: StandardCrystal,
+    record: Mapping[str, object],
+    *,
+    maximum_source_displacement_angstrom: float,
+    maximum_source_hencky_norm: float,
+    angle_tolerance: float,
+) -> GeometryCompleteOccupationalOccurrence | None:
+    """Rebuild one certified target-free carrier with expanded site geometry."""
+    kind = str(record["kind"])
+    cell_index = int(record["cell_index"])
+    if not ((kind == "t" and cell_index == 1) or (kind == "k" and 2 <= cell_index <= 4)):
+        raise ValueError("occupational embedding lies outside the qualified t/k domain")
     if int(record["child_space_group"]) != child.space_group:
         raise ValueError("embedding child group does not match the material")
     if maximum_source_hencky_norm <= 0.0:
@@ -487,28 +495,60 @@ def project_occupational_maximal_k_embedding(
         parent_setting.primitive_basis,
         child_setting.primitive_basis,
     )
-    projected = project_geometry_klassengleiche_parent(
-        child.lattice,
-        child.fractional,
-        int(child.species.size),
-        parent_setting.rotations,
-        parent_setting.translations,
-        primitive_embedding,
-        maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
-        maximum_index=4,
-    )
-    if projected is None:
-        return None
-    projection, full_action_order = projected
-    if full_action_order != int(parent_setting.rotations.shape[0]) * cell_index:
-        raise RuntimeError("klassengleiche geometry action has the wrong quotient order")
-    return _occupational_occurrence(
+    if kind == "t":
+        projection = project_geometry_translationengleiche_parent(
+            child.lattice,
+            child.fractional,
+            int(child.species.size),
+            parent_setting.rotations,
+            parent_setting.translations,
+            primitive_embedding,
+            maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+        )
+        if projection is None:
+            return None
+        expanded_lattice = projection.lattice
+        expanded_fractional = projection.fractional
+        basis = np.eye(3, dtype=np.int64)
+        origin = np.zeros(3, dtype=np.float64)
+        full_action_order = int(parent_setting.rotations.shape[0])
+    else:
+        complete = project_complete_geometry_klassengleiche_parent(
+            child.lattice,
+            child.fractional,
+            int(child.species.size),
+            parent_setting.rotations,
+            parent_setting.translations,
+            primitive_embedding,
+            maximum_source_displacement_angstrom=maximum_source_displacement_angstrom,
+            maximum_index=4,
+        )
+        if complete is None:
+            return None
+        projection = complete.parent
+        expanded_lattice = complete.expanded_lattice
+        expanded_fractional = complete.expanded_fractional
+        basis = complete.embedding_basis
+        origin = complete.embedding_origin
+        full_action_order = complete.full_action_order
+        if full_action_order != int(parent_setting.rotations.shape[0]) * cell_index:
+            raise RuntimeError("klassengleiche geometry action has the wrong quotient order")
+    occurrence = _occupational_occurrence(
         child,
         record,
         projection,
         full_action_order=full_action_order,
         maximum_source_hencky_norm=maximum_source_hencky_norm,
         angle_tolerance=angle_tolerance,
+    )
+    if occurrence is None:
+        return None
+    return GeometryCompleteOccupationalOccurrence(
+        occurrence=occurrence,
+        expanded_lattice=expanded_lattice,
+        expanded_fractional=expanded_fractional,
+        embedding_basis=basis,
+        embedding_origin=origin,
     )
 
 
