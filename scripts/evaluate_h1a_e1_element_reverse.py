@@ -74,6 +74,10 @@ def _teacher_forced_metrics(
         exact_composition = 0
         composition_count_l1 = 0
         composition_count_overlap = 0
+        input_count_overlap = 0
+        oracle_count_overlap = 0
+        oracle_exact_composition = 0
+        oracle_site_correct = 0
         graph_count = 0
         node_count = 0
         for chunk in _chunks(indices, batch_size):
@@ -110,6 +114,33 @@ def _teacher_forced_metrics(
                 output.prediction.clean_composition_logits,
                 counts,
             )
+            input_counts = composition_counts_from_tokens(
+                output.noisy.element_tokens,
+                batch_data.batch,
+                graphs,
+            )
+            condition = torch.zeros((graphs, 18), dtype=clean_time.dtype, device=device)
+            condition_present = torch.zeros(
+                (graphs, 1), dtype=torch.bool, device=device
+            )
+            oracle_prediction = runtime.model(
+                target,
+                output.noisy.fractional_coordinates,
+                output.noisy.log_volume,
+                output.noisy.log_shape,
+                batch_data.batch,
+                clean_time,
+                condition,
+                condition_present,
+                blueprint.shape_projector,
+                blueprint.fractional_to_cartesian,
+                element_time=element_time,
+                lattice_time=clean_time,
+            )
+            oracle_counts = rounded_graph_composition(
+                oracle_prediction.clean_composition_logits,
+                counts,
+            )
             nll = F.cross_entropy(logits, target, reduction="none")
             top = logits.topk(5, dim=-1).indices
             nll_sum += nll[mask].sum()
@@ -119,6 +150,12 @@ def _teacher_forced_metrics(
             exact_composition += int((predicted_counts == target_counts).all(dim=-1).sum())
             composition_count_l1 += int((predicted_counts - target_counts).abs().sum())
             composition_count_overlap += int(torch.minimum(predicted_counts, target_counts).sum())
+            input_count_overlap += int(torch.minimum(input_counts, target_counts).sum())
+            oracle_count_overlap += int(torch.minimum(oracle_counts, target_counts).sum())
+            oracle_exact_composition += int((oracle_counts == target_counts).all(dim=-1).sum())
+            oracle_site_correct += int(
+                (oracle_prediction.clean_element_logits.argmax(dim=-1) == target).sum()
+            )
             graph_count += graphs
             node_count += int(target.numel())
             tensor_candidates += int(output.prediction.gauge_atlas.effective_frame_count.sum())
@@ -135,6 +172,13 @@ def _teacher_forced_metrics(
                 "mean_composition_count_l1_per_graph": composition_count_l1
                 / max(graph_count, 1),
                 "composition_count_overlap_fraction": composition_count_overlap
+                / max(node_count, 1),
+                "input_count_overlap_fraction": input_count_overlap / max(node_count, 1),
+                "clean_token_oracle_count_overlap_fraction": oracle_count_overlap
+                / max(node_count, 1),
+                "clean_token_oracle_exact_composition_accuracy": oracle_exact_composition
+                / max(graph_count, 1),
+                "clean_token_oracle_site_accuracy": oracle_site_correct
                 / max(node_count, 1),
             }
         )
