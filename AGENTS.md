@@ -169,6 +169,26 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   median clip scale is `0.2661 > 0.2`, every pairwise median cosine is positive,
   and no pair reaches the frozen 75% negative fraction. Retain global clipping;
   do not add blockwise clipping, AGC or target-RMS normalization.
+- E1 element-only reverse qualification is complete through four bounded
+  mechanisms, all at seed 5705 and the same 2,111-update budget. The absorbing
+  path reaches free site accuracy `0.03843` and exact composition `0/256`;
+  uniform D3PM raises free site accuracy only to `0.06175`, with composition
+  overlap `0.08144` and exact composition `0/256`; a graph-composition head
+  gives `0.05944/0.08684/0` on those metrics; and an exchangeable current-token
+  histogram residual gives `0.03396/0.06831/0`. The latter correctly repairs
+  low-noise counting (`t=.25` overlap `0.87534`, exact composition `0.27734`,
+  clean-token-oracle exact `0.89062`) but cannot create a coherent formula at
+  high noise (`t=.9` overlap `0.08530`). Oracle target counts still raise site
+  accuracy to about `0.70` and exact assignment to `0.27--0.36`. Therefore do
+  not add another composition head, local feature, training exposure, loss
+  search or sampler search to this independent-site state space.
+- The qualified H1a cache contains 540,164 train graphs with at most 20 atoms,
+  76 active elements, `99.7408%` of graphs containing at most four species, and
+  a maximum of seven. This authorizes only a no-training exact sparse
+  composition-state kernel qualification, followed by a separately frozen
+  composition-only Gate if the kernel and composition-identifiability audits
+  pass. It does not authorize L1/M1, tensor/oracle work, relaxation, DFT or
+  DFPT. Target composition remains prohibited as a model input.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
   a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit

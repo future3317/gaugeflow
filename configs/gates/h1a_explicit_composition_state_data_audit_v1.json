@@ -1,0 +1,12 @@
+{
+  "protocol": "h1a_explicit_composition_state_data_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only sparse composition-state complexity audit on the qualified H1a cache",
+  "source_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "splits": ["train", "val", "test"],
+  "acceptance": {
+    "train_fraction_with_at_most_four_species_min": 0.95,
+    "train_maximum_distinct_species_max": 10
+  },
+  "boundary": "This audit may justify an exact sparse composition-state representation only. It cannot authorize E1 training, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+}

@@ -840,3 +840,34 @@ currently a theorem and future audit target, not a newly added loss. The
 proposed element--lattice--coordinate reverse path was corrected to
 `(1,1,1)->(0,1,1)->(0,1,0)->(0,0,0)` in `(A,F,L)` order; the sequence in the
 external feedback would otherwise clean coordinates before lattice.
+
+### E1 element-only reverse qualification
+
+E1 then isolates the element component with clean coordinate and lattice side
+information, the complete chemical vocabulary, seed 5705 and 2,111 updates.
+Four bounded mechanisms fail. Absorbing-mask diffusion lowers teacher-forced
+NLL but reaches free site accuracy `0.03843` and exact composition `0/256`.
+Uniform D3PM permits token correction yet reaches only `0.06175` site accuracy,
+`0.08144` count overlap and exact composition `0/256`. Supplying the same
+terminal site logits with oracle target counts raises site accuracy to
+`0.70861` and exact assignment to `0.30859`, localizing the main defect to the
+global species multiset rather than Hungarian ranking.
+
+A graph-composition head does not repair the free chain: site accuracy/count
+overlap/exact composition are `0.05944/0.08684/0`. Its information audit shows
+that at `t=.25` the current noisy-token histogram already has overlap `0.85913`
+while the learned head compresses it to `0.68352`. The subsequent exchangeable
+histogram residual preserves that sufficient statistic and correctly repairs
+the low-noise boundary (`t=.25` overlap `0.87534`, exact composition `0.27734`,
+clean-token-oracle exact `0.89062`). It still fails at high noise and in free
+reverse (`t=.9` overlap `0.08530`; free overlap/site accuracy
+`0.06831/0.03396`; exact composition `0/256`).
+
+The combined result rejects another readout head, wider local features, more
+exposure or sampler tuning on an independent site-token state. Occupation must
+next be tested as `A=(C,Y)`, with an explicit unordered composition `C` and a
+count-constrained site assignment `Y`. A read-only audit supports an exact
+sparse representation: 540,164 train graphs, at most 20 atoms, 76 active
+elements, `99.7408%` with at most four species and a maximum of seven. This
+authorizes only composition identifiability and exact synthetic-kernel audits;
+no later Gate is opened.

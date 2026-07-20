@@ -1,11 +1,13 @@
 # GaugeFlow
 
 GaugeFlow 是面向压电晶体的 tensor-orbit-conditioned 生成模型。当前唯一
-production 路径位于 `gaugeflow.production`：元素使用 absorbing categorical
-diffusion，分数坐标使用周期平移商上的 wrapped diffusion，晶格使用
+production 路径位于 `gaugeflow.production`：分数坐标使用周期平移商上的 wrapped
+diffusion，晶格使用
 log-volume / trace-free log-metric 表示，三阶极性张量条件使用 Stratified
-Cartesian Gauge Atlas。项目没有旧 continuous-logit flow、harmonic conditioner
-或 FlowMM runtime fallback。
+Cartesian Gauge Atlas。元素 reverse 尚未资格通过；现有 uniform categorical、
+graph-composition 和 exchangeable-histogram 实现只保留为已完成 E1 机制证据，
+不是合格 production substrate。项目没有旧 continuous-logit flow、harmonic
+conditioner 或 FlowMM runtime fallback。
 
 ## 当前正式状态
 
@@ -35,7 +37,7 @@ X = (A, F, L),       t = (t_A, t_F, t_L)
 R_theta = (r_A, s_F, r_L)
 ```
 
-其中 `A` 是 absorbing categorical 元素状态，`F` 是周期平移商坐标，`L` 是
+其中 `A` 是离散元素/occupation 状态，`F` 是周期平移商坐标，`L` 是
 log-volume / trace-free log-metric。joint generation、已知元素和晶格的 coordinate
 generation、CSP 与未来的分段/交替采样只是 `[0,1]^3` 模态噪声空间中的不同路径，
 不是永久分叉的模型。tensor orbit `[e]` 是贯穿所有路径的 quotient-valued condition，
@@ -372,6 +374,31 @@ J2。J1 原报告及 matched/gradient 报告分别位于
 `reports/h1a_j1_independent_modality_times_v1/`、
 `reports/h1a_j1_matched_clock_attribution_v1/` 和
 `reports/h1a_j1_gradient_geometry_audit_v1/`。
+
+## E1 元素 reverse 资格结论
+
+元素分量在固定真实坐标和晶格、完整 118 类词表、seed 5705 和 2,111-step
+预算下完成了三轮有边界机制筛选，均未通过，因此 L1、M1 和 J2 仍不允许启动。
+
+- absorbing-mask 基线的 teacher-forced NLL 会下降，但 free site accuracy 只有
+  `0.03843`，早期错误会被 absorbing path 永久锁死；
+- uniform D3PM 允许每一步修正 token，并以 `O(N*118)` 的
+  diagonal-plus-rank-one posterior 替代逐节点 `118x118` 矩阵，但 exact composition
+  仍为 `0/256`；
+- 独立 graph-composition head 没有改变高噪声失败。离线给同一 terminal logits
+  正确 counts 后，site accuracy 达到约 `0.70`，证明主要瓶颈是全局 species multiset，
+  不是 site ranking 或 Hungarian；
+- exchangeable histogram residual 在 `t=.25` 将 composition overlap 从
+  `0.68352` 提高到 `0.87534`，clean-token oracle exact 达到 `0.89062`，说明低噪声
+  计数链路已正确；但 `t=.9` overlap 仅 `0.08530`，free reverse overlap/site
+  accuracy 仅 `0.06831/0.03396`，所以它仍失败。
+
+当前结论是：现有独立 site-token 高噪声状态没有形成全局一致 formula 的随机变量；
+继续加 composition head、局部特征、训练步数或 sampler 调参均未获授权。只读数据审计
+显示 train split 的 `99.7408%` 结构不超过四种元素、最大七种，因此下一步只准备
+稀疏显式 `composition C + count-constrained assignment Y` 的 exact synthetic kernel
+资格测试。结果与图位于 `reports/h1a_e1_*` 和
+`reports/h1a_e1_summary_v1/e1_element_qualification.pdf`。
 
 ## 训练图与采样加速设计
 
