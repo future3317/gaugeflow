@@ -1,0 +1,143 @@
+{
+  "active_vocabulary_size": 76,
+  "boundary": "This Gate cannot qualify p(N), site assignment, free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT, or DFPT.",
+  "checks": {
+    "calibration_absolute_nll": true,
+    "calibration_atom_count": true,
+    "calibration_empirical_noninferiority": true,
+    "calibration_invalid_compositions": true,
+    "calibration_pair_jsd": true,
+    "calibration_pair_recall": true,
+    "calibration_pair_rmse": true,
+    "calibration_sampling_failures": true,
+    "calibration_uniform_gain": true,
+    "finite_gradient": true,
+    "memory": true,
+    "pair_mask_matches_split_manifest": true,
+    "test_absolute_nll": true,
+    "test_atom_count": true,
+    "test_empirical_noninferiority": true,
+    "test_invalid_compositions": true,
+    "test_pair_jsd": true,
+    "test_pair_recall": true,
+    "test_pair_rmse": true,
+    "test_sampling_failures": true,
+    "test_uniform_gain": true,
+    "throughput": true
+  },
+  "conditional_species_likelihood": {
+    "calibration": {
+      "decisions": 90503,
+      "empirical_nll_per_decision": 3.6479615183126426,
+      "mean_species_per_graph": 3.3629236028537455,
+      "model_minus_empirical_per_decision": -0.37383874305347814,
+      "model_minus_uniform_per_decision": -0.8864512434837546,
+      "model_nll_per_decision": 3.274122775259164,
+      "structure_paired_model_minus_empirical": {
+        "bootstrap_95_high": -0.35456395113945244,
+        "bootstrap_95_low": -0.3655051212814693,
+        "bootstrap_median": -0.36000605715217066,
+        "mean": -0.3601212794858663
+      },
+      "uniform_nll_per_decision": 4.160574018742919
+    },
+    "test": {
+      "decisions": 90503,
+      "empirical_nll_per_decision": 3.6429951157780267,
+      "mean_species_per_graph": 3.3629236028537455,
+      "model_minus_empirical_per_decision": -0.377582800085829,
+      "model_minus_uniform_per_decision": -0.8936138526962326,
+      "model_nll_per_decision": 3.265412315692198,
+      "structure_paired_model_minus_empirical": {
+        "bootstrap_95_high": -0.35872188629925456,
+        "bootstrap_95_low": -0.3698361467859424,
+        "bootstrap_median": -0.36423785599079417,
+        "mean": -0.36414169821314973
+      },
+      "uniform_nll_per_decision": 4.159026168388431
+    }
+  },
+  "decision": "qualify only p(C|N), freeze the composition law and authorize one separately preregistered count-constrained assignment Q1",
+  "fixed_partition_pair_calibration": {
+    "calibration": {
+      "pair_distribution_jsd": 0.009024359838166317,
+      "pair_identity_recall": 0.9995954692556634,
+      "pair_probability_mae": 0.0003356709293913472,
+      "pair_probability_rmse": 0.00047874745950232477,
+      "qualified_pairs": 2472
+    },
+    "test": {
+      "pair_distribution_jsd": 0.00911247686189623,
+      "pair_identity_recall": 1.0,
+      "pair_probability_mae": 0.000328816514282196,
+      "pair_probability_rmse": 0.000473273586974768,
+      "qualified_pairs": 2472
+    }
+  },
+  "free_composition_sampling": {
+    "calibration": {
+      "atom_count_preservation": 1.0,
+      "count_partition_total_variation": 0.025527645659928648,
+      "element_marginal_jsd": 0.0011425617196089526,
+      "invalid_compositions": 0,
+      "paired_composition_overlap_diagnostic": 0.05062144994735718,
+      "paired_exact_composition_accuracy_diagnostic": 0.0,
+      "sampled_formula_unique_fraction": 0.9850624256837098,
+      "sampling_failures": 0,
+      "successful_graphs": 26912,
+      "support_size_total_variation": 0.0030469678953626723,
+      "supported_element_recall": 1.0,
+      "supported_elements": 76
+    },
+    "test": {
+      "atom_count_preservation": 1.0,
+      "count_partition_total_variation": 0.026233650416171227,
+      "element_marginal_jsd": 0.0011074618319982638,
+      "invalid_compositions": 0,
+      "paired_composition_overlap_diagnostic": 0.05060698837041855,
+      "paired_exact_composition_accuracy_diagnostic": 3.715814455063082e-05,
+      "sampled_formula_unique_fraction": 0.9840219976218787,
+      "sampling_failures": 0,
+      "successful_graphs": 26912,
+      "support_size_total_variation": 0.0022666468489893335,
+      "supported_element_recall": 1.0,
+      "supported_elements": 76
+    }
+  },
+  "prerequisite_hashes": {
+    "cache_manifest": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "q2_result": "cf953f93275c82707e08c34755c1e067dcd530f8dae3d3c6ba852c99c8076e02",
+    "split_audit": "d6f8e092fd69ea0684062c7e0a5768658b69823e57b516b36f42447ca52ea28c",
+    "split_manifest": "330ed91af499385d9ef5f80aa50132e0eaaa44dc953a80379ab754374072d79b"
+  },
+  "protocol": "h1a_e1_absolute_likelihood_v1",
+  "protocol_sha256": "ecee3e7ad8988d6f79d9a4ded6111535db6cb8029991afab4881ddb0a4401cac",
+  "qualified": true,
+  "split_graphs": {
+    "calibration": 26912,
+    "fit": 486340,
+    "test": 26912
+  },
+  "tables": {
+    "conditional_nll_strata": "conditional_nll_strata.csv",
+    "conditional_nll_strata_sha256": "f5fadc29cebf0cd29154be71296c15b86a02b18e077adbf4b4a812b1054c1b3b",
+    "pair_calibration": "pair_calibration.csv",
+    "pair_calibration_sha256": "1c51d68492f3aa94fc6f7db628e980063d87e7d92a0e84548e55be1a90022db0"
+  },
+  "trainer_sha256": "e15c8f7f12c74199b5a8dfead3cd7bec4b56fb77cef095d249271605e1aa4415",
+  "training": {
+    "checkpoint": "/home/workspace/lrh/DATA/T2C-Flow/runs/h1a_e1_absolute_likelihood_v1/seed_5705/step_001900.pt",
+    "checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
+    "clip_fraction": 1.0,
+    "cuda": "12.4",
+    "data_passes": 1.0,
+    "device": "NVIDIA GeForce RTX 4090",
+    "final_species_loss": 10.997017860412598,
+    "graph_presentations": 486340,
+    "graphs_per_second": 13503.63292643969,
+    "peak_cuda_memory_mib": 53.53271484375,
+    "seed": 5705,
+    "steps": 1900,
+    "torch": "2.5.1+cu124"
+  }
+}

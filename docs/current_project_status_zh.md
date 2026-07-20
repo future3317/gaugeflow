@@ -80,7 +80,7 @@ H(d,a)=G_p^B\cap H_{\rm occ}(a)\cap
 
 `h1a_p1_structure_cache_v1` 已完整运行并独立通过。675,204 条结构全部重建成功，split 为 540,164/67,520/67,520；最大 source-equivalence error 为 `8.10e-15 A`，float32 cache error 为 `2.79e-6 A`。ID、split、prototype、space group 和 Niggli transform 全部留在 audit index，没有进入 denoiser。
 
-联合 tensor-free H1a 使用全部 train split，20,000 steps 共呈现 1,280,000 个 graphs（约 2.37 passes）。晶格有限且正体积，sampling failure 和 terminal mask 均为零；element marginal、volume 和 formula uniqueness 通过。但生成最近邻中位数为 `2.172 A`，训练参考为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，因此 H1a 失败。
+联合 tensor-free H1a 使用全部 train split，20,000 steps 共呈现 1,280,000 个 graphs（约 2.37 passes）。晶格有限且正体积，sampling failure 和 terminal mask 均为零；element marginal、volume 和 formula uniqueness 通过。但生成最近邻中位数为 `2.172 A`，训练参考为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，因此 H1a 失败。这组数字来自后续全量 checkpoint 的 `h1a_rao_blackwell_causal_audit_v1` reference；最早 `h1a_tensor_free_benchmark_v1` 的独立原始数字是 `1.2711/2.7591 A` 与 `2.62598`，两组结果不得跨协议混链。
 
 随后 seed 5705 做了恰好一遍 540,164-graph 的 coordinate-only 预训练。validation 从 1.037 降至 `0.54928`，但未达到 `0.35`；`t=.005` endpoint RMS 为 `0.04640 A > 0.04 A`。raw/EMA 和 train/validation 对照排除了 EMA lag 与普通泛化差距作为主因。重复元素代表元的 raw target 虽不同，但替代代表元后验质量至多 `5.42e-14`，因此没有引入 Sinkhorn/Hungarian 或 permutation-path 修改。
 
@@ -234,16 +234,55 @@ ratio 为 `0.58940`，`t=.005/.1` 为 `0.040084/0.05675 A`，rollout `.1/.2` 为
 主判据仍失败。三阶代码按预注册规则从 active runtime 删除。当前唯一生产实现是
 `l<=2` factorized moments + volume-normalized tangent chart；H1a 仍失败。
 
+## 生成接口闭包与 absolute-likelihood E1
+
+当前联合概率律明确拆分为
+
+\[
+p(N,C,A,L,F)=p(N)\,p(C\mid N)\,
+p(A\mid C,\mathcal O_{\rm parent})\,
+p(L\mid A,C,N,\mathrm{parent})\,
+p(F\mid A,L,N).
+\]
+
+IID calibration、formula/prototype-disjoint OOD 和 time split 是三个不同的
+科学轴，不能让同一 split 同时承担概率校准、OOD novelty 和未来 rediscovery。
+Alex-MP-20 当前没有可审计 source timestamp，所以 time split fail closed，不伪造
+时间轴。
+
+新的 absolute-likelihood E1 使用独立的 `486,340 / 26,912 / 26,912`
+fit/calibration/test。test conditional-species NLL 为 `3.26541`，优于 legal
+train-only empirical `3.642995` 和 uniform `4.159026`；structure-paired
+model-minus-empirical bootstrap 95% 上界为 `-0.35872`。test pair
+JSD/RMSE/recall 为 `0.009112/0.000473/1.0`，atom count preservation 为
+`1.0`，invalid composition 与 sampling failure 均为零，76 个支持元素全部召回。
+因此只有 `p(C|N)` 正式通过；旧的 final/initial-NLL-ratio E1 failure 保留为历史
+负结果，不被改写。
+
+该训练在 RTX 4090、seed 5705 上完成一遍 fit split；`13,503.63 graphs/s` 和
+`53.53 MiB` 只能标为 RTX 4090 性能。历史 RTX 4060 Ti 的 Q2 kernel runtime
+资格仍按原硬件保留，二者不能互相冒充。下一步只允许无训练 assignment carrier
+审计，以及审计通过后另行冻结的 count-constrained assignment Q1。oracle-C 与
+generated-C 必须分别报告。
+
+## 坐标能力的分层结论
+
+- 在真实 per-node 元素、真实晶格和受控低/中噪声状态下，条件 score field 与局部
+  rollout 已通过冻结的 `p(F|A_clean,L_clean,N)` 资格门。
+- 从接近先验 `t≈1` 完成完整条件反向轨迹尚未资格化。
+- generated `A,L` 下的 on-policy coordinate generation 未通过。
+- 自由联合 H1a 的局部 packing 明确失败，表现为最近邻偏短。
+
 ## 现在能声称与不能声称的内容
 
-可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；真实 H1a 已产生可解释的负结果。
+可以声称：数学接口、奇偶性、Cartesian atlas、production trainer/sampler 软件闭环、finite-affine/OPD catalogue、occupational parent occurrence、H0-v4 数据资格与 H1a cache 已通过各自 Gate；条件 `p(F|A_clean,L_clean,N)` 与 absolute-likelihood `p(C|N)` 已在各自范围内资格化；真实自由联合 H1a 已产生可解释的负结果。
 
 不能声称：真实 Alex 生成质量、H1a/H1b 通过、完整 parent blueprint 已训练、tensor condition 能引起 target-separated samples、oracle 已合格、结构已 relaxation、DFT/DFPT 已验证，或发现了新压电材料。
 
 ## 恢复任务时需要什么
 
-目前不需要用户补数据或修改阈值。数据、tangent index、局部角信息和 cell-scale
-异方差均已分别审计；它们的正确修复带来连续改善，但一次 pass 的 validation ratio
-仍停在 `0.58940`。三阶角基收益不足，说明下一步不能继续盲目提高角阶或堆条件模块，
-而应重新审查跨噪声状态的 score target 可识别性与共享 backbone 容量分配。任何 tensor、
-oracle 或物理计算仍必须等待 H1a/H1b 通过。
+目前不需要用户补数据或修改阈值。工作严格沿生成接口闭包推进：先归档 E1 pass，
+再审计 species-free occupational carrier；通过后才冻结并运行 exact-count、
+parent-action-quotient assignment Q1，之后再分别资格化 `p(N)`、L1 和 generated-side
+state 下的 on-policy coordinates，最后才进入完整 M1。任何 tensor、oracle、relaxation、
+DFT 或 DFPT 仍不得提前启动。

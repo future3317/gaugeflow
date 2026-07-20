@@ -196,33 +196,35 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   count (conditional TV `1.0`). Preserve that split for OOD novelty/coverage,
   but never use its marginal TV as an IID calibration Gate or train on its
   validation rows.
-- The only active explicit-composition implementation is now the exact
+- The only active explicit-composition implementation is the exact
   stoichiometry-first law. It enumerates 1,840 integer partitions for `N<=20`,
   fits a train-only smoothed `p0(lambda|N)`, and generates distinct elements in
   decreasing-count order with increasing-token tie breaking. A shared
   count-position encoder and current-count query replace the retired
   per-partition lookup and interleaved count autoregressor. Q2 passes exact
-  normalization, finite gradients, FP32/BF16 and CUDA performance (`3.55 ms`
-  teacher forcing, `15.17 ms` sampling, `50.63 MiB` for 256 graphs).
-- Its one-pass IID calibration screen still fails one frozen check:
-  final/initial NLL is `0.77569 > 0.75`. Count-partition TV `0.03551`,
-  support-size TV `0.00826`, element JSD `0.00119`, exact atom count and zero
-  failures all pass. The factorized encoder improves OOD species NLL from
-  `12.3747` to `11.6940` but does not authorize assignment. Do not add steps,
-  capacity, target composition, another composition head or another sampler;
-  E1 remains failed.
-- The allowed zero-training species-law/co-occurrence attribution is complete.
-  The species-only final/initial NLL ratio is `0.750885`; the archived
-  `0.775688` total ratio also contains an unchanged `1.617298`-nat/graph
-  partition-prior term. Random initialization is `0.178444` nat/decision worse
-  than the legal uniform law, while the final model is `0.901800` better and
-  `0.383854` better than a lower-context train-fit count-slot reference. With
-  each calibration partition fixed, pair JSD is `0.010461`, pair-probability
-  RMSE is `0.000451`, and all 1,423 frequent pairs are recovered. This
-  diagnoses the random-initialization total-NLL ratio as too indirect; it does
-  not retroactively pass E1. Assignment remains blocked until a new,
-  independently frozen absolute-likelihood/co-occurrence Gate is run. Do not
-  reuse the current panel to manufacture that pass.
+  normalization, finite gradients, FP32/BF16 and CUDA performance on the
+  archived RTX 4060 Ti qualification (`3.55 ms` teacher forcing, `15.17 ms`
+  sampling, `50.63 MiB` for 256 graphs).
+- The archived one-pass random-initialization-ratio screen remains failed at
+  `0.77569 > 0.75`; it is not rewritten. Its read-only attribution showed that
+  the statistic mixed the learned species law with an unchanged partition
+  prior and arbitrary initial-logit scale. A separately preregistered
+  absolute-likelihood Gate has now run on independent
+  fit/calibration/test rows (`486340/26912/26912`) and qualifies only
+  `p(C|N)`. Test conditional-species NLL is `3.26541`, versus `3.642995` for
+  the legal train-only empirical baseline and `4.159026` for the legal uniform
+  law; the structure-paired model-minus-empirical bootstrap 95% upper bound is
+  `-0.35872`. Test pair JSD/RMSE/recall are
+  `0.009112/0.000473/1.0`; atom-count preservation is `1.0`, invalid
+  compositions and sampling failures are zero, and supported-element recall is
+  `1.0`. This run used one exact pass, seed 5705, and an RTX 4090; its
+  throughput (`13503.63 graphs/s`) and memory (`53.53 MiB`) must not be quoted
+  as RTX 4060 Ti performance.
+- The absolute E1 pass authorizes only a separately versioned, count-constrained
+  assignment Q1 after the species-free occupational carrier passes its own
+  no-training audit. It does not qualify `p(N)`, site assignment, L1/M1, free
+  joint H1a, tensor/oracle work, relaxation, DFT or DFPT. Oracle-C and
+  generated-C assignment results must remain explicitly separated.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
   a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit
@@ -265,25 +267,33 @@ inside H1a diagnosis and no joint initialization is allowed.
 
 ## Required environment
 
-Use WSL 2 Ubuntu-22.04 for reported tests, benchmarks, training, and sampling:
+Windows is the local editing and Git host. WSL is not required and should
+remain stopped unless a separately declared local Linux-compatibility test
+needs it. Reported CUDA training, sampling and performance qualification run on
+the laboratory server:
 
 ```text
-/home/future04/micromamba/envs/flowmm-t2c/bin/python
+/home/workspace/lrh/T2C-Flow/gaugeflow
+/home/workspace/lrh/DATA
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python
 torch 2.5.1+cu124
 CUDA 12.4
-NVIDIA GeForce RTX 4060 Ti 16 GB
+6 x NVIDIA GeForce RTX 4090
 ```
 
 ```bash
-cd /mnt/e/CODE/T2C-Flow/gaugeflow
+cd /home/workspace/lrh/T2C-Flow/gaugeflow
 export PYTHONPATH="$PWD/src"
-PY=/home/future04/micromamba/envs/flowmm-t2c/bin/python
+PY=/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python
 $PY -m pytest -q
 $PY -m ruff check
 $PY -m mypy src/gaugeflow/production
 ```
 
-Do not use the Windows CPU-only torch environment for reported results.
+Every reported performance number must retain its actual device. Archived RTX
+4060 Ti qualifications remain valid for their stated scope; new RTX 4090
+throughput or memory is not a 4060 Ti replacement. Do not use the Windows
+CPU-only torch environment for reported numerical or performance results.
 
 ## Active data contract
 

@@ -928,3 +928,24 @@ assignment remain blocked. Any successor must use a new independently frozen
 contract with absolute conditional likelihood, fixed-partition co-occurrence
 and rare-stratum floors; the already inspected panel cannot be reused to claim
 qualification.
+
+### Independent absolute-likelihood E1 successor
+
+The successor protocol was preregistered in commit `79491cf`; trainer identity
+was finalized in `6c6dda4` before the run. It uses independent
+fit/calibration/test rows `486,340/26,912/26,912` and one exact train pass at
+seed 5705. Test conditional-species NLL is `3.265412`, below both the legal
+train-only empirical baseline `3.642995` and the legal uniform law `4.159026`.
+The structure-paired model-minus-empirical bootstrap 95% upper bound remains
+negative at `-0.358722`. Test pair JSD/RMSE/recall are
+`0.009112/0.000473/1.0`; exact atom-count preservation and supported-element
+recall are `1.0`, with zero invalid compositions and zero sampling failures.
+
+This independently qualifies only `p(C|N)`. It does not rewrite the archived
+ratio-based failure and does not qualify `p(N)`, site assignment, L1/M1, free
+joint H1a, tensor/oracle work, relaxation, DFT or DFPT. The run used an RTX
+4090 at `13,503.63 graphs/s` and `53.53 MiB`; those performance figures are not
+substituted for the archived RTX 4060 Ti runtime qualification. The next
+permitted operation is a zero-training audit of the species-free occupational
+carrier, followed only on audit pass by a separately frozen exact
+count-constrained parent-action-quotient assignment Q1.

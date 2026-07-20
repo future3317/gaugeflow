@@ -121,7 +121,11 @@ material ID、source row、split、formula、prototype、space group 和 Niggli 
 1,280,000 graph presentations（约 2.37 passes）。它生成有限正体积晶格且无
 sampling failure/mask；element marginal JSD 为 `0.0143`、volume Wasserstein 为
 `0.0644`、formula uniqueness 为 1.0。但生成最近邻中位数为 `2.172 A`，训练参考
-为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，所以 H1a 失败。
+为 `2.698 A`，归一化最近邻 Wasserstein 为 `0.953 > 0.75`，所以 H1a 失败。这组
+数字来自后续全量 checkpoint 的
+`reports/h1a_rao_blackwell_causal_audit_v1/` reference，而不是最早的
+`h1a_tensor_free_benchmark_v1`；最早 benchmark 的原始结果仍单独保留为
+`1.2711/2.7591 A` 和 `2.62598`，不得跨协议拼接。
 
 一次完整 train pass 的 coordinate-only 预训练也失败：基线 validation 为
 `0.54928 > 0.35`。经过独立数学/CUDA 资格化的 signed pairwise reciprocal residual
@@ -429,8 +433,13 @@ PY=/home/future04/micromamba/envs/flowmm-t2c/bin/python
 $PY -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
-资格机器为 PyTorch `2.5.1+cu124`、CUDA 12.4、RTX 4060 Ti 16 GB。Windows
-CPU-only torch 不用于报告结果。
+本地 Windows 只负责编辑、Git 和轻量静态检查；WSL 默认保持关闭。正式 CUDA
+训练和采样位于实验室服务器
+`/home/workspace/lrh/T2C-Flow/gaugeflow`，环境为
+`/home/workspace/lrh/miniconda3/envs/gaugeflow`，数据位于
+`/home/workspace/lrh/DATA`。历史 RTX 4060 Ti 资格结果继续按原硬件归档；新的 RTX
+4090 throughput/memory 不得标成 4060 Ti 结果。Windows CPU-only torch 不用于
+报告数值或性能结果。
 
 ## 验证
 
@@ -458,11 +467,10 @@ autoregressor and per-partition lookup table; target composition is never an
 input.
 
 The no-training Q2 kernel passes exact normalization, FP32/BF16, gradients and
-RTX 4060 Ti performance (`3.55 ms` teacher forcing and `15.17 ms` sampling per
-256 graphs). Its single-pass IID calibration screen passes partition TV
-`0.03551`, support TV `0.00826`, element JSD `0.00119`, exact atom count and
-zero failures, but fails final/initial NLL `0.77569 > 0.75`. E1 therefore
-remains failed and count-constrained assignment is not started.
+archived RTX 4060 Ti performance (`3.55 ms` teacher forcing and `15.17 ms`
+sampling per 256 graphs). Its first single-pass IID screen passed all
+distribution checks but failed its frozen final/initial NLL ratio
+`0.77569 > 0.75`; that historical result remains failed.
 
 A subsequent zero-training attribution isolates the trained species term. Its
 ratio is `0.750885`; the larger archived total ratio includes a fixed
@@ -472,9 +480,22 @@ The final law beats a train-fit count-slot reference by `0.383854`
 nat/decision. With the reference integer partition fixed, pair JSD is
 `0.010461`, pair-probability RMSE is `0.000451`, and frequent-pair recall is
 `1.0`. This identifies the initial/final total-NLL ratio as an indirect Gate
-metric, but does not rewrite its failure. A future independently frozen E1
-must use absolute conditional likelihood and co-occurrence; assignment is
-still blocked.
+metric and motivated, without rewriting the predecessor, a new independently
+frozen absolute-likelihood Gate.
+
+That successor has now passed on independent fit/calibration/test rows
+`486,340 / 26,912 / 26,912`. Test conditional-species NLL is `3.26541`, versus
+`3.642995` for the legal train-only empirical baseline and `4.159026` for the
+legal uniform law; the structure-paired model-minus-empirical bootstrap 95%
+upper bound is `-0.35872`. Test pair JSD/RMSE/recall are
+`0.009112 / 0.000473 / 1.0`. Free sampling preserves atom count exactly, has
+zero invalid compositions and failures, and recalls all 76 supported elements.
+It therefore qualifies only `p(C|N)` and authorizes one separately frozen
+count-constrained assignment Q1 after the carrier audit passes. It does not
+qualify `p(N)`, site assignment, L1/M1, free joint H1a, tensor conditioning or
+physical validation. The run used seed 5705 and an RTX 4090; its
+`13,503.63 graphs/s / 53.53 MiB` performance is not a 4060 Ti result. Evidence
+is archived in `reports/h1a_e1_absolute_likelihood_v1/`.
 
 The formula/prototype-disjoint H0 validation split is intentionally also
 stoichiometry-disjoint (conditional partition TV `1.0`). It remains the OOD
@@ -489,4 +510,5 @@ target and is never added to training.
 - 不把 target CIF、target lattice、material ID、target space group、stabilizer 或
   species mapping 输入 denoiser。
 - polar rank-three tensor orbit 使用 `SO(3)`；晶体兼容性才使用显式 parity 的 `O(3)`。
-- H1a 通过前不启动完整 blueprint、tensor、oracle 或物理验证。
+- 当前只允许完成 assignment carrier 审计及其通过后另行冻结的 Q1；L1/M1、完整
+  blueprint、tensor、oracle 或物理验证仍不得提前启动。
