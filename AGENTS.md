@@ -220,10 +220,18 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   `1.0`. This run used one exact pass, seed 5705, and an RTX 4090; its
   throughput (`13503.63 graphs/s`) and memory (`53.53 MiB`) must not be quoted
   as RTX 4060 Ti performance.
-- The absolute E1 pass authorizes only a separately versioned, count-constrained
-  assignment Q1 after the species-free occupational carrier passes its own
-  no-training audit. It does not qualify `p(N)`, site assignment, L1/M1, free
-  joint H1a, tensor/oracle work, relaxation, DFT or DFPT. Oracle-C and
+- The species-free occupational carrier audit has now passed all eight frozen
+  checks on 454 candidates (`358/43/53` train/val/test), at most 20 atoms, five
+  observed species and 1,053 mixed-radix DP states. Median uniform target
+  quotient probability is `0.00015873`, and every carrier breaks at least one
+  parent action orbit occupationally. In `41.8502%` of catalogues, distinct
+  crystallographic operations induce the same finite-site permutation; the
+  audit quotients to the faithful image `G_parent -> S_N` and checks group
+  closure. Duplicate operation multiplicity must never weight assignment
+  likelihood.
+- This audit authorizes only a separately versioned oracle-C count-constrained
+  assignment Q1. It does not qualify `p(N)`, site assignment itself, L1/M1,
+  free joint H1a, tensor/oracle work, relaxation, DFT or DFPT. Oracle-C and
   generated-C assignment results must remain explicitly separated.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are

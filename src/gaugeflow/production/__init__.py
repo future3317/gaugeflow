@@ -21,7 +21,10 @@ from .cartesian_coordinate_carrier import (
     CompactCartesianKrylovCarrier,
     StateAdaptiveCartesianCarrierMixer,
 )
-from .cartesian_gauge_atlas import CartesianSTFGeometryQueryEncoder, StratifiedCartesianGaugeAtlas
+from .cartesian_gauge_atlas import (
+    CartesianSTFGeometryQueryEncoder,
+    StratifiedCartesianGaugeAtlas,
+)
 from .categorical_mask import AbsorbingMaskDiffusion
 from .categorical_uniform import UniformCategoricalDiffusion
 from .checkpointing import (
@@ -43,12 +46,6 @@ from .composition_assignment import (
     count_projected_assignment,
     rounded_graph_composition,
 )
-from .generation_law import (
-    CrystalGenerationState,
-    FactorizedGenerationLogProbability,
-    LearnedNodeCountLaw,
-    ParentDeltaNodeCountLaw,
-)
 from .composition_state import (
     IntegerPartitionCatalogue,
     SparseCompositionLogProbability,
@@ -58,6 +55,12 @@ from .composition_state import (
     fit_integer_partition_log_prior,
 )
 from .equivariant_denoiser import HybridCrystalDenoiser
+from .generation_law import (
+    CrystalGenerationState,
+    FactorizedGenerationLogProbability,
+    LearnedNodeCountLaw,
+    ParentDeltaNodeCountLaw,
+)
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
     LatticeVolumeShape,
@@ -81,12 +84,15 @@ from .space_group_router import (
     ReachableChildPath,
     TerminalGroupCompatibilityRouter,
 )
-from .state_projection import project_hybrid_reverse_state, project_translation_state
 from .split_contract import (
     EvaluationRole,
     MultiAxisSplitSchema,
     SplitAxis,
     SplitAxisContract,
+)
+from .state_projection import (
+    project_hybrid_reverse_state,
+    project_translation_state,
 )
 from .terminal_symmetry_audit import (
     DetectedPointGroup,
@@ -94,7 +100,11 @@ from .terminal_symmetry_audit import (
     audit_terminal_symmetry,
     detect_cartesian_point_group,
 )
-from .training import ExponentialMovingAverage, ProductionTrainer, ProductionTrainingConfig
+from .training import (
+    ExponentialMovingAverage,
+    ProductionTrainer,
+    ProductionTrainingConfig,
+)
 from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotient
 
 __all__ = [

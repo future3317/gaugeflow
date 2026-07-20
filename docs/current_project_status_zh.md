@@ -261,9 +261,17 @@ JSD/RMSE/recall 为 `0.009112/0.000473/1.0`，atom count preservation 为
 
 该训练在 RTX 4090、seed 5705 上完成一遍 fit split；`13,503.63 graphs/s` 和
 `53.53 MiB` 只能标为 RTX 4090 性能。历史 RTX 4060 Ti 的 Q2 kernel runtime
-资格仍按原硬件保留，二者不能互相冒充。下一步只允许无训练 assignment carrier
-审计，以及审计通过后另行冻结的 count-constrained assignment Q1。oracle-C 与
-generated-C 必须分别报告。
+资格仍按原硬件保留，二者不能互相冒充。
+
+后续无训练 assignment carrier 审计已经通过：454 个 certified candidates 的
+train/val/test 为 `358/43/53`，最大 20 atoms、5 species、1,053 个 exact-DP states，
+材料 split 完全不交叉；median uniform target quotient probability 只有
+`0.00015873`，occupational symmetry-breaking fraction 为 `1.0`。41.8502% 的
+catalogue 中，不同 crystallographic operations 在有限 sites 上诱导同一个
+permutation；这是群作用核，不是坏数据。审计取 faithful image `G_parent -> S_N`
+去重并验证闭包，禁止重复操作次数隐式改变 quotient likelihood。现在只授权另行
+冻结的 oracle-C count-constrained assignment Q1；oracle-C 与 generated-C 必须分别
+报告。
 
 ## 坐标能力的分层结论
 
@@ -281,8 +289,7 @@ generated-C 必须分别报告。
 
 ## 恢复任务时需要什么
 
-目前不需要用户补数据或修改阈值。工作严格沿生成接口闭包推进：先归档 E1 pass，
-再审计 species-free occupational carrier；通过后才冻结并运行 exact-count、
-parent-action-quotient assignment Q1，之后再分别资格化 `p(N)`、L1 和 generated-side
-state 下的 on-policy coordinates，最后才进入完整 M1。任何 tensor、oracle、relaxation、
-DFT 或 DFPT 仍不得提前启动。
+目前不需要用户补数据或修改阈值。E1 与 carrier audit 已归档，下一步是另行冻结并
+运行 exact-count、parent-action-quotient oracle-C assignment Q1；通过后再分别资格化
+`p(N)`、L1 和 generated-side-state 下的 on-policy coordinates，最后才进入完整 M1。
+任何 tensor、oracle、relaxation、DFT 或 DFPT 仍不得提前启动。

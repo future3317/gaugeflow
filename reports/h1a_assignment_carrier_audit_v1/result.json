@@ -1,0 +1,65 @@
+{
+  "boundary": "This audit cannot pass assignment Q1, L1, M1, free joint H1a, tensor/oracle work, relaxation, DFT, or DFPT.",
+  "checks": {
+    "candidate_count": true,
+    "dp_bound": true,
+    "material_split_disjoint": true,
+    "node_bound": true,
+    "nontrivial_quotient": true,
+    "species_bound": true,
+    "split_counts": true,
+    "symmetry_breaking_present": true
+  },
+  "decision": "freeze a separately versioned oracle-C assignment Q1 using only species-free carrier features and exact parent-action quotient NLL",
+  "leakage_contract": {
+    "allowed_inputs": [
+      "predicted_or_oracle-labelled_composition_counts_with_role_flag",
+      "species_free_parent_geometry",
+      "parent_space_group_prior",
+      "sampled_supercell_index",
+      "parent_site_action"
+    ],
+    "target_only": [
+      "child_atomic_numbers",
+      "occupational_site_classes",
+      "occupational_species_by_class_tokens",
+      "child_space_group",
+      "occupational_stabilizer_indices"
+    ]
+  },
+  "metrics": {
+    "candidate_carriers": 454,
+    "candidate_carriers_by_split": {
+      "test": 53,
+      "train": 358,
+      "val": 43
+    },
+    "dynamic_program_states_max": 1053,
+    "material_split_disjoint": true,
+    "materials_by_split": {
+      "test": 16,
+      "train": 181,
+      "val": 27
+    },
+    "node_count_max": 20,
+    "node_count_min": 2,
+    "occupational_symmetry_breaking_fraction": 1.0,
+    "parent_action_catalogues_with_kernel_fraction": 0.4185022026431718,
+    "parent_action_order_raw_max": 192,
+    "parent_action_order_unique_max": 192,
+    "records": 835,
+    "species_count_max": 5,
+    "target_quotient_size_max": 4,
+    "uniform_quotient_nll_median": 8.748305320739746,
+    "uniform_target_quotient_probability_max": 1.0,
+    "uniform_target_quotient_probability_median": 0.00015873015873015873
+  },
+  "protocol": "h1a_assignment_carrier_audit_v1",
+  "protocol_sha256": "d445d25d2b55042240d9b639737c29f7ce57512ebb4f35a4c3bb7a40042b5885",
+  "qualified": true,
+  "source_hashes": {
+    "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961",
+    "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+    "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1"
+  }
+}

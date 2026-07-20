@@ -949,3 +949,20 @@ substituted for the archived RTX 4060 Ti runtime qualification. The next
 permitted operation is a zero-training audit of the species-free occupational
 carrier, followed only on audit pass by a separately frozen exact
 count-constrained parent-action-quotient assignment Q1.
+
+The no-training carrier successor then passes all eight frozen checks on 454
+certified O1 candidates (`358/43/53` train/validation/test). The largest graph
+has 20 sites, the observed species maximum is five, and the largest exact
+remaining-count state space has 1,053 states. Median uniform target-quotient
+probability is `0.00015873`, while every carrier contains occupational symmetry
+breaking. A reader bug initially treated repeated induced site permutations as
+duplicate data. The matched source shows instead that `41.8502%` of operation
+catalogues have a nontrivial kernel in the finite-site action. The corrected
+audit takes the faithful image `G_parent -> S_N`, verifies exact group closure,
+and reports raw and unique action orders; production likelihood separately
+deduplicates unique orbit labelings. This repair changes no acceptance bound
+and prevents operation multiplicity from reweighting the quotient measure.
+
+The carrier pass authorizes only a separately frozen oracle-C assignment Q1.
+It does not pass assignment itself or authorize `p(N)`, L1/M1, free joint H1a,
+tensor/oracle work, relaxation, DFT or DFPT.

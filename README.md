@@ -490,8 +490,14 @@ legal uniform law; the structure-paired model-minus-empirical bootstrap 95%
 upper bound is `-0.35872`. Test pair JSD/RMSE/recall are
 `0.009112 / 0.000473 / 1.0`. Free sampling preserves atom count exactly, has
 zero invalid compositions and failures, and recalls all 76 supported elements.
-It therefore qualifies only `p(C|N)` and authorizes one separately frozen
-count-constrained assignment Q1 after the carrier audit passes. It does not
+It therefore qualifies only `p(C|N)`. The subsequent no-training carrier audit
+also passes on 454 certified candidates: all eight frozen checks pass, the
+maximum exact-DP state count is 1,053, and the median uniform target quotient
+probability is `0.00015873`. Distinct crystallographic operations induce
+duplicate finite-site permutations in 41.8502% of catalogues; these are an
+action kernel, so the audit takes the unique `G_parent -> S_N` image and checks
+group closure rather than incorrectly weighting duplicates. This authorizes
+one separately frozen oracle-C count-constrained assignment Q1. It does not
 qualify `p(N)`, site assignment, L1/M1, free joint H1a, tensor conditioning or
 physical validation. The run used seed 5705 and an RTX 4090; its
 `13,503.63 graphs/s / 53.53 MiB` performance is not a 4060 Ti result. Evidence
@@ -510,5 +516,5 @@ target and is never added to training.
 - 不把 target CIF、target lattice、material ID、target space group、stabilizer 或
   species mapping 输入 denoiser。
 - polar rank-three tensor orbit 使用 `SO(3)`；晶体兼容性才使用显式 parity 的 `O(3)`。
-- 当前只允许完成 assignment carrier 审计及其通过后另行冻结的 Q1；L1/M1、完整
-  blueprint、tensor、oracle 或物理验证仍不得提前启动。
+- 当前只允许另行冻结并运行 oracle-C assignment Q1；L1/M1、完整 blueprint、
+  tensor、oracle 或物理验证仍不得提前启动。
