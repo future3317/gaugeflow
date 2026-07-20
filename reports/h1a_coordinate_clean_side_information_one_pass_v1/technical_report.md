@@ -94,35 +94,45 @@ branch would be wasteful and would reintroduce code redundancy.  Any future
 representation comparison must start from this qualified contract and add
 only one residual mechanism justified by a remaining measured error.
 
-### Method and theory: the unresolved problem is de-novo joint generation
+### Method and theory: de-novo cross-modal failure remains un-attributed
 
 This qualification is conditional coordinate generation, not free crystal
-generation.  The historical joint model independently corrupts element type,
-lattice, and coordinates and asks one 5.03M-parameter field to infer all three
-coupled clean variables.  Clean elements and lattice reduce coordinate-score
-conditional variance sharply, so the remaining joint failure is evidence
-against assuming that this simultaneous parameterization is an efficient
-learning problem for the current backbone.  It is not evidence that score
-matching on a torus is theoretically invalid.
+generation.  The qualified model observes one clean element token for every
+coordinate row and the clean lattice, so its distribution is `p(F|A,L,N)`,
+not `p(F|C,L,N)` when `C` denotes only integer composition counts.  The
+historical joint model instead learns `s_F(F_t|A_t,L_t,t)`, which is a
+legitimate joint-diffusion objective.  Its free reverse trajectory feeds
+coordinate prediction with side states produced by imperfect element and
+lattice heads rather than exact forward corruptions.  The present result does
+not separate element-head error, lattice-head error, coordinate conditional
+variance, on-policy side-state shift, shared-backbone gradient conflict, and
+finite capacity.  It therefore neither disproves nor qualifies simultaneous
+joint diffusion, and it is not evidence that torus score matching is invalid.
 
-The next non-degenerate design should use the exact probability-chain
-factorization
+If later evidence selects a chained generator, the minimal factorization that
+directly reuses the qualified coordinate model is
 
 \[
-p(N,C,L,F,A)=p(N,C)\,p(L\mid N,C)\,p(F\mid N,C,L)\,
-p(A\mid F,L,N,C),
+p(N,C,L,F)=p(N,C)\,p(L\mid N,C)\,
+p(F\mid \widetilde A(C),L),
 \]
 
-where `N` is site count, `C` composition, `L` lattice, `F` a species-free or
-composition-conditioned periodic geometry, and `A` the occupational
-assignment.  This factorization does not restrict the representable joint
-distribution when every conditional is expressive; it changes the statistical
-and optimization geometry.  The qualified model in this report directly
-supplies the `p(F|N,C,L)` substrate.  Composition counts must be generated, not
-read from the target, and the final assignment must be sampled as a complete
-permutation-equivariant categorical object rather than independent site
-argmaxes.  Parent symmetry may be a prior or latent route, not a hard terminal
-constraint.
+where `C` contains integer element counts and `Atilde(C)` expands those counts
+into an exchangeable multiset of per-node element tokens.  The coordinate
+model then generates the matching coordinate rows; no second basic-H1a
+occupational head is required.  Random token order is harmless because the
+denoiser is permutation equivariant.  The separate occupational variable in
+the parent--distortion--child hierarchy describes chemical ordering on an
+expanded parent carrier and must not be conflated with the elementary token
+attached to each generated coordinate row.  A genuinely species-free
+`p(F|C,L,N)` would require a new qualification and cannot silently reuse this
+checkpoint.
+
+This chained factorization remains an option, not the current decision.  The
+next attribution should first give element, lattice, and coordinate modalities
+independent noise times and measure oracle-to-generated side-state error.  That
+experiment can decide whether a unified multimodal hybrid diffusion is viable
+before replacing it with a hard chain.
 
 The previous Tweedie-topology result is also theoretically unsurprising.  For
 nonlinear, discontinuous topology extraction `g`, in general
@@ -133,8 +143,11 @@ g(\mathbb E[F_0\mid F_t]) \ne \mathbb E[g(F_0)\mid F_t].
 
 Thus a better posterior-mean coordinate estimate need not give a calibrated
 bond/topology posterior, and a predictive topology probe need not provide a
-causal coordinate residual.  No ACF or deterministic Tweedie topology branch
-is authorized by that result.
+causal coordinate residual.  This rejects the evaluated `g(xhat_0)` plug-in;
+it does not prove that a directly supervised topology posterior or jointly
+trained ACF is impossible.  No ACF branch is currently authorized because the
+repaired baseline has no measured residual requiring it and the archived
+plug-in has no positive causal evidence.
 
 ## Relation to original literature
 
@@ -161,7 +174,8 @@ is authorized by that result.
 The conditional-coordinate substrate is qualified.  Historical free joint
 H1a remains failed.  This result does not authorize tensor conditioning,
 oracle training, relaxation, DFT, or DFPT.  The next implementation should be
-a separately specified triangular de-novo generator using the same qualified
-coordinate field, followed by a small closure test for generated composition,
-lattice, assignment, and geometry.  It should not revive the old simultaneous
-joint path as a silent fallback.
+a separately specified cross-modal attribution with independent element,
+lattice, and coordinate times, followed by an oracle-versus-generated
+side-state error budget.  Only those results should select between a unified
+multimodal hybrid diffusion and the chained
+`p(N,C) p(L|N,C) p(F|Atilde(C),L)` generator.

@@ -1,0 +1,56 @@
+{
+  "protocol": "h1a_j0_side_information_sensitivity_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training paired sensitivity audit of the qualified p(F|A,L,N) checkpoint under controlled element and lattice side-state interventions",
+  "prerequisites": {
+    "source_protocol": "h1a_coordinate_clean_side_information_one_pass_v1",
+    "source_protocol_file_sha256": "018b386f66b974833432d171ddcd079e8e9a488d4b607af026eb632ee560c8fe",
+    "source_result_sha256": "16c6bd94c63e34126272298a00e6afbb129ba0e177b00fe1b17d6590853d2b39",
+    "source_checkpoint_sha256": "d6ff86b22c4ed9a75af3443e6705021b0f72f1ef6c9be35b0160cc465a63a41c",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "source_qualified": true,
+    "source_semantics": "p(F|A,L,N), where A is one clean element token per coordinate row"
+  },
+  "evaluation": {
+    "split": "val",
+    "graphs": 128,
+    "panel_seed": 8503,
+    "coordinate_noise_seed": 8504,
+    "side_noise_seed": 18631,
+    "bootstrap_seed": 18632,
+    "bootstrap_replicates": 2000,
+    "batch_size": 16,
+    "times": [0.005, 0.1, 0.4, 0.5, 0.6],
+    "focal_time": 0.5,
+    "lattice_log_volume_bin_width": 0.25,
+    "variants": [
+      "clean_elements_clean_lattice",
+      "corrupted_elements_clean_lattice",
+      "clean_elements_corrupted_lattice",
+      "corrupted_elements_corrupted_lattice",
+      "permuted_elements_clean_lattice",
+      "clean_elements_shuffled_lattice_shape"
+    ],
+    "common_coordinate_state": true,
+    "tensor_condition_enabled": false,
+    "optimizer_steps": 0
+  },
+  "acceptance": {
+    "clean_reference_metric_max_abs": 1e-6,
+    "focal_element_masked_fraction_min": 0.35,
+    "focal_element_masked_fraction_max": 0.65,
+    "focal_lattice_latent_rms_min": 0.001,
+    "permuted_element_changed_fraction_min": 0.25,
+    "shuffled_lattice_graph_coverage_min": 0.5,
+    "shuffled_lattice_shape_rms_min": 0.001,
+    "focal_relative_score_mse_degradation_min": 0.02,
+    "focal_paired_bootstrap_lower_bound_min": 0.0,
+    "tensor_candidates": 0,
+    "nonfinite_values": 0
+  },
+  "decision_rule": {
+    "authorize_j1": "clean baseline reproduces the qualified source and both focal controlled interventions increase paired coordinate score error by at least 2% with positive structure-bootstrap lower bounds",
+    "do_not_authorize_j1": "first repair or audit any side modality that is not measurably used; do not infer that simultaneous joint diffusion is invalid",
+    "boundary": "Diagnostic-only OOD/local sensitivity. It cannot change historical H1a, train a topology branch, select a hard chain, or authorize tensor/oracle/relaxation/DFT/DFPT work."
+  }
+}

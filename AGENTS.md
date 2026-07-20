@@ -146,11 +146,13 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   training structures and passes every frozen check: validation ratio
   `0.33219`, t=.6 explained fraction `0.63509`, t=.005/.1 endpoint RMS
   `0.03756/0.04919 A`, rollout RMS `0.05123/0.07039 A` from t=.1/.2, and zero
-  failures. This qualifies only `p(F|N,C,L)`, the conditional-coordinate
+  failures. This qualifies only `p(F|A,L,N)`, where `A` is the clean per-node
+  element-token list, not composition counts alone. It is the conditional-coordinate
   substrate. Historical free joint H1a remains failed. Do not rerun retired
-  local/topology branches on the old mismatched task. The next generator must
-  use a separately specified non-degenerate de-novo factorization and must not
-  retain the simultaneous joint path as a runtime fallback.
+  local/topology branches on the old mismatched task. The next gate must first
+  attribute element, lattice and interaction errors with independent modality
+  times; it must not silently choose either the old diagonal joint path or a
+  hard chain before that attribution.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive

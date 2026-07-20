@@ -323,8 +323,9 @@ validation ratio 为 `0.33219`，相对 0.25-pass screen 再改善 `0.16163`；
 explained fraction 为 `0.63509`；从 `t=.1/.2` 开始的 reverse-SDE-100 rollout
 RMS 为 `0.05123/0.07039 A`，零失败。训练吞吐 `267.57 graphs/s`，PyTorch 峰值
 显存 `4917.15 MiB`。这正式资格化了“已知元素与晶格时的条件坐标生成基座”，但不
-改写自由联合 H1a 的失败。下一方法问题是 de-novo 变量的非退化概率分解，而不是继续
-给坐标主干堆 topology/local/global 特征。结果、归因报告与图位于
+改写自由联合 H1a 的失败。下一方法问题是用独立的元素、晶格和坐标噪声时间归因
+cross-modal 条件方差与 on-policy side-state shift，而不是立即选定链式分解或继续给
+坐标主干堆 topology/local/global 特征。结果、归因报告与图位于
 `reports/h1a_coordinate_clean_side_information_one_pass_v1/`。
 
 ## 训练图与采样加速设计
