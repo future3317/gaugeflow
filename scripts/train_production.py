@@ -79,7 +79,7 @@ def _gradient_group(parameter_name: str) -> str:
         )
     ):
         return "coordinate_readout"
-    if parameter_name.startswith("element_head."):
+    if parameter_name.startswith(("composition_head.", "element_head.")):
         return "element_readout"
     if parameter_name.startswith(("volume_head.", "shape_head.")):
         return "lattice_readout"

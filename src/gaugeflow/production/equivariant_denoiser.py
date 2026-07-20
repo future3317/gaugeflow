@@ -248,6 +248,7 @@ class EquivariantDenoisingBlock(nn.Module):
 @dataclass(frozen=True)
 class HybridDenoiserOutput:
     clean_element_logits: torch.Tensor
+    clean_composition_logits: torch.Tensor
     coordinate_cartesian_scaled_score: torch.Tensor
     coordinate_fractional_scaled_score: torch.Tensor
     clean_volume_latent: torch.Tensor
@@ -345,8 +346,18 @@ class HybridCrystalDenoiser(nn.Module):
                 for _ in range(layers)
             ]
         )
-        head_inputs = 4 * hidden_dim
-        self.element_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 118))
+        graph_head_inputs = 4 * hidden_dim
+        node_head_inputs = 5 * hidden_dim
+        self.composition_head = nn.Sequential(
+            nn.Linear(graph_head_inputs, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 118),
+        )
+        self.element_head = nn.Sequential(
+            nn.Linear(node_head_inputs, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, 118),
+        )
         self.coordinate_control_gate = nn.Linear(3 * hidden_dim, vector_dim)
         self.coordinate_edge_encoder = nn.Sequential(
             nn.Linear(5 * hidden_dim + radial_dim, hidden_dim),
@@ -372,9 +383,11 @@ class HybridCrystalDenoiser(nn.Module):
             hidden_dim,
             rank=8,
         )
-        self.volume_head = nn.Sequential(nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
+        self.volume_head = nn.Sequential(
+            nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
+        )
         self.shape_head = nn.Sequential(
-            nn.Linear(head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
+            nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
         )
 
     @property
@@ -571,7 +584,22 @@ class HybridCrystalDenoiser(nn.Module):
         graph_context = torch.cat(
             (graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1
         )
-        node_context = torch.cat((nodes, node_time, node_condition, node_state), dim=-1)
+        composition_logits = self.composition_head(graph_context)
+        # The graph posterior is predicted only from the current state.  Its
+        # expected species embedding gives every site a permutation-invariant
+        # global abundance context without exposing target formula or counts.
+        composition_probability = torch.softmax(composition_logits.float(), dim=-1)
+        composition_token = composition_probability @ self.element_embedding.weight[:118].float()
+        node_context = torch.cat(
+            (
+                nodes,
+                node_time,
+                node_condition,
+                node_state,
+                composition_token[batch],
+            ),
+            dim=-1,
+        )
         element_logits = self.element_head(node_context)
         coordinate_control = torch.cat((node_time, node_condition, node_state), dim=-1)
         time_gated_vectors = vectors * torch.sigmoid(
@@ -639,6 +667,7 @@ class HybridCrystalDenoiser(nn.Module):
         clean_shape_latent = self.shape_head(graph_context)
         return HybridDenoiserOutput(
             clean_element_logits=element_logits,
+            clean_composition_logits=composition_logits,
             coordinate_cartesian_scaled_score=cartesian_score,
             coordinate_fractional_scaled_score=fractional_score,
             clean_volume_latent=clean_volume_latent,

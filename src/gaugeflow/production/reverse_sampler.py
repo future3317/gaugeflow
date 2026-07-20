@@ -206,6 +206,7 @@ class GeneratedElementBatch:
     batch: torch.Tensor
     predicted_composition_counts: torch.Tensor
     terminal_clean_element_logits: torch.Tensor
+    terminal_clean_composition_logits: torch.Tensor
     diagnostics: ElementReverseDiagnostics
 
 
@@ -362,6 +363,7 @@ class TensorFreeReverseSampler:
         if isinstance(self.categorical, UniformCategoricalDiffusion):
             tokens, composition_counts = count_projected_assignment(
                 prediction.clean_element_logits,
+                prediction.clean_composition_logits,
                 blueprint.batch,
                 blueprint.node_counts,
             )
@@ -377,6 +379,7 @@ class TensorFreeReverseSampler:
             batch=blueprint.batch,
             predicted_composition_counts=composition_counts,
             terminal_clean_element_logits=prediction.clean_element_logits,
+            terminal_clean_composition_logits=prediction.clean_composition_logits,
             diagnostics=ElementReverseDiagnostics(
                 time=times[1:].detach().cpu(),
                 masked_count=torch.stack(masked_counts).detach().cpu(),

@@ -22,6 +22,7 @@ from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.composition_assignment import (
     composition_counts_from_tokens,
     count_constrained_assignment,
+    rounded_graph_composition,
 )
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
@@ -70,6 +71,10 @@ def _teacher_forced_metrics(
         top1_sum = torch.zeros((), device=device)
         top5_sum = torch.zeros((), device=device)
         masked_count = torch.zeros((), device=device)
+        exact_composition = 0
+        composition_count_l1 = 0
+        composition_count_overlap = 0
+        graph_count = 0
         node_count = 0
         for chunk in _chunks(indices, batch_size):
             batch_data = collate_packed_alex([dataset[int(index)] for index in chunk]).to(
@@ -100,12 +105,21 @@ def _teacher_forced_metrics(
             mask = output.noisy.element_was_masked
             logits = output.prediction.clean_element_logits
             target = batch_data.atom_types
+            target_counts = composition_counts_from_tokens(target, batch_data.batch, graphs)
+            predicted_counts = rounded_graph_composition(
+                output.prediction.clean_composition_logits,
+                counts,
+            )
             nll = F.cross_entropy(logits, target, reduction="none")
             top = logits.topk(5, dim=-1).indices
             nll_sum += nll[mask].sum()
             top1_sum += (top[:, 0] == target)[mask].sum()
             top5_sum += (top == target.unsqueeze(-1)).any(dim=-1)[mask].sum()
             masked_count += mask.sum()
+            exact_composition += int((predicted_counts == target_counts).all(dim=-1).sum())
+            composition_count_l1 += int((predicted_counts - target_counts).abs().sum())
+            composition_count_overlap += int(torch.minimum(predicted_counts, target_counts).sum())
+            graph_count += graphs
             node_count += int(target.numel())
             tensor_candidates += int(output.prediction.gauge_atlas.effective_frame_count.sum())
         denominator = masked_count.clamp_min(1)
@@ -117,6 +131,11 @@ def _teacher_forced_metrics(
                 "nll": float(nll_sum / denominator),
                 "top1_accuracy": float(top1_sum / denominator),
                 "top5_accuracy": float(top5_sum / denominator),
+                "exact_composition_accuracy": exact_composition / max(graph_count, 1),
+                "mean_composition_count_l1_per_graph": composition_count_l1
+                / max(graph_count, 1),
+                "composition_count_overlap_fraction": composition_count_overlap
+                / max(node_count, 1),
             }
         )
     return {"by_time": rows, "tensor_candidate_count": tensor_candidates}
@@ -256,7 +275,11 @@ def main() -> None:
     training = protocol.get("training")
     if (
         protocol.get("protocol")
-        not in {"h1a_e1_element_reverse_v1", "h1a_e1_uniform_count_projection_v1"}
+        not in {
+            "h1a_e1_element_reverse_v1",
+            "h1a_e1_uniform_count_projection_v1",
+            "h1a_e1_graph_composition_field_v1",
+        }
         or protocol.get("status_before_run") != "frozen_not_run"
         or not isinstance(training, dict)
         or training.get("objective") != "element"

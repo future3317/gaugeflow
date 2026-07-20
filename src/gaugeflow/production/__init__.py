@@ -38,7 +38,7 @@ from .composition_assignment import (
     composition_counts_from_tokens,
     count_constrained_assignment,
     count_projected_assignment,
-    rounded_expected_composition,
+    rounded_graph_composition,
 )
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .hybrid_diffusion import TensorFreeHybridDiffusion
@@ -113,7 +113,7 @@ __all__ = [
     "ScalableWrappedQuotient",
     "ReachableChildCompatibilityRouter",
     "ReachableChildPath",
-    "rounded_expected_composition",
+    "rounded_graph_composition",
     "SelectedMode",
     "StratifiedCartesianGaugeAtlas",
     "StateAdaptiveCartesianCarrierMixer",

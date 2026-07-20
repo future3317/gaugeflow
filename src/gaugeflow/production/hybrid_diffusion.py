@@ -356,13 +356,8 @@ class TensorFreeHybridDiffusion(nn.Module):
         node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
         mask = noisy.element_was_masked.to(node_cross_entropy)
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
-        element_probability = torch.softmax(prediction.clean_element_logits.float(), dim=-1)
-        predicted_composition = scatter(
-            element_probability,
-            batch,
-            dim=0,
-            dim_size=graphs,
-            reduce="mean",
+        predicted_composition = torch.softmax(
+            prediction.clean_composition_logits.float(), dim=-1
         )
         flat_target = batch * self.categorical.element_count + clean_elements
         target_counts = torch.bincount(

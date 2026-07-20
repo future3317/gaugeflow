@@ -184,6 +184,7 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
     shifted = model(*shifted_values)
     for name in (
         "clean_element_logits",
+        "clean_composition_logits",
         "coordinate_cartesian_scaled_score",
         "coordinate_fractional_scaled_score",
         "clean_volume_latent",
@@ -201,6 +202,26 @@ def test_full_denoiser_projects_input_shape_and_is_translation_equivariant():
             atol=tolerance,
             rtol=tolerance,
         )
+
+    permutation = torch.tensor([2, 0, 3, 1])
+    relabeled_values = list(projected_values)
+    relabeled_values[0] = projected_values[0][permutation]
+    relabeled_values[1] = projected_values[1][permutation]
+    relabeled_values[4] = projected_values[4][permutation]
+    relabeled = model(*relabeled_values)
+    inverse = torch.argsort(permutation)
+    assert torch.allclose(
+        relabeled.clean_element_logits[inverse],
+        projected.clean_element_logits,
+        atol=3e-6,
+        rtol=3e-6,
+    )
+    assert torch.allclose(
+        relabeled.clean_composition_logits,
+        projected.clean_composition_logits,
+        atol=3e-6,
+        rtol=3e-6,
+    )
 
 
 def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
@@ -224,6 +245,12 @@ def test_full_unconditional_denoiser_is_unimodular_basis_equivariant():
     rotation = torch.linalg.inv(lattice_original[0]) @ torch.linalg.inv(basis) @ lattice_transformed[0]
     assert torch.allclose(rotation.T @ rotation, torch.eye(3), atol=2e-6, rtol=2e-6)
     assert torch.allclose(transformed.clean_element_logits, original.clean_element_logits, atol=2e-5, rtol=2e-5)
+    assert torch.allclose(
+        transformed.clean_composition_logits,
+        original.clean_composition_logits,
+        atol=2e-5,
+        rtol=2e-5,
+    )
     assert torch.allclose(
         transformed.coordinate_cartesian_scaled_score,
         original.coordinate_cartesian_scaled_score @ rotation,

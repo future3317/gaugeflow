@@ -102,7 +102,12 @@ def test_count_projection_predicts_counts_without_target_and_is_permutation_cons
     logits[2:, 7] = 4.0
     batch = torch.tensor([0, 0, 0, 0, 0])
     counts = torch.tensor([5])
-    assigned, predicted_counts = count_projected_assignment(logits, batch, counts)
+    composition_logits = torch.full((1, 118), -8.0)
+    composition_logits[0, 4] = torch.log(torch.tensor(2.0))
+    composition_logits[0, 7] = torch.log(torch.tensor(3.0))
+    assigned, predicted_counts = count_projected_assignment(
+        logits, composition_logits, batch, counts
+    )
     assert predicted_counts[0, 4] == 2
     assert predicted_counts[0, 7] == 3
     assert torch.equal(
@@ -112,6 +117,7 @@ def test_count_projection_predicts_counts_without_target_and_is_permutation_cons
     permutation = torch.tensor([3, 0, 4, 1, 2])
     permuted, permuted_counts = count_projected_assignment(
         logits[permutation],
+        composition_logits,
         batch,
         counts,
     )

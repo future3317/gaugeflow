@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import torch
 from scipy.optimize import linear_sum_assignment
-from torch_geometric.utils import scatter
 
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
@@ -25,24 +24,17 @@ def composition_counts_from_tokens(
     ).reshape(graph_count, CHEMICAL_ELEMENT_COUNT)
 
 
-def rounded_expected_composition(
-    clean_logits: torch.Tensor,
-    batch: torch.Tensor,
+def rounded_graph_composition(
+    composition_logits: torch.Tensor,
     node_counts: torch.Tensor,
 ) -> torch.Tensor:
-    """Predict integer counts by largest-remainder rounding of site marginals."""
+    """Round a predicted graph-level abundance distribution to exact counts."""
 
     graphs = int(node_counts.numel())
-    if clean_logits.shape != (batch.numel(), CHEMICAL_ELEMENT_COUNT):
-        raise ValueError("element logits must have shape [nodes,118]")
-    probability = torch.softmax(clean_logits.float(), dim=-1)
-    expected = scatter(
-        probability,
-        batch,
-        dim=0,
-        dim_size=graphs,
-        reduce="sum",
-    )
+    if composition_logits.shape != (graphs, CHEMICAL_ELEMENT_COUNT):
+        raise ValueError("composition logits must have shape [graphs,118]")
+    probability = torch.softmax(composition_logits.float(), dim=-1)
+    expected = probability * node_counts.unsqueeze(-1)
     counts = expected.floor().long()
     remainder = node_counts - counts.sum(dim=-1)
     if bool((remainder < 0).any()) or bool((remainder > node_counts).any()):
@@ -50,7 +42,7 @@ def rounded_expected_composition(
     order = (expected - counts).argsort(dim=-1, descending=True)
     ranks = torch.arange(
         CHEMICAL_ELEMENT_COUNT,
-        device=clean_logits.device,
+        device=composition_logits.device,
     ).expand(graphs, -1)
     additions = ranks < remainder.unsqueeze(-1)
     counts.scatter_add_(1, order, additions.long())
@@ -61,6 +53,7 @@ def rounded_expected_composition(
 
 def count_projected_assignment(
     clean_logits: torch.Tensor,
+    composition_logits: torch.Tensor,
     batch: torch.Tensor,
     node_counts: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -72,7 +65,7 @@ def count_projected_assignment(
     is introduced.
     """
 
-    counts = rounded_expected_composition(clean_logits, batch, node_counts)
+    counts = rounded_graph_composition(composition_logits, node_counts)
     return count_constrained_assignment(clean_logits, batch, counts), counts
 
 
@@ -84,10 +77,10 @@ def count_constrained_assignment(
     """MAP-assign sites under an explicitly supplied integer composition.
 
     Production sampling supplies model-predicted counts through
-    :func:`count_projected_assignment`.  Supplying observed counts is reserved
+    :func:`count_projected_assignment`. Supplying observed counts is reserved
     for offline attribution: it measures the site-assignment ceiling after
-    composition error has been removed and is never an input to the denoiser or
-    production sampler.
+    composition error has been removed and is never an input to the denoiser
+    or production sampler.
     """
 
     if clean_logits.shape != (batch.numel(), CHEMICAL_ELEMENT_COUNT):
