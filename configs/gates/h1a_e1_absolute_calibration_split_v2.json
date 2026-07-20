@@ -1,0 +1,54 @@
+{
+  "protocol": "h1a_e1_absolute_calibration_split_v2",
+  "status_before_run": "frozen_not_run",
+  "scope": "build an independent IID probability-calibration axis without target-aware row reassignment; preserve the formula/prototype novelty axis and fail closed on unavailable time metadata",
+  "source": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "train_cache_sha256": "57cd1e98cb0cb966534ef21abd2881f0ca7e1eba15e98505c761958a5a8c8b4b",
+    "train_index_sha256": "9cdabc34dfc4bc7962a07549afa20268ea189d9208715451931fd348bdb8d14c",
+    "novelty_assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+    "builder_sha256": "364aeb2ebcd62de2bdc87aa2a18bfb7b7d40cc4ae136376db71423f3f7f18a51"
+  },
+  "support": {
+    "graphs": 540164,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118
+  },
+  "split": {
+    "seed": 7727,
+    "calibration_fraction": 0.05,
+    "test_fraction": 0.05,
+    "minimum_partition_for_panels": 20,
+    "frequent_partition_threshold": 100,
+    "frequent_partition_panel_floor": 3,
+    "exact_partition_fit_support_required": true,
+    "target_aware_row_reassignment": false,
+    "historical_calibration_seed_reuse": false,
+    "from_scratch_checkpoint_must_exclude_calibration_and_test": true
+  },
+  "quality_floors": {
+    "eligible_element_graphs_min": 100,
+    "panel_element_graphs_min": 3,
+    "eligible_pair_graphs_min": 100,
+    "panel_pair_presence_min": 1,
+    "panel_pair_graphs_min": 3,
+    "underpowered_pairs_are_pooled_by_frequency": true
+  },
+  "acceptance": {
+    "material_id_unique": true,
+    "all_rows_assigned_once": true,
+    "fit_support_for_every_panel_partition": true,
+    "element_floor_pass": true,
+    "eligible_pair_identity_present_in_each_panel": true,
+    "per_pair_calibration_requires_floor_in_both_panels": true,
+    "time_axis_without_timestamp": "unavailable",
+    "iid_axis_role": "probability calibration",
+    "novelty_axis_role": "OOD novelty and coverage only"
+  },
+  "decision_rule": {
+    "pass": "freeze the assignment manifest hash and preregister one from-scratch absolute-likelihood E1 run; per-pair calibration is limited to the manifest-qualified pair subset",
+    "fail": "repair only the split/data contract; do not train E1, assignment, L1 or M1",
+    "boundary": "This data-axis qualification cannot pass E1 or authorize site-assignment learning, L1, M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

@@ -3,9 +3,12 @@
 The source remains the qualified child-train cache.  Exact composition
 partitions are stratified so every panel state has training support; small
 partitions stay fit-only and therefore cannot create accidental zero-support
-likelihood events.  This axis is independent of the frozen formula/prototype
-novelty split.  Alex-MP-20 has no source timestamp, so the time axis is written
-as explicitly unavailable rather than inferred from row order or material ID.
+likelihood events.  Element-pair targets never alter row assignment: doing so
+would turn the probability-calibration axis into a target-stratified panel.
+Instead, the manifest separates pair-identity presence from the subset with
+enough observations for pairwise calibration.  This axis is independent of
+the formula/prototype novelty split.  Alex-MP-20 has no source timestamp, so
+the time axis is explicitly unavailable rather than inferred from row order.
 """
 
 from __future__ import annotations
@@ -113,10 +116,12 @@ def _profile(
     eligible_element = element_total >= int(quality["eligible_element_graphs_min"])
     eligible_pair = pair_total >= int(quality["eligible_pair_graphs_min"])
     label_profile: dict[str, Any] = {}
+    pair_by_label: dict[str, torch.Tensor] = {}
     for value, name in enumerate(LABELS):
         index = torch.nonzero(labels == value, as_tuple=False).flatten()
         element = _element_graph_frequency(state, index)
         pair = _pair_graph_frequency(state, index)
+        pair_by_label[name] = pair
         label_profile[name] = {
             "graphs": int(index.numel()),
             "partition_tv_from_fit": None,
@@ -135,19 +140,33 @@ def _profile(
         label_profile[name]["partition_tv_from_fit"] = categorical_total_variation(
             fit_keys, keys[labels == value]
         )
+    panel_pair_floor = int(quality["panel_pair_graphs_min"])
+    pair_calibration = eligible_pair.clone()
+    for name in ("calibration", "test"):
+        pair_calibration &= pair_by_label[name] >= panel_pair_floor
+    eligible_pair_count = int(torch.triu(eligible_pair, diagonal=1).sum())
+    calibrated_pair_count = int(torch.triu(pair_calibration, diagonal=1).sum())
+    for name in ("calibration", "test"):
+        present = eligible_pair & (pair_by_label[name] > 0)
+        label_profile[name]["eligible_pair_identity_coverage"] = float(
+            torch.triu(present, diagonal=1).sum() / eligible_pair_count
+        )
+        label_profile[name]["pair_calibration_eligible_pairs"] = calibrated_pair_count
     return {
         "labels": label_profile,
         "eligible_elements": int(eligible_element.sum()),
-        "eligible_pairs": int(torch.triu(eligible_pair, diagonal=1).sum()),
+        "eligible_pairs": eligible_pair_count,
+        "pair_calibration_eligible_pairs": calibrated_pair_count,
+        "pair_calibration_identity_coverage": calibrated_pair_count / eligible_pair_count,
         "fit_support_for_every_panel_partition": fit_support_pass,
         "element_floor_pass": all(
             label_profile[name]["minimum_eligible_element_graphs"]
             >= int(quality["panel_element_graphs_min"])
             for name in ("calibration", "test")
         ),
-        "pair_floor_pass": all(
+        "pair_presence_pass": all(
             label_profile[name]["minimum_eligible_pair_graphs"]
-            >= int(quality["panel_pair_graphs_min"])
+            >= int(quality["panel_pair_presence_min"])
             for name in ("calibration", "test")
         ),
     }
@@ -162,7 +181,7 @@ def main() -> None:
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
     if (
-        protocol.get("protocol") != "h1a_e1_absolute_calibration_split_v1"
+        protocol.get("protocol") != "h1a_e1_absolute_calibration_split_v2"
         or protocol.get("status_before_run") != "frozen_not_run"
     ):
         raise ValueError("unexpected or unfrozen E1 split protocol")
@@ -206,7 +225,7 @@ def main() -> None:
     if (
         not profile["fit_support_for_every_panel_partition"]
         or not profile["element_floor_pass"]
-        or not profile["pair_floor_pass"]
+        or not profile["pair_presence_pass"]
     ):
         raise RuntimeError("preregistered IID support or panel floors are not met")
 
