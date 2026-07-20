@@ -1,0 +1,76 @@
+{
+  "artifact_hashes": {
+    "assignment": "fa719c292afc6d6957c5efba5f2562ffef906e90b3973c9ba72808a03323c047",
+    "calibration_index": "443339d82d94bf973bf79e5dfd1598a6e741c9e4f1086f9668017dc6fbf0c609",
+    "fit_index": "f2d2f35465955b343141532dbb1278591d40b157ede230ed99b9f2b9488fb7a6",
+    "manifest": "330ed91af499385d9ef5f80aa50132e0eaaa44dc953a80379ab754374072d79b",
+    "test_index": "cae993fa6d1a54d6d668e217998c76879decdc3270cc10289822746e0916fc40"
+  },
+  "boundary": "This audit cannot pass E1 or authorize assignment, L1, M1, tensor/oracle work, relaxation, DFT, or DFPT.",
+  "checks": {
+    "all_rows_assigned_once": true,
+    "canonical_material_id_join": true,
+    "deterministic_assignment_replay": true,
+    "element_floor": true,
+    "fit_support_for_every_panel_partition": true,
+    "material_id_unique": true,
+    "novelty_axis_preserved": true,
+    "pair_identity_presence": true,
+    "stored_indices_match_assignment": true,
+    "time_axis_fail_closed": true
+  },
+  "decision": "freeze_manifest_and_preregister_absolute_likelihood_e1",
+  "label_counts": {
+    "calibration": 26912,
+    "fit": 486340,
+    "test": 26912
+  },
+  "profile": {
+    "element_floor_pass": true,
+    "eligible_elements": 76,
+    "eligible_pairs": 2499,
+    "fit_support_for_every_panel_partition": true,
+    "labels": {
+      "calibration": {
+        "eligible_pair_identity_coverage": 1.0,
+        "graphs": 26912,
+        "minimum_eligible_element_graphs": 72,
+        "minimum_eligible_pair_graphs": 2,
+        "node_count_max": 20,
+        "node_count_min": 1,
+        "pair_calibration_eligible_pairs": 2472,
+        "partition_tv_from_fit": 0.004446592989436936,
+        "species_count_max": 5,
+        "species_count_min": 1
+      },
+      "fit": {
+        "graphs": 486340,
+        "minimum_eligible_element_graphs": 1135,
+        "minimum_eligible_pair_graphs": 84,
+        "node_count_max": 20,
+        "node_count_min": 1,
+        "partition_tv_from_fit": null,
+        "species_count_max": 7,
+        "species_count_min": 1
+      },
+      "test": {
+        "eligible_pair_identity_coverage": 1.0,
+        "graphs": 26912,
+        "minimum_eligible_element_graphs": 68,
+        "minimum_eligible_pair_graphs": 1,
+        "node_count_max": 20,
+        "node_count_min": 1,
+        "pair_calibration_eligible_pairs": 2472,
+        "partition_tv_from_fit": 0.004446592989436936,
+        "species_count_max": 5,
+        "species_count_min": 1
+      }
+    },
+    "pair_calibration_eligible_pairs": 2472,
+    "pair_calibration_identity_coverage": 0.9891956782713085,
+    "pair_presence_pass": true
+  },
+  "protocol": "h1a_e1_absolute_calibration_split_v2_independent_audit",
+  "qualified": true,
+  "source_protocol_sha256": "488dceec00ea60efad3a337a188da75875452f62c98a6d3e2100fa58008de99b"
+}

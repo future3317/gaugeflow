@@ -1,0 +1,85 @@
+{
+  "protocol": "h1a_e1_absolute_likelihood_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed one-pass from-scratch qualification of the exact stoichiometry-first p(C|N) law on independently frozen IID calibration and test panels",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "q2_result_sha256": "cf953f93275c82707e08c34755c1e067dcd530f8dae3d3c6ba852c99c8076e02",
+    "split_manifest_sha256": "330ed91af499385d9ef5f80aa50132e0eaaa44dc953a80379ab754374072d79b",
+    "split_audit_sha256": "d6f8e092fd69ea0684062c7e0a5768658b69823e57b516b36f42447ca52ea28c",
+    "trainer_sha256": "6b701342943a7de31cbea5b35bbc99eeef1c5ad84d0edafe593286956cf43b47",
+    "split_index_sha256": {
+      "fit": "f2d2f35465955b343141532dbb1278591d40b157ede230ed99b9f2b9488fb7a6",
+      "calibration": "443339d82d94bf973bf79e5dfd1598a6e741c9e4f1086f9668017dc6fbf0c609",
+      "test": "cae993fa6d1a54d6d668e217998c76879decdc3270cc10289822746e0916fc40"
+    }
+  },
+  "data": {
+    "graphs": [486340, 26912, 26912],
+    "split_order": ["fit", "calibration", "test"],
+    "split_axis": "iid_calibration",
+    "node_count_role": "observed conditioning variable for this Gate only; p(N) is not qualified here",
+    "formula_prototype_axis_role": "OOD novelty diagnostic only and not used for E1 acceptance",
+    "time_axis": "unavailable",
+    "target_aware_row_reassignment": false
+  },
+  "model": {
+    "law": "p0(lambda|N) times autoregressive distinct-species law in decreasing-count order with increasing-token tie breaking",
+    "context_dim": 1,
+    "hidden_dim": 256,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118,
+    "partition_smoothing": 0.5,
+    "target_composition_input": false,
+    "target_site_assignment_input": false,
+    "exact_normalization": true
+  },
+  "training": {
+    "seed": 5705,
+    "steps": 1900,
+    "batch_size": 256,
+    "graph_presentations": 486340,
+    "data_passes": 1.0,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "precision": "bf16",
+    "log_every": 50,
+    "from_scratch_required": true,
+    "seed_count": 1
+  },
+  "evaluation": {
+    "batch_size": 1024,
+    "empirical_smoothing": 0.5,
+    "bootstrap_seed": 21051,
+    "bootstrap_replicates": 2000,
+    "stratum_minimum_decisions": 20,
+    "eligible_pair_source_graphs_min": 100,
+    "pair_panel_graphs_min": 3,
+    "fixed_partition_sampling_seed": 21705,
+    "free_sampling_seed": 22705,
+    "minimum_reference_atoms": 25,
+    "strata": ["node_count_N", "species_support_S", "partition_lambda", "fit_event_frequency_tier", "element_token"],
+    "fixed_partition_pair_sampling_is_diagnostic": true,
+    "free_sampling_inputs": ["N"]
+  },
+  "acceptance": {
+    "species_nll_per_decision_max": 3.4,
+    "model_minus_empirical_bootstrap_95_high_max": 0.0,
+    "uniform_gain_per_decision_min": 0.75,
+    "pair_distribution_jsd_max": 0.015,
+    "pair_probability_rmse_max": 0.0007,
+    "pair_identity_recall_min": 0.99,
+    "atom_count_preservation": 1.0,
+    "invalid_compositions": 0,
+    "sampling_failures": 0,
+    "training_graphs_per_second_min": 1000.0,
+    "peak_cuda_memory_mib_max": 1000.0
+  },
+  "decision_rule": {
+    "pass": "qualify only p(C|N), freeze the composition law and authorize one separately preregistered count-constrained assignment Q1",
+    "fail": "stop before assignment and diagnose absolute likelihood or co-occurrence; do not add steps, capacity, a new composition head, L1, or M1",
+    "boundary": "This Gate cannot qualify p(N), site assignment, free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT, or DFPT."
+  }
+}
