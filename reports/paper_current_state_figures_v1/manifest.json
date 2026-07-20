@@ -1,0 +1,41 @@
+{
+  "claims": {
+    "base_probability_factorization": "method definition; no qualification claim",
+    "composition_assignment_evidence": "p(C|N) passed; unary Q1 failed; geometry/Q0 are no-training audits",
+    "conditional_coordinate_qualification": "clean-A/L low/middle-noise conditional scope only",
+    "gaugeflow_training_roadmap": "planned dependency graph; not completed evidence"
+  },
+  "outputs": {
+    "base_probability_factorization.pdf": "d85b8e602cdef9f9804d8d9a93cab3acfd6aaafc01a6169c1b706d45ce132a2c",
+    "base_probability_factorization.png": "658f7bf3d6bde8dc00336441f1045fc6b262ea07ec6749e9a3fb645573a6781e",
+    "composition_assignment_evidence.pdf": "26116ac6334a8565b597fd09943d4506031deea1fd2ff39e260e8bc454b332db",
+    "composition_assignment_evidence.png": "1c4a54996579e2bd7d7b4a7c40065c862700a3b2de08671ae647f027df1857fe",
+    "conditional_coordinate_qualification.pdf": "ad33808c10dd8bb40247f934bb9c1afab3b88dd758d75dfaf1697521d844719c",
+    "conditional_coordinate_qualification.png": "9fc56590a302830b9d2d76dc1029d8792d1026b10d23920898c22eda50dc638c",
+    "gaugeflow_training_roadmap.pdf": "81d8cf357890b75bf60ef0a318e69199211b244a8d7b9c458db475739cc38587",
+    "gaugeflow_training_roadmap.png": "5e031ee10459ab3decba675117fe9a74560b4c1fd21c2b7622abc5f8e23a6126"
+  },
+  "protocol": "paper_current_state_figures_v1",
+  "sources": {
+    "composition": {
+      "path": "h1a_e1_absolute_likelihood_v1/result.json",
+      "sha256": "7812bf380fa019fb655784d0a3ca6194b457fd17da9ed7cc3924da5d91f782d5"
+    },
+    "conditional_coordinate": {
+      "path": "h1a_coordinate_clean_side_information_one_pass_v1/result.json",
+      "sha256": "16c6bd94c63e34126272298a00e6afbb129ba0e177b00fe1b17d6590853d2b39"
+    },
+    "geometry_expressivity": {
+      "path": "h1a_assignment_geometry_expressivity_audit_v1/result.json",
+      "sha256": "f16eda33a1cb984c02dd9113e7ff5a0723031e94d242c015bed490225c17a069"
+    },
+    "legacy_assignment_q1": {
+      "path": "h1a_oracle_c_assignment_q1_v1/result.json",
+      "sha256": "dc902a0a36fd21fc0eb13c0054478857f1314876040136f689edea406c0454c1"
+    },
+    "orderless_q0": {
+      "path": "h1a_assignment_orderless_law_q0_v1/result.json",
+      "sha256": "7664e11ca98b344d5bd5d58d10a24b00a82ae26090df5678e9f760fdbde7f1e8"
+    }
+  }
+}

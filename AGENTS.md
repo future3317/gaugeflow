@@ -323,11 +323,15 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   used to fabricate them. Do not choose a hard chain, start free joint
   training, or enter later Gates before these prerequisites are satisfied.
 
-Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
-prohibited. Do not add seeds or steps to rescue completed protocols, revive
-either failed reciprocal-score residual, or initialize joint training from a
-failed coordinate checkpoint. A new mechanism requires a separately frozen
-causal or operator qualification first.
+Work is now at GaugeFlow-base A0 interface closure. The next permitted learned
+operation is one separately frozen, from-scratch, single-seed IID oracle-C
+orderless assignment Gate; the original formula/prototype panels remain OOD
+stress only. Learned assignment must precede `p(B,N)`, L1, generated-side-state
+coordinates, and joint A1 pretraining. H1b and H2--H6 remain prohibited. Do not
+add seeds or steps to rescue completed protocols, revive either failed
+reciprocal-score residual, or initialize joint training from a failed
+coordinate checkpoint. A new mechanism requires a separately frozen causal or
+operator qualification first.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.

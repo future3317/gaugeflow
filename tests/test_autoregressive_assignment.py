@@ -51,6 +51,18 @@ def test_order_marginal_law_is_exactly_normalized_and_count_exact() -> None:
         assert torch.equal(torch.bincount(sampled, minlength=CHEMICAL_ELEMENT_COUNT), counts)
 
 
+def test_batched_step_law_matches_individual_steps() -> None:
+    law = RemainingCountAssignmentLaw()
+    generator = torch.Generator().manual_seed(5705)
+    logits = torch.randn(3, CHEMICAL_ELEMENT_COUNT, generator=generator)
+    remaining = torch.stack((_counts(0, 0, 1), _counts(2, 3, 3), _counts(4)))
+    batched = law.batched_step_log_probabilities(logits, remaining)
+    expected = torch.stack(
+        [law.step_log_probabilities(logits[index], remaining[index]) for index in range(3)]
+    )
+    assert torch.equal(batched, expected)
+
+
 def test_unique_orbit_probability_deduplicates_group_operations() -> None:
     law = RemainingCountAssignmentLaw()
     counts = _counts(0, 0, 1, 1)

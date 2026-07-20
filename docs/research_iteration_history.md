@@ -1018,3 +1018,41 @@ that the supplied carrier itself presents as identical. The next bounded task
 is therefore a versioned geometry-complete assignment-carrier derivative from
 the certified parent decomposition, not a larger assignment network or a
 higher-order coloring loss.
+
+### Geometry-complete carrier, expressivity, and orderless Q0
+
+The versioned carrier compiler subsequently rebuilt all 454 unchanged O1
+occurrences in a canonical row-HNF convention. Candidate, HNF, expanded-node,
+finite-action, target-reconstruction, and source-relabel closure are all one;
+cell-index 1/2/3/4 counts are `158/230/22/44`, maximum periodic alignment error
+is `4.61e-14 A`, and failures/nonfinite values are zero. Carrier fields and
+target coloring are structurally disjoint. This repaired the offline
+interface without rewriting O1 or the failed unary Q1.
+
+The preregistered geometry-aware expressivity audit then exactly enumerated all
+454 carriers. Expanded-geometry unary signatures resolve `0.473568` of the
+population. Among the remaining 239 collision classes, the complete
+target-free two-point periodic descriptor resolves `0.878661`, with aggregate
+mean target ceiling `0.939331`; relabeling, `GL(3,Z)` basis, and target-orbit
+containment failures are zero. The IID-test stratum remains harder
+(`0.636364` pair resolution and `0.818182` ceiling), so the result identifies
+geometry as necessary but does not promote a static pair histogram as a learned
+law.
+
+The successor Q0 therefore qualified a different probability object: a
+target-independent uniformly ordered autoregressive path whose categorical
+base measure is remaining count times a geometry/partial-state score. Counts
+are consumed exactly, no terminal repair or mask exists, and parent likelihood
+sums unique orbit labelings. Complete-distribution normalization error is
+`4.44e-16`, subset-DP versus reveal-order brute force is `1.04e-17`, FP64/FP32
+node-equivariance errors are `1.11e-15/4.77e-7`, residual-stabilizer error is
+`2.98e-7`, exact-count sampling is one, and BF16 output cosine is `0.999974`.
+An explicit no-grad 64-graph RTX 4090 forward measures `5.07 ms / 99.05 MiB`.
+
+The first CUDA measurement incorrectly retained simultaneous FP32 and BF16
+autograd graphs and obtained `720.06 MiB`. It remains archived as a failed
+measurement attempt; the `512 MiB` threshold was not changed. Q0 is only a
+mathematical/software pass and authorizes one separately frozen, from-scratch,
+single-seed IID oracle-composition assignment training Gate. It does not pass a
+learned assignment or open generated composition, `p(N)`, L1/M1, tensor work,
+relaxation, DFT, or DFPT.

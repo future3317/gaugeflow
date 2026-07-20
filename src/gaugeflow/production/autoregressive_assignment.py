@@ -41,6 +41,30 @@ class RemainingCountAssignmentLaw:
         )
         return torch.log_softmax(log_weight, dim=0)
 
+    def batched_step_log_probabilities(
+        self,
+        logits: torch.Tensor,
+        remaining_counts: torch.Tensor,
+    ) -> torch.Tensor:
+        """Vectorized step law for independent partially revealed carriers."""
+        if (
+            logits.ndim != 2
+            or logits.shape[1] != self.vocabulary_size
+            or remaining_counts.shape != logits.shape
+        ):
+            raise ValueError("batched assignment steps have the wrong shape")
+        if remaining_counts.dtype != torch.long or bool((remaining_counts < 0).any()):
+            raise ValueError("remaining counts must be nonnegative int64")
+        if bool((remaining_counts.sum(dim=1) < 1).any()):
+            raise ValueError("every batched assignment step needs a remaining atom")
+        valid = remaining_counts > 0
+        log_weight = torch.where(
+            valid,
+            logits + torch.log(remaining_counts.clamp_min(1).to(logits.dtype)),
+            torch.full_like(logits, -torch.inf),
+        )
+        return torch.log_softmax(log_weight, dim=1)
+
     def path_log_probability(
         self,
         score: AssignmentScore,
