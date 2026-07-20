@@ -1,0 +1,44 @@
+{
+  "active_vocabulary_size": 76,
+  "boundary": "Q1 cannot authorize site assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "calibration_audit_sha256": "8cdd79df230ff28fb67937634008f55aa48a57ec7b10aae6f8fa6590ac1bb762",
+  "checks": {
+    "bf16": true,
+    "catalogue": true,
+    "fp32": true,
+    "gradients": true,
+    "law_normalization": true,
+    "memory": true,
+    "partition_sampling": true,
+    "prior_normalization": true,
+    "sample_probability": true,
+    "sampling_latency": true,
+    "teacher_latency": true,
+    "validity": true
+  },
+  "decision": "authorize one seed-5705 exact-one-pass IID-calibration composition-only screen; target composition remains prohibited as input",
+  "environment": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4060 Ti",
+    "torch": "2.5.1+cu124"
+  },
+  "metrics": {
+    "bf16_fp32_mean_absolute_error": 0.001238267868757248,
+    "catalogue_partitions": 1840,
+    "exhaustive_small_law_normalization_error": 0.0,
+    "fp32_fp64_max_absolute_error": 2.3961887549717176e-06,
+    "gradient_norm": 2.6732404232025146,
+    "incremental_cuda_memory_mib": 47.732421875,
+    "invalid_samples": 0,
+    "partition_prior_normalization_error": 8.881784197001252e-16,
+    "sample_log_probability_error": 1.430511474609375e-06,
+    "sample_partition_tv": 0.006510020222735048,
+    "sampling_latency_ms": 8.57131863333341,
+    "teacher_forced_latency_ms": 6.081644133333223
+  },
+  "protocol": "h1a_e1_stoichiometry_first_q1_v1",
+  "protocol_sha256": "89f2f83491c3c01cf8f14ee84ccb5eb91b244bca816420c8c40d54631e02ed45",
+  "qualified": true,
+  "seed": 5705
+}

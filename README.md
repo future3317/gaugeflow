@@ -441,6 +441,46 @@ $PY -m mypy src/gaugeflow/production
 $PY scripts/audit_code_redundancy.py
 ```
 
+## E1 explicit composition status (2026-07-20)
+
+The element-only site-token mechanisms remain failed. The current explicit
+composition candidate is an exact stoichiometry-first law:
+
+```text
+N -> integer partition lambda -> distinct element tokens -> exact composition C
+```
+
+For `N<=20` and at most seven species, it enumerates 1,840 partitions and fits
+only a smoothed train-split `p0(lambda|N)`. Equal-count element slots are
+deduplicated by increasing-token tie order. A shared count-position encoder
+and current-count query replace the retired interleaved species/count
+autoregressor and per-partition lookup table; target composition is never an
+input.
+
+The no-training Q2 kernel passes exact normalization, FP32/BF16, gradients and
+RTX 4060 Ti performance (`3.55 ms` teacher forcing and `15.17 ms` sampling per
+256 graphs). Its single-pass IID calibration screen passes partition TV
+`0.03551`, support TV `0.00826`, element JSD `0.00119`, exact atom count and
+zero failures, but fails final/initial NLL `0.77569 > 0.75`. E1 therefore
+remains failed and count-constrained assignment is not started.
+
+A subsequent zero-training attribution isolates the trained species term. Its
+ratio is `0.750885`; the larger archived total ratio includes a fixed
+`1.617298`-nat/graph partition-prior term, and the random network is itself
+`0.178444` nat/decision worse than the exactly legal uniform distribution.
+The final law beats a train-fit count-slot reference by `0.383854`
+nat/decision. With the reference integer partition fixed, pair JSD is
+`0.010461`, pair-probability RMSE is `0.000451`, and frequent-pair recall is
+`1.0`. This identifies the initial/final total-NLL ratio as an indirect Gate
+metric, but does not rewrite its failure. A future independently frozen E1
+must use absolute conditional likelihood and co-occurrence; assignment is
+still blocked.
+
+The formula/prototype-disjoint H0 validation split is intentionally also
+stoichiometry-disjoint (conditional partition TV `1.0`). It remains the OOD
+novelty/coverage reference, but is not used as an IID marginal-calibration
+target and is never added to training.
+
 ## 仓库原则
 
 - 当前代码就是唯一 runtime；不保留旧模型兼容分支。

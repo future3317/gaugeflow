@@ -1,0 +1,99 @@
+{
+  "active_vocabulary_size": 76,
+  "boundary": "This screen cannot qualify free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "calibration_sampling": {
+    "atom_count_preservation": 1.0,
+    "count_partition_total_variation": 0.03550668295753267,
+    "element_marginal_jsd": 0.0005441843696390211,
+    "invalid_compositions": 0,
+    "paired_composition_overlap_diagnostic": 0.0525168851017952,
+    "paired_exact_composition_accuracy_diagnostic": 0.0,
+    "sampled_formula_unique_fraction": 0.9830426894738791,
+    "sampling_failures": 0,
+    "successful_graphs": 27009,
+    "support_size_total_variation": 0.008256507090229155,
+    "supported_element_recall": 1.0,
+    "supported_elements": 76
+  },
+  "checks": {
+    "atom_count": true,
+    "calibration_nll": false,
+    "count_partition": true,
+    "element_marginal": true,
+    "element_recall": true,
+    "finite_gradients": true,
+    "iid_empirical_partition": true,
+    "iid_empirical_support": true,
+    "invalid_compositions": true,
+    "memory": true,
+    "sampling_failures": true,
+    "support_size": true,
+    "throughput": true
+  },
+  "decision": "stop before assignment and attribute species-law optimization separately from the now-exact integer-partition prior",
+  "final_calibration": {
+    "mean_counts_nll": 0.0,
+    "mean_species_nll": 10.92565687016365,
+    "mean_support_nll": 1.6172980543305588,
+    "mean_total_nll": 12.542954865739198
+  },
+  "final_initial_calibration_nll_ratio": 0.7921548921079613,
+  "iid_split": {
+    "calibration_graphs": 27009,
+    "calibration_index_sha256": "34c5e97886e49a863ee647d278549fb2b77a68329037146fa818d421394fa079",
+    "fit_graphs": 513155,
+    "fit_index_sha256": "d1f41b57c622ea99572154fcd6d5fbd27067d700106c2bae610abedac042cfcd",
+    "partition_tv": 0.028403564378266563,
+    "support_tv": 0.005509235003113082
+  },
+  "initial_calibration": {
+    "mean_counts_nll": 0.0,
+    "mean_species_nll": 14.216669457981599,
+    "mean_support_nll": 1.6172980543305588,
+    "mean_total_nll": 15.833967562027935
+  },
+  "ood_formula_prototype_disjoint_diagnostic": {
+    "nll": {
+      "mean_counts_nll": 0.0,
+      "mean_species_nll": 12.374731127119743,
+      "mean_support_nll": 9.78421380644161,
+      "mean_total_nll": 22.15894489017143
+    },
+    "qualification_role": "none",
+    "sampling": {
+      "atom_count_preservation": 1.0,
+      "count_partition_total_variation": 0.9990965639810425,
+      "element_marginal_jsd": 0.03706403710557441,
+      "invalid_compositions": 0,
+      "paired_composition_overlap_diagnostic": 0.042782433331012726,
+      "paired_exact_composition_accuracy_diagnostic": 0.0,
+      "sampled_formula_unique_fraction": 0.8040432464454976,
+      "sampling_failures": 0,
+      "successful_graphs": 67520,
+      "support_size_total_variation": 0.2103376777251185,
+      "supported_element_recall": 1.0,
+      "supported_elements": 76
+    },
+    "split": "val"
+  },
+  "protocol": "h1a_e1_stoichiometry_first_iid_screen_v1",
+  "protocol_sha256": "721838a19def540395a704417045575a045866c6984f4b077a5477e003c36db8",
+  "q1_result_sha256": "3eaedf663290df0cdd9ea7ef1faa99c101866ab7f567c865467db7b3f50e9547",
+  "qualified": false,
+  "seed": 5705,
+  "training": {
+    "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_e1_stoichiometry_first_iid_screen_v1/seed_5705/step_002005.pt",
+    "checkpoint_sha256": "efe7c042da59d9ae26ba332fa8e1b4d1ebed4993852056029af73013a819c248",
+    "clip_fraction": 1.0,
+    "cuda": "12.4",
+    "data_passes": 1.0,
+    "device": "NVIDIA GeForce RTX 4060 Ti",
+    "final_species_loss": 11.101615905761719,
+    "graph_presentations": 513155,
+    "graphs_per_second": 27554.36171149731,
+    "peak_cuda_memory_mib": 53.42724609375,
+    "steps": 2005,
+    "torch": "2.5.1+cu124"
+  }
+}

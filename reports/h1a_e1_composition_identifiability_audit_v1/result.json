@@ -1,0 +1,368 @@
+{
+  "assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+  "boundary": "No optimizer, model forward, tensor condition, L1/M1, oracle model, relaxation, DFT or DFPT is authorized by this audit.",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "cross_split": {
+    "test": {
+      "context_seen_in_train_fraction": {
+        "anonymous_prototype_audit_oracle": 0.0,
+        "count_partition_oracle": 0.0,
+        "count_partition_space_group_oracle": 0.0,
+        "matcher_envelope_audit_oracle": 0.0,
+        "node_count": 1.0,
+        "node_count_space_group": 0.9100562796208531,
+        "node_count_space_group_sites": 0.9100562796208531
+      },
+      "exact_composition_seen_in_train_fraction": 0.0
+    },
+    "val": {
+      "context_seen_in_train_fraction": {
+        "anonymous_prototype_audit_oracle": 0.0,
+        "count_partition_oracle": 0.0,
+        "count_partition_space_group_oracle": 0.0,
+        "matcher_envelope_audit_oracle": 0.0,
+        "node_count": 1.0,
+        "node_count_space_group": 0.6323015402843601,
+        "node_count_space_group_sites": 0.6323015402843601
+      },
+      "exact_composition_seen_in_train_fraction": 0.0
+    }
+  },
+  "decision": "use_explicit_stochastic_composition_and_treat_paired_exact_recovery_as_diagnostic",
+  "formula_reconstruction_verification": {
+    "test": {
+      "mismatches": 0,
+      "passed": true,
+      "sample_size": 4096
+    },
+    "train": {
+      "mismatches": 0,
+      "passed": true,
+      "sample_size": 4096
+    },
+    "val": {
+      "mismatches": 0,
+      "passed": true,
+      "sample_size": 4096
+    }
+  },
+  "leakage_boundary": "anonymous_stoichiometry, space_group, prototype and matcher keys are audit metadata only and must never enter the denoiser or composition generator",
+  "maximum_anonymous_geometry_ambiguous_sample_fraction": 0.999766737509349,
+  "paired_exact_formula_is_not_uniquely_identified": true,
+  "protocol": "h1a_e1_composition_identifiability_audit_v1",
+  "protocol_sha256": "84ec03f03c427ba04bdee1a7216fd5f207fd1b2fc34bbd3b1da71def6d5b27e1",
+  "splits": {
+    "test": {
+      "contexts": {
+        "anonymous_prototype_audit_oracle": {
+          "ambiguous_context_fraction": 0.6203904555314533,
+          "ambiguous_sample_fraction": 0.9944312796208531,
+          "bayes_exact_composition_accuracy": 0.016454383886255926,
+          "columns": [
+            "prototype_key"
+          ],
+          "conditional_entropy_nats": 7.547067422842137,
+          "contexts": 922,
+          "maximum_distinct_compositions": 17589,
+          "mean_distinct_compositions_in_ambiguous_context": 115.91258741258741,
+          "repeated_context_sample_fraction": 0.9951273696682464
+        },
+        "count_partition_oracle": {
+          "ambiguous_context_fraction": 0.8095238095238095,
+          "ambiguous_sample_fraction": 0.9998074644549763,
+          "bayes_exact_composition_accuracy": 0.0033767772511848343,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry"
+          ],
+          "conditional_entropy_nats": 9.074298329565602,
+          "contexts": 63,
+          "maximum_distinct_compositions": 35335,
+          "mean_distinct_compositions_in_ambiguous_context": 1191.9607843137255,
+          "repeated_context_sample_fraction": 0.9998370853080568
+        },
+        "count_partition_space_group_oracle": {
+          "ambiguous_context_fraction": 0.6757575757575758,
+          "ambiguous_sample_fraction": 0.9965343601895734,
+          "bayes_exact_composition_accuracy": 0.012662914691943129,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 7.646656289663797,
+          "contexts": 660,
+          "maximum_distinct_compositions": 17589,
+          "mean_distinct_compositions_in_ambiguous_context": 148.46860986547085,
+          "repeated_context_sample_fraction": 0.9970527251184834
+        },
+        "matcher_envelope_audit_oracle": {
+          "ambiguous_context_fraction": 0.8095238095238095,
+          "ambiguous_sample_fraction": 0.9998074644549763,
+          "bayes_exact_composition_accuracy": 0.0033767772511848343,
+          "columns": [
+            "matcher_envelope_key"
+          ],
+          "conditional_entropy_nats": 9.074298329565602,
+          "contexts": 63,
+          "maximum_distinct_compositions": 35335,
+          "mean_distinct_compositions_in_ambiguous_context": 1191.9607843137255,
+          "repeated_context_sample_fraction": 0.9998370853080568
+        },
+        "node_count": {
+          "ambiguous_context_fraction": 1.0,
+          "ambiguous_sample_fraction": 1.0,
+          "bayes_exact_composition_accuracy": 0.002058649289099526,
+          "columns": [
+            "node_count"
+          ],
+          "conditional_entropy_nats": 9.176284987816787,
+          "contexts": 17,
+          "maximum_distinct_compositions": 35335,
+          "mean_distinct_compositions_in_ambiguous_context": 3576.5882352941176,
+          "repeated_context_sample_fraction": 1.0
+        },
+        "node_count_space_group": {
+          "ambiguous_context_fraction": 0.7352415026833632,
+          "ambiguous_sample_fraction": 0.9975859004739337,
+          "bayes_exact_composition_accuracy": 0.011033767772511848,
+          "columns": [
+            "node_count",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 7.664722657848177,
+          "contexts": 559,
+          "maximum_distinct_compositions": 17589,
+          "mean_distinct_compositions_in_ambiguous_context": 161.27250608272507,
+          "repeated_context_sample_fraction": 0.9979561611374408
+        },
+        "node_count_space_group_sites": {
+          "ambiguous_context_fraction": 0.7352415026833632,
+          "ambiguous_sample_fraction": 0.9975859004739337,
+          "bayes_exact_composition_accuracy": 0.011033767772511848,
+          "columns": [
+            "node_count",
+            "space_group_number",
+            "primitive_sites"
+          ],
+          "conditional_entropy_nats": 7.664722657848177,
+          "contexts": 559,
+          "maximum_distinct_compositions": 17589,
+          "mean_distinct_compositions_in_ambiguous_context": 161.27250608272507,
+          "repeated_context_sample_fraction": 0.9979561611374408
+        }
+      },
+      "exact_compositions": 60802,
+      "graphs": 67520,
+      "marginal_composition_entropy_nats": 10.93485564335373
+    },
+    "train": {
+      "contexts": {
+        "anonymous_prototype_audit_oracle": {
+          "ambiguous_context_fraction": 0.6106739651043448,
+          "ambiguous_sample_fraction": 0.9955772691256729,
+          "bayes_exact_composition_accuracy": 0.012942365651913123,
+          "columns": [
+            "prototype_key"
+          ],
+          "conditional_entropy_nats": 7.468298228043046,
+          "contexts": 5846,
+          "maximum_distinct_compositions": 22898,
+          "mean_distinct_compositions_in_ambiguous_context": 149.00588235294117,
+          "repeated_context_sample_fraction": 0.9959586347849912
+        },
+        "count_partition_oracle": {
+          "ambiguous_context_fraction": 0.7923497267759563,
+          "ambiguous_sample_fraction": 0.999766737509349,
+          "bayes_exact_composition_accuracy": 0.003010196903162743,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry"
+          ],
+          "conditional_entropy_nats": 8.898818569976102,
+          "contexts": 549,
+          "maximum_distinct_compositions": 33794,
+          "mean_distinct_compositions_in_ambiguous_context": 1061.558620689655,
+          "repeated_context_sample_fraction": 0.9998074658807325
+        },
+        "count_partition_space_group_oracle": {
+          "ambiguous_context_fraction": 0.6813024173655648,
+          "ambiguous_sample_fraction": 0.997465584526181,
+          "bayes_exact_composition_accuracy": 0.009637813701024133,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 7.662351609907166,
+          "contexts": 4054,
+          "maximum_distinct_compositions": 33176,
+          "mean_distinct_compositions_in_ambiguous_context": 189.67197682838523,
+          "repeated_context_sample_fraction": 0.9977229137817404
+        },
+        "matcher_envelope_audit_oracle": {
+          "ambiguous_context_fraction": 0.7923497267759563,
+          "ambiguous_sample_fraction": 0.999766737509349,
+          "bayes_exact_composition_accuracy": 0.003010196903162743,
+          "columns": [
+            "matcher_envelope_key"
+          ],
+          "conditional_entropy_nats": 8.898818569976102,
+          "contexts": 549,
+          "maximum_distinct_compositions": 33794,
+          "mean_distinct_compositions_in_ambiguous_context": 1061.558620689655,
+          "repeated_context_sample_fraction": 0.9998074658807325
+        },
+        "node_count": {
+          "ambiguous_context_fraction": 1.0,
+          "ambiguous_sample_fraction": 1.0,
+          "bayes_exact_composition_accuracy": 0.0005091046422938219,
+          "columns": [
+            "node_count"
+          ],
+          "conditional_entropy_nats": 10.514681670012381,
+          "contexts": 20,
+          "maximum_distinct_compositions": 84206,
+          "mean_distinct_compositions_in_ambiguous_context": 23094.6,
+          "repeated_context_sample_fraction": 1.0
+        },
+        "node_count_space_group": {
+          "ambiguous_context_fraction": 0.8825910931174089,
+          "ambiguous_sample_fraction": 0.9997223065587488,
+          "bayes_exact_composition_accuracy": 0.003465614146814671,
+          "columns": [
+            "node_count",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 8.194715262356892,
+          "contexts": 1235,
+          "maximum_distinct_compositions": 39196,
+          "mean_distinct_compositions_in_ambiguous_context": 481.6706422018349,
+          "repeated_context_sample_fraction": 0.9997408194548323
+        },
+        "node_count_space_group_sites": {
+          "ambiguous_context_fraction": 0.8825910931174089,
+          "ambiguous_sample_fraction": 0.9997223065587488,
+          "bayes_exact_composition_accuracy": 0.003465614146814671,
+          "columns": [
+            "node_count",
+            "space_group_number",
+            "primitive_sites"
+          ],
+          "conditional_entropy_nats": 8.194715262356892,
+          "contexts": 1235,
+          "maximum_distinct_compositions": 39196,
+          "mean_distinct_compositions_in_ambiguous_context": 481.6706422018349,
+          "repeated_context_sample_fraction": 0.9997408194548323
+        }
+      },
+      "exact_compositions": 461892,
+      "graphs": 540164,
+      "marginal_composition_entropy_nats": 12.938495095642875
+    },
+    "val": {
+      "contexts": {
+        "anonymous_prototype_audit_oracle": {
+          "ambiguous_context_fraction": 0.6445497630331753,
+          "ambiguous_sample_fraction": 0.9964899289099526,
+          "bayes_exact_composition_accuracy": 0.011996445497630332,
+          "columns": [
+            "prototype_key"
+          ],
+          "conditional_entropy_nats": 7.087781594646297,
+          "contexts": 633,
+          "maximum_distinct_compositions": 6229,
+          "mean_distinct_compositions_in_ambiguous_context": 160.97303921568627,
+          "repeated_context_sample_fraction": 0.9968453791469194
+        },
+        "count_partition_oracle": {
+          "ambiguous_context_fraction": 0.78125,
+          "ambiguous_sample_fraction": 0.9997482227488151,
+          "bayes_exact_composition_accuracy": 0.002917654028436019,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry"
+          ],
+          "conditional_entropy_nats": 8.564481381180807,
+          "contexts": 64,
+          "maximum_distinct_compositions": 10977,
+          "mean_distinct_compositions_in_ambiguous_context": 1129.82,
+          "repeated_context_sample_fraction": 0.9998222748815165
+        },
+        "count_partition_space_group_oracle": {
+          "ambiguous_context_fraction": 0.6853448275862069,
+          "ambiguous_sample_fraction": 0.9977340047393365,
+          "bayes_exact_composition_accuracy": 0.009434241706161138,
+          "columns": [
+            "node_count",
+            "anonymous_stoichiometry",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 7.204658939244395,
+          "contexts": 464,
+          "maximum_distinct_compositions": 6229,
+          "mean_distinct_compositions_in_ambiguous_context": 205.94025157232704,
+          "repeated_context_sample_fraction": 0.9979413507109005
+        },
+        "matcher_envelope_audit_oracle": {
+          "ambiguous_context_fraction": 0.78125,
+          "ambiguous_sample_fraction": 0.9997482227488151,
+          "bayes_exact_composition_accuracy": 0.002917654028436019,
+          "columns": [
+            "matcher_envelope_key"
+          ],
+          "conditional_entropy_nats": 8.564481381180807,
+          "contexts": 64,
+          "maximum_distinct_compositions": 10977,
+          "mean_distinct_compositions_in_ambiguous_context": 1129.82,
+          "repeated_context_sample_fraction": 0.9998222748815165
+        },
+        "node_count": {
+          "ambiguous_context_fraction": 1.0,
+          "ambiguous_sample_fraction": 1.0,
+          "bayes_exact_composition_accuracy": 0.0016291469194312795,
+          "columns": [
+            "node_count"
+          ],
+          "conditional_entropy_nats": 8.740668306202531,
+          "contexts": 16,
+          "maximum_distinct_compositions": 10977,
+          "mean_distinct_compositions_in_ambiguous_context": 3531.5625,
+          "repeated_context_sample_fraction": 1.0
+        },
+        "node_count_space_group": {
+          "ambiguous_context_fraction": 0.7670157068062827,
+          "ambiguous_sample_fraction": 0.9986226303317536,
+          "bayes_exact_composition_accuracy": 0.008086492890995261,
+          "columns": [
+            "node_count",
+            "space_group_number"
+          ],
+          "conditional_entropy_nats": 7.216909981652425,
+          "contexts": 382,
+          "maximum_distinct_compositions": 6229,
+          "mean_distinct_compositions_in_ambiguous_context": 223.7064846416382,
+          "repeated_context_sample_fraction": 0.9987411137440758
+        },
+        "node_count_space_group_sites": {
+          "ambiguous_context_fraction": 0.7670157068062827,
+          "ambiguous_sample_fraction": 0.9986226303317536,
+          "bayes_exact_composition_accuracy": 0.008086492890995261,
+          "columns": [
+            "node_count",
+            "space_group_number",
+            "primitive_sites"
+          ],
+          "conditional_entropy_nats": 7.216909981652425,
+          "contexts": 382,
+          "maximum_distinct_compositions": 6229,
+          "mean_distinct_compositions_in_ambiguous_context": 223.7064846416382,
+          "repeated_context_sample_fraction": 0.9987411137440758
+        }
+      },
+      "exact_compositions": 56505,
+      "graphs": 67520,
+      "marginal_composition_entropy_nats": 10.81947152508867
+    }
+  }
+}

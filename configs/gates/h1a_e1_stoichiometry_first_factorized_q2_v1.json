@@ -1,0 +1,44 @@
+{
+  "protocol": "h1a_e1_stoichiometry_first_factorized_q2_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "no-training qualification of the factorized partition encoder and exact stoichiometry-first composition law",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "calibration_audit_sha256": "8cdd79df230ff28fb67937634008f55aa48a57ec7b10aae6f8fa6590ac1bb762"
+  },
+  "model": {
+    "context_dim": 8,
+    "hidden_dim": 256,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118,
+    "partition_smoothing": 0.5,
+    "partition_representation": "shared count-position encoder plus current-slot query; no per-partition embedding table"
+  },
+  "evaluation": {
+    "seed": 5705,
+    "draws": 50000,
+    "batch_size": 256,
+    "latency_repeats": 30,
+    "latency_warmup": 5
+  },
+  "acceptance": {
+    "catalogue_partitions": 1840,
+    "partition_prior_normalization_error_max": 1e-12,
+    "exhaustive_small_law_normalization_error_max": 2e-12,
+    "sample_partition_tv_max": 0.02,
+    "sample_log_probability_error_max": 2e-5,
+    "invalid_samples": 0,
+    "fp32_fp64_log_probability_error_max": 5e-5,
+    "bf16_fp32_mean_log_probability_error_max": 0.02,
+    "teacher_forced_latency_ms_max": 10.0,
+    "sampling_latency_ms_max": 25.0,
+    "incremental_cuda_memory_mib_max": 128.0,
+    "finite_nonzero_gradients": true
+  },
+  "decision_rule": {
+    "pass": "authorize one seed-5705 exact-one-pass IID-calibration composition-only screen with the factorized partition encoder",
+    "fail": "repair only the factorized partition/species probability law or vectorized implementation",
+    "boundary": "Q2 cannot authorize site assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "protocol": "h1a_e1_composition_identifiability_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "read-only audit of whether species-free E1 context uniquely identifies the paired composition",
+  "source_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "source_assignment_sha256": "aa3ac522da6fd8f6d2548915d6db9b1dc628eef371cd36dee62ca3bc143e7ab2",
+  "formula_verification_sample_size_per_split": 4096,
+  "formula_verification_seed": 5711,
+  "contexts": {
+    "node_count": ["node_count"],
+    "node_count_space_group": ["node_count", "space_group_number"],
+    "node_count_space_group_sites": ["node_count", "space_group_number", "primitive_sites"],
+    "count_partition_oracle": ["node_count", "anonymous_stoichiometry"],
+    "count_partition_space_group_oracle": ["node_count", "anonymous_stoichiometry", "space_group_number"],
+    "anonymous_prototype_audit_oracle": ["prototype_key"],
+    "matcher_envelope_audit_oracle": ["matcher_envelope_key"]
+  },
+  "decision_rule": {
+    "anonymous_geometry_ambiguous_sample_fraction_min": 0.01,
+    "interpretation": "if either anonymous prototype or matcher-envelope contexts map at least one percent of samples to multiple exact compositions, paired exact-formula retrieval is not a valid sole free-generation criterion; explicit stochastic composition remains required in either outcome"
+  },
+  "leakage_boundary": "anonymous_stoichiometry, space_group, prototype and matcher keys are audit metadata only and must never enter the denoiser or composition generator",
+  "boundary": "No optimizer, model forward, tensor condition, L1/M1, oracle model, relaxation, DFT or DFPT is authorized by this audit."
+}

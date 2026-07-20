@@ -1,0 +1,70 @@
+{
+  "attribution": "initial_ratio_criterion_is_too_indirect_for_species_law_calibration",
+  "boundary": "This audit takes zero optimizer steps and cannot authorize assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "checkpoints": {
+    "final_sha256": "fd1f4315342f2110b115a2b0a5e0f540a09d46b43e3caa50350ccc5970b3eb27",
+    "initial_sha256": "a97374b468ef097016e379081676b761e312066107a76b0a640f8d5ddcd232fc"
+  },
+  "decision": "Do not retroactively pass E1. Replace the random-initialization ratio only in a future versioned Gate with absolute conditional NLL and co-occurrence calibration; assignment remains blocked until that Gate is preregistered and passed.",
+  "diagnostic_checks": {
+    "conditional_nll": true,
+    "frequent_pair_recall": true,
+    "pair_jsd": true,
+    "pair_rmse": true
+  },
+  "final_fixed_partition_cooccurrence": {
+    "covariance_cosine": 0.937874659434903,
+    "covariance_relative_frobenius_error": 0.3514073453961389,
+    "element_count_jsd": 0.001281084532023686,
+    "element_presence_jsd": 0.0011048780114095527,
+    "frequent_pair_recall": 1.0,
+    "frequent_pairs": 1423,
+    "pair_distribution_jsd": 0.010460791130223598,
+    "pair_probability_mae": 0.0002993673973522796,
+    "pair_probability_rmse": 0.0004510768533934405
+  },
+  "iid_split": {
+    "calibration_graphs": 27009,
+    "calibration_index_sha256": "34c5e97886e49a863ee647d278549fb2b77a68329037146fa818d421394fa079",
+    "fit_graphs": 513155,
+    "fit_index_sha256": "d1f41b57c622ea99572154fcd6d5fbd27067d700106c2bae610abedac042cfcd"
+  },
+  "initial_fixed_partition_cooccurrence": {
+    "covariance_cosine": 0.301128110842709,
+    "covariance_relative_frobenius_error": 1.036256310272192,
+    "element_count_jsd": 0.07421909168747584,
+    "element_presence_jsd": 0.06012383726820643,
+    "frequent_pair_recall": 1.0,
+    "frequent_pairs": 1423,
+    "pair_distribution_jsd": 0.15772229298700044,
+    "pair_probability_mae": 0.001334110202382182,
+    "pair_probability_rmse": 0.0018861060454052417
+  },
+  "nll_attribution": {
+    "decisions": 91008,
+    "empirical_count_slot_nll_per_decision": 3.639940700907717,
+    "empirical_headroom_fraction_captured": 1.7411078253692034,
+    "final_initial_ratio": 0.7508852481842041,
+    "final_minus_empirical": -0.38385379210275317,
+    "final_minus_uniform": -0.9017997359490831,
+    "final_nll_per_decision": 3.256087064743042,
+    "final_nll_per_graph": 10.971527099609375,
+    "initial_minus_uniform": 0.1784442329870652,
+    "initial_nll_per_decision": 4.336330890655518,
+    "initial_nll_per_graph": 14.611455917358398,
+    "mean_species_per_graph": 3.3695434855048316,
+    "uniform_nll_per_decision": 4.157886644754048,
+    "uniform_to_empirical_headroom": 0.51794594384633,
+    "uniform_to_final_gain": 0.9017997359490831
+  },
+  "protocol": "h1a_e1_species_law_attribution_v1",
+  "protocol_sha256": "c1c236fec8c0f9fda401463c9dcba34eebadd60e4aec35cd01c4844c13fe5667",
+  "runtime": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4060 Ti",
+    "optimizer_steps": 0,
+    "torch": "2.5.1+cu124"
+  },
+  "source_result_sha256": "384f93d2515ffb3a72f563cdb491183fed4b4c1fc33bd6a6ff4a28aa34c5da97"
+}

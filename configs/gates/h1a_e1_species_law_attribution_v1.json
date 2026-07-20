@@ -1,0 +1,52 @@
+{
+  "protocol": "h1a_e1_species_law_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training attribution of the frozen factorized stoichiometry-first IID NLL miss",
+  "source_result": "reports/h1a_e1_stoichiometry_first_factorized_iid_v1/result.json",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "source_result_sha256": "384f93d2515ffb3a72f563cdb491183fed4b4c1fc33bd6a6ff4a28aa34c5da97",
+    "initial_checkpoint_sha256": "a97374b468ef097016e379081676b761e312066107a76b0a640f8d5ddcd232fc",
+    "final_checkpoint_sha256": "fd1f4315342f2110b115a2b0a5e0f540a09d46b43e3caa50350ccc5970b3eb27",
+    "fit_index_sha256": "d1f41b57c622ea99572154fcd6d5fbd27067d700106c2bae610abedac042cfcd",
+    "calibration_index_sha256": "34c5e97886e49a863ee647d278549fb2b77a68329037146fa818d421394fa079"
+  },
+  "checkpoints": {
+    "initial": "h1a_e1_stoichiometry_first_factorized_iid_v1/seed_5705/step_000000.pt",
+    "final": "h1a_e1_stoichiometry_first_factorized_iid_v1/seed_5705/step_002005.pt"
+  },
+  "data": {
+    "graphs": 540164,
+    "iid_fit_graphs": 513155,
+    "iid_calibration_graphs": 27009,
+    "split_seed": 6605,
+    "role": "reproduce the exact train-internal 95/5 IID split; no validation row is used"
+  },
+  "model": {
+    "context_dim": 1,
+    "hidden_dim": 256,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118
+  },
+  "evaluation": {
+    "batch_size": 2048,
+    "sampling_seed": 13705,
+    "empirical_smoothing": 0.5,
+    "empirical_baseline": "train-fit token frequency conditioned on node count, count-rank slot and current stoichiometric count, renormalized over the exact history-dependent legal support",
+    "fixed_partition_sampling": true,
+    "frequent_pair_graphs": 25
+  },
+  "diagnostic_thresholds": {
+    "final_minus_empirical_nll_per_decision_max": 0.1,
+    "pair_distribution_jsd_max": 0.05,
+    "pair_probability_rmse_max": 0.02,
+    "frequent_pair_recall_min": 0.95
+  },
+  "decision_rule": {
+    "initial_ratio_criterion_is_too_indirect_for_species_law_calibration": "Do not retroactively pass E1. Replace the random-initialization ratio only in a future versioned Gate with absolute conditional NLL and co-occurrence calibration; assignment remains blocked until that Gate is preregistered and passed.",
+    "conditional_species_law_underfit": "The fixed checkpoint underfits the conditional species law; stop without adding steps or capacity and design one separately justified species-law mechanism before assignment.",
+    "mixed_nll_and_cooccurrence_evidence": "Evidence is mixed; retain the E1 failure and do not alter architecture until the failing conditional strata are identified from the frozen group table.",
+    "boundary": "This audit takes zero optimizer steps and cannot authorize assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

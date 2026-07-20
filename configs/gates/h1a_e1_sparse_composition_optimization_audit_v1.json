@@ -1,0 +1,13 @@
+{
+  "protocol": "h1a_e1_sparse_composition_optimization_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training attribution of sparse composition failure to raw-vs-EMA state",
+  "source_result_sha256": "8ddf9538f82bf7b9cedac23018b45733bf5c5248b76f43a0303a2ab97ec5efa5",
+  "source_checkpoint_sha256": "731a32e9ff1855f9753be209b4e45b8d21dfe8648928762046f9c8c8c8594a30",
+  "evaluation_batch_size": 1024,
+  "sampling_seed": 9705,
+  "minimum_reference_atoms_for_element_recall": 100,
+  "ema_lag_relative_nll_improvement_min": 0.05,
+  "reuse_parent_acceptance": true,
+  "boundary": "No optimizer step, assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT is authorized."
+}

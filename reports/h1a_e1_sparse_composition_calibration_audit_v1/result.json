@@ -1,0 +1,924 @@
+{
+  "boundary": "This audit takes no optimizer step and cannot authorize assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "count_generalization_gap_material": true,
+  "decision": "formula_disjoint_split_shift_materially_contributes_to_partition_failure",
+  "empirical_train_to_validation": {
+    "partition": {
+      "by_node_count": [
+        {
+          "first_graphs": 75,
+          "node_count": 3,
+          "second_graphs": 9620,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 28821,
+          "node_count": 6,
+          "second_graphs": 18296,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 17363,
+          "node_count": 7,
+          "second_graphs": 928,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 21679,
+          "node_count": 9,
+          "second_graphs": 9290,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 82479,
+          "node_count": 10,
+          "second_graphs": 1138,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 22914,
+          "node_count": 11,
+          "second_graphs": 65,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 87740,
+          "node_count": 12,
+          "second_graphs": 5987,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 3351,
+          "node_count": 13,
+          "second_graphs": 605,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 11957,
+          "node_count": 14,
+          "second_graphs": 6784,
+          "tv": 0.9999999999999999
+        },
+        {
+          "first_graphs": 9911,
+          "node_count": 15,
+          "second_graphs": 3645,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 24849,
+          "node_count": 16,
+          "second_graphs": 71,
+          "tv": 0.9999999999999999
+        },
+        {
+          "first_graphs": 11957,
+          "node_count": 18,
+          "second_graphs": 8893,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 2627,
+          "node_count": 19,
+          "second_graphs": 2057,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 28898,
+          "node_count": 20,
+          "second_graphs": 119,
+          "tv": 1.0
+        }
+      ],
+      "excluded_validation_graphs": 22,
+      "included_validation_graphs": 67498,
+      "weighted_tv": 1.0
+    },
+    "partition_shift_material": true,
+    "support": {
+      "by_node_count": [
+        {
+          "first_graphs": 75,
+          "node_count": 3,
+          "second_graphs": 9620,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 28821,
+          "node_count": 6,
+          "second_graphs": 18296,
+          "tv": 0.3338884840914611
+        },
+        {
+          "first_graphs": 17363,
+          "node_count": 7,
+          "second_graphs": 928,
+          "tv": 0.6450498185797384
+        },
+        {
+          "first_graphs": 21679,
+          "node_count": 9,
+          "second_graphs": 9290,
+          "tv": 0.3619592080176006
+        },
+        {
+          "first_graphs": 82479,
+          "node_count": 10,
+          "second_graphs": 1138,
+          "tv": 0.5405323602529193
+        },
+        {
+          "first_graphs": 22914,
+          "node_count": 11,
+          "second_graphs": 65,
+          "tv": 0.7059003229466702
+        },
+        {
+          "first_graphs": 87740,
+          "node_count": 12,
+          "second_graphs": 5987,
+          "tv": 0.735659440527038
+        },
+        {
+          "first_graphs": 3351,
+          "node_count": 13,
+          "second_graphs": 605,
+          "tv": 0.10962115663019059
+        },
+        {
+          "first_graphs": 11957,
+          "node_count": 14,
+          "second_graphs": 6784,
+          "tv": 0.6344204384697683
+        },
+        {
+          "first_graphs": 9911,
+          "node_count": 15,
+          "second_graphs": 3645,
+          "tv": 0.21237103499610177
+        },
+        {
+          "first_graphs": 24849,
+          "node_count": 16,
+          "second_graphs": 71,
+          "tv": 0.6496840919151676
+        },
+        {
+          "first_graphs": 11957,
+          "node_count": 18,
+          "second_graphs": 8893,
+          "tv": 0.7856203703662777
+        },
+        {
+          "first_graphs": 2627,
+          "node_count": 19,
+          "second_graphs": 2057,
+          "tv": 0.14605979304329833
+        },
+        {
+          "first_graphs": 28898,
+          "node_count": 20,
+          "second_graphs": 119,
+          "tv": 0.6026755362675211
+        }
+      ],
+      "excluded_validation_graphs": 22,
+      "included_validation_graphs": 67498,
+      "weighted_tv": 0.5526766390212712
+    }
+  },
+  "model_sample": {
+    "to_train_partition": {
+      "by_node_count": [
+        {
+          "first_graphs": 9620,
+          "node_count": 3,
+          "second_graphs": 75,
+          "tv": 0.9811850311850312
+        },
+        {
+          "first_graphs": 18296,
+          "node_count": 6,
+          "second_graphs": 28821,
+          "tv": 0.1308690803799949
+        },
+        {
+          "first_graphs": 928,
+          "node_count": 7,
+          "second_graphs": 17363,
+          "tv": 0.18585479279164768
+        },
+        {
+          "first_graphs": 9290,
+          "node_count": 9,
+          "second_graphs": 21679,
+          "tv": 0.2648860358084153
+        },
+        {
+          "first_graphs": 1138,
+          "node_count": 10,
+          "second_graphs": 82479,
+          "tv": 0.15051231765849074
+        },
+        {
+          "first_graphs": 65,
+          "node_count": 11,
+          "second_graphs": 22914,
+          "tv": 0.35233481714235837
+        },
+        {
+          "first_graphs": 5987,
+          "node_count": 12,
+          "second_graphs": 87740,
+          "tv": 0.12991776993911547
+        },
+        {
+          "first_graphs": 605,
+          "node_count": 13,
+          "second_graphs": 3351,
+          "tv": 0.4272300608428222
+        },
+        {
+          "first_graphs": 6784,
+          "node_count": 14,
+          "second_graphs": 11957,
+          "tv": 0.2906498137587361
+        },
+        {
+          "first_graphs": 3645,
+          "node_count": 15,
+          "second_graphs": 9911,
+          "tv": 0.317373651562002
+        },
+        {
+          "first_graphs": 71,
+          "node_count": 16,
+          "second_graphs": 24849,
+          "tv": 0.3276794656627438
+        },
+        {
+          "first_graphs": 8893,
+          "node_count": 18,
+          "second_graphs": 11957,
+          "tv": 0.2880524755293484
+        },
+        {
+          "first_graphs": 2057,
+          "node_count": 19,
+          "second_graphs": 2627,
+          "tv": 0.5012745804340291
+        },
+        {
+          "first_graphs": 119,
+          "node_count": 20,
+          "second_graphs": 28898,
+          "tv": 0.23342431304309388
+        }
+      ],
+      "excluded_validation_graphs": 185543,
+      "included_validation_graphs": 354621,
+      "weighted_tv": 0.2041696656261794
+    },
+    "to_validation_partition": {
+      "by_node_count": [
+        {
+          "first_graphs": 9620,
+          "node_count": 3,
+          "second_graphs": 9620,
+          "tv": 0.15457380457380457
+        },
+        {
+          "first_graphs": 18296,
+          "node_count": 6,
+          "second_graphs": 18296,
+          "tv": 0.9887407083515523
+        },
+        {
+          "first_graphs": 928,
+          "node_count": 7,
+          "second_graphs": 928,
+          "tv": 0.9568965517241379
+        },
+        {
+          "first_graphs": 9290,
+          "node_count": 9,
+          "second_graphs": 9290,
+          "tv": 0.9340150699677073
+        },
+        {
+          "first_graphs": 1138,
+          "node_count": 10,
+          "second_graphs": 1138,
+          "tv": 0.9956063268892793
+        },
+        {
+          "first_graphs": 65,
+          "node_count": 11,
+          "second_graphs": 65,
+          "tv": 1.0
+        },
+        {
+          "first_graphs": 5987,
+          "node_count": 12,
+          "second_graphs": 5987,
+          "tv": 0.9946550860197094
+        },
+        {
+          "first_graphs": 605,
+          "node_count": 13,
+          "second_graphs": 605,
+          "tv": 0.8942148760330577
+        },
+        {
+          "first_graphs": 6784,
+          "node_count": 14,
+          "second_graphs": 6784,
+          "tv": 0.9376474056603775
+        },
+        {
+          "first_graphs": 3645,
+          "node_count": 15,
+          "second_graphs": 3645,
+          "tv": 0.9805212620027435
+        },
+        {
+          "first_graphs": 71,
+          "node_count": 16,
+          "second_graphs": 71,
+          "tv": 0.9999999999999999
+        },
+        {
+          "first_graphs": 8893,
+          "node_count": 18,
+          "second_graphs": 8893,
+          "tv": 0.9732373777128079
+        },
+        {
+          "first_graphs": 2057,
+          "node_count": 19,
+          "second_graphs": 2057,
+          "tv": 0.9654837141468158
+        },
+        {
+          "first_graphs": 119,
+          "node_count": 20,
+          "second_graphs": 119,
+          "tv": 0.9411764705882353
+        }
+      ],
+      "excluded_validation_graphs": 22,
+      "included_validation_graphs": 67498,
+      "weighted_tv": 0.8532845417642004
+    },
+    "to_validation_support": {
+      "by_node_count": [
+        {
+          "first_graphs": 9620,
+          "node_count": 3,
+          "second_graphs": 9620,
+          "tv": 0.15457380457380457
+        },
+        {
+          "first_graphs": 18296,
+          "node_count": 6,
+          "second_graphs": 18296,
+          "tv": 0.37456274595540007
+        },
+        {
+          "first_graphs": 928,
+          "node_count": 7,
+          "second_graphs": 928,
+          "tv": 0.6120689655172413
+        },
+        {
+          "first_graphs": 9290,
+          "node_count": 9,
+          "second_graphs": 9290,
+          "tv": 0.34424111948331537
+        },
+        {
+          "first_graphs": 1138,
+          "node_count": 10,
+          "second_graphs": 1138,
+          "tv": 0.5149384885764499
+        },
+        {
+          "first_graphs": 65,
+          "node_count": 11,
+          "second_graphs": 65,
+          "tv": 0.7846153846153846
+        },
+        {
+          "first_graphs": 5987,
+          "node_count": 12,
+          "second_graphs": 5987,
+          "tv": 0.7065308167696676
+        },
+        {
+          "first_graphs": 605,
+          "node_count": 13,
+          "second_graphs": 605,
+          "tv": 0.09421487603305786
+        },
+        {
+          "first_graphs": 6784,
+          "node_count": 14,
+          "second_graphs": 6784,
+          "tv": 0.6282429245283019
+        },
+        {
+          "first_graphs": 3645,
+          "node_count": 15,
+          "second_graphs": 3645,
+          "tv": 0.2702331961591221
+        },
+        {
+          "first_graphs": 71,
+          "node_count": 16,
+          "second_graphs": 71,
+          "tv": 0.619718309859155
+        },
+        {
+          "first_graphs": 8893,
+          "node_count": 18,
+          "second_graphs": 8893,
+          "tv": 0.7598110873720905
+        },
+        {
+          "first_graphs": 2057,
+          "node_count": 19,
+          "second_graphs": 2057,
+          "tv": 0.32280019445794844
+        },
+        {
+          "first_graphs": 119,
+          "node_count": 20,
+          "second_graphs": 119,
+          "tv": 0.5882352941176471
+        }
+      ],
+      "excluded_validation_graphs": 22,
+      "included_validation_graphs": 67498,
+      "weighted_tv": 0.4416723458472844
+    },
+    "top_partitions": [
+      {
+        "graphs": 8133,
+        "partition": [
+          1,
+          1,
+          1
+        ],
+        "probability": 0.12045320123434067
+      },
+      {
+        "graphs": 6470,
+        "partition": [
+          3,
+          2,
+          1
+        ],
+        "probability": 0.09582345932722092
+      },
+      {
+        "graphs": 4767,
+        "partition": [
+          4,
+          1,
+          1
+        ],
+        "probability": 0.07060130685567856
+      },
+      {
+        "graphs": 2524,
+        "partition": [
+          2,
+          2,
+          1,
+          1
+        ],
+        "probability": 0.03738151490688324
+      },
+      {
+        "graphs": 2390,
+        "partition": [
+          12,
+          4,
+          2
+        ],
+        "probability": 0.035396918654441833
+      },
+      {
+        "graphs": 2207,
+        "partition": [
+          6,
+          2,
+          1
+        ],
+        "probability": 0.03268660977482796
+      },
+      {
+        "graphs": 2000,
+        "partition": [
+          8,
+          4,
+          2
+        ],
+        "probability": 0.029620852321386337
+      },
+      {
+        "graphs": 1893,
+        "partition": [
+          8,
+          3,
+          3,
+          1
+        ],
+        "probability": 0.02803613804280758
+      },
+      {
+        "graphs": 1761,
+        "partition": [
+          5,
+          1
+        ],
+        "probability": 0.026081161573529243
+      },
+      {
+        "graphs": 1749,
+        "partition": [
+          6,
+          3,
+          2,
+          1
+        ],
+        "probability": 0.025903435423970222
+      },
+      {
+        "graphs": 1540,
+        "partition": [
+          4,
+          3,
+          2
+        ],
+        "probability": 0.022808056324720383
+      },
+      {
+        "graphs": 1306,
+        "partition": [
+          2,
+          1
+        ],
+        "probability": 0.019342416897416115
+      },
+      {
+        "graphs": 1186,
+        "partition": [
+          4,
+          2,
+          2,
+          1
+        ],
+        "probability": 0.0175651665776968
+      },
+      {
+        "graphs": 1091,
+        "partition": [
+          3,
+          1,
+          1,
+          1
+        ],
+        "probability": 0.016158174723386765
+      },
+      {
+        "graphs": 1014,
+        "partition": [
+          10,
+          6,
+          2
+        ],
+        "probability": 0.01501777209341526
+      }
+    ]
+  },
+  "nll": {
+    "train": {
+      "mean_counts_nll": 2.50316832352145,
+      "mean_species_nll": 10.51542951538792,
+      "mean_support_nll": 0.7819382284372633,
+      "mean_total_nll": 13.800535907121494
+    },
+    "validation": {
+      "mean_counts_nll": 3.7711038453884034,
+      "mean_species_nll": 11.387876335252518,
+      "mean_support_nll": 0.8025541929272114,
+      "mean_total_nll": 15.961534256053762
+    },
+    "validation_minus_train": {
+      "mean_counts_nll": 1.2679355218669532,
+      "mean_species_nll": 0.8724468198645976,
+      "mean_support_nll": 0.02061596448994807,
+      "mean_total_nll": 2.1609983489322673
+    }
+  },
+  "partition_encoding": {
+    "injective": true,
+    "integer_partitions": 1840,
+    "maximum_key": 184397160,
+    "unique_keys": 1840
+  },
+  "protocol": "h1a_e1_sparse_composition_calibration_audit_v1",
+  "protocol_sha256": "0ef0ef73c3a27005084cff1f624ca11b2aab68ceab428359f3a83541d8f34c26",
+  "reference_top_partitions": {
+    "train": [
+      {
+        "graphs": 66620,
+        "partition": [
+          2,
+          1,
+          1
+        ],
+        "probability": 0.1233329102396965
+      },
+      {
+        "graphs": 33867,
+        "partition": [
+          6,
+          3,
+          2,
+          1
+        ],
+        "probability": 0.0626976266503334
+      },
+      {
+        "graphs": 33629,
+        "partition": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "probability": 0.06225701794028282
+      },
+      {
+        "graphs": 20405,
+        "partition": [
+          6,
+          2,
+          1,
+          1
+        ],
+        "probability": 0.037775564938783646
+      },
+      {
+        "graphs": 18855,
+        "partition": [
+          4,
+          3,
+          2,
+          1
+        ],
+        "probability": 0.034906066954135895
+      },
+      {
+        "graphs": 15408,
+        "partition": [
+          4,
+          2,
+          2
+        ],
+        "probability": 0.028524670749902725
+      },
+      {
+        "graphs": 15248,
+        "partition": [
+          2,
+          1,
+          1,
+          1
+        ],
+        "probability": 0.028228463605046272
+      },
+      {
+        "graphs": 14143,
+        "partition": [
+          8,
+          2,
+          1,
+          1
+        ],
+        "probability": 0.026182789355516434
+      },
+      {
+        "graphs": 14110,
+        "partition": [
+          4,
+          4,
+          2
+        ],
+        "probability": 0.026121696457266808
+      },
+      {
+        "graphs": 11531,
+        "partition": [
+          8,
+          4,
+          3,
+          1
+        ],
+        "probability": 0.021347220987081528
+      },
+      {
+        "graphs": 11215,
+        "partition": [
+          5,
+          4,
+          1
+        ],
+        "probability": 0.020762212574481964
+      },
+      {
+        "graphs": 11183,
+        "partition": [
+          3,
+          2,
+          1
+        ],
+        "probability": 0.020702971145510674
+      },
+      {
+        "graphs": 10781,
+        "partition": [
+          6,
+          2,
+          2
+        ],
+        "probability": 0.019958753138780594
+      },
+      {
+        "graphs": 10027,
+        "partition": [
+          12,
+          4,
+          2,
+          2
+        ],
+        "probability": 0.018562881276011467
+      },
+      {
+        "graphs": 9544,
+        "partition": [
+          2,
+          2,
+          1
+        ],
+        "probability": 0.01766870729625225
+      }
+    ],
+    "validation": [
+      {
+        "graphs": 18296,
+        "partition": [
+          2,
+          2,
+          2
+        ],
+        "probability": 0.2709715664386749
+      },
+      {
+        "graphs": 9620,
+        "partition": [
+          1,
+          1,
+          1
+        ],
+        "probability": 0.14247630536556244
+      },
+      {
+        "graphs": 8506,
+        "partition": [
+          12,
+          2,
+          2,
+          2
+        ],
+        "probability": 0.12597748637199402
+      },
+      {
+        "graphs": 6288,
+        "partition": [
+          6,
+          1,
+          1,
+          1
+        ],
+        "probability": 0.09312795847654343
+      },
+      {
+        "graphs": 6018,
+        "partition": [
+          8,
+          2,
+          2,
+          2
+        ],
+        "probability": 0.08912914991378784
+      },
+      {
+        "graphs": 5979,
+        "partition": [
+          4,
+          4,
+          4
+        ],
+        "probability": 0.08855154365301132
+      },
+      {
+        "graphs": 3634,
+        "partition": [
+          9,
+          3,
+          2,
+          1
+        ],
+        "probability": 0.05382109060883522
+      },
+      {
+        "graphs": 2998,
+        "partition": [
+          3,
+          3,
+          3
+        ],
+        "probability": 0.044401660561561584
+      },
+      {
+        "graphs": 1996,
+        "partition": [
+          12,
+          6,
+          1
+        ],
+        "probability": 0.029561610892415047
+      },
+      {
+        "graphs": 1135,
+        "partition": [
+          7,
+          2,
+          1
+        ],
+        "probability": 0.01680983416736126
+      },
+      {
+        "graphs": 752,
+        "partition": [
+          4,
+          1,
+          1,
+          1
+        ],
+        "probability": 0.011137440800666809
+      },
+      {
+        "graphs": 705,
+        "partition": [
+          8,
+          5,
+          1
+        ],
+        "probability": 0.010441350750625134
+      },
+      {
+        "graphs": 506,
+        "partition": [
+          10,
+          2,
+          1
+        ],
+        "probability": 0.0074940756894648075
+      },
+      {
+        "graphs": 335,
+        "partition": [
+          6,
+          6,
+          6
+        ],
+        "probability": 0.004961492959409952
+      },
+      {
+        "graphs": 176,
+        "partition": [
+          6,
+          1
+        ],
+        "probability": 0.002606634981930256
+      }
+    ]
+  },
+  "source_checkpoint_sha256": "731a32e9ff1855f9753be209b4e45b8d21dfe8648928762046f9c8c8c8594a30",
+  "source_optimization_audit_sha256": "53863653a2e4223a4624a43d1ffbc1f80b590d7b08a62c61e42fc2a62e166be6",
+  "source_result_sha256": "8ddf9538f82bf7b9cedac23018b45733bf5c5248b76f43a0303a2ab97ec5efa5"
+}

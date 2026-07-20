@@ -40,6 +40,14 @@ from .composition_assignment import (
     count_projected_assignment,
     rounded_graph_composition,
 )
+from .composition_state import (
+    IntegerPartitionCatalogue,
+    SparseCompositionLogProbability,
+    SparseCompositionSample,
+    SparseCompositionState,
+    StoichiometryFirstCompositionModel,
+    fit_integer_partition_log_prior,
+)
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
@@ -96,6 +104,7 @@ __all__ = [
     "GeneratedHybridBatch",
     "HybridCrystalDenoiser",
     "HierarchicalSample",
+    "IntegerPartitionCatalogue",
     "LatticeVolumeShape",
     "ModeCatalog",
     "ModeCatalogEntry",
@@ -114,6 +123,10 @@ __all__ = [
     "ReachableChildCompatibilityRouter",
     "ReachableChildPath",
     "rounded_graph_composition",
+    "SparseCompositionLogProbability",
+    "SparseCompositionSample",
+    "SparseCompositionState",
+    "StoichiometryFirstCompositionModel",
     "SelectedMode",
     "StratifiedCartesianGaugeAtlas",
     "StateAdaptiveCartesianCarrierMixer",
@@ -124,6 +137,7 @@ __all__ = [
     "TerminalSymmetryAudit",
     "audit_terminal_symmetry",
     "detect_cartesian_point_group",
+    "fit_integer_partition_log_prior",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
     "reverse_time_grid",

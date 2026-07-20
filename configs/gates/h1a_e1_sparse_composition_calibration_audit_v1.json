@@ -1,0 +1,21 @@
+{
+  "protocol": "h1a_e1_sparse_composition_calibration_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training attribution of sparse composition count-partition failure",
+  "source_result_sha256": "8ddf9538f82bf7b9cedac23018b45733bf5c5248b76f43a0303a2ab97ec5efa5",
+  "source_optimization_audit_sha256": "53863653a2e4223a4624a43d1ffbc1f80b590d7b08a62c61e42fc2a62e166be6",
+  "source_checkpoint_sha256": "731a32e9ff1855f9753be209b4e45b8d21dfe8648928762046f9c8c8c8594a30",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "model_variant": "ema",
+  "evaluation_batch_size": 2048,
+  "sampling_seed": 11705,
+  "minimum_graphs_per_node_count": 32,
+  "material_train_validation_shift_tv": 0.10,
+  "material_generalization_gap_nll": 0.50,
+  "decision_rule": {
+    "split_shift": "If the empirical train-to-validation conditional partition TV exceeds 0.10, do not attribute the parent failure solely to optimization.",
+    "optimization": "If empirical conditional TV is at most 0.10 but model-to-train conditional TV is large, the finite one-pass optimization or factorization is the primary failure.",
+    "representation": "If partition encoding is injective but count NLL and partition TV fail while support/species improve, replace only the interleaved count factorization with a versioned stoichiometry-first exact partition state.",
+    "boundary": "This audit takes no optimizer step and cannot authorize assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

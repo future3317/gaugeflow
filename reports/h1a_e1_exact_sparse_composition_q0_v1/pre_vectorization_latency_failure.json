@@ -1,0 +1,98 @@
+{
+  "boundary": "Q0 cannot qualify learned composition, E1 assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "checks": {
+    "bf16_fp32": true,
+    "cuda_log_prob_latency": false,
+    "cuda_memory": true,
+    "cuda_sampling_latency": true,
+    "duplicate_free": true,
+    "finite_gradients": true,
+    "formula_reconstruction": true,
+    "fp32_fp64": true,
+    "invalid_samples": true,
+    "normalization": true,
+    "sampling_distribution": true,
+    "sampling_log_probability": true
+  },
+  "cuda": {
+    "batch_graphs": 256,
+    "bf16_fp32_mean_log_probability_error": 0.0026939399540424347,
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4060 Ti",
+    "incremental_peak_memory_mib": 3.970703125,
+    "invalid_samples": 0,
+    "log_prob_latency_ms": 13.5712158203125,
+    "parameters": 542865,
+    "sampling_latency_ms": 15.168416748046875,
+    "torch": "2.5.1+cu124"
+  },
+  "data_audit_sha256": "6f9f2fb78b5b9c28f7c5acf9133b94475cc906e72dd90a2d34bafd16399a81d1",
+  "decision": "stop_before_training_and_repair_exact_sparse_composition_kernel",
+  "exhaustive": {
+    "by_node_count": [
+      {
+        "absolute_error": 0.0,
+        "expected_states": 5,
+        "node_count": 1,
+        "probability_sum": 1.0,
+        "states": 5
+      },
+      {
+        "absolute_error": 0.0,
+        "expected_states": 15,
+        "node_count": 2,
+        "probability_sum": 1.0,
+        "states": 15
+      },
+      {
+        "absolute_error": 0.0,
+        "expected_states": 35,
+        "node_count": 3,
+        "probability_sum": 1.0,
+        "states": 35
+      },
+      {
+        "absolute_error": 4.440892098500626e-16,
+        "expected_states": 65,
+        "node_count": 4,
+        "probability_sum": 1.0000000000000004,
+        "states": 65
+      },
+      {
+        "absolute_error": 1.1102230246251565e-16,
+        "expected_states": 105,
+        "node_count": 5,
+        "probability_sum": 0.9999999999999999,
+        "states": 105
+      },
+      {
+        "absolute_error": 0.0,
+        "expected_states": 155,
+        "node_count": 6,
+        "probability_sum": 1.0,
+        "states": 155
+      }
+    ],
+    "duplicate_free": true,
+    "maximum_normalization_error": 4.440892098500626e-16
+  },
+  "identifiability_audit_sha256": "a2bcaaa52a17be36a034b8a3caabd31e80365615feea7111f193573b7dcbb5a4",
+  "leakage_boundary": "The kernel receives graph context and node count only. Target composition is a teacher-forced label during likelihood evaluation, never a conditioning input.",
+  "numerical": {
+    "finite_gradients": true,
+    "formula_reconstruction_fraction": 1.0,
+    "gradient_norm": 6.699767589569092,
+    "maximum_fp32_fp64_log_probability_error": 9.5367431640625e-07
+  },
+  "protocol": "h1a_e1_exact_sparse_composition_q0_v1",
+  "protocol_sha256": "9a8313af64f01aa00509e5ae54c059646711726604abdce9aa6245f9ecefc026",
+  "qualified": false,
+  "sampling": {
+    "draws": 50000,
+    "exact_states": 65,
+    "invalid_unique_samples": 0,
+    "maximum_log_probability_error": 1.7763568394002505e-15,
+    "sampled_unique_states": 65,
+    "total_variation": 0.012630614182949793
+  }
+}

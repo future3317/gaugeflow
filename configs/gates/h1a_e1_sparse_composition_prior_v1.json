@@ -1,0 +1,60 @@
+{
+  "protocol": "h1a_e1_sparse_composition_prior_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed exact-one-pass qualification of an explicit stochastic composition prior conditioned only on node count",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "identifiability_audit_sha256": "a2bcaaa52a17be36a034b8a3caabd31e80365615feea7111f193573b7dcbb5a4",
+    "exact_kernel_q0_sha256": "f91639b696eba22d8d69d9f16849a8a830cf6c9caaf2631c9597fd72a4151fa7",
+    "q0_qualified": true
+  },
+  "model": {
+    "context": "constant-one null context plus node-count embedding; no geometry, lattice, blueprint metadata or target formula",
+    "context_dim": 1,
+    "hidden_dim": 256,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118,
+    "active_vocabulary": "derived once from train split and stored in checkpoint",
+    "target_composition_input": false
+  },
+  "training": {
+    "seed": 5705,
+    "steps": 2111,
+    "batch_size": 256,
+    "graph_presentations": 540164,
+    "data_passes": 1.0,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "log_every": 50,
+    "from_scratch_required": true
+  },
+  "evaluation": {
+    "validation_graphs": 67520,
+    "batch_size": 1024,
+    "sampling_seed": 9705,
+    "minimum_reference_atoms_for_element_recall": 100,
+    "paired_exact_composition_is_diagnostic_only": true
+  },
+  "acceptance": {
+    "final_initial_validation_nll_ratio_max": 0.75,
+    "element_marginal_jsd_max": 0.05,
+    "support_size_total_variation_max": 0.05,
+    "count_partition_total_variation_max": 0.10,
+    "supported_element_recall_min": 0.95,
+    "atom_count_preservation": 1.0,
+    "invalid_compositions": 0,
+    "sampling_failures": 0,
+    "training_graphs_per_second_min": 1000.0,
+    "peak_cuda_memory_mib_max": 1000.0,
+    "finite_gradients": true
+  },
+  "decision_rule": {
+    "pass": "qualify the explicit stochastic composition state and authorize only an oracle-composition count-constrained assignment qualification",
+    "fail": "stop before assignment and distinguish optimization from insufficient p(C|N) context; do not return to independent site-token diffusion",
+    "boundary": "This protocol cannot qualify site assignment, free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

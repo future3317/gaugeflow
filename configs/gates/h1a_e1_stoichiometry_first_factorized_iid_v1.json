@@ -1,0 +1,73 @@
+{
+  "protocol": "h1a_e1_stoichiometry_first_factorized_iid_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed exact-one-pass IID calibration of the factorized stoichiometry-first composition prior",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "q2_result_sha256": "cf953f93275c82707e08c34755c1e067dcd530f8dae3d3c6ba852c99c8076e02",
+    "q2_qualified": true
+  },
+  "data": {
+    "parent_split": "train",
+    "graphs": 540164,
+    "iid_fit_graphs": 513155,
+    "iid_calibration_graphs": 27009,
+    "split_seed": 6605,
+    "split_rule": "torch.randperm over the qualified child-train cache; first floor(0.95*n) rows fit and remainder calibrate",
+    "scientific_role": "IID implementation/calibration screen only; formula/prototype-disjoint val remains an OOD diagnostic"
+  },
+  "model": {
+    "context": "constant-one null context plus node count, exact train-only partition prior, and shared count-position partition encoder",
+    "context_dim": 1,
+    "hidden_dim": 256,
+    "maximum_atoms": 20,
+    "maximum_species": 7,
+    "vocabulary_size": 118,
+    "partition_smoothing": 0.5,
+    "target_composition_input": false,
+    "per_partition_embedding": false,
+    "current_count_query": true
+  },
+  "training": {
+    "seed": 5705,
+    "steps": 2005,
+    "batch_size": 256,
+    "graph_presentations": 513155,
+    "data_passes": 1.0,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "precision": "bf16",
+    "log_every": 50,
+    "ema": false,
+    "from_scratch_required": true
+  },
+  "evaluation": {
+    "batch_size": 1024,
+    "sampling_seed": 12705,
+    "minimum_reference_atoms_for_element_recall": 25,
+    "paired_exact_composition_is_diagnostic_only": true,
+    "ood_split": "val",
+    "ood_metrics_are_diagnostic_only": true
+  },
+  "acceptance": {
+    "iid_empirical_partition_tv_max": 0.03,
+    "iid_empirical_support_tv_max": 0.02,
+    "final_initial_calibration_nll_ratio_max": 0.75,
+    "element_marginal_jsd_max": 0.05,
+    "support_size_total_variation_max": 0.05,
+    "count_partition_total_variation_max": 0.10,
+    "supported_element_recall_min": 0.95,
+    "atom_count_preservation": 1.0,
+    "invalid_compositions": 0,
+    "sampling_failures": 0,
+    "training_graphs_per_second_min": 1000.0,
+    "peak_cuda_memory_mib_max": 1000.0,
+    "finite_gradients": true
+  },
+  "decision_rule": {
+    "pass": "qualify the factorized explicit stochastic composition prior and authorize only a separately frozen count-constrained site-assignment qualification",
+    "fail": "stop before assignment; do not add steps, capacity, target composition or another composition head",
+    "boundary": "This screen cannot qualify free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

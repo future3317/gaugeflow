@@ -189,6 +189,40 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   composition-only Gate if the kernel and composition-identifiability audits
   pass. It does not authorize L1/M1, tensor/oracle work, relaxation, DFT or
   DFPT. Target composition remains prohibited as a model input.
+- The subsequent composition audit found an evaluation-contract issue rather
+  than corrupt data: the qualified H0 matcher envelope contains reduced
+  anonymous stoichiometry, so train and formula/prototype-disjoint validation
+  have exactly disjoint integer-partition support at every populated node
+  count (conditional TV `1.0`). Preserve that split for OOD novelty/coverage,
+  but never use its marginal TV as an IID calibration Gate or train on its
+  validation rows.
+- The only active explicit-composition implementation is now the exact
+  stoichiometry-first law. It enumerates 1,840 integer partitions for `N<=20`,
+  fits a train-only smoothed `p0(lambda|N)`, and generates distinct elements in
+  decreasing-count order with increasing-token tie breaking. A shared
+  count-position encoder and current-count query replace the retired
+  per-partition lookup and interleaved count autoregressor. Q2 passes exact
+  normalization, finite gradients, FP32/BF16 and CUDA performance (`3.55 ms`
+  teacher forcing, `15.17 ms` sampling, `50.63 MiB` for 256 graphs).
+- Its one-pass IID calibration screen still fails one frozen check:
+  final/initial NLL is `0.77569 > 0.75`. Count-partition TV `0.03551`,
+  support-size TV `0.00826`, element JSD `0.00119`, exact atom count and zero
+  failures all pass. The factorized encoder improves OOD species NLL from
+  `12.3747` to `11.6940` but does not authorize assignment. Do not add steps,
+  capacity, target composition, another composition head or another sampler;
+  E1 remains failed.
+- The allowed zero-training species-law/co-occurrence attribution is complete.
+  The species-only final/initial NLL ratio is `0.750885`; the archived
+  `0.775688` total ratio also contains an unchanged `1.617298`-nat/graph
+  partition-prior term. Random initialization is `0.178444` nat/decision worse
+  than the legal uniform law, while the final model is `0.901800` better and
+  `0.383854` better than a lower-context train-fit count-slot reference. With
+  each calibration partition fixed, pair JSD is `0.010461`, pair-probability
+  RMSE is `0.000451`, and all 1,423 frequent pairs are recovered. This
+  diagnoses the random-initialization total-NLL ratio as too indirect; it does
+  not retroactively pass E1. Assignment remains blocked until a new,
+  independently frozen absolute-likelihood/co-occurrence Gate is run. Do not
+  reuse the current panel to manufacture that pass.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
   a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit

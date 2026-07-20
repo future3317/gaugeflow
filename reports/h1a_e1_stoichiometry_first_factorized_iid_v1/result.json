@@ -1,0 +1,99 @@
+{
+  "active_vocabulary_size": 76,
+  "boundary": "This screen cannot qualify free joint H1a, L1/M1, tensor/oracle work, relaxation, DFT or DFPT.",
+  "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "calibration_sampling": {
+    "atom_count_preservation": 1.0,
+    "count_partition_total_variation": 0.03550668295753267,
+    "element_marginal_jsd": 0.0011949514037188761,
+    "invalid_compositions": 0,
+    "paired_composition_overlap_diagnostic": 0.0515793114900589,
+    "paired_exact_composition_accuracy_diagnostic": 0.0,
+    "sampled_formula_unique_fraction": 0.9843385538153949,
+    "sampling_failures": 0,
+    "successful_graphs": 27009,
+    "support_size_total_variation": 0.008256507090229155,
+    "supported_element_recall": 1.0,
+    "supported_elements": 76
+  },
+  "checks": {
+    "atom_count": true,
+    "calibration_nll": false,
+    "count_partition": true,
+    "element_marginal": true,
+    "element_recall": true,
+    "finite_gradients": true,
+    "iid_empirical_partition": true,
+    "iid_empirical_support": true,
+    "invalid_compositions": true,
+    "memory": true,
+    "sampling_failures": true,
+    "support_size": true,
+    "throughput": true
+  },
+  "decision": "stop before assignment; do not add steps, capacity, target composition or another composition head",
+  "final_calibration": {
+    "mean_counts_nll": 0.0,
+    "mean_species_nll": 10.971441359101364,
+    "mean_support_nll": 1.6172980543305588,
+    "mean_total_nll": 12.588739589696953
+  },
+  "final_initial_calibration_nll_ratio": 0.7756878965884096,
+  "iid_split": {
+    "calibration_graphs": 27009,
+    "calibration_index_sha256": "34c5e97886e49a863ee647d278549fb2b77a68329037146fa818d421394fa079",
+    "fit_graphs": 513155,
+    "fit_index_sha256": "d1f41b57c622ea99572154fcd6d5fbd27067d700106c2bae610abedac042cfcd",
+    "partition_tv": 0.028403564378266563,
+    "support_tv": 0.005509235003113082
+  },
+  "initial_calibration": {
+    "mean_counts_nll": 0.0,
+    "mean_species_nll": 14.611831827180291,
+    "mean_support_nll": 1.6172980543305588,
+    "mean_total_nll": 16.229129840834304
+  },
+  "ood_formula_prototype_disjoint_diagnostic": {
+    "nll": {
+      "mean_counts_nll": 0.0,
+      "mean_species_nll": 11.694032786581754,
+      "mean_support_nll": 9.78421380644161,
+      "mean_total_nll": 21.478246723193127
+    },
+    "qualification_role": "none",
+    "sampling": {
+      "atom_count_preservation": 1.0,
+      "count_partition_total_variation": 0.9990965639810425,
+      "element_marginal_jsd": 0.03738417160306489,
+      "invalid_compositions": 0,
+      "paired_composition_overlap_diagnostic": 0.041946329176425934,
+      "paired_exact_composition_accuracy_diagnostic": 0.0,
+      "sampled_formula_unique_fraction": 0.8045171800947867,
+      "sampling_failures": 0,
+      "successful_graphs": 67520,
+      "support_size_total_variation": 0.2103376777251185,
+      "supported_element_recall": 1.0,
+      "supported_elements": 76
+    },
+    "split": "val"
+  },
+  "protocol": "h1a_e1_stoichiometry_first_factorized_iid_v1",
+  "protocol_sha256": "97645a39bfac217c1c5a1e66862b61771e0e09bc500fcc05895479beb564a1cf",
+  "q2_result_sha256": "cf953f93275c82707e08c34755c1e067dcd530f8dae3d3c6ba852c99c8076e02",
+  "qualified": false,
+  "seed": 5705,
+  "training": {
+    "checkpoint": "/mnt/e/DATA/T2C-Flow/runs/h1a_e1_stoichiometry_first_factorized_iid_v1/seed_5705/step_002005.pt",
+    "checkpoint_sha256": "fd1f4315342f2110b115a2b0a5e0f540a09d46b43e3caa50350ccc5970b3eb27",
+    "clip_fraction": 1.0,
+    "cuda": "12.4",
+    "data_passes": 1.0,
+    "device": "NVIDIA GeForce RTX 4060 Ti",
+    "final_species_loss": 11.111398696899414,
+    "graph_presentations": 513155,
+    "graphs_per_second": 27780.012495554693,
+    "peak_cuda_memory_mib": 53.5302734375,
+    "steps": 2005,
+    "torch": "2.5.1+cu124"
+  }
+}

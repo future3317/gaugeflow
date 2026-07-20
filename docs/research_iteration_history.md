@@ -871,3 +871,60 @@ sparse representation: 540,164 train graphs, at most 20 atoms, 76 active
 elements, `99.7408%` with at most four species and a maximum of seven. This
 authorizes only composition identifiability and exact synthetic-kernel audits;
 no later Gate is opened.
+
+### E1 explicit stochastic composition and split-contract correction
+
+The first exact sparse autoregressor interleaved increasing element tokens and
+positive counts. Its Q0 law was normalized and fast after a batched-GRU
+teacher-forcing rewrite, but the one-pass N-only prior failed validation NLL,
+support calibration and count-partition TV. A raw-versus-EMA audit rejected EMA
+lag as the cause.
+
+The next read-only audit exposed a more fundamental evaluation mismatch. H0's
+matcher envelope intentionally includes reduced anonymous stoichiometry and
+primitive-site count. Consequently the formula/prototype-disjoint validation
+split has no integer-partition support in common with train at fixed node
+count: conditional partition TV is exactly `1.0` and conditional support-size
+TV is `0.552677`. This is intentional OOD separation, not corrupt cache. The
+split remains valid for novelty/coverage and OOD likelihood, but its marginal
+TV cannot qualify a train-only prior.
+
+The active representation was then simplified to a stoichiometry-first exact
+law. It enumerates all 1,840 integer partitions for `N<=20,S<=7`, fits only a
+smoothed train prior `p0(lambda|N)`, and generates distinct elements after
+sorting count slots decreasingly with increasing-element tie breaks. The first
+version used a separate learned embedding for every partition. It passed
+numerical Q1 but missed the one-pass IID NLL ratio (`0.79215 > 0.75`), even
+though partition TV `0.03551`, support TV `0.00826`, element JSD `0.00054`,
+exact atom count and zero failures passed.
+
+Code inspection showed that this lookup prevented statistical sharing and did
+not expose the current count directly to the element query. The current model
+therefore uses a shared count-position partition encoder and a current-count
+query. Q2 passes all exactness, precision and performance checks: exhaustive
+normalization error `2.22e-16`, 50,000-draw TV `0.00651`, teacher forcing
+`3.55 ms`, sampling `15.17 ms`, and `50.63 MiB` on 256 graphs. It improves OOD
+species NLL from `12.3747` to `11.6940` and the IID ratio to `0.77569`, but the
+same frozen `0.75` threshold still fails. All distribution/validity checks
+pass. The old interleaved runtime and one-off runners were removed; frozen
+results remain in reports and Git history. Assignment and later Gates remain
+blocked. The next admissible work is a zero-training species-law/co-occurrence
+attribution, not more exposure, capacity, heads or sampler search.
+
+That zero-training attribution has now been completed on the unchanged step-0
+and step-2005 checkpoints. The archived total NLL ratio mixes the trained
+species law with a fixed partition-prior contribution of `1.617298` nats per
+graph. The species-only ratio is `0.750885`, just `0.000885` above the archived
+threshold, while the random initialization is `0.178444` nats per decision
+worse than a legal uniform law. The trained model is `0.901800` below uniform
+and `0.383854` below a lower-context count-slot empirical reference. Holding
+each calibration partition fixed, training reduces element-pair JSD from
+`0.15772` to `0.010461`, raises covariance cosine from `0.30113` to `0.93787`,
+and recovers all 1,423 frequent pairs. Small rare strata remain weaker and the
+co-occurrence covariance relative error is still `0.35141`.
+
+The finding is a metric attribution, not a retroactive Gate pass. E1 and
+assignment remain blocked. Any successor must use a new independently frozen
+contract with absolute conditional likelihood, fixed-partition co-occurrence
+and rare-stratum floors; the already inspected panel cannot be reused to claim
+qualification.

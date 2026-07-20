@@ -1,0 +1,68 @@
+{
+  "boundary": "No optimizer step, assignment, L1/M1, tensor/oracle work, relaxation, DFT or DFPT is authorized.",
+  "checkpoint_sha256": "731a32e9ff1855f9753be209b4e45b8d21dfe8648928762046f9c8c8c8594a30",
+  "decision": "raw_and_ema_both_reject_the_N_only_composition_prior",
+  "ema_lag_material": false,
+  "parent_result_sha256": "8ddf9538f82bf7b9cedac23018b45733bf5c5248b76f43a0303a2ab97ec5efa5",
+  "protocol": "h1a_e1_sparse_composition_optimization_audit_v1",
+  "protocol_sha256": "f4534fb1374d8adf98c1b50b38dc35842c7bbd963499307be4c8e8486288a2ba",
+  "raw_checks": {
+    "atom_count": true,
+    "count_partition": false,
+    "element_marginal": true,
+    "element_recall": true,
+    "invalid_compositions": true,
+    "sampling_failures": true,
+    "support_size": false,
+    "validation_nll": false
+  },
+  "raw_final_initial_nll_ratio": 0.8633581659378233,
+  "raw_qualified_on_parent_scientific_metrics": false,
+  "raw_relative_nll_improvement_over_ema": -0.03161389219225505,
+  "variants": {
+    "ema": {
+      "sampling": {
+        "atom_count_preservation": 1.0,
+        "count_partition_total_variation": 0.853332345971564,
+        "element_marginal_jsd": 0.05570354147274605,
+        "invalid_compositions": 0,
+        "paired_composition_overlap_diagnostic": 0.038876425474882126,
+        "paired_exact_composition_accuracy_diagnostic": 0.0,
+        "sampled_formula_unique_fraction": 0.9489188388625592,
+        "sampling_failures": 0,
+        "successful_graphs": 67520,
+        "support_size_total_variation": 0.10989336492890997,
+        "supported_element_recall": 1.0,
+        "supported_elements": 76
+      },
+      "validation": {
+        "mean_counts_nll": 3.771103859851711,
+        "mean_species_nll": 11.387872936375333,
+        "mean_support_nll": 0.8017172158046921,
+        "mean_total_nll": 15.960694068077052
+      }
+    },
+    "raw": {
+      "sampling": {
+        "atom_count_preservation": 1.0,
+        "count_partition_total_variation": 0.8544283175355449,
+        "element_marginal_jsd": 0.04825390608739445,
+        "invalid_compositions": 0,
+        "paired_composition_overlap_diagnostic": 0.041669946163892746,
+        "paired_exact_composition_accuracy_diagnostic": 2.9620852728839964e-05,
+        "sampled_formula_unique_fraction": 0.9314721563981042,
+        "sampling_failures": 0,
+        "successful_graphs": 67520,
+        "support_size_total_variation": 0.11282582938388626,
+        "supported_element_recall": 1.0,
+        "supported_elements": 76
+      },
+      "validation": {
+        "mean_counts_nll": 4.2325740470705435,
+        "mean_species_nll": 11.410587675989522,
+        "mean_support_nll": 0.822111980383995,
+        "mean_total_nll": 16.465273729658804
+      }
+    }
+  }
+}
