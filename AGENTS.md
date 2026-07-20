@@ -169,6 +169,14 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   median clip scale is `0.2661 > 0.2`, every pairwise median cosine is positive,
   and no pair reaches the frozen 75% negative fraction. Retain global clipping;
   do not add blockwise clipping, AGC or target-RMS normalization.
+- The final substrate is one heterogeneous product-space reverse field over
+  `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
+  a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit
+  metadata, never model input. Joint, conditional, staged and alternating
+  generation are sampler paths of this field. The tensor orbit is a shared
+  quotient-valued condition, not a fourth diffused state. The exact family has
+  a nested-corruption tower identity, but no finite-model consistency loss or
+  information-coordinate ablation is authorized before E1/L1/M1 qualification.
 - J2 is authorized only after these attribution/gradient results are recorded,
   separately frozen E1 element and L1 lattice reverse heads qualify, and joint
   M1 training qualifies.

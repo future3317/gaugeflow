@@ -140,18 +140,16 @@ class ProductionTrainer:
             modality_arguments: dict[str, torch.Tensor] = {}
             if self.config.modality_time_mode == "independent_corner_mixture":
                 graph_count = int(blueprint.node_counts.numel())
-                coordinate_time, element_time, lattice_time, regime = (
-                    self.diffusion.sample_independent_modality_times(
-                        graph_count,
-                        clean_fractional_coordinates,
-                        generator=generator,
-                    )
+                modality_times = self.diffusion.sample_task_measure_times(
+                    graph_count,
+                    clean_fractional_coordinates,
+                    generator=generator,
                 )
                 modality_arguments = {
-                    "time": coordinate_time,
-                    "element_time": element_time,
-                    "lattice_time": lattice_time,
-                    "modality_regime": regime,
+                    "time": modality_times.coordinate,
+                    "element_time": modality_times.element,
+                    "lattice_time": modality_times.lattice,
+                    "modality_regime": modality_times.regime,
                 }
             output = self.diffusion(
                 clean_elements,

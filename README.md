@@ -27,6 +27,28 @@ tensor 条件或后续 Gate。
 
 ## 当前方法
 
+当前最终生成基座不再表述为“依次拼接元素、坐标和晶格模块”，而是同一个异质
+乘积状态空间上的 typed reverse field：
+
+```text
+X = (A, F, L),       t = (t_A, t_F, t_L)
+R_theta = (r_A, s_F, r_L)
+```
+
+其中 `A` 是 absorbing categorical 元素状态，`F` 是周期平移商坐标，`L` 是
+log-volume / trace-free log-metric。joint generation、已知元素和晶格的 coordinate
+generation、CSP 与未来的分段/交替采样只是 `[0,1]^3` 模态噪声空间中的不同路径，
+不是永久分叉的模型。tensor orbit `[e]` 是贯穿所有路径的 quotient-valued condition，
+不是第四个被扩散的状态。
+
+训练端的五种 J1 regime 现在由
+`gaugeflow.production.modality_task_measure.FiveRegimeTaskMeasure` 统一采样；它是
+task-path measure 的等质量五节点 stochastic cubature，保持既有
+`13/13/13/13/12` 覆盖和随机数顺序，regime ID 只作审计元数据，绝不输入 denoiser。
+E1、L1、M1 和 J2 分别只资格化同一 reverse field 的分量、共享训练和 on-policy
+路径，不进入最终模型图。精确 conditional family 应满足 nested-corruption tower
+identity；当前只将其作为后续零训练审计目标，尚未加入 consistency loss 或信息时钟。
+
 完整层级表示为：
 
 ```text

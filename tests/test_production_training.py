@@ -212,14 +212,19 @@ def test_coordinate_clean_side_information_noises_only_coordinates() -> None:
     torch.testing.assert_close(noisy.fractional_coordinates, repeated.fractional_coordinates)
 
 
-def test_independent_modality_time_mixture_has_frozen_balanced_counts() -> None:
+def test_five_regime_task_measure_has_frozen_balanced_counts() -> None:
     diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
-    coordinate, element, lattice, regime = diffusion.sample_independent_modality_times(
+    times = diffusion.sample_task_measure_times(
         64,
         torch.zeros(1),
         generator=torch.Generator().manual_seed(112),
     )
+    coordinate = times.coordinate
+    element = times.element
+    lattice = times.lattice
+    regime = times.regime
     assert torch.equal(torch.bincount(regime, minlength=5), torch.tensor([13, 13, 13, 13, 12]))
+    torch.testing.assert_close(times.as_afl(), torch.stack((element, coordinate, lattice), dim=-1))
     assert torch.equal(element[regime == 0], torch.zeros(13))
     assert torch.equal(lattice[regime == 0], torch.zeros(13))
     assert torch.equal(element[regime == 1], coordinate[regime == 1])

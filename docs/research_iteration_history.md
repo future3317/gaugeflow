@@ -818,3 +818,25 @@ readout, `18.22%` input/time, `11.52%` dynamic edge/angular, `0.57%` base
 blocks, and `0.19%` time fusion. Global clipping is retained; no optimizer
 modification is authorized. E1/L1 protocol design may proceed, but no E1/L1,
 M1 or J2 run is inferred from these coordinate-only audits.
+
+### Unified product-process interpretation after J1 attribution
+
+The matched controls change the abstraction, not the frozen numbers. Their
+result does not support “three named clocks repair noisy/noisy learning.” It
+supports training a family of partially observed tasks rather than only the
+synchronized diagonal. The production design is therefore written as one
+typed reverse field on the heterogeneous product state `X=(A,F,L)` with noise
+coordinate `(t_A,t_F,t_L)`. Joint, coordinate-conditional, CSP, staged and
+alternating generation are paths through this cube. E1 and L1 qualify field
+components, M1 qualifies their shared training, and J2 qualifies on-policy
+paths; none is a permanent architecture branch.
+
+The existing equal five-regime sampler is now factored into the production
+`FiveRegimeTaskMeasure`. This is a behavior-preserving implementation change:
+the `13/13/13/13/12` counts, random-number order, coordinate target, loss and
+model capacity are unchanged, while regime identifiers remain audit-only.
+The paper also records the exact nested-corruption Fisher/tower identity. It is
+currently a theorem and future audit target, not a newly added loss. The
+proposed element--lattice--coordinate reverse path was corrected to
+`(1,1,1)->(0,1,1)->(0,1,0)->(0,0,0)` in `(A,F,L)` order; the sequence in the
+external feedback would otherwise clean coordinates before lattice.

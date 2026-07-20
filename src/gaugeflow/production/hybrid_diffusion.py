@@ -13,6 +13,7 @@ from .categorical_mask import AbsorbingMaskDiffusion, MaskedCategoricalState
 from .equivariant_denoiser import HybridCrystalDenoiser, HybridDenoiserOutput
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
+from .modality_task_measure import FiveRegimeTaskMeasure, ModalityNoiseTimes
 from .quotient_score import factorized_translation_quotient_scaled_score
 from .schedules import (
     CosineNoiseSchedule,
@@ -85,6 +86,7 @@ class TensorFreeHybridDiffusion(nn.Module):
             sigma_min=coordinate_sigma_min,
             sigma_max=coordinate_sigma_max,
         )
+        self.task_measure = FiveRegimeTaskMeasure()
         self.minimum_time = float(minimum_time)
         self.maximum_time = float(maximum_time)
 
@@ -108,47 +110,22 @@ class TensorFreeHybridDiffusion(nn.Module):
         uniform = strata[order]
         return self.minimum_time + (self.maximum_time - self.minimum_time) * uniform
 
-    def sample_independent_modality_times(
+    def sample_task_measure_times(
         self,
         graph_count: int,
         reference: torch.Tensor,
         *,
         generator: torch.Generator | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Sample the preregistered five-way J1 corner/interior mixture.
+    ) -> ModalityNoiseTimes:
+        """Sample the active task measure without exposing regime IDs to the model."""
 
-        Regimes are 0=clean/clean, 1=noisy-element, 2=noisy-lattice,
-        3=diagonal noisy/noisy and 4=independent interior.  Counts differ by
-        at most one and are randomly assigned to graphs; a 64-graph batch is
-        therefore exactly 13/13/13/13/12.
-        """
-        if graph_count < 5:
-            raise ValueError("independent modality-time sampling needs at least five graphs")
-        coordinate_time = self.sample_time(graph_count, reference, generator=generator)
-        counts = torch.full(
-            (5,), graph_count // 5, dtype=torch.long, device=reference.device
+        return self.task_measure.sample(
+            graph_count,
+            lambda count: self.sample_time(
+                count, reference, generator=generator
+            ),
+            generator=generator,
         )
-        counts[: graph_count % 5] += 1
-        regime = torch.repeat_interleave(
-            torch.arange(5, dtype=torch.long, device=reference.device), counts
-        )
-        regime = regime[torch.randperm(graph_count, device=reference.device, generator=generator)]
-        element_time = torch.zeros_like(coordinate_time)
-        lattice_time = torch.zeros_like(coordinate_time)
-        element_noisy = (regime == 1) | (regime == 3)
-        lattice_noisy = (regime == 2) | (regime == 3)
-        element_time[element_noisy] = coordinate_time[element_noisy]
-        lattice_time[lattice_noisy] = coordinate_time[lattice_noisy]
-        interior = regime == 4
-        interior_count = int(interior.sum())
-        if interior_count:
-            element_time[interior] = self.sample_time(
-                interior_count, reference, generator=generator
-            )
-            lattice_time[interior] = self.sample_time(
-                interior_count, reference, generator=generator
-            )
-        return coordinate_time, element_time, lattice_time, regime
 
     def noise_clean_batch(
         self,

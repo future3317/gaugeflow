@@ -10,15 +10,10 @@ from torch_geometric.data import Batch
 from .alex_p1_data import PackedAlexP1Dataset
 from .blueprint import ParentBlueprintBatch
 from .hybrid_diffusion import TensorFreeHybridDiffusion
+from .modality_task_measure import MODALITY_REGIME_NAMES
 from .runtime import load_tensor_free_ema_runtime
 
-CORNER_NAMES = (
-    "clean_clean",
-    "noisy_element",
-    "noisy_lattice",
-    "diagonal",
-    "interior",
-)
+CORNER_NAMES = MODALITY_REGIME_NAMES
 
 
 @torch.no_grad()
