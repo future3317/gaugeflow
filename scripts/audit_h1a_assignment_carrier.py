@@ -146,7 +146,7 @@ def main() -> None:
         [row["uniform_target_quotient_probability"] for row in rows], dtype=torch.float64
     )
     quotient_nll = torch.tensor([row["uniform_quotient_nll"] for row in rows])
-    metrics = {
+    metrics: dict[str, Any] = {
         "records": len(records),
         "candidate_carriers": len(rows),
         "candidate_carriers_by_split": dict(sorted(split_candidates.items())),
