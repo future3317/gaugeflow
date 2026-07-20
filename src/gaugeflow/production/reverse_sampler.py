@@ -331,6 +331,8 @@ class TensorFreeReverseSampler:
                         condition_present,
                         blueprint.shape_projector,
                         blueprint.fractional_to_cartesian,
+                        element_time=time_from,
+                        lattice_time=time_from,
                     )
 
                     probabilities = self.categorical.reverse_probabilities(

@@ -272,6 +272,7 @@ class HybridCrystalDenoiser(nn.Module):
         edge_dim: int = 64,
         angular_channels: int = 8,
         edge_refresh_rank: int = 16,
+        independent_modality_times: bool = False,
     ) -> None:
         super().__init__()
         if layers < 1:
@@ -279,11 +280,24 @@ class HybridCrystalDenoiser(nn.Module):
         if edge_dim < 1 or angular_channels < 1 or edge_refresh_rank < 1:
             raise ValueError("edge, angular and refresh dimensions must be positive")
         self.edge_dim = int(edge_dim)
+        self.independent_modality_times = bool(independent_modality_times)
         self.element_embedding = nn.Embedding(119, hidden_dim)
         self.degree_embedding = nn.Sequential(
             nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
         )
         self.time_embedding = FourierTimeEmbedding(hidden_dim)
+        self.element_time_embedding: FourierTimeEmbedding | None
+        self.lattice_time_embedding: FourierTimeEmbedding | None
+        self.modality_time_fusion: nn.Linear | None
+        if self.independent_modality_times:
+            self.element_time_embedding = FourierTimeEmbedding(hidden_dim)
+            self.lattice_time_embedding = FourierTimeEmbedding(hidden_dim)
+            self.modality_time_fusion = nn.Linear(3 * hidden_dim, hidden_dim, bias=False)
+            nn.init.orthogonal_(self.modality_time_fusion.weight)
+        else:
+            self.element_time_embedding = None
+            self.lattice_time_embedding = None
+            self.modality_time_fusion = None
         # Current generated state only: noisy lattice, graph size and current
         # (possibly masked) composition. No target metadata enters this token.
         self.state_embedding = nn.Sequential(
@@ -363,6 +377,9 @@ class HybridCrystalDenoiser(nn.Module):
         condition_present: torch.Tensor,
         shape_projector: torch.Tensor,
         fractional_to_cartesian: torch.Tensor,
+        *,
+        element_time: torch.Tensor | None = None,
+        lattice_time: torch.Tensor | None = None,
     ) -> HybridDenoiserOutput:
         """Denoise one hybrid state.
 
@@ -371,6 +388,38 @@ class HybridCrystalDenoiser(nn.Module):
         group, stabilizer, source ID, or endpoint token is accepted.
         """
         graphs = time.numel()
+        if time.ndim != 1:
+            raise ValueError("coordinate time must be a graph vector")
+        if self.independent_modality_times:
+            if element_time is None or lattice_time is None:
+                raise ValueError(
+                    "independent-modality denoising requires explicit element and lattice times"
+                )
+            if element_time.shape != time.shape or lattice_time.shape != time.shape:
+                raise ValueError("all modality times must match the graph vector")
+            assert self.element_time_embedding is not None
+            assert self.lattice_time_embedding is not None
+            assert self.modality_time_fusion is not None
+            graph_time = self.modality_time_fusion(
+                torch.cat(
+                    (
+                        self.time_embedding(time),
+                        self.element_time_embedding(element_time),
+                        self.lattice_time_embedding(lattice_time),
+                    ),
+                    dim=-1,
+                )
+            )
+        else:
+            if (element_time is None) != (lattice_time is None):
+                raise ValueError("element and lattice times must be supplied together")
+            if element_time is not None and (
+                not torch.equal(element_time, time) or not torch.equal(lattice_time, time)
+            ):
+                raise ValueError(
+                    "shared-time denoising cannot silently consume different modality times"
+                )
+            graph_time = self.time_embedding(time)
         if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
             raise ValueError("element state must be rank-one int64 tokens")
         if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
@@ -407,7 +456,7 @@ class HybridCrystalDenoiser(nn.Module):
             edge_envelope = self.radial.envelope(edges.distance)
         source, target = edges.source, edges.target
         degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
-        node_time = self.time_embedding(time)[batch]
+        node_time = graph_time[batch]
         initial_nodes = self.element_embedding(element_tokens) + self.degree_embedding(
             degree.log1p().unsqueeze(-1)
         )
@@ -488,7 +537,6 @@ class HybridCrystalDenoiser(nn.Module):
                     edge_state.float(),
                 )
         graph_nodes = graph_mean(nodes, batch, graphs)
-        graph_time = self.time_embedding(time)
         graph_context = torch.cat(
             (graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1
         )

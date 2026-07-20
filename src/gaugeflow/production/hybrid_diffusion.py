@@ -28,7 +28,14 @@ class TensorFreeNoisyBatch:
     fractional_coordinates: torch.Tensor
     log_volume: torch.Tensor
     log_shape: torch.Tensor
+    # ``time`` is the coordinate time retained as the primary reverse-process
+    # coordinate.  Side modalities have explicit clocks even on the shared
+    # diagonal, so training cannot silently confuse observed and corrupted
+    # chemistry/lattice states.
     time: torch.Tensor
+    element_time: torch.Tensor
+    lattice_time: torch.Tensor
+    modality_regime: torch.Tensor | None
     coordinate_scaled_score_target: torch.Tensor
     clean_volume_latent_target: torch.Tensor
     clean_shape_latent_target: torch.Tensor
@@ -40,6 +47,7 @@ class HybridLossOutput:
     loss: torch.Tensor
     element_loss: torch.Tensor
     coordinate_loss: torch.Tensor
+    graph_coordinate_loss: torch.Tensor
     volume_loss: torch.Tensor
     shape_loss: torch.Tensor
     masked_fraction: torch.Tensor
@@ -100,6 +108,48 @@ class TensorFreeHybridDiffusion(nn.Module):
         uniform = strata[order]
         return self.minimum_time + (self.maximum_time - self.minimum_time) * uniform
 
+    def sample_independent_modality_times(
+        self,
+        graph_count: int,
+        reference: torch.Tensor,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Sample the preregistered five-way J1 corner/interior mixture.
+
+        Regimes are 0=clean/clean, 1=noisy-element, 2=noisy-lattice,
+        3=diagonal noisy/noisy and 4=independent interior.  Counts differ by
+        at most one and are randomly assigned to graphs; a 64-graph batch is
+        therefore exactly 13/13/13/13/12.
+        """
+        if graph_count < 5:
+            raise ValueError("independent modality-time sampling needs at least five graphs")
+        coordinate_time = self.sample_time(graph_count, reference, generator=generator)
+        counts = torch.full(
+            (5,), graph_count // 5, dtype=torch.long, device=reference.device
+        )
+        counts[: graph_count % 5] += 1
+        regime = torch.repeat_interleave(
+            torch.arange(5, dtype=torch.long, device=reference.device), counts
+        )
+        regime = regime[torch.randperm(graph_count, device=reference.device, generator=generator)]
+        element_time = torch.zeros_like(coordinate_time)
+        lattice_time = torch.zeros_like(coordinate_time)
+        element_noisy = (regime == 1) | (regime == 3)
+        lattice_noisy = (regime == 2) | (regime == 3)
+        element_time[element_noisy] = coordinate_time[element_noisy]
+        lattice_time[lattice_noisy] = coordinate_time[lattice_noisy]
+        interior = regime == 4
+        interior_count = int(interior.sum())
+        if interior_count:
+            element_time[interior] = self.sample_time(
+                interior_count, reference, generator=generator
+            )
+            lattice_time[interior] = self.sample_time(
+                interior_count, reference, generator=generator
+            )
+        return coordinate_time, element_time, lattice_time, regime
+
     def noise_clean_batch(
         self,
         clean_elements: torch.Tensor,
@@ -110,6 +160,9 @@ class TensorFreeHybridDiffusion(nn.Module):
         fractional_to_cartesian: torch.Tensor,
         *,
         time: torch.Tensor | None = None,
+        element_time: torch.Tensor | None = None,
+        lattice_time: torch.Tensor | None = None,
+        modality_regime: torch.Tensor | None = None,
         generator: torch.Generator | None = None,
         clean_side_information: bool = False,
     ) -> TensorFreeNoisyBatch:
@@ -129,6 +182,29 @@ class TensorFreeHybridDiffusion(nn.Module):
             selected_time = self.sample_time(graphs, clean_fractional_coordinates, generator=generator)
         if selected_time.shape != (graphs,):
             raise ValueError("time must provide one scalar per graph")
+        if clean_side_information and (element_time is not None or lattice_time is not None):
+            raise ValueError("clean side information cannot also specify corrupted side times")
+        if (element_time is None) != (lattice_time is None):
+            raise ValueError("element and lattice times must be supplied together")
+        selected_element_time = (
+            torch.zeros_like(selected_time)
+            if clean_side_information
+            else selected_time if element_time is None else element_time
+        )
+        selected_lattice_time = (
+            torch.zeros_like(selected_time)
+            if clean_side_information
+            else selected_time if lattice_time is None else lattice_time
+        )
+        if (
+            selected_element_time.shape != (graphs,)
+            or selected_lattice_time.shape != (graphs,)
+        ):
+            raise ValueError("side-modality times must provide one scalar per graph")
+        if modality_regime is not None and (
+            modality_regime.shape != (graphs,) or modality_regime.dtype != torch.long
+        ):
+            raise ValueError("modality regime must be an int64 graph vector")
 
         clean_coordinates = project_translation_state(clean_fractional_coordinates, batch, graphs)
         lattice_state = LatticeVolumeShape.from_lattice(clean_lattice, fractional_to_cartesian)
@@ -153,7 +229,9 @@ class TensorFreeHybridDiffusion(nn.Module):
                 device=clean_elements.device,
                 generator=generator,
             )
-            categorical_state = self.categorical.corrupt(clean_elements, selected_time, batch, uniform=uniform)
+            categorical_state = self.categorical.corrupt(
+                clean_elements, selected_element_time, batch, uniform=uniform
+            )
 
         coordinate_sigma = self.coordinate_schedule.sigma(selected_time)[batch]
         fractional_noise = standard_normal(clean_fractional_coordinates.shape, clean_fractional_coordinates, generator)
@@ -170,8 +248,13 @@ class TensorFreeHybridDiffusion(nn.Module):
             noisy_volume_latent = clean_volume_latent
             noisy_shape_latent = clean_shape_latent
         else:
-            alpha = self.vp_schedule.alpha(selected_time)
-            sigma = self.vp_schedule.sigma(selected_time).clamp_min(1.0e-8)
+            alpha = self.vp_schedule.alpha(selected_lattice_time)
+            sigma = self.vp_schedule.sigma(selected_lattice_time)
+            sigma = torch.where(
+                selected_lattice_time == 0,
+                torch.zeros_like(sigma),
+                sigma.clamp_min(1.0e-8),
+            )
             volume_noise = standard_normal(clean_volume_latent.shape, clean_volume_latent, generator)
             shape_noise = standard_normal(clean_shape_latent.shape, clean_shape_latent, generator)
             noisy_volume_latent = alpha * clean_volume_latent + sigma * volume_noise
@@ -186,6 +269,9 @@ class TensorFreeHybridDiffusion(nn.Module):
             log_volume=noisy_volume,
             log_shape=noisy_shape,
             time=selected_time,
+            element_time=selected_element_time,
+            lattice_time=selected_lattice_time,
+            modality_regime=modality_regime,
             coordinate_scaled_score_target=coordinate_target,
             clean_volume_latent_target=clean_volume_latent,
             clean_shape_latent_target=clean_shape_latent,
@@ -202,6 +288,9 @@ class TensorFreeHybridDiffusion(nn.Module):
         fractional_to_cartesian: torch.Tensor,
         *,
         time: torch.Tensor | None = None,
+        element_time: torch.Tensor | None = None,
+        lattice_time: torch.Tensor | None = None,
+        modality_regime: torch.Tensor | None = None,
         generator: torch.Generator | None = None,
         clean_side_information: bool = False,
     ) -> HybridLossOutput:
@@ -216,12 +305,23 @@ class TensorFreeHybridDiffusion(nn.Module):
                 shape_projector,
                 fractional_to_cartesian,
                 time=time,
+                element_time=element_time,
+                lattice_time=lattice_time,
+                modality_regime=modality_regime,
                 generator=generator,
                 clean_side_information=clean_side_information,
             )
         graphs = noisy.time.numel()
         condition = noisy.log_volume.new_zeros((graphs, 18))
         condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=noisy.log_volume.device)
+        denoiser_time_arguments = (
+            {
+                "element_time": noisy.element_time,
+                "lattice_time": noisy.lattice_time,
+            }
+            if self.denoiser.independent_modality_times
+            else {}
+        )
         prediction = self.denoiser(
             noisy.element_tokens,
             noisy.fractional_coordinates,
@@ -233,6 +333,7 @@ class TensorFreeHybridDiffusion(nn.Module):
             condition_present,
             shape_projector,
             fractional_to_cartesian,
+            **denoiser_time_arguments,
         )
 
         node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
@@ -279,6 +380,7 @@ class TensorFreeHybridDiffusion(nn.Module):
             loss=loss,
             element_loss=element_loss,
             coordinate_loss=coordinate_loss,
+            graph_coordinate_loss=graph_coordinate,
             volume_loss=volume_loss,
             shape_loss=shape_loss,
             masked_fraction=mask.mean(),

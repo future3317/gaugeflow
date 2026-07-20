@@ -212,6 +212,127 @@ def test_coordinate_clean_side_information_noises_only_coordinates() -> None:
     torch.testing.assert_close(noisy.fractional_coordinates, repeated.fractional_coordinates)
 
 
+def test_independent_modality_time_mixture_has_frozen_balanced_counts() -> None:
+    diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
+    coordinate, element, lattice, regime = diffusion.sample_independent_modality_times(
+        64,
+        torch.zeros(1),
+        generator=torch.Generator().manual_seed(112),
+    )
+    assert torch.equal(torch.bincount(regime, minlength=5), torch.tensor([13, 13, 13, 13, 12]))
+    assert torch.equal(element[regime == 0], torch.zeros(13))
+    assert torch.equal(lattice[regime == 0], torch.zeros(13))
+    assert torch.equal(element[regime == 1], coordinate[regime == 1])
+    assert torch.equal(lattice[regime == 1], torch.zeros(13))
+    assert torch.equal(element[regime == 2], torch.zeros(13))
+    assert torch.equal(lattice[regime == 2], coordinate[regime == 2])
+    assert torch.equal(element[regime == 3], coordinate[regime == 3])
+    assert torch.equal(lattice[regime == 3], coordinate[regime == 3])
+    assert bool((element[regime == 4] > 0).all())
+    assert bool((lattice[regime == 4] > 0).all())
+
+
+def test_explicit_diagonal_times_reproduce_shared_corruption_exactly() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
+    time = torch.tensor([0.4, 0.7])
+    default = diffusion.noise_clean_batch(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=time,
+        generator=torch.Generator().manual_seed(113),
+    )
+    explicit = diffusion.noise_clean_batch(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=time,
+        element_time=time,
+        lattice_time=time,
+        generator=torch.Generator().manual_seed(113),
+    )
+    for name in (
+        "element_tokens",
+        "fractional_coordinates",
+        "log_volume",
+        "log_shape",
+        "coordinate_scaled_score_target",
+    ):
+        torch.testing.assert_close(getattr(default, name), getattr(explicit, name))
+
+
+def test_independent_modality_times_are_non_degenerate_and_receive_gradients() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        independent_modality_times=True,
+    )
+    diffusion = TensorFreeHybridDiffusion(model, _standardizer())
+    coordinate_time = torch.tensor([0.4, 0.7])
+    output = diffusion(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=coordinate_time,
+        element_time=torch.tensor([0.0, 0.7]),
+        lattice_time=torch.tensor([0.4, 0.0]),
+        generator=torch.Generator().manual_seed(114),
+    )
+    output.coordinate_loss.backward()
+    for prefix in (
+        "time_embedding.",
+        "element_time_embedding.",
+        "lattice_time_embedding.",
+        "modality_time_fusion.",
+    ):
+        gradients = [
+            parameter.grad
+            for name, parameter in model.named_parameters()
+            if name.startswith(prefix)
+        ]
+        assert gradients and all(value is not None and torch.isfinite(value).all() for value in gradients)
+        assert sum(float(value.square().sum()) for value in gradients if value is not None) > 0.0
+
+
+def test_shared_time_model_rejects_silent_modality_mismatch() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = _small_model()
+    graphs = blueprint.node_counts.numel()
+    try:
+        model(
+            elements,
+            coordinates,
+            torch.zeros(graphs),
+            torch.zeros(graphs, 6),
+            blueprint.batch,
+            torch.full((graphs,), 0.5),
+            torch.zeros(graphs, 18),
+            torch.zeros(graphs, 1, dtype=torch.bool),
+            blueprint.shape_projector,
+            blueprint.fractional_to_cartesian,
+            element_time=torch.zeros(graphs),
+            lattice_time=torch.zeros(graphs),
+        )
+    except ValueError as error:
+        assert "cannot silently consume" in str(error)
+    else:
+        raise AssertionError("shared-time model accepted distinct modality times")
+
+
 def test_coordinate_trainer_uses_clean_noncoordinate_side_information() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())

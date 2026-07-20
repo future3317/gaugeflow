@@ -1,0 +1,107 @@
+{
+  "protocol": "h1a_j1_independent_modality_times_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed 0.25-pass attribution of coordinate-score degradation across independently corrupted element, lattice and coordinate modalities",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_j0_side_information_sensitivity_v1",
+    "qualification_result_sha256": "b8ff1ccfa9d948adb2fc6274fd5388c823e31b8078cb376f9680981ab8c67640",
+    "j0_protocol_sha256": "a4f6180896fe9c65bb5d40cd88a1d2a39d304bdf7820b570bc48b15b18661bf8",
+    "j0_authorize_j1": true,
+    "clean_clean_reference_ratio": 0.4938223400498962,
+    "historical_diagonal_reference_ratio": 0.7383705054029606,
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "coordinate_score": "s_F(F_tF | A_tA, L_tL, tF, tA, tL)",
+    "only_change": "add explicit element and lattice Fourier clocks, fuse all three clocks before the unchanged per-block time FiLM, and train a fixed five-way corner/interior mixture",
+    "time_mixture": {
+      "clean_clean": "20%; t_A=0, t_L=0",
+      "noisy_element": "20%; t_A=t_F, t_L=0",
+      "noisy_lattice": "20%; t_A=0, t_L=t_F",
+      "diagonal": "20%; t_A=t_F, t_L=t_F",
+      "interior": "20%; independently stratified t_A, t_L and t_F",
+      "batch_64_exact_counts": [13, 13, 13, 13, 12]
+    },
+    "unchanged": [
+      "coordinate torus probability path and analytic score target",
+      "dynamic persistent-edge l<=2 Cartesian message backbone and coordinate readout",
+      "optimizer, EMA, batch size, data order and coordinate loss",
+      "seed 5705 and 2111-step exposure"
+    ],
+    "forbidden": [
+      "clean endpoint or target metadata as model input",
+      "ACF or topology latent",
+      "tensor conditioning",
+      "flow matching",
+      "extra seed, step or hyperparameter search"
+    ]
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "independent_modality_times": true,
+    "parameter_count": 5232057
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 2111,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "coordinate",
+    "coordinate_clean_side_information": false,
+    "modality_time_mode": "independent_corner_mixture",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 2111],
+    "exposure_mode": "prefix_screen",
+    "graph_presentations": 135104,
+    "data_passes": 0.2501166312453255,
+    "from_scratch_required": true
+  },
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "bootstrap_seed": 9101,
+    "bootstrap_replicates": 2000,
+    "corner_coordinate_times": "same randomized stratified graph times for every corner and checkpoint",
+    "corners": [
+      "clean_clean",
+      "noisy_element",
+      "noisy_lattice",
+      "diagonal",
+      "interior"
+    ]
+  },
+  "acceptance": {
+    "clean_clean_validation_ratio_max": 0.518513457052391,
+    "diagonal_validation_ratio_max": 0.6645334548626645,
+    "all_modality_time_gradient_norms_positive_finite": true,
+    "all_corner_losses_finite": true,
+    "tensor_candidates": 0,
+    "training_graphs_per_second_min": 200.0,
+    "peak_cuda_memory_mib_max": 5500.0,
+    "target_leakage_fields": 0
+  },
+  "decision_rule": {
+    "pass": "retain the unified multimodal hybrid-diffusion hypothesis and proceed only to a separately frozen J2 oracle/generated side-state error budget",
+    "fail": "do not rescue this run; attribute whether clean-corner retention or noisy-diagonal capacity failed, then propose the minimal hard-chain decomposition p(N,C), p(L|N,C), p(F|A_tilde(C),L)",
+    "boundary": "J1 does not qualify free joint generation and does not authorize ACF, topology features, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

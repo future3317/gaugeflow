@@ -37,7 +37,17 @@ _GRADIENT_GROUPS = (
 
 
 def _gradient_group(parameter_name: str) -> str:
-    if parameter_name.startswith(("element_embedding.", "degree_embedding.", "time_embedding.", "state_embedding.")):
+    if parameter_name.startswith(
+        (
+            "element_embedding.",
+            "degree_embedding.",
+            "time_embedding.",
+            "element_time_embedding.",
+            "lattice_time_embedding.",
+            "modality_time_fusion.",
+            "state_embedding.",
+        )
+    ):
         return "input_state_embeddings"
     if parameter_name.startswith(("gauge_atlas.", "geometry_query_encoder.")):
         return "tensor_atlas"
@@ -86,6 +96,29 @@ def _clipped_module_gradient_norms(model: torch.nn.Module) -> dict[str, float]:
             squared[group] = squared[group] + parameter.grad.detach().float().square().sum()
     values = torch.stack(tuple(squared[name] for name in _GRADIENT_GROUPS)).sqrt().cpu()
     return {name: float(value) for name, value in zip(_GRADIENT_GROUPS, values, strict=True)}
+
+
+def _time_embedding_gradient_norms(model: torch.nn.Module) -> dict[str, float]:
+    """Report the three explicit modality clocks after global clipping."""
+    reference = next(model.parameters())
+    groups = {
+        "coordinate": "time_embedding.",
+        "element": "element_time_embedding.",
+        "lattice": "lattice_time_embedding.",
+        "fusion": "modality_time_fusion.",
+    }
+    result: dict[str, float] = {}
+    for label, prefix in groups.items():
+        squared = torch.zeros((), dtype=torch.float32, device=reference.device)
+        found = False
+        for name, parameter in model.named_parameters():
+            if name.startswith(prefix):
+                found = True
+                if parameter.grad is not None:
+                    squared = squared + parameter.grad.detach().float().square().sum()
+        if found:
+            result[label] = float(squared.sqrt().cpu())
+    return result
 
 
 def _validate_coordinate_exposure(
@@ -235,6 +268,9 @@ def main() -> None:
             "edge_dim": int(model_spec["edge_dim"]),
             "angular_channels": int(model_spec["angular_channels"]),
             "edge_refresh_rank": int(model_spec["edge_refresh_rank"]),
+            "independent_modality_times": bool(
+                model_spec.get("independent_modality_times", False)
+            ),
         }
     )
     model = HybridCrystalDenoiser(**model_config)
@@ -257,8 +293,12 @@ def main() -> None:
             precision=str(training_spec["precision"]),
             objective=objective,
             coordinate_clean_side_information=bool(training_spec.get("coordinate_clean_side_information", False)),
+            modality_time_mode=str(training_spec.get("modality_time_mode", "shared")),
         )
     )
+    expects_independent_times = training_config.modality_time_mode == "independent_corner_mixture"
+    if model.independent_modality_times != expects_independent_times:
+        raise ValueError("model and training modality-time contracts do not match")
     diffusion = TensorFreeHybridDiffusion(
         model,
         lattice_standardizer,
@@ -311,6 +351,7 @@ def main() -> None:
     graphs_seen_this_invocation = 0
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
+    clipped_steps = torch.zeros((), dtype=torch.long, device=device)
     while trainer.step < steps:
         try:
             batch_data = next(data_iterator)
@@ -329,6 +370,7 @@ def main() -> None:
             blueprint,
             generator=device_generator,
         )
+        clipped_steps = clipped_steps + (gradient_norm > training_config.gradient_clip_norm)
         throughput_graphs += graph_count
         graphs_seen_this_invocation += graph_count
         if trainer.step % log_every == 0 or trainer.step in checkpoint_steps or trainer.step in {1, steps}:
@@ -346,13 +388,30 @@ def main() -> None:
                 "shape_loss": float(output.shape_loss.detach().cpu()),
                 "masked_fraction": float(output.masked_fraction.detach().cpu()),
                 "gradient_norm": float(gradient_norm.cpu()),
+                "post_clip_gradient_norm": min(
+                    float(gradient_norm.cpu()), training_config.gradient_clip_norm
+                ),
+                "clip_fraction": float(clipped_steps.cpu()) / trainer.step,
                 "clipped_module_gradient_norms": _clipped_module_gradient_norms(model),
+                "modality_time_gradient_norms": _time_embedding_gradient_norms(model),
                 "graphs_seen_this_invocation": graphs_seen_this_invocation,
                 "graphs_per_second": throughput_graphs / elapsed,
                 "peak_cuda_memory_mib": (
                     float(torch.cuda.max_memory_allocated(device)) / (1024.0**2) if device.type == "cuda" else 0.0
                 ),
             }
+            if output.noisy.modality_regime is not None:
+                regime_names = (
+                    "clean_clean",
+                    "noisy_element",
+                    "noisy_lattice",
+                    "diagonal",
+                    "interior",
+                )
+                record["coordinate_loss_by_modality_regime"] = {
+                    name: float(output.graph_coordinate_loss[output.noisy.modality_regime == index].mean().cpu())
+                    for index, name in enumerate(regime_names)
+                }
             with log_path.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
             print(json.dumps(record, sort_keys=True), flush=True)

@@ -25,6 +25,7 @@ class ProductionTrainingConfig:
     precision: str = "bf16"
     objective: str = "joint"
     coordinate_clean_side_information: bool = False
+    modality_time_mode: str = "shared"
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
@@ -41,6 +42,14 @@ class ProductionTrainingConfig:
             raise ValueError("training objective must be joint or coordinate")
         if self.coordinate_clean_side_information and self.objective != "coordinate":
             raise ValueError("clean element/lattice side information is coordinate-only")
+        if self.modality_time_mode not in {"shared", "independent_corner_mixture"}:
+            raise ValueError("unknown modality-time training mode")
+        if self.modality_time_mode == "independent_corner_mixture" and (
+            self.objective != "coordinate" or self.coordinate_clean_side_information
+        ):
+            raise ValueError(
+                "independent modality-time attribution requires coordinate training without clean-side override"
+            )
 
 
 class ExponentialMovingAverage:
@@ -128,6 +137,22 @@ class ProductionTrainer:
             dtype=torch.bfloat16,
             enabled=use_bf16,
         ):
+            modality_arguments: dict[str, torch.Tensor] = {}
+            if self.config.modality_time_mode == "independent_corner_mixture":
+                graph_count = int(blueprint.node_counts.numel())
+                coordinate_time, element_time, lattice_time, regime = (
+                    self.diffusion.sample_independent_modality_times(
+                        graph_count,
+                        clean_fractional_coordinates,
+                        generator=generator,
+                    )
+                )
+                modality_arguments = {
+                    "time": coordinate_time,
+                    "element_time": element_time,
+                    "lattice_time": lattice_time,
+                    "modality_regime": regime,
+                }
             output = self.diffusion(
                 clean_elements,
                 clean_fractional_coordinates,
@@ -137,6 +162,7 @@ class ProductionTrainer:
                 blueprint.fractional_to_cartesian,
                 generator=generator,
                 clean_side_information=self.config.coordinate_clean_side_information,
+                **modality_arguments,
             )
         optimization_loss = output.loss if self.config.objective == "joint" else output.coordinate_loss
         if not torch.isfinite(optimization_loss):
