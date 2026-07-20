@@ -233,6 +233,20 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   assignment Q1. It does not qualify `p(N)`, site assignment itself, L1/M1,
   free joint H1a, tensor/oracle work, relaxation, DFT or DFPT. Oracle-C and
   generated-C assignment results must remain explicitly separated.
+- The separately frozen oracle-C assignment Q1 has now run once at seed 5705
+  from commit `4fa6093` and fails. Validation/test exact target-quotient
+  probabilities are `0.12324/0.22052 < 0.25`, sampled orbit-aligned site
+  accuracies are `0.53458/0.61121 < 0.8`, and model-minus-uniform quotient-NLL
+  UCB95 values are `4.74238/6.84618 > 0`. Exact and sampled compositions remain
+  exact, failures are zero, and sample retrieval agrees with exact probability.
+  A read-only checkpoint audit gives train quotient NLL `2.77939` versus
+  uniform `8.00377` and reaches `99.86%` of the implemented site-signature
+  unary ceiling, ruling out failure to fit the training carriers. The frozen
+  OOD split has zero train support for validation/test composition partitions
+  and only `25.58%/13.21%` exact action-signature coverage. Q1 therefore rejects
+  the present unary scorer under this OOD contract; do not add steps,
+  target-derived occupation fields, generated-C, `p(N)`, L1/M1, tensor work,
+  relaxation, DFT or DFPT.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
   a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit

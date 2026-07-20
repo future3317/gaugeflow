@@ -1,0 +1,59 @@
+{
+  "audit_role": "read-only attribution of the frozen failed Q1 checkpoint and source support; no training and no threshold changes",
+  "checkpoint_sha256": "f35e636f0302c755744bb558043d6646ad188eff1725c3fcf9904f58a60852b2",
+  "implementation_commit": "4fa609337b9fbed54f0b581cea6a6b479fc336d5",
+  "protocol_sha256": "7684b2a47cb7eb810afe43f12d620030fb42395cd968da27f62b1599b33140d9",
+  "raw_result_sha256": "dc902a0a36fd21fc0eb13c0054478857f1314876040136f689edea406c0454c1",
+  "law_and_sampler_checks": {
+    "exact_composition_validation_test": [1.0, 1.0],
+    "evaluation_failures_validation_test": [0, 0],
+    "parent_action_score_max_abs_validation_test": [0.0, 0.0],
+    "relabel_probability_max_abs_validation_test": [0.00000762939453125, 0.000011444091796875],
+    "sample_minus_exact_target_probability_abs_validation_test": [0.006384875426716646, 0.009460550990691874]
+  },
+  "checkpoint_train_read_only": {
+    "carriers": 358,
+    "materials": 181,
+    "quotient_nll": 2.7793947941231485,
+    "target_quotient_probability": 0.368097017411053,
+    "uniform_quotient_nll": 8.003769815635337
+  },
+  "implemented_site_signature_ceiling": {
+    "train": 0.3686086902926236,
+    "validation": 0.4149036632696763,
+    "test": 0.30471420940170946,
+    "checkpoint_fraction_of_ceiling": {
+      "train": 0.998611882278587,
+      "validation": 0.29704426620790564,
+      "test": 0.72369423858601
+    },
+    "carriers_where_feature_ceiling_is_below_parent_orbit_ceiling_fraction": {
+      "train": 0.5363128491620112,
+      "validation": 0.11627906976744186,
+      "test": 0.8301886792452831
+    }
+  },
+  "train_support_coverage": {
+    "validation": {
+      "all_elements_seen": 1.0,
+      "parent_space_group_seen": 0.6744186046511628,
+      "node_and_species_count_seen": 0.6511627906976745,
+      "composition_partition_seen": 0.0,
+      "exact_parent_action_signature_seen": 0.2558139534883721
+    },
+    "test": {
+      "all_elements_seen": 0.9622641509433962,
+      "parent_space_group_seen": 0.6981132075471698,
+      "node_and_species_count_seen": 0.660377358490566,
+      "composition_partition_seen": 0.0,
+      "exact_parent_action_signature_seen": 0.1320754716981132
+    }
+  },
+  "attribution": {
+    "code_or_sampler_failure": false,
+    "training_memorization_failure": false,
+    "ood_support_shift": true,
+    "unary_site_signature_limit": true,
+    "decision": "freeze Q1 as failed; do not start generated-C assignment, p(N), L1, M1 or tensor work"
+  }
+}

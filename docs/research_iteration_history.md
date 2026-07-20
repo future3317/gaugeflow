@@ -966,3 +966,17 @@ and prevents operation multiplicity from reweighting the quotient measure.
 The carrier pass authorizes only a separately frozen oracle-C assignment Q1.
 It does not pass assignment itself or authorize `p(N)`, L1/M1, free joint H1a,
 tensor/oracle work, relaxation, DFT or DFPT.
+
+The separately frozen `h1a_oracle_c_assignment_q1_v1` then runs once from
+commit `4fa6093`, seed 5705, for 2,000 FP32 steps on an RTX 4090. It fails every
+likelihood/retrieval threshold while preserving the law invariants: validation/
+test exact target quotient probabilities are `0.123245/0.220520`, sampled
+orbit-aligned site accuracies are `0.534582/0.611207`, exact composition is one,
+and failures are zero. The test relabel residual is `1.1444e-5`, narrowly above
+the frozen `1e-5` threshold, but is not causal to the much larger statistical
+failure. A read-only checkpoint attribution gives material-balanced train NLL
+`2.77939` versus uniform `8.00377` and target probability `0.368097`, which is
+`99.86%` of the implemented site-signature unary ceiling. Validation and test
+composition partitions have zero train support and exact action-signature
+coverage is only `25.58%/13.21%`. The result rejects the unary scorer under the
+frozen OOD contract and stops before generated-C, `p(N)`, L1, M1 or tensor work.

@@ -516,5 +516,8 @@ target and is never added to training.
 - 不把 target CIF、target lattice、material ID、target space group、stabilizer 或
   species mapping 输入 denoiser。
 - polar rank-three tensor orbit 使用 `SO(3)`；晶体兼容性才使用显式 parity 的 `O(3)`。
-- 当前只允许另行冻结并运行 oracle-C assignment Q1；L1/M1、完整 blueprint、
-  tensor、oracle 或物理验证仍不得提前启动。
+- oracle-C assignment Q1 已按冻结协议单次运行并失败：exact composition 与 sampler
+  软件闭环正确，但 validation/test quotient probability、sample retrieval 与
+  orbit-aligned accuracy 未通过；当前 unary scorer 已在 train 上饱和其实现 ceiling，
+  同时 OOD split 的 composition partition 支持完全不重叠。不得直接进入 generated-C、
+  `p(N)`、L1/M1、完整 blueprint、tensor、oracle 或物理验证。
