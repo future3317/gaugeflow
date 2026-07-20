@@ -1,0 +1,72 @@
+{
+  "protocol": "h1a_j1_matched_clock_attribution_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed parameter- and task-matched attribution of J1 gains to modality-identifiable time coordinates",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "c0_protocol_file_sha256": "327776820c2b28c02ad4ab595a6b274df1321ac1858fcc9424f186b4e1eb1364",
+    "c1_protocol_file_sha256": "6d2e868d6cf8ed48b5b740c4577dc7b187cd06a6a1dd6ec9923514edc16a9c68",
+    "c2_protocol_file_sha256": "9b60dc1badb1c31c28be5a8ed56dac5a42bcb4c6965dcc0c48c6a423c462e5e0",
+    "c2_result_file_sha256": "016a9d277ae376a45218bc4d914e9566084b3bd180e72818c04193eb2b7c1e2c",
+    "c2_checkpoint_sha256": "ffc521b0191a57b02f6797a205753d957af59570ca70354da6bfe0549cbd9864"
+  },
+  "arms": {
+    "C0": {
+      "protocol": "h1a_j1_c0_single_clock_control_v1",
+      "visible_times": ["t_F"],
+      "time_conditioning": "matched_single"
+    },
+    "C1": {
+      "protocol": "h1a_j1_c1_side_summary_control_v1",
+      "visible_times": ["t_F", "(t_A+t_L)/2"],
+      "time_conditioning": "side_mean"
+    },
+    "C2": {
+      "protocol": "h1a_j1_independent_modality_times_v1",
+      "visible_times": ["t_F", "t_A", "t_L"],
+      "time_conditioning": "separate"
+    }
+  },
+  "matched_contract": {
+    "seed": 5705,
+    "steps": 2111,
+    "batch_size": 64,
+    "batch_regime_counts": [13, 13, 13, 13, 12],
+    "parameter_count": 5232057,
+    "same_train_shuffle_and_device_noise": true,
+    "same_optimizer_ema_precision_and_coordinate_target": true,
+    "dummy_parameters_excluded_from_forward": true,
+    "tensor_condition_enabled": false
+  },
+  "evaluation": {
+    "split": "val",
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "bootstrap_seed": 19571,
+    "bootstrap_replicates": 5000,
+    "batch_size": 16,
+    "common_structures_times_and_noise_across_arms": true,
+    "paired_quantity": "per-structure final coordinate MSE difference, C2 minus comparator",
+    "corners": [
+      "clean_clean",
+      "noisy_element",
+      "noisy_lattice",
+      "diagonal",
+      "interior"
+    ]
+  },
+  "acceptance": {
+    "c2_minus_c0_diagonal_paired_difference_q975_max": 0.0,
+    "c2_minus_c0_interior_paired_difference_q975_max": 0.0,
+    "c2_clean_final_mse_over_c0_clean_final_mse_max": 1.05,
+    "equal_parameter_count": true,
+    "finite_losses": true,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "attribute the C2 benefit to modality-identifiable clocks rather than task mixture or nominal parameter count, while retaining the bounded statement that evaluation is teacher-forced forward corruption",
+    "fail": "retain J1 as a successful composite intervention but do not attribute its gain specifically to separate clocks",
+    "boundary": "This attribution does not qualify free joint generation or on-policy reverse states and cannot authorize E1/L1/M1/J2, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

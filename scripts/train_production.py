@@ -271,6 +271,15 @@ def main() -> None:
             "independent_modality_times": bool(
                 model_spec.get("independent_modality_times", False)
             ),
+            **(
+                {
+                    "modality_time_conditioning": str(
+                        model_spec["modality_time_conditioning"]
+                    )
+                }
+                if "modality_time_conditioning" in model_spec
+                else {}
+            ),
         }
     )
     model = HybridCrystalDenoiser(**model_config)
@@ -296,8 +305,9 @@ def main() -> None:
             modality_time_mode=str(training_spec.get("modality_time_mode", "shared")),
         )
     )
-    expects_independent_times = training_config.modality_time_mode == "independent_corner_mixture"
-    if model.independent_modality_times != expects_independent_times:
+    uses_mixed_regimes = training_config.modality_time_mode == "independent_corner_mixture"
+    matched_modes = {"matched_single", "side_mean", "separate"}
+    if uses_mixed_regimes != (model.modality_time_conditioning in matched_modes):
         raise ValueError("model and training modality-time contracts do not match")
     diffusion = TensorFreeHybridDiffusion(
         model,

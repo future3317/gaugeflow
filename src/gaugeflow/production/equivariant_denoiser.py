@@ -273,6 +273,7 @@ class HybridCrystalDenoiser(nn.Module):
         angular_channels: int = 8,
         edge_refresh_rank: int = 16,
         independent_modality_times: bool = False,
+        modality_time_conditioning: str | None = None,
     ) -> None:
         super().__init__()
         if layers < 1:
@@ -280,7 +281,27 @@ class HybridCrystalDenoiser(nn.Module):
         if edge_dim < 1 or angular_channels < 1 or edge_refresh_rank < 1:
             raise ValueError("edge, angular and refresh dimensions must be positive")
         self.edge_dim = int(edge_dim)
-        self.independent_modality_times = bool(independent_modality_times)
+        if modality_time_conditioning is None:
+            modality_time_conditioning = (
+                "separate" if independent_modality_times else "coordinate"
+            )
+        if modality_time_conditioning not in {
+            "coordinate",
+            "matched_single",
+            "side_mean",
+            "separate",
+        }:
+            raise ValueError("unknown modality-time conditioning mode")
+        if independent_modality_times and modality_time_conditioning != "separate":
+            raise ValueError(
+                "independent_modality_times is only the archived name for separate clocks"
+            )
+        self.modality_time_conditioning = modality_time_conditioning
+        self.independent_modality_times = modality_time_conditioning == "separate"
+        self.uses_side_modality_times = modality_time_conditioning in {
+            "side_mean",
+            "separate",
+        }
         self.element_embedding = nn.Embedding(119, hidden_dim)
         self.degree_embedding = nn.Sequential(
             nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
@@ -289,7 +310,7 @@ class HybridCrystalDenoiser(nn.Module):
         self.element_time_embedding: FourierTimeEmbedding | None
         self.lattice_time_embedding: FourierTimeEmbedding | None
         self.modality_time_fusion: nn.Linear | None
-        if self.independent_modality_times:
+        if self.modality_time_conditioning != "coordinate":
             self.element_time_embedding = FourierTimeEmbedding(hidden_dim)
             self.lattice_time_embedding = FourierTimeEmbedding(hidden_dim)
             self.modality_time_fusion = nn.Linear(3 * hidden_dim, hidden_dim, bias=False)
@@ -390,25 +411,33 @@ class HybridCrystalDenoiser(nn.Module):
         graphs = time.numel()
         if time.ndim != 1:
             raise ValueError("coordinate time must be a graph vector")
-        if self.independent_modality_times:
+        if self.uses_side_modality_times:
             if element_time is None or lattice_time is None:
                 raise ValueError(
-                    "independent-modality denoising requires explicit element and lattice times"
+                    "side-time conditioning requires explicit element and lattice times"
                 )
             if element_time.shape != time.shape or lattice_time.shape != time.shape:
                 raise ValueError("all modality times must match the graph vector")
             assert self.element_time_embedding is not None
             assert self.lattice_time_embedding is not None
             assert self.modality_time_fusion is not None
-            graph_time = self.modality_time_fusion(
-                torch.cat(
-                    (
-                        self.time_embedding(time),
-                        self.element_time_embedding(element_time),
-                        self.lattice_time_embedding(lattice_time),
-                    ),
-                    dim=-1,
+            coordinate_clock = self.time_embedding(time)
+            if self.modality_time_conditioning == "separate":
+                side_clocks = (
+                    self.element_time_embedding(element_time),
+                    self.lattice_time_embedding(lattice_time),
                 )
+            else:
+                # C1 exposes exactly one side-uncertainty scalar.  The third
+                # clock MLP and the final H columns of the fusion map are
+                # parameter-matching dummies and do not enter the forward map.
+                side_mean = 0.5 * (element_time + lattice_time)
+                side_clocks = (
+                    self.element_time_embedding(side_mean),
+                    torch.zeros_like(coordinate_clock),
+                )
+            graph_time = self.modality_time_fusion(
+                torch.cat((coordinate_clock, *side_clocks), dim=-1)
             )
         else:
             if (element_time is None) != (lattice_time is None):
@@ -419,6 +448,9 @@ class HybridCrystalDenoiser(nn.Module):
                 raise ValueError(
                     "shared-time denoising cannot silently consume different modality times"
                 )
+            # ``matched_single`` owns the same clock bank as the two controls,
+            # but the dummy bank is deliberately absent from this graph.  It
+            # therefore sees only t_F while matching total parameter count.
             graph_time = self.time_embedding(time)
         if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
             raise ValueError("element state must be rank-one int64 tokens")

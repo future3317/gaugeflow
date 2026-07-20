@@ -319,7 +319,7 @@ class TensorFreeHybridDiffusion(nn.Module):
                 "element_time": noisy.element_time,
                 "lattice_time": noisy.lattice_time,
             }
-            if self.denoiser.independent_modality_times
+            if self.denoiser.uses_side_modality_times
             else {}
         )
         prediction = self.denoiser(

@@ -1,0 +1,49 @@
+{
+  "protocol": "h1a_j1_gradient_geometry_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-optimizer-step pre-clipping gradient geometry of the trained C2 coordinate objective across five modality regimes",
+  "prerequisites": {
+    "source_protocol": "h1a_j1_independent_modality_times_v1",
+    "source_protocol_file_sha256": "9b60dc1badb1c31c28be5a8ed56dac5a42bcb4c6965dcc0c48c6a423c462e5e0",
+    "source_result_file_sha256": "016a9d277ae376a45218bc4d914e9566084b3bd180e72818c04193eb2b7c1e2c",
+    "source_checkpoint_sha256": "ffc521b0191a57b02f6797a205753d957af59570ca70354da6bfe0549cbd9864",
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da"
+  },
+  "evaluation": {
+    "split": "val",
+    "graphs": 64,
+    "panel_seed": 19572,
+    "noise_seed": 19573,
+    "batch_size": 8,
+    "microbatches": 8,
+    "precision": "bf16_learned_fp32_geometry",
+    "checkpoint_state": "raw training model at step 2111, not EMA",
+    "optimizer_steps": 0,
+    "clip_norm_reference": 1.0,
+    "regimes": [
+      "clean_clean",
+      "noisy_element",
+      "noisy_lattice",
+      "diagonal",
+      "interior"
+    ],
+    "module_partition": [
+      "input_time_embeddings",
+      "base_message_blocks",
+      "dynamic_edge_angular",
+      "time_fusion",
+      "coordinate_readout"
+    ]
+  },
+  "diagnostic_thresholds": {
+    "severe_clipping_median_alpha_max": 0.2,
+    "persistent_conflict_negative_fraction_min": 0.75,
+    "persistent_conflict_median_cosine_max": 0.0,
+    "nonfinite_values": 0
+  },
+  "decision_rule": {
+    "no_conflict": "retain global clipping; norm differences alone do not authorize an optimizer change",
+    "persistent_conflict_and_severe_clipping": "prepare exactly one separately frozen comparison among blockwise clipping, adaptive gradient clipping, or target-RMS normalization",
+    "boundary": "Do not change clip norm or stack optimization modifications in this audit. No training, E1/L1/M1/J2, tensor/oracle work, relaxation, DFT or DFPT is authorized."
+  }
+}

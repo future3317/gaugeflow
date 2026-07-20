@@ -771,9 +771,21 @@ final/initial ratios are `0.47273`, `0.51407`, `0.56107`, `0.57304`, and
 `0.64015` in the five regimes. Clean-clean is below `0.518513`; diagonal is
 below `0.664533`. All clock/fusion gradients are positive and finite,
 throughput is `247.65 graphs/s`, peak allocation is `4714 MiB`, and the tensor
-atlas is bypassed. The result supports unified multimodal diffusion and rejects
-an immediate hard-chain decision, but it does not qualify free joint H1a.
+atlas is bypassed. The composite result supports continuing unified multimodal
+diffusion and rejects an immediate hard-chain decision, but it does not isolate
+the clock effect from the changed five-regime task mixture or the 3.9% parameter
+increase and does not qualify free joint H1a. Separate confidence intervals for
+adjacent regimes overlap, so their ordering is descriptive until a
+structure-paired difference bootstrap is run.
 
-J2 requires qualified element and lattice generators to cross true/generated
-side states. J1 is coordinate-only, so those heads are untrained; no J2 state,
-joint sample, tensor result, relaxation, DFT or DFPT is fabricated from it.
+The next frozen controls are C0 (only `t_F`, with a disconnected
+parameter-matching clock bank), C1 (`t_F` plus `(t_A+t_L)/2`) and the existing
+C2 (three named clocks), all using the identical mixture, seed, exposure and
+capacity. A separate zero-step audit measures per-regime pre-clip norms,
+gradient cosines, clip scales and module energy shares before any clipping
+policy can change.
+
+J2 requires qualified E1 element and L1 lattice reverse generators followed by
+joint M1 training to cross true/generated on-policy side states. J1 is
+coordinate-only, so those heads are untrained; no J2 state, joint sample,
+tensor result, relaxation, DFT or DFPT is fabricated from it.

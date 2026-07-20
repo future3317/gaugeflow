@@ -308,6 +308,78 @@ def test_independent_modality_times_are_non_degenerate_and_receive_gradients() -
         assert sum(float(value.square().sum()) for value in gradients if value is not None) > 0.0
 
 
+def test_parameter_matched_clock_controls_have_equal_size_and_distinct_inputs() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    modes = ("matched_single", "side_mean", "separate")
+    models = {
+        mode: HybridCrystalDenoiser(
+            hidden_dim=16,
+            vector_dim=4,
+            layers=1,
+            radial_dim=4,
+            atlas_residual_circle_samples=8,
+            modality_time_conditioning=mode,
+        )
+        for mode in modes
+    }
+    counts = {sum(parameter.numel() for parameter in model.parameters()) for model in models.values()}
+    assert len(counts) == 1
+    graphs = blueprint.node_counts.numel()
+    common = {
+        "element_tokens": elements,
+        "frac_coords": coordinates,
+        "log_volume": torch.zeros(graphs),
+        "log_shape": torch.zeros(graphs, 6),
+        "batch": blueprint.batch,
+        "time": torch.full((graphs,), 0.5),
+        "tensor_condition": torch.zeros(graphs, 18),
+        "condition_present": torch.zeros(graphs, 1, dtype=torch.bool),
+        "shape_projector": blueprint.shape_projector,
+        "fractional_to_cartesian": blueprint.fractional_to_cartesian,
+    }
+    single = models["matched_single"](**common)
+    single.coordinate_cartesian_scaled_score.square().sum().backward()
+    for name, parameter in models["matched_single"].named_parameters():
+        if name.startswith(("element_time_embedding.", "lattice_time_embedding.", "modality_time_fusion.")):
+            assert parameter.grad is None
+
+    for mode in ("side_mean", "separate"):
+        try:
+            models[mode](**common)
+        except ValueError as error:
+            assert "requires explicit" in str(error)
+        else:
+            raise AssertionError(f"{mode} accepted missing side times")
+
+
+def test_parameter_matched_clock_controls_accept_same_corrupted_side_states() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    for mode in ("matched_single", "side_mean", "separate"):
+        model = HybridCrystalDenoiser(
+            hidden_dim=16,
+            vector_dim=4,
+            layers=1,
+            radial_dim=4,
+            atlas_residual_circle_samples=8,
+            modality_time_conditioning=mode,
+        )
+        diffusion = TensorFreeHybridDiffusion(model, _standardizer())
+        output = diffusion(
+            elements,
+            coordinates,
+            lattice,
+            blueprint.batch,
+            blueprint.shape_projector,
+            blueprint.fractional_to_cartesian,
+            time=torch.tensor([0.4, 0.7]),
+            element_time=torch.tensor([0.0, 0.7]),
+            lattice_time=torch.tensor([0.4, 0.0]),
+            generator=torch.Generator().manual_seed(115),
+        )
+        output.coordinate_loss.backward()
+        assert torch.isfinite(output.coordinate_loss)
+
+
 def test_shared_time_model_rejects_silent_modality_mismatch() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     model = _small_model()

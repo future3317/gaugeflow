@@ -10,9 +10,14 @@ multimodal hybrid-diffusion hypothesis; it does **not** qualify free joint
 generation and does not authorize ACF, tensor conditioning, relaxation, DFT or
 DFPT.
 
-This result narrows the historical failure to a cross-modal parameterization
-problem.  There is still no evidence that the wrapped torus path, score target,
-coordinate carrier, data cache or diffusion theory is intrinsically invalid.
+This result shows that the composite intervention---a fixed five-regime task
+mixture plus explicit modality clocks---handles teacher-forced side-state
+uncertainty better while retaining the clean-side task.  It does not yet
+isolate clocks from the changed task mixture or the 3.9% parameter increase,
+and therefore does not establish that a single clock caused the historical
+free-joint failure.  There is still no evidence that the wrapped torus path,
+score target, coordinate carrier, data cache or diffusion theory is
+intrinsically invalid.
 
 ## What was corrected before J1
 
@@ -117,17 +122,20 @@ or the decision.
 
 ## Interpretation
 
-The ordering
+The observed ordering
 
 \[
 r_{00}<r_{A}<r_{L}<r_{AA=LL}<r_{\mathrm{interior}}
 \]
 
-shows a graded cross-modal difficulty rather than a collapsed time encoder.
-Lattice uncertainty is more damaging than element uncertainty under this
-budget, while asynchronous interior states are hardest.  Explicit clocks let
-the same 5.23M-parameter network learn all five contracts without sacrificing
-the clean-side corner.
+is consistent with graded cross-modal difficulty rather than a collapsed time
+encoder.  Lattice uncertainty is more damaging than element uncertainty under
+this budget, while asynchronous interior states are hardest.  The separate
+bootstrap intervals of adjacent regimes overlap, however; adjacent differences
+must be bootstrapped on paired structures before they are called significant.
+The run shows that the 5.23M-parameter network can learn all five contracts
+without sacrificing the clean-side corner, but task mixture, clock identity
+and nominal capacity remain confounded.
 
 The 97.4% global clipping rate is an important optimization diagnostic.  It
 does not invalidate J1 because all models use the preregistered clip and every
@@ -135,15 +143,22 @@ clock receives finite gradients, but future matched joint training should
 report pre/post-clip norms and module shares as done here.  J1 does not grant
 permission to tune the clip threshold retrospectively.
 
-## Decision boundary and next gate
+## Decision boundary and next gates
 
-J1 authorizes only preparation of a separately frozen J2 side-state error
-budget.  A valid J2 needs qualified element and lattice generators so that
-true/generated composition and lattice can be crossed without fabricating
-on-policy states.  The current J1 coordinate-only checkpoint leaves the
-element and lattice readouts untrained; it must not be misused as such a
-generator.  Until those upstream heads are qualified, J2 remains prepared but
-not executable.
+J1 first authorizes a parameter-matched clock attribution and a zero-optimizer-
+step gradient-geometry audit.  The former compares single-clock, side-summary
+and separate-clock models under the same five-regime mixture and exact
+5,232,057-parameter budget.  The latter tests whether the 97.4% clipping rate
+reflects persistent cross-regime gradient conflict or only large norms; it does
+not change the clip threshold.
+
+Only after those diagnostics may clean-side element and lattice reverse heads
+be separately qualified as E1 and L1, followed by joint multi-head M1.  A valid
+J2 then needs their on-policy states at the same reverse-clock time.  The
+current J1 coordinate-only checkpoint leaves the element and lattice readouts
+untrained; it must not be misused as such a generator or used to manufacture a
+terminal-state/forward-noise surrogate.  Until those upstream heads are
+qualified, J2 remains unexecutable.
 
 If later J2 shows tolerable upstream error, continue one unified multimodal
 hybrid diffusion.  If upstream side-state errors dominate, the minimal hard

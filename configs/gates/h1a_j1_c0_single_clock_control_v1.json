@@ -1,0 +1,66 @@
+{
+  "protocol": "h1a_j1_c0_single_clock_control_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "parameter-matched single-coordinate-clock control for J1 attribution under the identical five-regime training mixture",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_j1_independent_modality_times_v1",
+    "qualification_result_sha256": "016a9d277ae376a45218bc4d914e9566084b3bd180e72818c04193eb2b7c1e2c",
+    "j1_protocol_file_sha256": "9b60dc1badb1c31c28be5a8ed56dac5a42bcb4c6965dcc0c48c6a423c462e5e0",
+    "j1_checkpoint_sha256": "ffc521b0191a57b02f6797a205753d957af59570ca70354da6bfe0549cbd9864",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "arm": "C0",
+    "visible_time_coordinates": ["t_F"],
+    "side_state_corruption": "the same t_A and t_L five-regime mixture as C2 is applied to inputs but is not exposed to the denoiser",
+    "parameter_matching": "the element-clock MLP, lattice-clock MLP and fusion map exist in the parameter set but are disconnected from forward",
+    "forbidden": [
+      "using t_A or t_L in forward",
+      "changing batch mixture, data order, optimizer, model width or exposure",
+      "extra seed, step or hyperparameter search",
+      "tensor, topology, reciprocal or flow-matching branches"
+    ]
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "modality_time_conditioning": "matched_single",
+    "parameter_count": 5232057
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 2111,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "coordinate",
+    "coordinate_clean_side_information": false,
+    "modality_time_mode": "independent_corner_mixture",
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 2111],
+    "exposure_mode": "prefix_screen",
+    "graph_presentations": 135104,
+    "data_passes": 0.2501166312453255,
+    "from_scratch_required": true
+  },
+  "decision_rule": {
+    "status": "control arm only; scientific attribution is decided by h1a_j1_matched_clock_attribution_v1",
+    "boundary": "C0 cannot qualify free joint generation, change clipping, or authorize E1/L1/M1/J2, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

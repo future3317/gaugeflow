@@ -72,6 +72,35 @@ def _paired_bootstrap_ratio(
     }
 
 
+def _paired_bootstrap_mean_difference(
+    left: torch.Tensor,
+    right: torch.Tensor,
+    *,
+    seed: int,
+    replicates: int,
+) -> dict[str, float]:
+    """Bootstrap the structure-paired mean of ``left - right``."""
+    if left.shape != right.shape or left.ndim != 1 or left.numel() < 2:
+        raise ValueError("paired difference bootstrap requires matching structure vectors")
+    difference = left.double() - right.double()
+    generator = torch.Generator().manual_seed(seed)
+    draws = torch.randint(
+        difference.numel(),
+        (replicates, difference.numel()),
+        generator=generator,
+    )
+    means = difference[draws].mean(-1)
+    quantiles = torch.quantile(
+        means, torch.tensor([0.025, 0.5, 0.975], dtype=torch.float64)
+    )
+    return {
+        "mean": float(difference.mean()),
+        "q025": float(quantiles[0]),
+        "median": float(quantiles[1]),
+        "q975": float(quantiles[2]),
+    }
+
+
 @torch.no_grad()
 def _corner_graph_losses(
     checkpoint: Path,
@@ -93,8 +122,6 @@ def _corner_graph_losses(
         protocol_name=protocol_name,
         protocol_sha256=protocol_sha256,
     )
-    if not runtime.model.independent_modality_times:
-        raise ValueError("J1 checkpoint does not implement independent modality clocks")
     diffusion = TensorFreeHybridDiffusion(
         runtime.model,
         runtime.lattice_standardizer,

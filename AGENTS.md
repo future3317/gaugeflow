@@ -158,12 +158,16 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   `0.47273/0.51407/0.56107/0.57304/0.64015`; clean retention and diagonal
   improvement both pass their frozen bounds. All three clock embeddings have
   finite nonzero gradients. This supports a unified multimodal hybrid
-  diffusion but does not qualify free joint H1a.
-- J2 is authorized only as a separately frozen true/generated side-state error
-  budget after qualified element and lattice generators exist. The J1
-  coordinate-only checkpoint leaves those heads untrained and must not be used
-  to fabricate on-policy side states. Do not choose a hard chain, start free
-  joint training, or enter later Gates before this prerequisite is satisfied.
+  diffusion but does not isolate clock identity from the changed task mixture
+  and 3.9% capacity increase, and does not qualify free joint H1a. The next
+  controls are the frozen parameter-matched C0/C1/C2 comparison and a zero-step
+  gradient-geometry audit; do not tune clipping from the 97.4% rate alone.
+- J2 is authorized only after matched attribution, the gradient audit,
+  qualified E1 element and L1 lattice reverse heads, and joint M1 training.
+  Generated side states must be on-policy at the same reverse-clock time. The
+  J1 coordinate-only checkpoint leaves those heads untrained and must not be
+  used to fabricate them. Do not choose a hard chain, start free joint
+  training, or enter later Gates before these prerequisites are satisfied.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive
