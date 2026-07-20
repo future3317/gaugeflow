@@ -16,7 +16,6 @@ import torch
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.composition_metrics import (
     load_compositions,
-    partition_key,
     sample_validation,
 )
 from gaugeflow.production.composition_qualification import (
