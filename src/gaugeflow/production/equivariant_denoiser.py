@@ -9,6 +9,7 @@ import torch
 from torch import nn
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
+from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
 from .cartesian_coordinate_carrier import (
     CompactCartesianKrylovCarrier,
@@ -349,10 +350,12 @@ class HybridCrystalDenoiser(nn.Module):
         graph_head_inputs = 4 * hidden_dim
         node_head_inputs = 5 * hidden_dim
         self.composition_head = nn.Sequential(
-            nn.Linear(graph_head_inputs, hidden_dim),
+            nn.Linear(graph_head_inputs + CHEMICAL_ELEMENT_COUNT + 1, hidden_dim),
             nn.SiLU(),
-            nn.Linear(hidden_dim, 118),
+            nn.Linear(hidden_dim, CHEMICAL_ELEMENT_COUNT),
         )
+        nn.init.orthogonal_(self.composition_head[-1].weight, gain=1.0e-2)
+        nn.init.zeros_(self.composition_head[-1].bias)
         self.element_head = nn.Sequential(
             nn.Linear(node_head_inputs, hidden_dim),
             nn.SiLU(),
@@ -584,7 +587,47 @@ class HybridCrystalDenoiser(nn.Module):
         graph_context = torch.cat(
             (graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1
         )
-        composition_logits = self.composition_head(graph_context)
+        chemical = element_tokens < CHEMICAL_ELEMENT_COUNT
+        flat_chemical = (
+            batch[chemical] * CHEMICAL_ELEMENT_COUNT + element_tokens[chemical]
+        )
+        current_counts = torch.bincount(
+            flat_chemical,
+            minlength=graphs * CHEMICAL_ELEMENT_COUNT,
+        ).reshape(graphs, CHEMICAL_ELEMENT_COUNT)
+        observed_total = current_counts.sum(dim=-1, keepdim=True)
+        uniform_composition = current_counts.new_full(
+            current_counts.shape,
+            1.0 / CHEMICAL_ELEMENT_COUNT,
+            dtype=nodes.dtype,
+        )
+        current_composition = current_counts.to(nodes) / observed_total.clamp_min(1).to(
+            nodes
+        )
+        current_composition = torch.where(
+            observed_total > 0,
+            current_composition,
+            uniform_composition,
+        )
+        active_element_time = element_time if element_time is not None else time
+        categorical_survival = torch.cos(0.5 * math.pi * active_element_time).square()
+        base_composition = (
+            categorical_survival.unsqueeze(-1) * current_composition
+            + (1.0 - categorical_survival.unsqueeze(-1)) * uniform_composition
+        )
+        composition_residual = self.composition_head(
+            torch.cat(
+                (
+                    graph_context,
+                    current_composition,
+                    categorical_survival.unsqueeze(-1),
+                ),
+                dim=-1,
+            )
+        )
+        composition_logits = base_composition.clamp_min(1.0e-8).log() + (
+            1.0 - categorical_survival.unsqueeze(-1)
+        ) * composition_residual
         # The graph posterior is predicted only from the current state.  Its
         # expected species embedding gives every site a permutation-invariant
         # global abundance context without exposing target formula or counts.

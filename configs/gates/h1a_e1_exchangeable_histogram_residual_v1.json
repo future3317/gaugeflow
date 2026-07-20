@@ -1,0 +1,101 @@
+{
+  "protocol": "h1a_e1_exchangeable_histogram_residual_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed bounded qualification of a current-state-sufficient exchangeable histogram residual",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_e1_graph_composition_field_v1",
+    "qualification_result_sha256": "93a8e98506761adeb53a4b194804bf345e11868a9c2a71216c9eea73f1f47341",
+    "source_e1_2_decision": "fail",
+    "source_low_noise_input_overlap": 0.8591277499035122,
+    "source_low_noise_posterior_overlap": 0.6835198764955616,
+    "source_high_noise_clean_token_oracle_exact": 0.0234375,
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "name": "exchangeable current-histogram residual posterior",
+    "sufficient_statistic": "exact normalized histogram of the current categorical state, computed by one vectorized bincount",
+    "base_measure": "a_t h(A_t) + (1-a_t) Uniform(118), with a_t=cos^2(pi t_A/2)",
+    "residual": "(1-a_t) times a learned graph-context correction",
+    "clean_boundary": "composition counts equal the current-state histogram exactly at t_A=0",
+    "site_feedback": "expected species embedding under the residual-corrected posterior",
+    "integer_decoder": "largest-remainder model-predicted counts and exact Hungarian assignment",
+    "target_composition_input": false,
+    "runtime_fallback": false,
+    "forbidden": [
+      "target formula or target counts as input",
+      "additional seeds or updates",
+      "loss-weight search",
+      "sampler search or per-step target projection",
+      "L1, M1, joint or tensor training"
+    ]
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "independent_modality_times": true,
+    "parameter_count": 5462191
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 2111,
+    "batch_size": 64,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "element",
+    "coordinate_clean_side_information": false,
+    "modality_time_mode": "element_only",
+    "categorical_path": "uniform_replacement",
+    "composition_loss_weight": 1.0,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 2111],
+    "exposure_mode": "prefix_screen",
+    "graph_presentations": 135104,
+    "data_passes": 0.2501166312453255,
+    "from_scratch_required": true
+  },
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 9701,
+    "batch_size": 32,
+    "teacher_forced_times": [0.25, 0.5, 0.75, 0.9],
+    "teacher_forced_noise_seed": 9702,
+    "reverse_steps": 100,
+    "sampling_seed": 9703
+  },
+  "acceptance": {
+    "mean_nll_ratio_max": 0.75,
+    "t05_top1_min": 0.5,
+    "t05_top5_min": 0.8,
+    "t09_top1_min": 0.25,
+    "exact_composition_accuracy_min": 0.15,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "atom_count_preservation": 1.0,
+    "tensor_candidates": 0,
+    "training_graphs_per_second_min": 190.0,
+    "peak_cuda_memory_mib_max": 5700.0,
+    "positive_element_head_gradient": true,
+    "positive_element_time_gradient": true
+  },
+  "decision_rule": {
+    "pass": "qualify p(A|F_0,L_0,N) and permit only a separately frozen L1 lattice-head qualification",
+    "fail": "stop before L1; do not add another element feature head, more exposure, or sampler changes, and reassess whether composition must be an explicit stochastic state",
+    "boundary": "E1.3 cannot change historical H1a, qualify free joint generation, or authorize M1/J2, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT."
+  }
+}

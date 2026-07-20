@@ -323,6 +323,7 @@ def main() -> None:
             "h1a_e1_element_reverse_v1",
             "h1a_e1_uniform_count_projection_v1",
             "h1a_e1_graph_composition_field_v1",
+            "h1a_e1_exchangeable_histogram_residual_v1",
         }
         or protocol.get("status_before_run") != "frozen_not_run"
         or not isinstance(training, dict)

@@ -156,7 +156,7 @@ def test_production_model_contains_only_the_adaptive_compact_coordinate_readout(
 
     model = HybridCrystalDenoiser()
     names = tuple(name for name, _ in model.named_parameters())
-    assert sum(parameter.numel() for parameter in model.parameters()) == 5_034_297
+    assert sum(parameter.numel() for parameter in model.parameters()) == 5_264_431
     assert not any("coordinate_vector_head" in name for name in names)
     assert not any("coordinate_edge_head" in name for name in names)
     assert not any("coordinate_carrier_head" in name for name in names)

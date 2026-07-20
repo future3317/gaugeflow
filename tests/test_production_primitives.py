@@ -9,6 +9,7 @@ from gaugeflow.production.composition_assignment import (
     composition_counts_from_tokens,
     count_constrained_assignment,
     count_projected_assignment,
+    rounded_graph_composition,
 )
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
@@ -137,6 +138,39 @@ def test_count_constrained_assignment_is_an_offline_composition_oracle() -> None
     assigned = count_constrained_assignment(logits, batch, counts)
     assert torch.equal(assigned, torch.tensor([3, 3, 8, 8]))
     assert torch.equal(composition_counts_from_tokens(assigned, batch, 1), counts)
+
+
+def test_composition_field_exactly_preserves_clean_current_histogram() -> None:
+    values = _small_hybrid_input()
+    tokens, frac, log_volume, log_shape, batch, condition, present, projectors, charts = values
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    ).eval()
+    clean_time = torch.zeros(2)
+    output = model(
+        tokens,
+        frac,
+        log_volume,
+        log_shape,
+        batch,
+        clean_time,
+        condition,
+        present,
+        projectors,
+        charts,
+        element_time=clean_time,
+        lattice_time=clean_time,
+    )
+    node_counts = torch.bincount(batch, minlength=2)
+    predicted = rounded_graph_composition(
+        output.clean_composition_logits,
+        node_counts,
+    )
+    assert torch.equal(predicted, composition_counts_from_tokens(tokens, batch, 2))
 
 
 def test_wrapped_score_matches_autograd():
