@@ -160,10 +160,18 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   finite nonzero gradients. This supports a unified multimodal hybrid
   diffusion but does not isolate clock identity from the changed task mixture
   and 3.9% capacity increase, and does not qualify free joint H1a. The next
-  controls are the frozen parameter-matched C0/C1/C2 comparison and a zero-step
-  gradient-geometry audit; do not tune clipping from the 97.4% rate alone.
-- J2 is authorized only after matched attribution, the gradient audit,
-  qualified E1 element and L1 lattice reverse heads, and joint M1 training.
+  parameter-matched C0/C1/C2 comparison is now complete and fails its specific
+  clock-attribution criterion: C2-minus-C0 diagonal/interior intervals cross
+  zero, although C2 significantly improves clean and element-only corners.
+  J1 remains a successful composite task-mixture intervention, not proof that
+  separate clocks caused its noisy/noisy gain.
+- The zero-step gradient-geometry audit finds no persistent regime conflict:
+  median clip scale is `0.2661 > 0.2`, every pairwise median cosine is positive,
+  and no pair reaches the frozen 75% negative fraction. Retain global clipping;
+  do not add blockwise clipping, AGC or target-RMS normalization.
+- J2 is authorized only after these attribution/gradient results are recorded,
+  separately frozen E1 element and L1 lattice reverse heads qualify, and joint
+  M1 training qualifies.
   Generated side states must be on-policy at the same reverse-clock time. The
   J1 coordinate-only checkpoint leaves those heads untrained and must not be
   used to fabricate them. Do not choose a hard chain, start free joint

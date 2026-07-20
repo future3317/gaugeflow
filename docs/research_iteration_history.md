@@ -789,3 +789,32 @@ J2 requires qualified E1 element and L1 lattice reverse generators followed by
 joint M1 training to cross true/generated on-policy side states. J1 is
 coordinate-only, so those heads are untrained; no J2 state, joint sample,
 tensor result, relaxation, DFT or DFPT is fabricated from it.
+
+### J1 matched attribution and gradient geometry
+
+The parameter-matched controls use the exact J1 mixture, seed, 2,111-step
+exposure and 5,232,057 parameters. C0 sees only `t_F`, C1 sees `t_F` and
+`(t_A+t_L)/2`, and C2 is the existing three-clock checkpoint. Final MSE for
+C0/C1/C2 is `0.55303/0.54216/0.52814` at clean--clean,
+`0.62187/0.61225/0.59945` for noisy element,
+`0.62257/0.61921/0.62028` for noisy lattice,
+`0.67028/0.66935/0.66934` for diagonal, and
+`0.75772/0.75505/0.75190` for interior.
+
+The frozen clock-attribution Gate fails. C2-minus-C0 paired 95% intervals are
+`[-0.00929,0.00703]` for diagonal and `[-0.01619,0.00446]` for interior, so
+neither is strictly below zero. C2 is significantly better for clean and
+element-only states and non-inferior by observation elsewhere; separate clocks
+remain an information-preserving interface, but they are not the identified
+cause of J1's noisy/noisy improvement. The fixed multi-regime task mixture is
+the shared sufficient change in this comparison.
+
+The raw C2 step-2111 zero-optimizer audit then evaluates 40 gradients (five
+regimes over eight structure microbatches). Median hypothetical clip scale is
+`0.26609`, above the frozen severe boundary `0.2`. Every regime-pair median
+cosine is positive, the largest negative fraction is `0.125`, and no pair meets
+the 75% persistent-conflict rule. Mean gradient energy is `69.48%` coordinate
+readout, `18.22%` input/time, `11.52%` dynamic edge/angular, `0.57%` base
+blocks, and `0.19%` time fusion. Global clipping is retained; no optimizer
+modification is authorized. E1/L1 protocol design may proceed, but no E1/L1,
+M1 or J2 run is inferred from these coordinate-only audits.

@@ -1,10 +1,10 @@
 import torch
 
-from scripts.evaluate_h1a_j1_independent_modality_times import (
+from gaugeflow.production.modality_time_diagnostics import (
     CORNER_NAMES,
-    _corner_side_times,
-    _paired_bootstrap_mean_difference,
-    _paired_bootstrap_ratio,
+    corner_side_times,
+    paired_bootstrap_mean_difference,
+    paired_bootstrap_ratio,
 )
 
 
@@ -21,7 +21,7 @@ def test_j1_corner_time_contract() -> None:
     }
     assert set(CORNER_NAMES) == set(expected)
     for name, values in expected.items():
-        observed = _corner_side_times(
+        observed = corner_side_times(
             name,
             coordinate,
             interior_element,
@@ -34,8 +34,8 @@ def test_j1_corner_time_contract() -> None:
 def test_j1_structure_bootstrap_is_paired_and_deterministic() -> None:
     initial = torch.tensor([1.0, 2.0, 4.0, 8.0])
     final = 0.5 * initial
-    first = _paired_bootstrap_ratio(initial, final, seed=91, replicates=200)
-    second = _paired_bootstrap_ratio(initial, final, seed=91, replicates=200)
+    first = paired_bootstrap_ratio(initial, final, seed=91, replicates=200)
+    second = paired_bootstrap_ratio(initial, final, seed=91, replicates=200)
     assert first == second
     assert first == {"q025": 0.5, "median": 0.5, "q975": 0.5}
 
@@ -43,6 +43,6 @@ def test_j1_structure_bootstrap_is_paired_and_deterministic() -> None:
 def test_j1_structure_paired_difference_bootstrap_preserves_sign() -> None:
     left = torch.tensor([0.2, 0.4, 0.8, 1.6])
     right = left + 0.1
-    result = _paired_bootstrap_mean_difference(left, right, seed=92, replicates=200)
+    result = paired_bootstrap_mean_difference(left, right, seed=92, replicates=200)
     assert result["mean"] < 0.0
     assert result["q975"] < 0.0

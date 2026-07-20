@@ -297,7 +297,6 @@ class HybridCrystalDenoiser(nn.Module):
                 "independent_modality_times is only the archived name for separate clocks"
             )
         self.modality_time_conditioning = modality_time_conditioning
-        self.independent_modality_times = modality_time_conditioning == "separate"
         self.uses_side_modality_times = modality_time_conditioning in {
             "side_mean",
             "separate",

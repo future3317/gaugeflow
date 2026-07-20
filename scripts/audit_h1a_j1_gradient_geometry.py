@@ -21,9 +21,9 @@ from gaugeflow.production.checkpointing import (
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from scripts.evaluate_h1a_j1_independent_modality_times import (
+from gaugeflow.production.modality_time_diagnostics import (
     CORNER_NAMES,
-    _corner_side_times,
+    corner_side_times,
 )
 
 MODULE_GROUPS = (
@@ -251,7 +251,7 @@ def main() -> None:
         gradients: dict[str, torch.Tensor] = {}
         for regime_index, regime in enumerate(CORNER_NAMES):
             model.zero_grad(set_to_none=True)
-            element_time, lattice_time = _corner_side_times(
+            element_time, lattice_time = corner_side_times(
                 regime,
                 coordinate_time[start:stop],
                 interior_element_time[start:stop],

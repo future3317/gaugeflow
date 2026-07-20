@@ -13,13 +13,13 @@ import torch
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
-from gaugeflow.production.runtime import load_tensor_free_ema_runtime
-from scripts.evaluate_h1a_j1_independent_modality_times import (
+from gaugeflow.production.modality_time_diagnostics import (
     CORNER_NAMES,
-    _corner_graph_losses,
-    _paired_bootstrap_mean_difference,
-    _paired_bootstrap_ratio,
+    corner_graph_losses,
+    paired_bootstrap_mean_difference,
+    paired_bootstrap_ratio,
 )
+from gaugeflow.production.runtime import load_tensor_free_ema_runtime
 
 ARM_FILES = {
     "C0": Path("configs/gates/h1a_j1_c0_single_clock_control_v1.json"),
@@ -146,7 +146,7 @@ def main() -> None:
 
         by_step: dict[str, dict[str, torch.Tensor]] = {}
         for step in (0, 2111):
-            losses, candidates = _corner_graph_losses(
+            losses, candidates = corner_graph_losses(
                 arm_roots[arm] / f"checkpoint_step_{step:08d}.pt",
                 dataset,
                 indices,
@@ -170,7 +170,7 @@ def main() -> None:
                 "initial_coordinate_mse": float(initial.mean()),
                 "final_coordinate_mse": float(final.mean()),
                 "validation_ratio": float(final.mean() / initial.mean()),
-                "bootstrap_ratio": _paired_bootstrap_ratio(
+                "bootstrap_ratio": paired_bootstrap_ratio(
                     initial,
                     final,
                     seed=int(evaluation["bootstrap_seed"]) + 100 * arm_index + corner_index,
@@ -197,7 +197,7 @@ def main() -> None:
     paired: dict[str, Any] = {}
     for comparator_index, comparator in enumerate(("C0", "C1")):
         paired["C2_minus_" + comparator] = {
-            corner: _paired_bootstrap_mean_difference(
+            corner: paired_bootstrap_mean_difference(
                 arm_losses["C2"]["2111"][corner],
                 arm_losses[comparator]["2111"][corner],
                 seed=int(evaluation["bootstrap_seed"])
@@ -210,7 +210,7 @@ def main() -> None:
         }
     c2_adjacent = {}
     for pair_index, (left, right) in enumerate(zip(CORNER_NAMES[1:], CORNER_NAMES[:-1], strict=True)):
-        c2_adjacent[f"{left}_minus_{right}"] = _paired_bootstrap_mean_difference(
+        c2_adjacent[f"{left}_minus_{right}"] = paired_bootstrap_mean_difference(
             arm_losses["C2"]["2111"][left],
             arm_losses["C2"]["2111"][right],
             seed=int(evaluation["bootstrap_seed"]) + 2000 + pair_index,

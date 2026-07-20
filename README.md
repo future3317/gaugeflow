@@ -338,12 +338,18 @@ ratio 为 `0.47273/0.51407/0.56107/0.57304/0.64015`。clean-clean 通过 `0.5185
 保留阈值，diagonal 通过 `0.66453` 改善阈值；全部时钟梯度非零，吞吐
 `247.65 graphs/s`，峰值显存 `4714 MiB`。这支持继续统一 multimodal hybrid
 diffusion，但尚未把独立时钟的收益与五任务 mixture 和 3.9% 参数增量分离，也还不是
-自由 joint generation 资格。已冻结的下一步是参数完全匹配的 C0/C1/C2 对照，以及不做
-optimizer step 的梯度几何审计；不能看到 `97.4%` clipping 后直接调阈值。随后还必须先
-资格化 E1 元素 reverse、L1 晶格 reverse 和联合 M1，才可用同一 reverse-clock 时刻的
-on-policy side states 建立 J2；当前 coordinate-only checkpoint 的两个上游 head 未训练，
-不能拿来伪造 J2。完整报告和图位于
-`reports/h1a_j1_independent_modality_times_v1/`。
+自由 joint generation 资格。参数完全匹配的 C0/C1/C2 对照现已完成并失败：C2 相比
+C0 的 diagonal/interior 配对区间跨 0；它只在 clean 与 noisy-element 上有显著收益。
+因此 J1 应解释为“五任务 mixture + clocks”的 composite 成功，不能声称独立时钟导致了
+noisy/noisy 改善。零 optimizer-step 梯度审计同时显示 median clip scale 为 `0.2661`，
+所有 regime-pair median cosine 为正，没有持续冲突，所以保留 global clipping，不加入
+blockwise clipping、AGC 或 target-RMS normalization。随后仍须分别资格化 E1 元素
+reverse、L1 晶格 reverse 和联合 M1，才可用同一 reverse-clock 时刻的 on-policy side
+states 建立 J2；当前 coordinate-only checkpoint 的两个上游 head 未训练，不能拿来伪造
+J2。J1 原报告及 matched/gradient 报告分别位于
+`reports/h1a_j1_independent_modality_times_v1/`、
+`reports/h1a_j1_matched_clock_attribution_v1/` 和
+`reports/h1a_j1_gradient_geometry_audit_v1/`。
 
 ## 训练图与采样加速设计
 
