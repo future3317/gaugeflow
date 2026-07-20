@@ -11,6 +11,7 @@ as explicitly unavailable rather than inferred from row order or material ID.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,11 @@ from gaugeflow.production.composition_metrics import (
 )
 
 LABELS = ("fit", "calibration", "test")
+
+
+def _normalized_source_sha256(path: Path) -> str:
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _partition_stratified_labels(
@@ -157,7 +163,7 @@ def main() -> None:
     ):
         raise ValueError("unexpected or unfrozen E1 split protocol")
     source = protocol["source"]
-    if sha256_file(Path(__file__)) != source["builder_sha256"]:
+    if _normalized_source_sha256(Path(__file__)) != source["builder_sha256"]:
         raise ValueError("split builder does not match the preregistered implementation")
     expected = {
         args.cache_root / "manifest.json": source["cache_manifest_sha256"],
