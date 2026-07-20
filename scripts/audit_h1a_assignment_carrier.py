@@ -37,6 +37,16 @@ def _action_orbits(permutations: torch.Tensor) -> tuple[tuple[int, ...], ...]:
     return tuple(orbits)
 
 
+def _validate_action_image(permutations: torch.Tensor) -> None:
+    """Check closure of the faithful image of the parent action in ``S_N``."""
+    action = {tuple(map(int, row)) for row in permutations.tolist()}
+    for left in action:
+        for right in action:
+            composition = tuple(left[index] for index in right)
+            if composition not in action:
+                raise ValueError("deduplicated parent site action is not group closed")
+
+
 def _validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     tokens = torch.tensor(candidate["child_atomic_numbers"], dtype=torch.long) - 1
     if bool(((tokens < 0) | (tokens >= CHEMICAL_ELEMENT_COUNT)).any()):
@@ -48,16 +58,21 @@ def _validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     if not torch.equal(species_by_class[site_class], tokens):
         raise ValueError("occupational class reconstruction changed the target assignment")
     nodes = tokens.numel()
-    permutations = torch.tensor(candidate["parent_action_permutations"], dtype=torch.long)
-    if permutations.ndim != 2 or permutations.shape[1] != nodes:
+    raw_permutations = torch.tensor(
+        candidate["parent_action_permutations"], dtype=torch.long
+    )
+    if raw_permutations.ndim != 2 or raw_permutations.shape[1] != nodes:
         raise ValueError("parent site action has the wrong shape")
     expected = torch.arange(nodes)
-    if not torch.equal(torch.sort(permutations, dim=1).values, expected.expand_as(permutations)):
+    if not torch.equal(
+        torch.sort(raw_permutations, dim=1).values,
+        expected.expand_as(raw_permutations),
+    ):
         raise ValueError("parent action contains a non-permutation row")
+    permutations = torch.unique(raw_permutations, dim=0)
     if not bool(torch.all(permutations == expected.unsqueeze(0), dim=1).any()):
         raise ValueError("parent action lost the identity")
-    if torch.unique(permutations, dim=0).shape[0] != permutations.shape[0]:
-        raise ValueError("parent action catalogue contains duplicate group elements")
+    _validate_action_image(permutations)
     if int(candidate["child_site_count"]) != nodes:
         raise ValueError("child site count and target assignment disagree")
     if int(candidate["parent_site_count"]) * int(candidate["cell_index"]) != nodes:
@@ -86,7 +101,11 @@ def _validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         "carrier_orbits": len(action_orbits),
         "mixed_carrier_orbits": mixed,
         "dynamic_program_states": state_count,
-        "parent_action_order": int(permutations.shape[0]),
+        "parent_action_order_raw": int(raw_permutations.shape[0]),
+        "parent_action_order_unique": int(permutations.shape[0]),
+        "parent_action_duplicate_count": int(
+            raw_permutations.shape[0] - permutations.shape[0]
+        ),
     }
 
 
@@ -165,7 +184,16 @@ def main() -> None:
         "dynamic_program_states_max": max(
             int(row["dynamic_program_states"]) for row in rows
         ),
-        "parent_action_order_max": max(int(row["parent_action_order"]) for row in rows),
+        "parent_action_order_raw_max": max(
+            int(row["parent_action_order_raw"]) for row in rows
+        ),
+        "parent_action_order_unique_max": max(
+            int(row["parent_action_order_unique"]) for row in rows
+        ),
+        "parent_action_catalogues_with_kernel_fraction": sum(
+            int(row["parent_action_duplicate_count"]) > 0 for row in rows
+        )
+        / len(rows),
         "target_quotient_size_max": max(int(row["target_quotient_size"]) for row in rows),
         "uniform_target_quotient_probability_median": float(quotient_probability.median()),
         "uniform_target_quotient_probability_max": float(quotient_probability.max()),

@@ -7,7 +7,7 @@
     "manifest_sha256": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
     "results_sha256": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
     "independent_audit_sha256": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961",
-    "auditor_sha256": "2ebc3d57cead15adfa893ab5e73f515631529f4cb5bc2f7be261450d46b92a9d"
+    "auditor_sha256": "b9045301dfdbcbded41ef3452167d9504baa51fc18252d19d150ea12db44a92c"
   },
   "scientific_contract": {
     "composition_role": "C is a sampled upstream variable; observed C may be used only in the oracle-C conditional qualification and must be labelled as such",
