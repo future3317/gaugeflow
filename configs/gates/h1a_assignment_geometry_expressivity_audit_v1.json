@@ -1,0 +1,51 @@
+{
+  "protocol": "h1a_assignment_geometry_expressivity_audit_v1",
+  "frozen_at_utc": "2026-07-21T00:00:00Z",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training test of whether target-free expanded parent geometry resolves the global-coloring collisions that invalidated the Q1 unary scorer",
+  "prerequisite": {
+    "result": "reports/h1a_assignment_geometry_carrier_v2/result.json",
+    "result_sha256": "37e34e437b7df95314bd0aa1f189d552a7f109f2fc80b7bb03b4202f4b3bfa6d"
+  },
+  "source": {
+    "carrier_root": "processed/gaugeflow_h1a_assignment_v2/assignment_carrier_v2",
+    "artifact_sha256": {
+      "records.json.gz": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
+      "manifest.json": "37e34e437b7df95314bd0aa1f189d552a7f109f2fc80b7bb03b4202f4b3bfa6d"
+    },
+    "iid_roles": "reports/h1a_assignment_iid_calibration_split_v1/assignments.json",
+    "iid_roles_sha256": "e293cf05b35b5905b8f2f75917802fe202590aca8d90a105eea05073a20a8150",
+    "candidate_carriers": 454,
+    "candidate_carriers_by_split": {
+      "train": 358,
+      "val": 43,
+      "test": 53
+    }
+  },
+  "scientific_contract": {
+    "site_family": "faithful parent-action signature plus the sorted exact-CVP periodic distance environment of each expanded species-free site",
+    "pair_family": "endpoint site descriptors, pair distance and the unordered two-point distance view to every third site; no carrier-local orbit ID",
+    "target_role": "the observed coloring selects a collision class and is never an input to a site or pair descriptor",
+    "invariances": "node relabeling and unimodular GL(3,Z) cell-basis changes must preserve all descriptors",
+    "scope_limit": "identifiability only; normalization and learnability remain separate requirements"
+  },
+  "audit": {
+    "maximum_exact_geometry_unary_collision_class": 1000000,
+    "assignment_chunk_size": 2048,
+    "distance_resolution_angstrom": 1e-6,
+    "relabel_seed": 5705
+  },
+  "acceptance": {
+    "exact_enumerated_carrier_fraction_min": 0.98,
+    "relabel_failures": 0,
+    "cell_basis_failures": 0,
+    "target_orbit_containment_failures": 0,
+    "geometry_pair_resolved_collision_fraction_min": 0.8,
+    "geometry_pair_mean_target_ceiling_min": 0.9
+  },
+  "decision_rule": {
+    "pass": "geometry-resolved occupation is identifiable enough to design one separately frozen count-exact, exactly normalized IID oracle-C training Gate",
+    "fail": "do not train; identify whether remaining collisions need a higher-order geometry descriptor or an assignment-level latent law",
+    "boundary": "This audit cannot qualify assignment, generated-C, p(N), L1/M1, tensor conditioning, relaxation, DFT or DFPT."
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "checks": {
+    "action_node_alignment_fraction": true,
+    "archived_identity_fraction": true,
+    "candidate_rebuild_fraction": true,
+    "carrier_target_key_overlap_count": true,
+    "expanded_node_closure_fraction": true,
+    "hnf_index_closure_fraction": true,
+    "maximum_periodic_alignment_error_angstrom": true,
+    "nonfinite_value_count": true,
+    "processing_failure_count": true,
+    "source_candidate_count": true,
+    "source_relabel_consistency_fraction": true,
+    "target_reconstruction_fraction": true
+  },
+  "decision": "geometry_aware_zero_training_audit_authorized",
+  "failures": [],
+  "implementation_commit": "ef32de8f2a633f22b457cf75fa4d63745ef26e26",
+  "metrics": {
+    "action_node_alignment_fraction": 1.0,
+    "archived_identity_fraction": 1.0,
+    "candidate_rebuild_fraction": 1.0,
+    "carrier_target_key_overlap_count": 0,
+    "cell_index_counts": {
+      "1": 158,
+      "2": 230,
+      "3": 22,
+      "4": 44
+    },
+    "expanded_node_closure_fraction": 1.0,
+    "hnf_index_closure_fraction": 1.0,
+    "maximum_periodic_alignment_error_angstrom": 4.6117381930282355e-14,
+    "nonfinite_value_count": 0,
+    "processing_failure_count": 0,
+    "rebuilt_candidate_count": 454,
+    "source_candidate_count": 454,
+    "source_relabel_consistency_fraction": 1.0,
+    "target_reconstruction_fraction": 1.0
+  },
+  "protocol": "h1a_assignment_geometry_carrier_v2",
+  "protocol_config_sha256": "efb763ccf56215e8813c3baeabe3c1cb14ff171129cfc4d5a8929214ea10577b",
+  "qualified": true,
+  "records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2"
+}

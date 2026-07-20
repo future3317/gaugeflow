@@ -263,16 +263,17 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   orbitals as a shared unordered DeepSet resolves only `4.23%`; their mean
   target ceilings are `0.35765/0.36468`. Do not train either representation or
   treat the carrier-specific upper bound as a production result.
-- The matched carrier-interface audit identifies the missing information. Only
-  `158/454 = 0.34802` carriers expose one species-free coordinate per action
-  node. All 296 carriers with cell index 2--4 omit the expanded parent
-  fractional coordinates, expanded lattice, certified HNF, and translation
-  coset ordering, although action-node alignment and the stored primitive
-  lattice are valid. Build a versioned geometry-complete assignment carrier
-  from the certified parent decomposition; never infer the missing nodes from
-  the target coloring or add a runtime fallback. Only after that data audit
-  passes may a geometry-aware zero-training occupation audit run. Assignment
-  training remains blocked.
+- The matched carrier-interface audit found that archived O1 serialization
+  retained site-resolved geometry for only `158/454` carriers and omitted the
+  expanded supercell fields for all 296 index-2--4 paths. The separately
+  versioned geometry-complete compiler now passes on all 454 unchanged O1
+  occurrences: candidate/HNF/node/action/target/relabel closure are all `1.0`,
+  the index-1/2/3/4 counts are `158/230/22/44`, maximum periodic alignment
+  error is `4.61e-14 A`, and failures/nonfinite values are zero. Carrier and
+  target fields are structurally disjoint. This repairs the offline interface,
+  not failed Q1; it authorizes only the frozen geometry-aware zero-training
+  expressivity audit. Assignment training remains blocked until that audit
+  passes and an exactly normalized successor law is separately qualified.
 - Future successor probability/relabel metrics must cast frozen FP32 model
   scores to FP64 before exact DP evaluation. This resolves the archived
   `1.1444e-5` reduction-order residual without weakening its frozen threshold;
