@@ -195,7 +195,10 @@ def structure_bootstrap_mean(
         )
         draws.append(values[index].double().mean(dim=1))
     samples = torch.cat(draws)
-    quantile = torch.quantile(samples, torch.tensor([0.025, 0.5, 0.975]))
+    quantile = torch.quantile(
+        samples,
+        samples.new_tensor([0.025, 0.5, 0.975]),
+    )
     return {
         "mean": float(values.double().mean()),
         "bootstrap_95_low": float(quantile[0]),
