@@ -35,10 +35,19 @@ from .child_reconstruction import (
     ParentGeometryCarrier,
 )
 from .composition_assignment import (
+    AssignmentLogProbability,
+    AssignmentSample,
+    CountConstrainedAssignmentLaw,
     composition_counts_from_tokens,
     count_constrained_assignment,
     count_projected_assignment,
     rounded_graph_composition,
+)
+from .generation_law import (
+    CrystalGenerationState,
+    FactorizedGenerationLogProbability,
+    LearnedNodeCountLaw,
+    ParentDeltaNodeCountLaw,
 )
 from .composition_state import (
     IntegerPartitionCatalogue,
@@ -73,6 +82,12 @@ from .space_group_router import (
     TerminalGroupCompatibilityRouter,
 )
 from .state_projection import project_hybrid_reverse_state, project_translation_state
+from .split_contract import (
+    EvaluationRole,
+    MultiAxisSplitSchema,
+    SplitAxis,
+    SplitAxisContract,
+)
 from .terminal_symmetry_audit import (
     DetectedPointGroup,
     TerminalSymmetryAudit,
@@ -84,10 +99,13 @@ from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotien
 
 __all__ = [
     "AbsorbingMaskDiffusion",
+    "AssignmentLogProbability",
+    "AssignmentSample",
     "UniformCategoricalDiffusion",
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
     "CompactCartesianKrylovCarrier",
+    "CountConstrainedAssignmentLaw",
     "composition_counts_from_tokens",
     "count_constrained_assignment",
     "count_projected_assignment",
@@ -95,24 +113,30 @@ __all__ = [
     "ContinuousReverseMode",
     "ChildReconstructor",
     "CosineNoiseSchedule",
+    "CrystalGenerationState",
     "DistortionBlueprint",
     "DetectedPointGroup",
     "EmpiricalNodeCountPrior",
     "ExponentialMovingAverage",
+    "EvaluationRole",
     "ElementReverseDiagnostics",
     "GeneratedElementBatch",
     "GeneratedHybridBatch",
     "HybridCrystalDenoiser",
     "HierarchicalSample",
     "IntegerPartitionCatalogue",
+    "FactorizedGenerationLogProbability",
     "LatticeVolumeShape",
+    "LearnedNodeCountLaw",
     "ModeCatalog",
     "ModeCatalogEntry",
     "ModeDiffusionState",
+    "MultiAxisSplitSchema",
     "OPDBranch",
     "OccupationalPattern",
     "ParentBlueprint",
     "ParentBlueprintBatch",
+    "ParentDeltaNodeCountLaw",
     "ParentGeometryCarrier",
     "PackedAlexP1Dataset",
     "PointGroupMetricChart",
@@ -126,6 +150,8 @@ __all__ = [
     "SparseCompositionLogProbability",
     "SparseCompositionSample",
     "SparseCompositionState",
+    "SplitAxis",
+    "SplitAxisContract",
     "StoichiometryFirstCompositionModel",
     "SelectedMode",
     "StratifiedCartesianGaugeAtlas",

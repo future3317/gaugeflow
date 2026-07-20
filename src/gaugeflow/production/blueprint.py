@@ -462,6 +462,19 @@ class EmpiricalNodeCountPrior:
         indices = torch.multinomial(self.probabilities, count, replacement=True, generator=generator)
         return self.support[indices].to(device=device)
 
+    def log_prob(self, node_counts: torch.Tensor) -> torch.Tensor:
+        """Return the exact train-empirical categorical log probability."""
+        values = node_counts.to(device="cpu", dtype=torch.long)
+        if values.ndim != 1:
+            raise ValueError("node counts must be a rank-one integer vector")
+        location = torch.searchsorted(self.support, values)
+        valid = location < self.support.numel()
+        matched = self.support.index_select(0, location.clamp_max(self.support.numel() - 1))
+        valid = valid & (matched == values)
+        output = torch.full(values.shape, -torch.inf, dtype=torch.float64)
+        output[valid] = self.probabilities.log().index_select(0, location[valid])
+        return output.to(node_counts.device)
+
     def state_dict(self) -> dict[str, torch.Tensor]:
         return {"support": self.support.clone(), "probabilities": self.probabilities.clone()}
 
