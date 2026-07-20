@@ -128,6 +128,9 @@ def _profile(
             "species_count_max": int(state.length[index].max()),
         }
     fit_keys = keys[labels == 0]
+    fit_support = torch.unique(fit_keys)
+    panel_support = torch.unique(keys[labels != 0])
+    fit_support_pass = bool(torch.isin(panel_support, fit_support).all())
     for value, name in ((1, "calibration"), (2, "test")):
         label_profile[name]["partition_tv_from_fit"] = categorical_total_variation(
             fit_keys, keys[labels == value]
@@ -136,6 +139,7 @@ def _profile(
         "labels": label_profile,
         "eligible_elements": int(eligible_element.sum()),
         "eligible_pairs": int(torch.triu(eligible_pair, diagonal=1).sum()),
+        "fit_support_for_every_panel_partition": fit_support_pass,
         "element_floor_pass": all(
             label_profile[name]["minimum_eligible_element_graphs"]
             >= int(quality["panel_element_graphs_min"])
@@ -199,8 +203,12 @@ def main() -> None:
         frequent_partition_panel_floor=int(split["frequent_partition_panel_floor"]),
     )
     profile = _profile(state, keys, labels, protocol)
-    if not profile["element_floor_pass"] or not profile["pair_floor_pass"]:
-        raise RuntimeError("preregistered IID panel element/pair floors are not met")
+    if (
+        not profile["fit_support_for_every_panel_partition"]
+        or not profile["element_floor_pass"]
+        or not profile["pair_floor_pass"]
+    ):
+        raise RuntimeError("preregistered IID support or panel floors are not met")
 
     args.output_root.mkdir(parents=True, exist_ok=False)
     material_id = index_table["material_id"].to_pylist()
@@ -266,7 +274,7 @@ def main() -> None:
         "index_sha256": {
             name: sha256_file(args.output_root / f"{name}_index.pt") for name in LABELS
         },
-        "builder_sha256": sha256_file(Path(__file__)),
+        "builder_sha256": _normalized_source_sha256(Path(__file__)),
     }
     (args.output_root / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

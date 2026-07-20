@@ -1,8 +1,24 @@
 from __future__ import annotations
 
+import hashlib
+
 import torch
 
-from scripts.build_h1a_e1_absolute_calibration_split import _partition_stratified_labels
+from scripts.build_h1a_e1_absolute_calibration_split import (
+    _normalized_source_sha256,
+    _partition_stratified_labels,
+)
+
+
+def test_builder_source_hash_is_line_ending_invariant(tmp_path) -> None:
+    lf = tmp_path / "lf.py"
+    crlf = tmp_path / "crlf.py"
+    source = "first = 1\nsecond = 2\n"
+    lf.write_bytes(source.encode("utf-8"))
+    crlf.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
+    expected = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    assert _normalized_source_sha256(lf) == expected
+    assert _normalized_source_sha256(crlf) == expected
 
 
 def test_partition_stratified_iid_split_is_deterministic_and_keeps_fit_support() -> None:
