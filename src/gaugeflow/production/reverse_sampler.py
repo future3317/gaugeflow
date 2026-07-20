@@ -11,6 +11,8 @@ from gaugeflow.manifold import wrap01
 
 from .blueprint import ParentBlueprintBatch
 from .categorical_mask import AbsorbingMaskDiffusion
+from .categorical_uniform import UniformCategoricalDiffusion
+from .composition_assignment import composition_counts_from_tokens, count_projected_assignment
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape
@@ -187,6 +189,26 @@ class GeneratedHybridBatch:
     diagnostics: ReverseTrajectoryDiagnostics
 
 
+@dataclass(frozen=True)
+class ElementReverseDiagnostics:
+    """Discrete-only trajectory diagnostics with observed geometry fixed."""
+
+    time: torch.Tensor
+    masked_count: torch.Tensor
+
+
+@dataclass(frozen=True)
+class GeneratedElementBatch:
+    """Element sample conditioned on an observed coordinate/lattice carrier."""
+
+    element_tokens: torch.Tensor
+    atomic_numbers: torch.Tensor
+    batch: torch.Tensor
+    predicted_composition_counts: torch.Tensor
+    terminal_clean_element_logits: torch.Tensor
+    diagnostics: ElementReverseDiagnostics
+
+
 class TensorFreeReverseSampler:
     """Hybrid categorical and continuous reverse process for crystal states."""
 
@@ -199,12 +221,19 @@ class TensorFreeReverseSampler:
         coordinate_sigma_max: float = 0.5,
         maximum_time: float = 0.999,
         guardrails: LatticeGuardrails | None = None,
+        categorical_path: str = "absorbing_mask",
     ) -> None:
         if not 0.0 < maximum_time < 1.0:
             raise ValueError("maximum reverse time must lie in (0,1)")
         self.denoiser = denoiser
         self.lattice_standardizer = lattice_standardizer
-        self.categorical = AbsorbingMaskDiffusion()
+        self.categorical: AbsorbingMaskDiffusion | UniformCategoricalDiffusion
+        if categorical_path == "absorbing_mask":
+            self.categorical = AbsorbingMaskDiffusion()
+        elif categorical_path == "uniform_replacement":
+            self.categorical = UniformCategoricalDiffusion()
+        else:
+            raise ValueError("unknown categorical probability path")
         self.vp_schedule = CosineNoiseSchedule()
         self.coordinate_schedule = ExponentialTorusNoiseSchedule(
             sigma_min=coordinate_sigma_min,
@@ -212,6 +241,147 @@ class TensorFreeReverseSampler:
         )
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
+
+    def sample_elements(
+        self,
+        blueprint: ParentBlueprintBatch,
+        fractional_coordinates: torch.Tensor,
+        lattice: torch.Tensor,
+        *,
+        steps: int = 100,
+        categorical_generator: torch.Generator | None = None,
+        time_grid: str = "uniform_log_alpha",
+    ) -> GeneratedElementBatch:
+        """Reverse only ``A_t`` while holding the observed ``(F_0,L_0)`` fixed.
+
+        This is the E1 qualification path, not a partially disabled joint
+        sampler.  The denoiser receives the explicit clock triple
+        ``(t_A,t_F,t_L)=(t,0,0)`` and no continuous state is integrated.
+        """
+
+        if steps < 1:
+            raise ValueError("element reverse sampler requires at least one step")
+        if self.denoiser.modality_time_conditioning != "separate":
+            raise ValueError("element reverse sampling requires the unified separate-clock backbone")
+        device = blueprint.batch.device
+        dtype = blueprint.shape_projector.dtype
+        graphs = int(blueprint.node_counts.numel())
+        nodes = int(blueprint.batch.numel())
+        if fractional_coordinates.shape != (nodes, 3):
+            raise ValueError("observed fractional coordinates must have shape [nodes,3]")
+        if lattice.shape != (graphs, 3, 3):
+            raise ValueError("observed lattice must have shape [graphs,3,3]")
+        if (
+            fractional_coordinates.device != device
+            or lattice.device != device
+            or fractional_coordinates.dtype != dtype
+            or lattice.dtype != dtype
+        ):
+            raise ValueError("observed geometry must match the blueprint dtype and device")
+        if not all(torch.isfinite(value).all() for value in (fractional_coordinates, lattice)):
+            raise ValueError("observed geometry must be finite")
+
+        coordinates = project_translation_state(
+            fractional_coordinates,
+            blueprint.batch,
+            graphs,
+        )
+        lattice_state = LatticeVolumeShape.from_lattice(
+            lattice,
+            blueprint.fractional_to_cartesian,
+        )
+        log_volume = lattice_state.log_volume
+        log_shape = torch.einsum(
+            "bij,bj->bi",
+            blueprint.shape_projector,
+            lattice_state.log_shape,
+        )
+        tokens = self.categorical.sample_prior(
+            nodes,
+            blueprint.shape_projector,
+            generator=categorical_generator,
+        )
+        condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
+        condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
+        clean_time = torch.zeros((graphs,), dtype=dtype, device=device)
+        times = reverse_time_grid(
+            self.vp_schedule,
+            self.maximum_time,
+            steps,
+            dtype=dtype,
+            device=device,
+            spacing=time_grid,
+        )
+        masked_counts: list[torch.Tensor] = []
+        was_training = self.denoiser.training
+        self.denoiser.eval()
+        trajectory_error: RuntimeError | ValueError | None = None
+        try:
+            with torch.no_grad():
+                for index in range(steps):
+                    time_from = times[index].expand(graphs)
+                    time_to = times[index + 1].expand(graphs)
+                    prediction = self.denoiser(
+                        tokens,
+                        coordinates,
+                        log_volume,
+                        log_shape,
+                        blueprint.batch,
+                        clean_time,
+                        condition,
+                        condition_present,
+                        blueprint.shape_projector,
+                        blueprint.fractional_to_cartesian,
+                        element_time=time_from,
+                        lattice_time=clean_time,
+                    )
+                    probabilities = self.categorical.reverse_probabilities(
+                        tokens,
+                        prediction.clean_element_logits,
+                        time_from,
+                        time_to,
+                        blueprint.batch,
+                    )
+                    tokens = torch.multinomial(
+                        probabilities,
+                        1,
+                        replacement=True,
+                        generator=categorical_generator,
+                    ).squeeze(-1)
+                    masked_counts.append((tokens == self.categorical.mask_index).sum())
+        except (RuntimeError, ValueError) as error:
+            trajectory_error = error
+        finally:
+            self.denoiser.train(was_training)
+        if trajectory_error is not None:
+            raise SamplingFailure(
+                f"element reverse trajectory failed: {trajectory_error}"
+            ) from trajectory_error
+        if bool((tokens == self.categorical.mask_index).any()):
+            raise SamplingFailure("terminal categorical state contains absorbing masks")
+        if isinstance(self.categorical, UniformCategoricalDiffusion):
+            tokens, composition_counts = count_projected_assignment(
+                prediction.clean_element_logits,
+                blueprint.batch,
+                blueprint.node_counts,
+            )
+        else:
+            composition_counts = composition_counts_from_tokens(
+                tokens,
+                blueprint.batch,
+                graphs,
+            )
+        return GeneratedElementBatch(
+            element_tokens=tokens,
+            atomic_numbers=self.categorical.decode(tokens),
+            batch=blueprint.batch,
+            predicted_composition_counts=composition_counts,
+            terminal_clean_element_logits=prediction.clean_element_logits,
+            diagnostics=ElementReverseDiagnostics(
+                time=times[1:].detach().cpu(),
+                masked_count=torch.stack(masked_counts).detach().cpu(),
+            ),
+        )
 
     def initialize_continuous_state(
         self,
@@ -276,8 +446,10 @@ class TensorFreeReverseSampler:
         dtype = blueprint.shape_projector.dtype
         graphs = blueprint.node_counts.numel()
         nodes = blueprint.batch.numel()
-        tokens = torch.full(
-            (nodes,), self.categorical.mask_index, dtype=torch.long, device=device
+        tokens = self.categorical.sample_prior(
+            nodes,
+            blueprint.shape_projector,
+            generator=categorical_generator,
         )
         if initial_state is None:
             initial_state = self.initialize_continuous_state(

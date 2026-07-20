@@ -212,6 +212,49 @@ def test_coordinate_clean_side_information_noises_only_coordinates() -> None:
     torch.testing.assert_close(noisy.fractional_coordinates, repeated.fractional_coordinates)
 
 
+def test_element_only_corruption_keeps_geometry_exact_and_zeroes_inactive_score() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(
+        HybridCrystalDenoiser(
+            hidden_dim=16,
+            vector_dim=4,
+            layers=1,
+            radial_dim=4,
+            atlas_residual_circle_samples=8,
+            modality_time_conditioning="separate",
+        ),
+        _standardizer(),
+    )
+    clean_time = torch.zeros(2)
+    noisy = diffusion.noise_clean_batch(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=clean_time,
+        element_time=torch.tensor([0.4, 0.8]),
+        lattice_time=clean_time,
+        generator=torch.Generator().manual_seed(116),
+    )
+    clean_coordinates = coordinates.clone()
+    for graph in range(2):
+        selected = blueprint.batch == graph
+        clean_coordinates[selected] -= clean_coordinates[selected].mean(dim=0)
+    clean_lattice_state = LatticeVolumeShape.from_lattice(
+        lattice,
+        blueprint.fractional_to_cartesian,
+    )
+    torch.testing.assert_close(noisy.fractional_coordinates, clean_coordinates)
+    torch.testing.assert_close(noisy.log_volume, clean_lattice_state.log_volume)
+    torch.testing.assert_close(noisy.log_shape, clean_lattice_state.log_shape)
+    assert torch.equal(noisy.time, clean_time)
+    assert torch.equal(noisy.lattice_time, clean_time)
+    assert torch.count_nonzero(noisy.coordinate_scaled_score_target) == 0
+    assert torch.isfinite(noisy.coordinate_scaled_score_target).all()
+
+
 def test_five_regime_task_measure_has_frozen_balanced_counts() -> None:
     diffusion = TensorFreeHybridDiffusion(_small_model(), _standardizer())
     times = diffusion.sample_task_measure_times(
@@ -429,6 +472,104 @@ def test_coordinate_trainer_uses_clean_noncoordinate_side_information() -> None:
     assert not bool(output.noisy.element_was_masked.any())
 
 
+def test_element_only_trainer_updates_element_path_but_not_continuous_heads() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    trainer = ProductionTrainer(
+        TensorFreeHybridDiffusion(model, _standardizer()),
+        ProductionTrainingConfig(
+            precision="fp32",
+            objective="element",
+            modality_time_mode="element_only",
+            ema_decay=0.9,
+        ),
+    )
+    inactive_before = {
+        name: value.detach().clone()
+        for name, value in model.named_parameters()
+        if name.startswith(
+            (
+                "coordinate_control_gate.",
+                "coordinate_edge_encoder.",
+                "coordinate_carrier.",
+                "coordinate_carrier_mixer.",
+                "volume_head.",
+                "shape_head.",
+            )
+        )
+    }
+    element_before = {
+        name: value.detach().clone()
+        for name, value in model.named_parameters()
+        if name.startswith("element_head.")
+    }
+    output, gradient_norm = trainer.train_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(117),
+    )
+    assert torch.isfinite(output.element_loss) and gradient_norm > 0.0
+    assert torch.equal(output.noisy.time, torch.zeros(2))
+    assert torch.equal(output.noisy.lattice_time, torch.zeros(2))
+    assert bool((output.noisy.element_time > 0.0).all())
+    current = dict(model.named_parameters())
+    assert all(torch.equal(value, current[name]) for name, value in inactive_before.items())
+    assert any(not torch.equal(value, current[name]) for name, value in element_before.items())
+
+
+def test_uniform_element_training_is_self_correcting_and_uses_composition_loss() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    diffusion = TensorFreeHybridDiffusion(
+        model,
+        _standardizer(),
+        categorical_path="uniform_replacement",
+    )
+    trainer = ProductionTrainer(
+        diffusion,
+        ProductionTrainingConfig(
+            precision="fp32",
+            objective="element",
+            modality_time_mode="element_only",
+            categorical_path="uniform_replacement",
+            composition_loss_weight=1.0,
+            ema_decay=0.9,
+        ),
+    )
+    output, gradient_norm = trainer.train_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(119),
+    )
+    assert gradient_norm > 0.0
+    assert torch.isfinite(output.element_loss)
+    assert torch.isfinite(output.composition_loss)
+    torch.testing.assert_close(
+        trainer.optimization_loss(output),
+        output.element_loss + output.composition_loss,
+    )
+
+
 def test_tensor_free_path_skips_geometry_query_encoder():
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     model = _small_model()
@@ -525,6 +666,86 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
             torch.tensor(0.0),
             atol=2e-5,
         )
+
+
+def test_element_reverse_sampler_uses_observed_geometry_and_finishes_without_masks() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    del elements
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    seen_times: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = []
+
+    def record_times(_module, args, kwargs):
+        seen_times.append(
+            (
+                args[5].detach().clone(),
+                kwargs["element_time"].detach().clone(),
+                kwargs["lattice_time"].detach().clone(),
+            )
+        )
+
+    handle = model.register_forward_pre_hook(record_times, with_kwargs=True)
+    sampler = TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8)
+    coordinate_copy = coordinates.clone()
+    lattice_copy = lattice.clone()
+    try:
+        generated = sampler.sample_elements(
+            blueprint,
+            coordinates,
+            lattice,
+            steps=4,
+            categorical_generator=torch.Generator().manual_seed(118),
+        )
+    finally:
+        handle.remove()
+    assert torch.equal(coordinates, coordinate_copy)
+    assert torch.equal(lattice, lattice_copy)
+    assert generated.element_tokens.shape == (5,)
+    assert generated.atomic_numbers.min() >= 1 and generated.atomic_numbers.max() <= 118
+    assert generated.diagnostics.masked_count[-1] == 0
+    assert len(seen_times) == 4
+    for coordinate_time, element_time, lattice_time in seen_times:
+        assert torch.equal(coordinate_time, torch.zeros(2))
+        assert torch.equal(lattice_time, torch.zeros(2))
+        assert bool((element_time > 0.0).all())
+
+
+def test_uniform_element_reverse_projects_model_predicted_integer_composition() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    del elements
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+        categorical_path="uniform_replacement",
+    )
+    generated = sampler.sample_elements(
+        blueprint,
+        coordinates,
+        lattice,
+        steps=4,
+        categorical_generator=torch.Generator().manual_seed(120),
+    )
+    assert generated.element_tokens.min() >= 0 and generated.element_tokens.max() < 118
+    assert torch.equal(
+        generated.predicted_composition_counts.sum(dim=-1),
+        blueprint.node_counts,
+    )
+    assert generated.diagnostics.masked_count[-1] == 0
 
 
 def test_quotient_coordinate_reverse_modes_use_full_and_half_score_drift():

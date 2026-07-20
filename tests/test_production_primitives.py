@@ -4,6 +4,12 @@ import torch
 
 from gaugeflow.manifold import vector_to_symmetric
 from gaugeflow.production.categorical_mask import AbsorbingMaskDiffusion
+from gaugeflow.production.categorical_uniform import UniformCategoricalDiffusion
+from gaugeflow.production.composition_assignment import (
+    composition_counts_from_tokens,
+    count_constrained_assignment,
+    count_projected_assignment,
+)
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, SymmetryShapeBasis
 from gaugeflow.production.so3_quadrature import nested_hopf_so3_grid
@@ -64,6 +70,67 @@ def test_absorbing_reverse_kernel_is_normalized_and_copies_revealed_tokens():
     assert torch.allclose(probability.sum(-1), torch.ones(3), atol=1e-6)
     assert probability[0, 3] == 1 and torch.count_nonzero(probability[0]) == 1
     assert torch.all(probability[1:, :118] >= 0)
+
+
+def test_uniform_reverse_is_normalized_correctable_and_recovers_x0_posterior() -> None:
+    process = UniformCategoricalDiffusion()
+    current = torch.tensor([3, 7, 11])
+    logits = torch.randn((3, 118), generator=torch.Generator().manual_seed(81))
+    batch = torch.tensor([0, 0, 0])
+    probability = process.reverse_probabilities(
+        current,
+        logits,
+        torch.tensor([0.8]),
+        torch.tensor([0.4]),
+        batch,
+    )
+    assert torch.allclose(probability.sum(-1), torch.ones(3), atol=1e-6)
+    assert bool((probability[torch.arange(3), current] < 1.0).all())
+    terminal = process.reverse_probabilities(
+        current,
+        logits,
+        torch.tensor([0.8]),
+        torch.tensor([0.0]),
+        batch,
+    )
+    torch.testing.assert_close(terminal, torch.softmax(logits, dim=-1), atol=2e-6, rtol=2e-6)
+
+
+def test_count_projection_predicts_counts_without_target_and_is_permutation_consistent() -> None:
+    logits = torch.full((5, 118), -8.0)
+    logits[:2, 4] = 5.0
+    logits[2:, 7] = 4.0
+    batch = torch.tensor([0, 0, 0, 0, 0])
+    counts = torch.tensor([5])
+    assigned, predicted_counts = count_projected_assignment(logits, batch, counts)
+    assert predicted_counts[0, 4] == 2
+    assert predicted_counts[0, 7] == 3
+    assert torch.equal(
+        composition_counts_from_tokens(assigned, batch, 1),
+        predicted_counts,
+    )
+    permutation = torch.tensor([3, 0, 4, 1, 2])
+    permuted, permuted_counts = count_projected_assignment(
+        logits[permutation],
+        batch,
+        counts,
+    )
+    inverse = torch.argsort(permutation)
+    assert torch.equal(permuted[inverse], assigned)
+    assert torch.equal(permuted_counts, predicted_counts)
+
+
+def test_count_constrained_assignment_is_an_offline_composition_oracle() -> None:
+    logits = torch.full((4, 118), -8.0)
+    logits[:, 3] = torch.tensor([5.0, 4.0, 1.0, 0.0])
+    logits[:, 8] = torch.tensor([0.0, 1.0, 4.0, 5.0])
+    batch = torch.zeros(4, dtype=torch.long)
+    counts = torch.zeros((1, 118), dtype=torch.long)
+    counts[0, 3] = 2
+    counts[0, 8] = 2
+    assigned = count_constrained_assignment(logits, batch, counts)
+    assert torch.equal(assigned, torch.tensor([3, 3, 8, 8]))
+    assert torch.equal(composition_counts_from_tokens(assigned, batch, 1), counts)
 
 
 def test_wrapped_score_matches_autograd():

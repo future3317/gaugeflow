@@ -10,6 +10,7 @@ from torch import nn
 from torch_geometric.utils import scatter
 
 from .categorical_mask import AbsorbingMaskDiffusion, MaskedCategoricalState
+from .categorical_uniform import UniformCategoricalDiffusion
 from .equivariant_denoiser import HybridCrystalDenoiser, HybridDenoiserOutput
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
@@ -47,6 +48,7 @@ class TensorFreeNoisyBatch:
 class HybridLossOutput:
     loss: torch.Tensor
     element_loss: torch.Tensor
+    composition_loss: torch.Tensor
     coordinate_loss: torch.Tensor
     graph_coordinate_loss: torch.Tensor
     volume_loss: torch.Tensor
@@ -74,13 +76,20 @@ class TensorFreeHybridDiffusion(nn.Module):
         coordinate_sigma_max: float = 0.5,
         minimum_time: float = 1.0e-3,
         maximum_time: float = 0.999,
+        categorical_path: str = "absorbing_mask",
     ) -> None:
         super().__init__()
         if not 0.0 < minimum_time < maximum_time < 1.0:
             raise ValueError("training times must satisfy 0 < minimum < maximum < 1")
         self.denoiser = denoiser
         self.lattice_standardizer = lattice_standardizer
-        self.categorical = AbsorbingMaskDiffusion()
+        self.categorical: AbsorbingMaskDiffusion | UniformCategoricalDiffusion
+        if categorical_path == "absorbing_mask":
+            self.categorical = AbsorbingMaskDiffusion()
+        elif categorical_path == "uniform_replacement":
+            self.categorical = UniformCategoricalDiffusion()
+        else:
+            raise ValueError("unknown categorical probability path")
         self.vp_schedule = CosineNoiseSchedule()
         self.coordinate_schedule = ExponentialTorusNoiseSchedule(
             sigma_min=coordinate_sigma_min,
@@ -206,19 +215,50 @@ class TensorFreeHybridDiffusion(nn.Module):
                 device=clean_elements.device,
                 generator=generator,
             )
-            categorical_state = self.categorical.corrupt(
-                clean_elements, selected_element_time, batch, uniform=uniform
-            )
+            if isinstance(self.categorical, UniformCategoricalDiffusion):
+                token_uniform = torch.rand(
+                    clean_elements.shape,
+                    dtype=clean_fractional_coordinates.dtype,
+                    device=clean_elements.device,
+                    generator=generator,
+                )
+                categorical_state = self.categorical.corrupt(
+                    clean_elements,
+                    selected_element_time,
+                    batch,
+                    uniform=uniform,
+                    token_uniform=token_uniform,
+                )
+            else:
+                categorical_state = self.categorical.corrupt(
+                    clean_elements, selected_element_time, batch, uniform=uniform
+                )
 
-        coordinate_sigma = self.coordinate_schedule.sigma(selected_time)[batch]
+        coordinate_sigma_graph = self.coordinate_schedule.sigma(selected_time)
+        coordinate_sigma = coordinate_sigma_graph[batch]
         fractional_noise = standard_normal(clean_fractional_coordinates.shape, clean_fractional_coordinates, generator)
         displacement = coordinate_sigma.unsqueeze(-1) * fractional_noise
         noisy_coordinates = clean_coordinates + displacement
+        # An observed coordinate state is represented by t_F=0.  Its Dirac
+        # endpoint has no finite score and is never an active coordinate
+        # objective.  Evaluate the analytic score at a harmless positive scale
+        # and mask it to zero, keeping the whole operation vectorized and
+        # finite for element-only training.
+        positive_coordinate_sigma = torch.where(
+            selected_time > 0.0,
+            coordinate_sigma_graph,
+            torch.ones_like(coordinate_sigma_graph),
+        )
         coordinate_target = factorized_translation_quotient_scaled_score(
             displacement,
-            self.coordinate_schedule.sigma(selected_time),
+            positive_coordinate_sigma,
             batch,
             graphs,
+        )
+        coordinate_target = torch.where(
+            (selected_time > 0.0)[batch, None],
+            coordinate_target,
+            torch.zeros_like(coordinate_target),
         )
 
         if clean_side_information:
@@ -316,6 +356,28 @@ class TensorFreeHybridDiffusion(nn.Module):
         node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
         mask = noisy.element_was_masked.to(node_cross_entropy)
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
+        element_probability = torch.softmax(prediction.clean_element_logits.float(), dim=-1)
+        predicted_composition = scatter(
+            element_probability,
+            batch,
+            dim=0,
+            dim_size=graphs,
+            reduce="mean",
+        )
+        flat_target = batch * self.categorical.element_count + clean_elements
+        target_counts = torch.bincount(
+            flat_target,
+            minlength=graphs * self.categorical.element_count,
+        ).reshape(graphs, self.categorical.element_count)
+        target_composition = target_counts.to(predicted_composition)
+        target_composition = target_composition / target_composition.sum(
+            dim=-1,
+            keepdim=True,
+        )
+        composition_loss = -(
+            target_composition
+            * predicted_composition.clamp_min(1.0e-8).log()
+        ).sum(dim=-1).mean()
 
         # The analytic score components become a reverse-drift tangent under
         # the fractional Brownian mobility. With r=fL, its Cartesian target is
@@ -356,6 +418,7 @@ class TensorFreeHybridDiffusion(nn.Module):
         return HybridLossOutput(
             loss=loss,
             element_loss=element_loss,
+            composition_loss=composition_loss,
             coordinate_loss=coordinate_loss,
             graph_coordinate_loss=graph_coordinate,
             volume_loss=volume_loss,

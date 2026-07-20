@@ -23,6 +23,7 @@ from .cartesian_coordinate_carrier import (
 )
 from .cartesian_gauge_atlas import CartesianSTFGeometryQueryEncoder, StratifiedCartesianGaugeAtlas
 from .categorical_mask import AbsorbingMaskDiffusion
+from .categorical_uniform import UniformCategoricalDiffusion
 from .checkpointing import (
     load_production_checkpoint,
     read_production_checkpoint_metadata,
@@ -32,6 +33,12 @@ from .child_reconstruction import (
     ChildReconstructor,
     HierarchicalSample,
     ParentGeometryCarrier,
+)
+from .composition_assignment import (
+    composition_counts_from_tokens,
+    count_constrained_assignment,
+    count_projected_assignment,
+    rounded_expected_composition,
 )
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .hybrid_diffusion import TensorFreeHybridDiffusion
@@ -44,6 +51,8 @@ from .lattice_volume_shape import (
 from .reverse_sampler import (
     ContinuousReverseInitialState,
     ContinuousReverseMode,
+    ElementReverseDiagnostics,
+    GeneratedElementBatch,
     GeneratedHybridBatch,
     SamplingFailure,
     TensorFreeReverseSampler,
@@ -67,9 +76,13 @@ from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotien
 
 __all__ = [
     "AbsorbingMaskDiffusion",
+    "UniformCategoricalDiffusion",
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
     "CompactCartesianKrylovCarrier",
+    "composition_counts_from_tokens",
+    "count_constrained_assignment",
+    "count_projected_assignment",
     "ContinuousReverseInitialState",
     "ContinuousReverseMode",
     "ChildReconstructor",
@@ -78,6 +91,8 @@ __all__ = [
     "DetectedPointGroup",
     "EmpiricalNodeCountPrior",
     "ExponentialMovingAverage",
+    "ElementReverseDiagnostics",
+    "GeneratedElementBatch",
     "GeneratedHybridBatch",
     "HybridCrystalDenoiser",
     "HierarchicalSample",
@@ -98,6 +113,7 @@ __all__ = [
     "ScalableWrappedQuotient",
     "ReachableChildCompatibilityRouter",
     "ReachableChildPath",
+    "rounded_expected_composition",
     "SelectedMode",
     "StratifiedCartesianGaugeAtlas",
     "StateAdaptiveCartesianCarrierMixer",

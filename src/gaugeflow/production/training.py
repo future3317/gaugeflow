@@ -26,6 +26,8 @@ class ProductionTrainingConfig:
     objective: str = "joint"
     coordinate_clean_side_information: bool = False
     modality_time_mode: str = "shared"
+    categorical_path: str = "absorbing_mask"
+    composition_loss_weight: float = 0.0
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
@@ -38,11 +40,19 @@ class ProductionTrainingConfig:
             raise ValueError("training time interval is invalid")
         if self.precision not in {"fp32", "bf16"}:
             raise ValueError("training precision must be fp32 or bf16")
-        if self.objective not in {"joint", "coordinate"}:
-            raise ValueError("training objective must be joint or coordinate")
+        if self.categorical_path not in {"absorbing_mask", "uniform_replacement"}:
+            raise ValueError("unknown categorical training path")
+        if self.composition_loss_weight < 0.0:
+            raise ValueError("composition loss weight must be nonnegative")
+        if self.objective not in {"joint", "coordinate", "element"}:
+            raise ValueError("training objective must be joint, coordinate or element")
         if self.coordinate_clean_side_information and self.objective != "coordinate":
             raise ValueError("clean element/lattice side information is coordinate-only")
-        if self.modality_time_mode not in {"shared", "independent_corner_mixture"}:
+        if self.modality_time_mode not in {
+            "shared",
+            "independent_corner_mixture",
+            "element_only",
+        }:
             raise ValueError("unknown modality-time training mode")
         if self.modality_time_mode == "independent_corner_mixture" and (
             self.objective != "coordinate" or self.coordinate_clean_side_information
@@ -50,6 +60,8 @@ class ProductionTrainingConfig:
             raise ValueError(
                 "independent modality-time attribution requires coordinate training without clean-side override"
             )
+        if (self.objective == "element") != (self.modality_time_mode == "element_only"):
+            raise ValueError("element training requires the explicit element-only modality-time mode")
 
 
 class ExponentialMovingAverage:
@@ -151,6 +163,19 @@ class ProductionTrainer:
                     "lattice_time": modality_times.lattice,
                     "modality_regime": modality_times.regime,
                 }
+            elif self.config.modality_time_mode == "element_only":
+                graph_count = int(blueprint.node_counts.numel())
+                element_time = self.diffusion.sample_time(
+                    graph_count,
+                    clean_fractional_coordinates,
+                    generator=generator,
+                )
+                clean_time = torch.zeros_like(element_time)
+                modality_arguments = {
+                    "time": clean_time,
+                    "element_time": element_time,
+                    "lattice_time": clean_time,
+                }
             output = self.diffusion(
                 clean_elements,
                 clean_fractional_coordinates,
@@ -162,7 +187,7 @@ class ProductionTrainer:
                 clean_side_information=self.config.coordinate_clean_side_information,
                 **modality_arguments,
             )
-        optimization_loss = output.loss if self.config.objective == "joint" else output.coordinate_loss
+        optimization_loss = self.optimization_loss(output)
         if not torch.isfinite(optimization_loss):
             raise FloatingPointError("selected training loss is non-finite")
         optimization_loss.backward()
@@ -178,3 +203,12 @@ class ProductionTrainer:
         # at the existing synchronized log boundary; converting it here would
         # serialize every CUDA training step.
         return output, gradient_norm.detach()
+
+    def optimization_loss(self, output: HybridLossOutput) -> torch.Tensor:
+        """Select the sole preregistered objective without mixing inactive heads."""
+
+        if self.config.objective == "joint":
+            return output.loss
+        if self.config.objective == "coordinate":
+            return output.coordinate_loss
+        return output.element_loss + self.config.composition_loss_weight * output.composition_loss

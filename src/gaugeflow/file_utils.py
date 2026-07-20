@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import io
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,16 @@ def load_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"expected one JSON object: {path}")
     return value
+
+
+def numeric_tree_is_finite(value: object) -> bool:
+    """Return whether every numeric leaf in a JSON-like tree is finite."""
+
+    if isinstance(value, dict):
+        return all(numeric_tree_is_finite(item) for item in value.values())
+    if isinstance(value, list):
+        return all(numeric_tree_is_finite(item) for item in value)
+    return not isinstance(value, (int, float)) or math.isfinite(float(value))
 
 
 def load_gzip_json(path: Path) -> Any:

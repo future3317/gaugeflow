@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 from typing import Any
 
@@ -13,17 +12,14 @@ from diagnose_h1a_coordinate_generator import _score_calibration
 from evaluate_h1a_coordinate_pretraining import _rollout_closure
 from evaluate_h1a_p1_protocol import _validation_losses
 
-from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
+from gaugeflow.file_utils import (
+    canonical_json_hash,
+    load_json_object,
+    numeric_tree_is_finite,
+    sha256_file,
+)
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.checkpointing import read_production_checkpoint_metadata
-
-
-def _finite_tree(value: object) -> bool:
-    if isinstance(value, dict):
-        return all(_finite_tree(item) for item in value.values())
-    if isinstance(value, list):
-        return all(_finite_tree(item) for item in value)
-    return not isinstance(value, (int, float)) or math.isfinite(float(value))
 
 
 def _prerequisite_hash_contract(
@@ -104,7 +100,7 @@ def main() -> None:
     final_step = int(training["steps"])
     checkpoint = run / f"checkpoint_step_{final_step:08d}.pt"
     records = [json.loads(line) for line in (run / "training_metrics.jsonl").read_text(encoding="utf-8").splitlines()]
-    if not records or int(records[-1]["step"]) != final_step or not _finite_tree(records):
+    if not records or int(records[-1]["step"]) != final_step or not numeric_tree_is_finite(records):
         raise ValueError("training log is incomplete or non-finite")
 
     dataset = PackedAlexP1Dataset(args.cache_root, "val")
@@ -172,7 +168,7 @@ def main() -> None:
     )
     final_log = records[-1]
     checks = {
-        "finite_training": _finite_tree(records),
+        "finite_training": numeric_tree_is_finite(records),
         "coordinate_contract_recorded": bool(
             read_production_checkpoint_metadata(checkpoint)["training_config"][
                 "coordinate_clean_side_information"

@@ -1,0 +1,77 @@
+{
+  "boundary": "This diagnostic performs zero optimizer steps and cannot authorize L1/M1/J2, tensor/oracle work, relaxation, DFT or DFPT.",
+  "checks": {
+    "finite": true,
+    "high_mask_representation_limited": true,
+    "one_shot_advantage": false,
+    "oracle_carrier_advantage": true
+  },
+  "classification": "mixed",
+  "decision_text": "both the all-MASK estimator and irreversible error propagation are material; test one structured self-correcting categorical mechanism that also represents graph-level composition, without target composition input",
+  "l1_authorized": false,
+  "multistep": {
+    "exact_composition_accuracy": 0.0,
+    "site_accuracy": 0.045171339563862926
+  },
+  "one_shot": {
+    "exact_composition_accuracy": 0.0,
+    "site_accuracy": 0.04672897196261682
+  },
+  "optimizer_steps": 0,
+  "protocol": "h1a_e1_categorical_exposure_audit_v1",
+  "protocol_sha256": "dba07478d1f764fed982798654c3f9353f0fb06adccab8685eed5204b23e94ab",
+  "snapshots": [
+    {
+      "all_mask_top1": 0.08411214953271028,
+      "masked_fraction": 0.9742990654205608,
+      "observed_time": 0.9017165899276733,
+      "on_policy_masked_top1": 0.0639488409272582,
+      "oracle_minus_on_policy": 0.055955235811350916,
+      "oracle_revealed_masked_top1": 0.11990407673860912,
+      "target_time": 0.9,
+      "wrong_revealed_fraction": 1.0
+    },
+    {
+      "all_mask_top1": 0.08566978193146417,
+      "masked_fraction": 0.852803738317757,
+      "observed_time": 0.7520685195922852,
+      "on_policy_masked_top1": 0.057534246575342465,
+      "oracle_minus_on_policy": 0.27671232876712326,
+      "oracle_revealed_masked_top1": 0.33424657534246577,
+      "target_time": 0.75,
+      "wrong_revealed_fraction": 0.9788359788359788
+    },
+    {
+      "all_mask_top1": 0.08800623052959501,
+      "masked_fraction": 0.4719626168224299,
+      "observed_time": 0.4844997227191925,
+      "on_policy_masked_top1": 0.0297029702970297,
+      "oracle_minus_on_policy": 0.39603960396039606,
+      "oracle_revealed_masked_top1": 0.42574257425742573,
+      "target_time": 0.5,
+      "wrong_revealed_fraction": 0.9557522123893806
+    },
+    {
+      "all_mask_top1": 0.08489096573208722,
+      "masked_fraction": 0.1277258566978193,
+      "observed_time": 0.2263081818819046,
+      "on_policy_masked_top1": 0.036585365853658534,
+      "oracle_minus_on_policy": 0.42073170731707316,
+      "oracle_revealed_masked_top1": 0.4573170731707317,
+      "target_time": 0.25,
+      "wrong_revealed_fraction": 0.9571428571428572
+    },
+    {
+      "all_mask_top1": 0.08489096573208722,
+      "masked_fraction": 0.1277258566978193,
+      "observed_time": 0.2263081818819046,
+      "on_policy_masked_top1": 0.036585365853658534,
+      "oracle_minus_on_policy": 0.42073170731707316,
+      "oracle_revealed_masked_top1": 0.4573170731707317,
+      "target_time": 0.1,
+      "wrong_revealed_fraction": 0.9571428571428572
+    }
+  ],
+  "source_checkpoint_sha256": "215b26f725fb084cea44aaca6437db4078c38ea8e5ee2a56d929608462b2de8e",
+  "validation_indices_sha256": "a76c6a52e43242f13220024c264cee57a67f26ae4d34052864f2db7a8cd8719d"
+}

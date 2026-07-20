@@ -8,6 +8,7 @@ import torch
 
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
+from .categorical_common import FixedElementVocabulary
 from .schedules import CosineNoiseSchedule
 
 
@@ -17,7 +18,7 @@ class MaskedCategoricalState:
     clean_mask: torch.Tensor
 
 
-class AbsorbingMaskDiffusion:
+class AbsorbingMaskDiffusion(FixedElementVocabulary):
     """Continuous-time mask corruption and exact finite-step reverse kernel.
 
     Chemical states are dense element indices ``0..117``.  The absorbing mask
@@ -36,12 +37,6 @@ class AbsorbingMaskDiffusion:
         self.element_count = element_count
         self.mask_index = element_count
         self.schedule = schedule or CosineNoiseSchedule()
-
-    def validate_clean(self, tokens: torch.Tensor) -> None:
-        if tokens.dtype != torch.long or tokens.ndim != 1:
-            raise ValueError("clean element tokens must be a rank-one int64 tensor")
-        if tokens.numel() and bool(((tokens < 0) | (tokens >= self.element_count)).any()):
-            raise ValueError("clean element token lies outside 0..117")
 
     def corrupt(
         self,
@@ -65,6 +60,21 @@ class AbsorbingMaskDiffusion:
         return MaskedCategoricalState(
             tokens=torch.where(keep, clean, torch.full_like(clean, self.mask_index)),
             clean_mask=keep,
+        )
+
+    def sample_prior(
+        self,
+        nodes: int,
+        reference: torch.Tensor,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> torch.Tensor:
+        del generator
+        return torch.full(
+            (nodes,),
+            self.mask_index,
+            dtype=torch.long,
+            device=reference.device,
         )
 
     def reverse_probabilities(
@@ -106,7 +116,3 @@ class AbsorbingMaskDiffusion:
         if bool(revealed.any()):
             probabilities[revealed, current[revealed]] = 1.0
         return probabilities
-
-    def decode(self, tokens: torch.Tensor) -> torch.Tensor:
-        self.validate_clean(tokens)
-        return tokens + 1

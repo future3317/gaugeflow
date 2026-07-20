@@ -190,6 +190,8 @@ def main() -> None:
     objective = str(training_spec["objective"])
     if objective == "coordinate" and "coordinate_clean_side_information" not in training_spec:
         raise ValueError("coordinate training must explicitly declare its observed-side-information contract")
+    if objective == "element" and training_spec.get("modality_time_mode") != "element_only":
+        raise ValueError("element training must explicitly declare the element-only time contract")
     log_every = int(training_spec["log_every"])
     num_workers = int(training_spec["num_workers"])
     checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
@@ -303,12 +305,19 @@ def main() -> None:
             objective=objective,
             coordinate_clean_side_information=bool(training_spec.get("coordinate_clean_side_information", False)),
             modality_time_mode=str(training_spec.get("modality_time_mode", "shared")),
+            categorical_path=str(training_spec.get("categorical_path", "absorbing_mask")),
+            composition_loss_weight=float(training_spec.get("composition_loss_weight", 0.0)),
         )
     )
-    uses_mixed_regimes = training_config.modality_time_mode == "independent_corner_mixture"
+    uses_explicit_modality_times = training_config.modality_time_mode in {
+        "independent_corner_mixture",
+        "element_only",
+    }
     matched_modes = {"matched_single", "side_mean", "separate"}
-    if uses_mixed_regimes != (model.modality_time_conditioning in matched_modes):
+    if uses_explicit_modality_times != (model.modality_time_conditioning in matched_modes):
         raise ValueError("model and training modality-time contracts do not match")
+    if training_config.modality_time_mode == "element_only" and model.modality_time_conditioning != "separate":
+        raise ValueError("element-only qualification requires the unified separate-clock backbone")
     diffusion = TensorFreeHybridDiffusion(
         model,
         lattice_standardizer,
@@ -316,6 +325,7 @@ def main() -> None:
         coordinate_sigma_max=training_config.coordinate_sigma_max,
         minimum_time=training_config.minimum_time,
         maximum_time=training_config.maximum_time,
+        categorical_path=training_config.categorical_path,
     )
     trainer = ProductionTrainer(diffusion, training_config)
     if args.resume is not None:
@@ -390,9 +400,10 @@ def main() -> None:
             record = {
                 "step": trainer.step,
                 "loss": float(
-                    (output.loss if training_config.objective == "joint" else output.coordinate_loss).detach().cpu()
+                    trainer.optimization_loss(output).detach().cpu()
                 ),
                 "element_loss": float(output.element_loss.detach().cpu()),
+                "composition_loss": float(output.composition_loss.detach().cpu()),
                 "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
                 "volume_loss": float(output.volume_loss.detach().cpu()),
                 "shape_loss": float(output.shape_loss.detach().cpu()),

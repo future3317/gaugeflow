@@ -55,6 +55,8 @@ ACTIVE_ENTRYPOINTS = (
     ROOT / "scripts" / "compare_h1a_execution_snapshots.py",
     ROOT / "scripts" / "audit_h1a_sde_probability_flow_sampler.py",
     ROOT / "scripts" / "audit_h1a_reverse_sde_50_noninferiority.py",
+    ROOT / "scripts" / "evaluate_h1a_e1_element_reverse.py",
+    ROOT / "scripts" / "audit_h1a_e1_categorical_exposure.py",
 )
 
 
