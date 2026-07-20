@@ -116,6 +116,52 @@ def _backward_assignment_messages(
     return messages, digits, strides
 
 
+def _backward_assignment_max_messages(
+    block_scores: torch.Tensor,
+    multiplicity: torch.Tensor,
+    counts: torch.Tensor,
+    *,
+    maximum_states: int,
+) -> list[torch.Tensor]:
+    """Return max-sum messages for the exact global assignment MAP.
+
+    Sampling uses log-sum-exp messages, whereas a MAP traceback must use the
+    max-plus semiring.  Reusing conditional probability modes is only a greedy
+    decoder and can miss the highest-probability complete assignment.
+    """
+    digits, strides = _mixed_radix_states(counts)
+    state_count = digits.shape[0]
+    if state_count > maximum_states:
+        raise ValueError(
+            f"assignment DP requires {state_count} states, above limit {maximum_states}"
+        )
+    target = (counts * strides).sum()
+    working_dtype = torch.float64 if block_scores.dtype == torch.float64 else torch.float32
+    beta = torch.full(
+        (state_count,),
+        -torch.inf,
+        dtype=working_dtype,
+        device=block_scores.device,
+    )
+    beta[int(target)] = 0.0
+    messages = [beta]
+    scores = block_scores.to(working_dtype)
+    state_index = torch.arange(state_count, device=counts.device).unsqueeze(1)
+    for block in range(block_scores.shape[0] - 1, -1, -1):
+        valid = digits + multiplicity[block] <= counts.unsqueeze(0)
+        successor = state_index + multiplicity[block] * strides.unsqueeze(0)
+        safe_successor = successor.clamp_max(state_count - 1)
+        candidate = scores[block].unsqueeze(0) + beta.index_select(
+            0, safe_successor.reshape(-1)
+        ).reshape(state_count, -1)
+        beta = candidate.masked_fill(~valid, -torch.inf).amax(dim=1)
+        messages.append(beta)
+    messages.reverse()
+    if not torch.isfinite(messages[0][0]):
+        raise ValueError("composition counts are incompatible with occupation-block multiplicities")
+    return messages
+
+
 class CountConstrainedAssignmentLaw:
     r"""Exact ``p(A | C, carrier)`` with optional indivisible occupation blocks.
 
@@ -258,29 +304,126 @@ class CountConstrainedAssignmentLaw:
             if not bool(torch.all(permutations == expected.unsqueeze(0), dim=1).any()):
                 raise ValueError("parent action must contain the identity permutation")
             labelings = torch.unique(graph_assignment.to(permutations.device)[permutations], dim=0)
-            orbit_logp: list[torch.Tensor] = []
-            orbit_score: list[torch.Tensor] = []
-            state_count = 0
-            for labeling in labelings:
-                value, numerator, state_count = self._one_log_prob(
-                    site_scores[selected],
-                    counts[graph],
-                    labeling.to(assignment.device),
-                    None if block_index is None else block_index[selected],
-                )
-                orbit_logp.append(value)
-                orbit_score.append(numerator)
-            graph_logp = torch.logsumexp(torch.stack(orbit_logp), dim=0)
+            active, _, block_scores, _, messages, inverse = self._graph_problem(
+                site_scores[selected],
+                counts[graph],
+                None if block_index is None else block_index[selected],
+            )
+            if block_index is not None:
+                relabeled_blocks = inverse.to(permutations.device)[permutations]
+                source_blocks = inverse.to(permutations.device)
+                for source_block in range(block_scores.shape[0]):
+                    image_values = relabeled_blocks[:, source_blocks == source_block]
+                    if not torch.all(image_values == image_values[:, :1]):
+                        raise ValueError(
+                            "parent action does not preserve the indivisible block partition"
+                        )
+            orbit_labelings = labelings.to(assignment.device)
+            block_tokens = torch.empty(
+                (orbit_labelings.shape[0], block_scores.shape[0]),
+                dtype=torch.long,
+                device=assignment.device,
+            )
+            for block in range(block_scores.shape[0]):
+                block_values = orbit_labelings[:, inverse == block]
+                if not torch.all(block_values == block_values[:, :1]):
+                    raise ValueError("target orbit violates an indivisible occupation block")
+                block_tokens[:, block] = block_values[:, 0]
+            lookup = torch.full(
+                (CHEMICAL_ELEMENT_COUNT,),
+                -1,
+                dtype=torch.long,
+                device=assignment.device,
+            )
+            lookup[active] = torch.arange(active.numel(), device=assignment.device)
+            active_index = lookup[block_tokens]
+            if bool((active_index < 0).any()):
+                raise ValueError("target orbit uses species outside the supplied composition")
+            orbit_score = block_scores.unsqueeze(0).expand(labelings.shape[0], -1, -1).gather(
+                2, active_index.unsqueeze(-1)
+            ).squeeze(-1).sum(dim=1)
+            graph_partition = messages[0][0]
+            graph_logp = torch.logsumexp(orbit_score - graph_partition, dim=0)
             logp.append(graph_logp)
-            score.append(torch.logsumexp(torch.stack(orbit_score), dim=0))
-            partition.append(score[-1] - graph_logp)
-            states.append(state_count)
+            score.append(torch.logsumexp(orbit_score, dim=0))
+            partition.append(graph_partition)
+            states.append(messages[0].numel())
         return AssignmentLogProbability(
             torch.stack(logp),
             torch.stack(partition),
             torch.stack(score),
             torch.tensor(states, dtype=torch.long, device=batch.device),
         )
+
+    @torch.no_grad()
+    def entropy(
+        self,
+        site_scores: torch.Tensor,
+        batch: torch.Tensor,
+        counts: torch.Tensor,
+        *,
+        block_index: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Return exact graphwise assignment entropy from the DP conditionals."""
+        _validate_assignment_batch(site_scores, batch, counts)
+        if block_index is not None and block_index.shape != batch.shape:
+            raise ValueError("occupation blocks must align with packed sites")
+        graph_entropies: list[torch.Tensor] = []
+        for graph in range(counts.shape[0]):
+            selected = batch == graph
+            _, active_counts, block_scores, multiplicity, messages, _ = self._graph_problem(
+                site_scores[selected],
+                counts[graph],
+                None if block_index is None else block_index[selected],
+            )
+            digits, strides = _mixed_radix_states(active_counts)
+            state_count = digits.shape[0]
+            state_probability = torch.zeros_like(messages[0])
+            state_probability[0] = 1.0
+            graph_entropy = torch.zeros((), dtype=messages[0].dtype, device=messages[0].device)
+            state_index = torch.arange(state_count, device=digits.device).unsqueeze(1)
+            for block in range(block_scores.shape[0]):
+                successor = state_index + multiplicity[block] * strides.unsqueeze(0)
+                valid = digits + multiplicity[block] <= active_counts.unsqueeze(0)
+                safe_successor = successor.clamp_max(state_count - 1)
+                candidate = block_scores[block].to(messages[0].dtype).unsqueeze(0)
+                candidate = candidate + messages[block + 1].index_select(
+                    0, safe_successor.reshape(-1)
+                ).reshape_as(successor)
+                reachable = (
+                    valid
+                    & torch.isfinite(candidate)
+                    & torch.isfinite(messages[block]).unsqueeze(1)
+                )
+                log_conditional = torch.where(
+                    reachable,
+                    candidate - messages[block].unsqueeze(1),
+                    torch.zeros_like(candidate),
+                )
+                conditional = torch.where(
+                    reachable,
+                    log_conditional.exp(),
+                    torch.zeros_like(log_conditional),
+                )
+                joint = state_probability.unsqueeze(1) * conditional
+                graph_entropy = graph_entropy - (joint * log_conditional).sum()
+                next_probability = torch.zeros_like(state_probability)
+                next_probability.index_add_(
+                    0,
+                    safe_successor.reshape(-1),
+                    joint.reshape(-1),
+                )
+                state_probability = next_probability
+            target_state = int((active_counts * strides).sum())
+            if not torch.allclose(
+                state_probability[target_state],
+                torch.ones((), dtype=state_probability.dtype, device=state_probability.device),
+                atol=1e-5,
+                rtol=1e-5,
+            ):
+                raise RuntimeError("assignment entropy propagation lost probability mass")
+            graph_entropies.append(graph_entropy)
+        return torch.stack(graph_entropies)
 
     @torch.no_grad()
     def sample(
@@ -293,7 +436,7 @@ class CountConstrainedAssignmentLaw:
         generator: torch.Generator | None = None,
         mode: bool = False,
     ) -> AssignmentSample:
-        """Draw a full assignment categorical, or take its exact MAP mode."""
+        """Draw a full assignment categorical, or take its exact global MAP."""
         _validate_assignment_batch(site_scores, batch, counts)
         output = torch.empty_like(batch)
         log_probabilities: list[torch.Tensor] = []
@@ -306,33 +449,46 @@ class CountConstrainedAssignmentLaw:
                 None if block_index is None else block_index[selected],
             )
             digits, strides = _mixed_radix_states(active_counts)
+            max_messages = (
+                _backward_assignment_max_messages(
+                    block_scores,
+                    multiplicity,
+                    active_counts,
+                    maximum_states=self.maximum_states,
+                )
+                if mode
+                else None
+            )
             state = 0
             choices: list[torch.Tensor] = []
-            selected_logp = torch.zeros(
+            selected_score = torch.zeros(
                 (), dtype=messages[0].dtype, device=block_scores.device
             )
             for block in range(block_scores.shape[0]):
                 successor = state + multiplicity[block] * strides
                 valid = digits[state] + multiplicity[block] <= active_counts
-                candidate = block_scores[block].to(messages[0].dtype) + messages[
+                continuation = messages if max_messages is None else max_messages
+                candidate = block_scores[block].to(messages[0].dtype) + continuation[
                     block + 1
                 ].index_select(
                     0, successor.clamp_max(messages[block + 1].numel() - 1)
                 )
                 candidate = candidate.masked_fill(~valid, -torch.inf)
-                log_categorical = candidate - torch.logsumexp(candidate, dim=0)
                 if mode:
-                    choice = torch.argmax(log_categorical)
+                    choice = torch.argmax(candidate)
                 else:
+                    log_categorical = candidate - torch.logsumexp(candidate, dim=0)
                     choice = torch.multinomial(
                         log_categorical.exp(), 1, generator=generator
                     ).squeeze(0)
-                selected_logp = selected_logp + log_categorical[choice]
+                selected_score = selected_score + block_scores[block, choice].to(
+                    messages[0].dtype
+                )
                 choices.append(choice)
                 state = int(successor[choice])
             block_tokens = active.index_select(0, torch.stack(choices))
             output[selected] = block_tokens.index_select(0, inverse)
-            log_probabilities.append(selected_logp)
+            log_probabilities.append(selected_score - messages[0][0])
             partitions.append(messages[0][0])
         observed = composition_counts_from_tokens(output, batch, counts.shape[0])
         if not torch.equal(observed, counts):

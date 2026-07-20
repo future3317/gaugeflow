@@ -1,0 +1,121 @@
+{
+  "protocol": "h1a_oracle_c_assignment_q1_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed from-scratch qualification of exact count-constrained parent-action-quotient site assignment conditioned on oracle composition",
+  "prerequisites": {
+    "absolute_likelihood_e1_result_sha256": "7812bf380fa019fb655784d0a3ca6194b457fd17da9ed7cc3924da5d91f782d5",
+    "assignment_carrier_audit_result_sha256": "00256b17833da8b9bc08f639b80a27da455eca849539893b8606acb7bd7ba1b8"
+  },
+  "source": {
+    "dataset": "qualified H0-E-v4 O1-v1 species-free parent carriers and target-only occupational colorings",
+    "split_axis": "frozen material-disjoint GaugeFlow train/val/test assignment split",
+    "candidate_carriers_by_split": {
+      "train": 358,
+      "val": 43,
+      "test": 53
+    },
+    "materials_by_split": {
+      "train": 181,
+      "val": 27,
+      "test": 16
+    },
+    "artifact_sha256": {
+      "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+      "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
+      "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961"
+    },
+    "normalized_implementation_sha256": {
+      "src/gaugeflow/production/assignment_scorer.py": "592fd61921b031914326c41969cb6281602ea4410913a086b23a44ad4d4ec861",
+      "src/gaugeflow/production/composition_assignment.py": "d554008469d400fcd200b0da06964979b578e4a82a814f909cb6d28d4647494d",
+      "scripts/train_h1a_oracle_c_assignment_q1.py": "f5d374974d980a396c5715e5cd19fcf352fc8694d675f5da6c4b9c01f93bdc6c"
+    }
+  },
+  "scientific_contract": {
+    "law": "p(A|C_oracle,O_parent) with exact composition counts and parent-action unique-orbit quotient likelihood",
+    "normalization": "mixed-radix remaining-count dynamic program over the complete legal assignment space",
+    "parent_action_measure": "faithful finite-site image with duplicate operation multiplicity removed",
+    "model_family": "permutation-equivariant composition-conditioned unary energy on species-free parent-action site signatures",
+    "family_limit": "sites in one parent action orbit necessarily have equal unary scores; the target-orbit probability ceiling is reported and never used as an input",
+    "map_role": "global labeling MAP uses max-sum DP but remains diagnostic because deterministic tie breaking can depend on an arbitrary row order",
+    "fixed_cif_role": "diagnostic only and excluded from qualification"
+  },
+  "leakage_contract": {
+    "allowed_inputs": [
+      "oracle_composition_counts_with_explicit_oracle_role_in_protocol",
+      "species_free_parent_fractional_geometry",
+      "species_free_parent_lattice",
+      "parent_space_group_prior",
+      "sampled_supercell_index",
+      "faithful_parent_site_action_image"
+    ],
+    "target_only": [
+      "child_atomic_numbers",
+      "occupational_site_classes",
+      "occupational_species_by_class_tokens",
+      "child_space_group",
+      "occupational_stabilizer_indices",
+      "cif_row_order",
+      "material_id"
+    ],
+    "generated_composition_exposure": false,
+    "target_assignment_input": false,
+    "target_occupation_orbit_input": false
+  },
+  "model": {
+    "maximum_sites": 20,
+    "maximum_active_species": 7,
+    "maximum_dynamic_program_states": 100000,
+    "maximum_cell_index": 4,
+    "element_vocabulary": 118,
+    "hidden_dim": 96,
+    "radial_channels": 16,
+    "exact_assignment_normalization": true,
+    "exact_global_map": true,
+    "from_scratch_required": true
+  },
+  "training": {
+    "seed": 5705,
+    "seed_count": 1,
+    "cuda_device": 0,
+    "steps": 2000,
+    "material_batch_size": 32,
+    "material_balanced_sampling": true,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "precision": "fp32",
+    "evaluation_interval": 100,
+    "continuous_hyperparameter_search": false
+  },
+  "evaluation": {
+    "batch_size": 32,
+    "sample_draws_per_carrier": 32,
+    "bootstrap_resamples": 5000,
+    "bootstrap_unit": "material",
+    "aggregation": "mean over carriers within material, then mean over materials",
+    "strata": [
+      "site_count_N",
+      "active_species_S",
+      "faithful_parent_action_order",
+      "target_quotient_size"
+    ],
+    "random_node_relabeling_per_carrier": 1,
+    "labeling_map_retrieval_is_diagnostic": true,
+    "fixed_cif_site_accuracy_is_diagnostic": true
+  },
+  "acceptance": {
+    "model_minus_uniform_nll_ucb95_max": 0.0,
+    "target_quotient_probability_min": 0.25,
+    "sample_retrieval_min": 0.25,
+    "sample_orbit_aligned_site_accuracy_min": 0.8,
+    "exact_composition": 1.0,
+    "sample_exact_composition": 1.0,
+    "evaluation_failures": 0,
+    "relabel_probability_max_abs": 0.00001
+  },
+  "decision_rule": {
+    "pass": "qualify only oracle-C count-constrained assignment and freeze its checkpoint; generated-C exposure, p(N), L1 and M1 remain blocked",
+    "fail": "stop before generated-C, p(N), L1 or M1 and attribute failure to unary assignment energy, carrier identifiability or unresolved symmetry-inequivalent global coloring without adding target-derived inputs",
+    "boundary": "This Gate cannot qualify generated-C assignment, p(N), L1/M1, free joint H1a, tensor conditioning or guidance, relaxation, DFT, or DFPT."
+  }
+}

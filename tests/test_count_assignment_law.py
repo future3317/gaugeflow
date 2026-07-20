@@ -71,6 +71,28 @@ def test_assignment_law_is_site_permutation_equivariant_and_count_exact() -> Non
     assert torch.allclose(sample.log_probability, recomputed.log_probability, atol=1e-12)
 
 
+def test_assignment_mode_uses_global_max_sum_not_greedy_conditional_mode() -> None:
+    scores = torch.full((3, CHEMICAL_ELEMENT_COUNT), -100.0, dtype=torch.float64)
+    scores[0, 1] = 0.0
+    scores[0, 2] = 0.0
+    scores[1:, 1] = -0.1
+    scores[1:, 2] = 0.0
+    batch = torch.zeros(3, dtype=torch.long)
+    counts = _counts({1: 1, 2: 2})
+    law = CountConstrainedAssignmentLaw()
+
+    mode = law.sample(scores, batch, counts, mode=True)
+    assignments = torch.tensor(
+        sorted(set(itertools.permutations([1, 2, 2]))),
+        dtype=torch.long,
+    )
+    logp = torch.stack(
+        [law.log_prob(scores, batch, counts, value).log_probability[0] for value in assignments]
+    )
+    assert torch.equal(mode.tokens, assignments[torch.argmax(logp)])
+    assert torch.allclose(mode.log_probability[0], logp.max(), atol=1e-12, rtol=0.0)
+
+
 def test_indivisible_occupation_blocks_enforce_legal_multiplicity() -> None:
     scores = _scores(4)
     batch = torch.zeros(4, dtype=torch.long)
@@ -98,3 +120,96 @@ def test_parent_quotient_deduplicates_group_elements_and_cif_rows() -> None:
     )
     assert torch.allclose(base.log_probability, torch.zeros(1, dtype=torch.float64), atol=1e-12)
     assert torch.allclose(base.log_probability, duplicate.log_probability, atol=1e-12)
+
+
+def test_vectorized_quotient_matches_explicit_orbit_with_blocks_and_fp32_gradient() -> None:
+    scores = _scores(4, dtype=torch.float32).requires_grad_()
+    batch = torch.zeros(4, dtype=torch.long)
+    counts = _counts({3: 2, 8: 2})
+    assignment = torch.tensor([3, 3, 8, 8], dtype=torch.long)
+    blocks = torch.tensor([4, 4, 9, 9], dtype=torch.long)
+    group = torch.tensor(
+        [[0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]],
+        dtype=torch.long,
+    )
+    law = CountConstrainedAssignmentLaw()
+    observed = law.quotient_log_prob(
+        scores,
+        batch,
+        counts,
+        assignment,
+        [group[[2, 0, 3, 1, 2]]],
+        block_index=blocks,
+    )
+    labelings = torch.unique(assignment[group], dim=0)
+    explicit = torch.logsumexp(
+        torch.stack(
+            [
+                law.log_prob(
+                    scores,
+                    batch,
+                    counts,
+                    labeling,
+                    block_index=blocks,
+                ).log_probability[0]
+                for labeling in labelings
+            ]
+        ),
+        dim=0,
+    )
+    assert torch.allclose(observed.log_probability[0], explicit, atol=2e-6, rtol=2e-6)
+    (-observed.log_probability.mean()).backward()
+    assert scores.grad is not None and torch.isfinite(scores.grad).all()
+
+
+def test_exact_assignment_entropy_matches_enumeration() -> None:
+    scores = _scores(4)
+    batch = torch.zeros(4, dtype=torch.long)
+    counts = _counts({1: 2, 7: 1, 11: 1})
+    assignments = torch.tensor(
+        sorted(set(itertools.permutations([1, 1, 7, 11]))),
+        dtype=torch.long,
+    )
+    law = CountConstrainedAssignmentLaw()
+    logp = torch.stack(
+        [law.log_prob(scores, batch, counts, value).log_probability[0] for value in assignments]
+    )
+    expected = -(logp.exp() * logp).sum()
+    observed = law.entropy(scores, batch, counts)[0]
+    assert torch.allclose(observed, expected, atol=1e-11, rtol=1e-11)
+
+
+def test_quotient_rejects_parent_action_that_splits_an_indivisible_block() -> None:
+    scores = _scores(4)
+    batch = torch.zeros(4, dtype=torch.long)
+    counts = _counts({3: 2, 8: 2})
+    assignment = torch.tensor([3, 3, 8, 8], dtype=torch.long)
+    blocks = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    invalid_for_blocks = torch.tensor([[0, 1, 2, 3], [0, 2, 1, 3]], dtype=torch.long)
+    with pytest.raises(ValueError, match="does not preserve"):
+        CountConstrainedAssignmentLaw().quotient_log_prob(
+            scores,
+            batch,
+            counts,
+            assignment,
+            [invalid_for_blocks],
+            block_index=blocks,
+        )
+
+
+def test_quotient_rejects_block_split_even_when_target_species_hide_it() -> None:
+    scores = _scores(4)
+    batch = torch.zeros(4, dtype=torch.long)
+    counts = _counts({3: 2, 8: 2})
+    assignment = torch.tensor([3, 3, 8, 8], dtype=torch.long)
+    blocks = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    hidden_split = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]], dtype=torch.long)
+    with pytest.raises(ValueError, match="does not preserve"):
+        CountConstrainedAssignmentLaw().quotient_log_prob(
+            scores,
+            batch,
+            counts,
+            assignment,
+            [hidden_split],
+            block_index=blocks,
+        )

@@ -5,6 +5,12 @@ prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
 from .alex_p1_data import PackedAlexP1Dataset
+from .assignment_scorer import (
+    OrbitAwareAssignmentScorer,
+    faithful_parent_action,
+    parent_action_site_features,
+    parent_carrier_graph_features,
+)
 from .blueprint import (
     DistortionBlueprint,
     EmpiricalNodeCountPrior,
@@ -109,6 +115,7 @@ from .wrapped_coordinates import AdaptiveWrappedQuotient, ScalableWrappedQuotien
 
 __all__ = [
     "AbsorbingMaskDiffusion",
+    "OrbitAwareAssignmentScorer",
     "AssignmentLogProbability",
     "AssignmentSample",
     "UniformCategoricalDiffusion",
@@ -174,10 +181,13 @@ __all__ = [
     "audit_terminal_symmetry",
     "detect_cartesian_point_group",
     "fit_integer_partition_log_prior",
+    "faithful_parent_action",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
     "reverse_time_grid",
     "project_hybrid_reverse_state",
+    "parent_action_site_features",
+    "parent_carrier_graph_features",
     "project_lattice_state",
     "project_translation_state",
     "save_production_checkpoint",
