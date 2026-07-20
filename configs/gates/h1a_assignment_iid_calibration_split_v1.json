@@ -1,0 +1,61 @@
+{
+  "protocol": "h1a_assignment_iid_calibration_split_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training construction of an assignment-specific IID calibration split inside the original GaugeFlow train partition while preserving the original validation/test partitions as untouched OOD stress panels",
+  "source": {
+    "artifact_sha256": {
+      "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+      "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
+      "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961"
+    },
+    "candidate_carriers": 454,
+    "materials": 224,
+    "original_carriers_by_split": {
+      "train": 358,
+      "val": 43,
+      "test": 53
+    },
+    "original_materials_by_split": {
+      "train": 181,
+      "val": 27,
+      "test": 16
+    }
+  },
+  "split": {
+    "seed": 5705,
+    "iid_holdout_fraction_per_supported_partition": 0.15,
+    "minimum_materials_per_iid_partition": 3,
+    "grouping_unit": "material_id; all candidate carriers of one material remain together",
+    "iid_support_key": "(site_count, decreasing integer composition partition)",
+    "rare_partition_role": "iid_fit_rare",
+    "original_train_roles": [
+      "iid_fit",
+      "iid_fit_rare",
+      "iid_calibration",
+      "iid_test"
+    ],
+    "untouched_ood_roles": {
+      "val": "ood_validation",
+      "test": "ood_test"
+    },
+    "duplicate_definition": "exact (embedding_key, ordered child coloring) input-output duplicate; duplicates must remain in one role",
+    "same_input_different_output_policy": "allowed across IID roles because repeated outcomes for one target-free carrier are required to calibrate a conditional probability law"
+  },
+  "acceptance": {
+    "all_source_carriers_assigned_once": true,
+    "material_role_overlap": 0,
+    "exact_input_output_duplicate_role_overlap": 0,
+    "iid_calibration_partition_fit_support": 1.0,
+    "iid_test_partition_fit_support": 1.0,
+    "iid_calibration_materials_min": 20,
+    "iid_test_materials_min": 20,
+    "ood_validation_carriers": 43,
+    "ood_test_carriers": 53,
+    "original_ood_rows_used_for_iid_fit": 0
+  },
+  "decision_rule": {
+    "pass": "freeze the split manifest for a future from-scratch oracle-C IID assignment Gate; the existing Q1 split remains the distinct OOD stress panel",
+    "fail": "repair only split grouping/support; do not train assignment or start downstream Gates",
+    "boundary": "This split cannot qualify assignment, generated-C, p(N), L1/M1, tensor work, relaxation, DFT or DFPT."
+  }
+}

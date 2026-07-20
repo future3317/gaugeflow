@@ -1,0 +1,38 @@
+{
+  "protocol": "h1a_assignment_site_resolved_carrier_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training audit of whether the assignment carrier exposes full species-free site geometry aligned with every node of the parent action",
+  "prerequisites": {
+    "orbital_set_result_sha256": "29fc6f5b76dca547f3f36a0fccecb991867b74a30f5cad65722dda6119f66d7d",
+    "orbital_set_required_qualified": false
+  },
+  "source": {
+    "artifact_sha256": {
+      "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+      "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
+      "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961"
+    },
+    "candidate_carriers": 454
+  },
+  "required_interface": {
+    "expanded_parent_fractional": "one species-free fractional coordinate per assignment/action node",
+    "expanded_parent_lattice": "the supercell lattice in which expanded_parent_fractional is expressed",
+    "supercell_hnf": "certified integer supercell transform for every cell_index > 1",
+    "translation_cosets": "explicit ordering certificate aligning expanded sites, action permutations and supercell translations",
+    "target_prohibition": "child coordinates, child species mapping and occupational labels may not be used to construct runtime features"
+  },
+  "acceptance": {
+    "full_site_geometry_fraction": 1.0,
+    "expanded_geometry_field_fraction": 1.0,
+    "expanded_lattice_field_fraction": 1.0,
+    "supercell_hnf_fraction_when_cell_index_gt_1": 1.0,
+    "translation_coset_fraction_when_cell_index_gt_1": 1.0,
+    "action_node_alignment_fraction": 1.0,
+    "positive_finite_lattice_fraction": 1.0
+  },
+  "decision_rule": {
+    "pass": "permit only a geometry-aware zero-training occupation expressivity audit",
+    "fail": "build a versioned assignment-carrier derivative from the certified parent candidate and supercell transform; do not train or infer missing expanded geometry from target coloring",
+    "boundary": "This audit cannot qualify assignment, generated-C, p(N), L1/M1, tensor work, relaxation, DFT or DFPT."
+  }
+}

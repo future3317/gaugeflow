@@ -1,0 +1,47 @@
+{
+  "protocol": "h1a_assignment_orbital_set_expressivity_audit_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "zero-training audit of an exact parent-orbital DeepSet statistic after the aggregate pair descriptor in the global-interaction audit proved over-compressed",
+  "prerequisites": {
+    "global_interaction_result_sha256": "fcf02c47bc2ef719359828bf957a28e3871961f7707a13066e6b415b595bcBfc",
+    "required_decision_class": "orbital_only"
+  },
+  "source": {
+    "artifact_sha256": {
+      "manifest.json": "5080228b3452601a9d72c34a8cc4e8f26c51c11584a2c082c33662459029294a",
+      "results.json.gz": "baf1a293171f05a8866546cebf62cacc4d92bb35d661cf0df9f5d4f7911c94c1",
+      "independent_audit.json": "bb2ea88de8fc2dba55a7cab55fdbc6d3992b5810f7f6b1c2a69a009642328961"
+    },
+    "candidate_carriers": 454,
+    "candidate_carriers_by_split": {
+      "train": 358,
+      "val": 43,
+      "test": 53
+    }
+  },
+  "scientific_contract": {
+    "representation": "the exact unordered pair orbits are retained as elements of an unordered set; each element contains a target-free pair-action descriptor and its species-pair count vector",
+    "shared_energy": "a future scorer may apply one shared function to each orbital element and sum over the set; it may not use an orbit index, prototype ID or target-derived metadata",
+    "identical_descriptor_policy": "orbitals with identical target-free descriptors remain separate set elements; their colored statistics are compared as a multiset rather than summed before scoring",
+    "target_role": "target assignments are evaluation labels only",
+    "normalization_boundary": "this audit establishes representational identifiability only; it does not solve or qualify global normalization",
+    "no_training": true
+  },
+  "audit": {
+    "maximum_exact_unary_collision_class": 1000000,
+    "assignment_chunk_size": 2048,
+    "relabel_seed": 5705
+  },
+  "acceptance": {
+    "exact_enumerated_carrier_fraction_min": 0.98,
+    "relabel_failures": 0,
+    "target_orbit_containment_failures": 0,
+    "orbital_set_resolved_unary_collision_fraction_min": 0.8,
+    "orbital_set_mean_target_ceiling_min": 0.9
+  },
+  "decision_rule": {
+    "pass": "the minimal exact-orbital set interaction is expressively supported; next audit a tractable normalized law and freeze the independent IID/OOD split before training",
+    "fail": "second-order orbital sets remain insufficient; do not train and audit the smallest higher-order or assignment-level latent statistic",
+    "boundary": "This audit cannot qualify assignment, its normalization, generated-C, p(N), L1/M1, tensor work, relaxation, DFT or DFPT."
+  }
+}

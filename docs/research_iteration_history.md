@@ -980,3 +980,41 @@ failure. A read-only checkpoint attribution gives material-balanced train NLL
 composition partitions have zero train support and exact action-signature
 coverage is only `25.58%/13.21%`. The result rejects the unary scorer under the
 frozen OOD contract and stops before generated-C, `p(N)`, L1, M1 or tensor work.
+
+### Assignment successor: IID/OOD separation and global interaction audits
+
+The next cycle did not rescue Q1 with steps, seeds or width. An
+assignment-specific split was constructed only inside the original training
+partition. It assigns `174/90/42/52` carriers to IID fit, rare-fit,
+calibration and test, while preserving the original `43/53` validation/test
+carriers as untouched formula/prototype-disjoint OOD panels. Both IID panels
+have complete train support for their integer composition partitions; their
+target-free action-signature support is `0.8333/0.6731` and remains a reported
+secondary support axis. This split passes all frozen integrity checks and does
+not itself authorize training.
+
+The first expressivity audit enumerated the complete current-unary collision
+class for 452 of 454 carriers (`0.99559` coverage; the remaining two exceed the
+predeclared one-million-assignment bound). Exact pair-orbit counts with a
+carrier-specific orbit identity resolve `0.93656` of 331 unary collisions.
+That statistic is intentionally labelled an upper bound: it gives independent
+parameters to otherwise indistinguishable orbitals and cannot be shared across
+relabelled carriers. The admissible target-free descriptor aggregation resolves
+only `0.03927`, with mean target ceiling `0.35765`.
+
+A second audit retained exact orbitals as an unordered set and compared colored
+orbital statistics as a multiset within each target-free descriptor class. It
+also fails (`0.04230` resolved, mean ceiling `0.36468`). Thus the missing
+information is not repaired by a DeepSet over action-only orbitals. Both audits
+have zero relabel and target-orbit-containment failures.
+
+The subsequent data-interface audit explains the collapse. O1 serializes full
+site geometry only for the 158 cell-index-one carriers. All 296 cell-index
+two-to-four records expose action permutations over the expanded nodes but omit
+`expanded_parent_fractional`, `expanded_parent_lattice`, `supercell_hnf`, and
+the translation-coset ordering. Action-node alignment and primitive-lattice
+validity remain one. A target-free equivariant law cannot distinguish sites
+that the supplied carrier itself presents as identical. The next bounded task
+is therefore a versioned geometry-complete assignment-carrier derivative from
+the certified parent decomposition, not a larger assignment network or a
+higher-order coloring loss.

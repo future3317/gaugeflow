@@ -247,6 +247,36 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   the present unary scorer under this OOD contract; do not add steps,
   target-derived occupation fields, generated-C, `p(N)`, L1/M1, tensor work,
   relaxation, DFT or DFPT.
+- The assignment-specific IID split is now independently frozen without
+  consuming the OOD panels. It partitions only original-train materials into
+  `98/37/23/23` IID-fit/rare-fit/calibration/test materials
+  (`174/90/42/52` carriers); original validation/test remain untouched OOD
+  panels with `43/53` carriers. Composition-partition fit support is exactly
+  one in both IID panels, exact input-output duplicate overlap is zero, and
+  target-free action-signature fit support is `0.8333/0.6731`. IID and OOD
+  evidence must remain separately labelled.
+- Two zero-training global-coloring audits close the action-only pair route.
+  Exact carrier-specific pair-orbit IDs resolve `93.66%` of exactly enumerated
+  unary collisions, but they are only a mathematical upper bound: independent
+  orbit IDs are not a shared relabeling-invariant input. Aggregating the
+  target-free pair descriptors resolves only `3.93%`, and retaining exact
+  orbitals as a shared unordered DeepSet resolves only `4.23%`; their mean
+  target ceilings are `0.35765/0.36468`. Do not train either representation or
+  treat the carrier-specific upper bound as a production result.
+- The matched carrier-interface audit identifies the missing information. Only
+  `158/454 = 0.34802` carriers expose one species-free coordinate per action
+  node. All 296 carriers with cell index 2--4 omit the expanded parent
+  fractional coordinates, expanded lattice, certified HNF, and translation
+  coset ordering, although action-node alignment and the stored primitive
+  lattice are valid. Build a versioned geometry-complete assignment carrier
+  from the certified parent decomposition; never infer the missing nodes from
+  the target coloring or add a runtime fallback. Only after that data audit
+  passes may a geometry-aware zero-training occupation audit run. Assignment
+  training remains blocked.
+- Future successor probability/relabel metrics must cast frozen FP32 model
+  scores to FP64 before exact DP evaluation. This resolves the archived
+  `1.1444e-5` reduction-order residual without weakening its frozen threshold;
+  it does not alter the failed Q1 result.
 - The final substrate is one heterogeneous product-space reverse field over
   `(A,F,L)`, not three modules assembled after E1/L1/M1. The five J1 regimes are
   a finite task-path measure over `(t_A,t_F,t_L)`; their regime index is audit

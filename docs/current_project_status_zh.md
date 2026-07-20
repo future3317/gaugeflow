@@ -303,3 +303,18 @@ Q1 已失败。下一步不能直接进入 `p(N)`、L1 或 M1；必须先把 ass
 probability calibration 与 formula/prototype OOD 角色拆开，并对能区分全局
 symmetry-inequivalent coloring 的 occupation energy 做无泄漏资格审计，再决定是否冻结
 Q1 successor。任何 tensor、oracle、relaxation、DFT 或 DFPT 仍不得提前启动。
+
+上述两个前置问题现已完成审计，但尚不授权 Q1 successor 训练。新的 IID split 只在原
+train 内部拆分：IID fit/rare-fit/calibration/test 为 `174/90/42/52` 个 carriers，
+原 validation/test `43/53` 个 carriers 保持为 OOD stress panels。IID
+composition-partition support 均为 `1.0`，action-signature support
+`0.8333/0.6731` 作为单独分层。
+
+全局 interaction 的结论是否定性的。Carrier-specific exact pair-orbit ID 可分开
+`93.66%` 的 unary 冲突，但这是不能共享的上界。合法的 target-free descriptor
+aggregation 与 unordered orbital DeepSet 仅分别解决 `3.93%/4.23%`，不能训练。
+根因审计显示只有 `158/454` 个 carrier 含完整 action-node geometry；296 个非平凡
+supercell carrier 缺少 expanded coordinates/lattice、HNF 和 translation cosets。
+因此下一步已收缩为构建版本化 geometry-complete carrier；不得从 target coloring
+猜测缺失站点，不得加兼容 fallback。新 carrier 通过审计前，assignment、`p(N)`、
+L1/M1 与 tensor/物理路线全部继续阻塞。

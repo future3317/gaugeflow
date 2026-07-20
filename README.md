@@ -521,3 +521,25 @@ target and is never added to training.
   orbit-aligned accuracy 未通过；当前 unary scorer 已在 train 上饱和其实现 ceiling，
   同时 OOD split 的 composition partition 支持完全不重叠。不得直接进入 generated-C、
   `p(N)`、L1/M1、完整 blueprint、tensor、oracle 或物理验证。
+
+## Assignment 后继审计
+
+后继工作没有增加 Q1 的训练步数，而是拆开 calibration、representation 与 carrier
+数据接口。新的 assignment-specific IID split 只在原 train 内部划分：IID
+fit/rare-fit/calibration/test 分别有 `174/90/42/52` 个 carriers；原始
+validation/test 的 `43/53` 个 carriers 保留为独立 OOD panels。IID 两个评估面板的
+composition-partition fit support 均为 `1.0`，完全相同 input-output duplicate 的
+跨 split 数为零；target-free action-signature support `0.8333/0.6731` 单独报告。
+
+全局 coloring 审计严格枚举了 `452/454` 个 carrier 的完整 unary collision class。
+若为每个 exact pair orbit 赋予独立身份，二阶统计可解决 `93.66%` 的冲突；但该值只是
+carrier-specific 数学上界，任意 orbit ID 不能成为共享、重标号一致的模型输入。真正
+target-free 的聚合 pair descriptor 仅解决 `3.93%`，保留 orbit 为共享无序 DeepSet
+元素也只解决 `4.23%`，因此均不授权训练。
+
+matched carrier-interface Gate 进一步发现：只有 `158/454=0.34802` 个 carrier
+给 action 的每个节点提供 species-free 坐标。296 个 cell-index 2--4 的 carrier
+没有序列化 expanded parent coordinates/lattice、certified HNF 与 translation-coset
+ordering；action-node alignment 与 primitive lattice 则完全有效。下一步只允许从已认证
+parent decomposition 构建版本化、geometry-complete 的 assignment carrier，再做
+geometry-aware 零训练表示审计。Assignment 训练和全部下游 Gate 继续阻塞。
