@@ -149,10 +149,21 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   failures. This qualifies only `p(F|A,L,N)`, where `A` is the clean per-node
   element-token list, not composition counts alone. It is the conditional-coordinate
   substrate. Historical free joint H1a remains failed. Do not rerun retired
-  local/topology branches on the old mismatched task. The next gate must first
-  attribute element, lattice and interaction errors with independent modality
-  times; it must not silently choose either the old diagonal joint path or a
-  hard chain before that attribution.
+  local/topology branches on the old mismatched task.
+- J0 confirms that this qualified field materially uses both side modalities:
+  at coordinate time 0.5, controlled element and lattice corruption increase
+  score MSE by `5.335x` and `5.163x`, and both give `9.939x`. J1 therefore ran
+  one seed-5705, 2,111-step independent-clock attribution in the same backbone.
+  Its clean/noisy-element/noisy-lattice/diagonal/interior validation ratios are
+  `0.47273/0.51407/0.56107/0.57304/0.64015`; clean retention and diagonal
+  improvement both pass their frozen bounds. All three clock embeddings have
+  finite nonzero gradients. This supports a unified multimodal hybrid
+  diffusion but does not qualify free joint H1a.
+- J2 is authorized only as a separately frozen true/generated side-state error
+  budget after qualified element and lattice generators exist. The J1
+  coordinate-only checkpoint leaves those heads untrained and must not be used
+  to fabricate on-policy side states. Do not choose a hard chain, start free
+  joint training, or enter later Gates before this prerequisite is satisfied.
 
 Work remains inside H1a coordinate-generator diagnosis. H1b and H2--H6 are
 prohibited. Do not add seeds or steps to rescue completed protocols, revive

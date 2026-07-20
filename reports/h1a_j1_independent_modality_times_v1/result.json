@@ -1,0 +1,89 @@
+{
+  "acf_authorized": false,
+  "boundary": "J1 does not qualify free joint generation and does not authorize ACF, topology features, H1b-H6, tensor/oracle work, relaxation, DFT or DFPT.",
+  "checkpoint_sha256": "ffc521b0191a57b02f6797a205753d957af59570ca70354da6bfe0549cbd9864",
+  "checks": {
+    "clean_clean_retention": true,
+    "diagonal_improvement": true,
+    "finite_corner_losses": true,
+    "memory": true,
+    "modality_time_gradients": true,
+    "target_leakage_fields": true,
+    "tensor_bypass": true,
+    "throughput": true
+  },
+  "corner_results": {
+    "clean_clean": {
+      "bootstrap_ratio": {
+        "median": 0.47283709049224854,
+        "q025": 0.4355718344449997,
+        "q975": 0.5105674162507057
+      },
+      "final_coordinate_mse": 0.5281403660774231,
+      "initial_coordinate_mse": 1.1172248125076294,
+      "validation_ratio": 0.4727252423763275
+    },
+    "diagonal": {
+      "bootstrap_ratio": {
+        "median": 0.5724403560161591,
+        "q025": 0.5377340689301491,
+        "q975": 0.6073985770344734
+      },
+      "final_coordinate_mse": 0.6693437099456787,
+      "initial_coordinate_mse": 1.1680519580841064,
+      "validation_ratio": 0.5730427503585815
+    },
+    "interior": {
+      "bootstrap_ratio": {
+        "median": 0.6399579644203186,
+        "q025": 0.6006303817033768,
+        "q975": 0.6846254631876946
+      },
+      "final_coordinate_mse": 0.7519001960754395,
+      "initial_coordinate_mse": 1.1745742559432983,
+      "validation_ratio": 0.6401470303535461
+    },
+    "noisy_element": {
+      "bootstrap_ratio": {
+        "median": 0.513677716255188,
+        "q025": 0.47853452861309054,
+        "q975": 0.5507989302277565
+      },
+      "final_coordinate_mse": 0.5994518399238586,
+      "initial_coordinate_mse": 1.1660926342010498,
+      "validation_ratio": 0.5140687823295593
+    },
+    "noisy_lattice": {
+      "bootstrap_ratio": {
+        "median": 0.5613171458244324,
+        "q025": 0.5232166230678559,
+        "q975": 0.6030814290046692
+      },
+      "final_coordinate_mse": 0.6202759742736816,
+      "initial_coordinate_mse": 1.1055279970169067,
+      "validation_ratio": 0.5610676407814026
+    }
+  },
+  "decision": "pass",
+  "decision_text": "retain the unified multimodal hybrid-diffusion hypothesis and proceed only to a separately frozen J2 oracle/generated side-state error budget",
+  "historical_h1a_status_changed": false,
+  "j2_authorized": true,
+  "protocol": "h1a_j1_independent_modality_times_v1",
+  "protocol_sha256": "fc08a7c4c170ad8774fe5a86da9df79cb84d64b088fa6682009bd751d36e5e36",
+  "qualified": true,
+  "seed": 5705,
+  "tensor_work_authorized": false,
+  "training": {
+    "clip_fraction": 0.9739459971577451,
+    "final_loss": 0.6070297956466675,
+    "final_modality_time_gradient_norms": {
+      "coordinate": 0.03839260712265968,
+      "element": 0.017594503238797188,
+      "fusion": 0.03533973917365074,
+      "lattice": 0.030015502125024796
+    },
+    "graphs_per_second": 247.65268941434925,
+    "peak_cuda_memory_mib": 4714.07421875
+  },
+  "validation_indices_sha256": "127f42a8a10c424ea7a93c1f9a38c7e4a4b9b01c7cd2f056aacf6bf691a31d8a"
+}

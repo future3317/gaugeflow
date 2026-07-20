@@ -748,5 +748,32 @@ and lattice. It does not change the historical free-joint H1a result. It also
 changes how earlier representation ablations may be interpreted: they remain
 valid for their archived mismatched task, but cannot by themselves establish a
 representation limit under the repaired contract. Retired branches are not
-restored. The next scientific object is a separately specified de-novo
-probability factorization, not another topology feature or extra exposure.
+restored.
+
+### J0 side-information sensitivity and J1 independent clocks
+
+J0 uses the qualified one-pass EMA checkpoint with fixed validation structures
+and coordinate noise. At `t_F=.5`, controlled element corruption increases
+coordinate score MSE by `5.33520x`, lattice corruption by `5.16257x`, and both
+by `9.93850x`. Per-node permutation changes `35.855%` of tokens, the shuffled
+lattice control retains graph coverage, and all tensor-candidate counts remain
+zero. The coordinate field therefore uses both observed side modalities.
+
+J1 is committed separately at `c4a4201a746969ff87dcbdf7d115a267d18946de`.
+It adds independent Fourier clocks `(t_F,t_A,t_L)` and one linear fusion before
+the unchanged per-block time FiLM. The coordinate probability path, target,
+loss, optimizer, EMA and dynamic Cartesian backbone are unchanged. Each
+64-graph batch has exact regime counts `13/13/13/13/12` for clean-clean,
+noisy-element, noisy-lattice, diagonal and independent interior states.
+
+The seed-5705, 2,111-step run passes both frozen scientific bounds. Held-out
+final/initial ratios are `0.47273`, `0.51407`, `0.56107`, `0.57304`, and
+`0.64015` in the five regimes. Clean-clean is below `0.518513`; diagonal is
+below `0.664533`. All clock/fusion gradients are positive and finite,
+throughput is `247.65 graphs/s`, peak allocation is `4714 MiB`, and the tensor
+atlas is bypassed. The result supports unified multimodal diffusion and rejects
+an immediate hard-chain decision, but it does not qualify free joint H1a.
+
+J2 requires qualified element and lattice generators to cross true/generated
+side states. J1 is coordinate-only, so those heads are untrained; no J2 state,
+joint sample, tensor result, relaxation, DFT or DFPT is fabricated from it.

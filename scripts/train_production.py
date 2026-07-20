@@ -409,7 +409,9 @@ def main() -> None:
                     "interior",
                 )
                 record["coordinate_loss_by_modality_regime"] = {
-                    name: float(output.graph_coordinate_loss[output.noisy.modality_regime == index].mean().cpu())
+                    name: float(
+                        (output.graph_coordinate_loss[output.noisy.modality_regime == index].mean() / 3.0).cpu()
+                    )
                     for index, name in enumerate(regime_names)
                 }
             with log_path.open("a", encoding="utf-8") as stream:

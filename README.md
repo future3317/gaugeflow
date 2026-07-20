@@ -323,10 +323,24 @@ validation ratio 为 `0.33219`，相对 0.25-pass screen 再改善 `0.16163`；
 explained fraction 为 `0.63509`；从 `t=.1/.2` 开始的 reverse-SDE-100 rollout
 RMS 为 `0.05123/0.07039 A`，零失败。训练吞吐 `267.57 graphs/s`，PyTorch 峰值
 显存 `4917.15 MiB`。这正式资格化了“已知元素与晶格时的条件坐标生成基座”，但不
-改写自由联合 H1a 的失败。下一方法问题是用独立的元素、晶格和坐标噪声时间归因
-cross-modal 条件方差与 on-policy side-state shift，而不是立即选定链式分解或继续给
-坐标主干堆 topology/local/global 特征。结果、归因报告与图位于
+改写自由联合 H1a 的失败。结果、归因报告与图位于
 `reports/h1a_coordinate_clean_side_information_one_pass_v1/`。
+
+随后 J0 在同一 checkpoint 上做零训练 side-information sensitivity：`t_F=.5` 时，
+受控元素腐化使 coordinate-score MSE 增加 `5.335x`，晶格腐化增加 `5.163x`，两者
+同时腐化增加 `9.939x`。因此模型确实使用 chemistry/lattice，而不是因为 clean-side
+任务简单就忽略条件。
+
+J1 在同一 Cartesian backbone 中加入显式 `(t_F,t_A,t_L)` Fourier 时钟；64 图批次
+固定覆盖 `13/13/13/13/12` 个 clean-clean、noisy-element、noisy-lattice、diagonal
+和 independent-interior 状态。seed 5705、2,111-step 冻结实验通过：各角点 validation
+ratio 为 `0.47273/0.51407/0.56107/0.57304/0.64015`。clean-clean 通过 `0.51851`
+保留阈值，diagonal 通过 `0.66453` 改善阈值；全部时钟梯度非零，吞吐
+`247.65 graphs/s`，峰值显存 `4714 MiB`。这支持统一 multimodal hybrid diffusion，
+但还不是自由 joint generation 资格。下一步只能在合格 element/lattice generator
+存在后建立 J2 true/generated side-state error budget；当前 coordinate-only checkpoint
+的两个上游 head 未训练，不能拿来伪造 J2。完整报告和图位于
+`reports/h1a_j1_independent_modality_times_v1/`。
 
 ## 训练图与采样加速设计
 
