@@ -1,6 +1,7 @@
 import torch
 
 from gaugeflow.production.matpes_data import (
+    collate_matpes_records,
     matpes_iid_split,
     matpes_stress_kbar_to_kelvin_gpa,
     parse_matpes_row,
@@ -162,3 +163,35 @@ def test_functional_normalization_preserves_force_and_stress_covariance() -> Non
         rotation @ kelvin_to_symmetric_cartesian(normalized.stress_kelvin) @ rotation.T,
         atol=1e-6,
     )
+
+
+def test_matpes_collation_packs_graphs_and_masks_without_ids() -> None:
+    base = {
+        "matpes_id": "pbe-id",
+        "functional": "PBE",
+        "nsites": 1,
+        "structure": {
+            "lattice": {"matrix": [[3.0, 0.0, 0.0], [0.0, 3.0, 0.0], [0.0, 0.0, 3.0]]},
+            "sites": [{"species": [{"element": "Si", "occu": 1.0}], "abc": [0.0, 0.0, 0.0]}],
+        },
+        "energy": -4.0,
+        "forces": [[0.1, 0.2, 0.3]],
+        "stress": None,
+    }
+    second = dict(base)
+    second.update(matpes_id="r2scan-id", functional="r2SCAN", energy=None)
+    records = [parse_matpes_row(base), parse_matpes_row(second)]
+    packed = collate_matpes_records(
+        records,
+        functional_vocabulary={"PBE": 0, "r2SCAN": 1},
+        teacher_dim=4,
+    )
+    assert packed.element_tokens.shape == (2,)
+    assert packed.fractional_coordinates.shape == (2, 3)
+    assert packed.lattice.shape == (2, 3, 3)
+    assert packed.batch.tolist() == [0, 1]
+    assert packed.functional_index.tolist() == [0, 1]
+    assert packed.targets.energy_mask.tolist() == [True, False]
+    assert packed.targets.force_mask.tolist() == [True, True]
+    assert packed.targets.stress_mask.tolist() == [False, False]
+    assert packed.targets.teacher_features.shape == (2, 4)

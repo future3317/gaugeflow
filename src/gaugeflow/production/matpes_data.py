@@ -11,7 +11,7 @@ from pymatgen.core import Element
 
 from gaugeflow.vocabulary import atomic_numbers_to_tokens
 
-from .physical_pretraining import symmetric_cartesian_to_kelvin
+from .physical_pretraining import PhysicalTargets, symmetric_cartesian_to_kelvin
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,38 @@ class MatPESPhysicalRecord:
     energy_present: bool
     forces_present: bool
     stress_present: bool
+
+
+@dataclass(frozen=True)
+class MatPESPhysicalBatch:
+    """Packed model inputs and explicitly masked physical targets."""
+
+    element_tokens: torch.Tensor
+    fractional_coordinates: torch.Tensor
+    lattice: torch.Tensor
+    batch: torch.Tensor
+    functional_index: torch.Tensor
+    targets: PhysicalTargets
+
+    def to(self, device: torch.device | str) -> MatPESPhysicalBatch:
+        target = self.targets
+        return MatPESPhysicalBatch(
+            element_tokens=self.element_tokens.to(device),
+            fractional_coordinates=self.fractional_coordinates.to(device),
+            lattice=self.lattice.to(device),
+            batch=self.batch.to(device),
+            functional_index=self.functional_index.to(device),
+            targets=PhysicalTargets(
+                energy_per_atom=target.energy_per_atom.to(device),
+                forces=target.forces.to(device),
+                stress_kelvin=target.stress_kelvin.to(device),
+                teacher_features=target.teacher_features.to(device),
+                energy_mask=target.energy_mask.to(device),
+                force_mask=target.force_mask.to(device),
+                stress_mask=target.stress_mask.to(device),
+                teacher_mask=target.teacher_mask.to(device),
+            ),
+        )
 
 
 MatPESEnergyTarget = Literal[
@@ -169,4 +201,48 @@ def parse_matpes_row(
         energy_present=energy_present,
         forces_present=forces_present,
         stress_present=stress_present,
+    )
+
+
+def collate_matpes_records(
+    records: Sequence[MatPESPhysicalRecord],
+    *,
+    functional_vocabulary: Mapping[str, int],
+    teacher_dim: int,
+) -> MatPESPhysicalBatch:
+    """Pack variable-size records without exposing material identifiers to the model."""
+
+    if not records:
+        raise ValueError("cannot collate an empty MatPES batch")
+    if teacher_dim < 1:
+        raise ValueError("teacher feature dimension must be positive")
+    if not functional_vocabulary or min(functional_vocabulary.values()) < 0:
+        raise ValueError("functional vocabulary must contain nonnegative indices")
+    if len(set(functional_vocabulary.values())) != len(functional_vocabulary):
+        raise ValueError("functional vocabulary indices must be unique")
+    counts = torch.tensor([record.element_tokens.numel() for record in records], dtype=torch.long)
+    functional: list[int] = []
+    for record in records:
+        if record.functional not in functional_vocabulary:
+            raise ValueError(f"unregistered MatPES functional {record.functional!r}")
+        functional.append(functional_vocabulary[record.functional])
+    graph_count = len(records)
+    return MatPESPhysicalBatch(
+        element_tokens=torch.cat([record.element_tokens for record in records]),
+        fractional_coordinates=torch.cat([record.fractional_coordinates for record in records]),
+        lattice=torch.stack([record.lattice for record in records]),
+        batch=torch.repeat_interleave(torch.arange(graph_count), counts),
+        functional_index=torch.tensor(functional, dtype=torch.long),
+        targets=PhysicalTargets(
+            energy_per_atom=torch.stack([record.energy_per_atom_ev for record in records]),
+            forces=torch.cat([record.forces_ev_per_angstrom for record in records]),
+            stress_kelvin=torch.stack([record.stress_kelvin_gpa for record in records]),
+            teacher_features=torch.zeros(graph_count, teacher_dim),
+            energy_mask=torch.tensor([record.energy_present for record in records]),
+            force_mask=torch.repeat_interleave(
+                torch.tensor([record.forces_present for record in records]), counts
+            ),
+            stress_mask=torch.tensor([record.stress_present for record in records]),
+            teacher_mask=torch.zeros(graph_count, dtype=torch.bool),
+        ),
     )
