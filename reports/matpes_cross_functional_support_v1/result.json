@@ -5,12 +5,28 @@
     "PBE": {
       "rows": 389870,
       "unique_matpes_ids": 389870,
-      "rows_nle20": 348450
+      "rows_nle20": 348450,
+      "nle20_label_counts": {
+        "cohesive_energy_per_atom": 348450,
+        "formation_energy_per_atom": 67832,
+        "total_energy": 348450,
+        "forces": 348450,
+        "stress": 348450,
+        "nonfinite_scalar_labels": 0
+      }
     },
     "r2SCAN": {
       "rows": 347889,
       "unique_matpes_ids": 347889,
-      "rows_nle20": 326437
+      "rows_nle20": 326437,
+      "nle20_label_counts": {
+        "cohesive_energy_per_atom": 326437,
+        "formation_energy_per_atom": 66645,
+        "total_energy": 326437,
+        "forces": 326437,
+        "stress": 326437,
+        "nonfinite_scalar_labels": 0
+      }
     }
   },
   "cross_functional": {
@@ -24,7 +40,9 @@
     "random_row_split_allowed": false,
     "reason": "The same material identifier occurs under both functionals, so row-wise splitting would leak structural identity across train and evaluation.",
     "initial_gaugeflow_base_domain": "N<=20",
-    "larger_cells": "Retained in raw data but excluded from the first GaugeFlow-base physical-pretraining cache."
+    "larger_cells": "Retained in raw data but excluded from the first GaugeFlow-base physical-pretraining cache.",
+    "common_energy_target": "cohesive_energy_per_atom",
+    "energy_target_reason": "Cohesive energy is present for every eligible PBE and r2SCAN row and differs from total energy only by composition-dependent elemental references; formation energy is present for only a minority of rows and is not silently substituted."
   },
   "qualified": true
 }
