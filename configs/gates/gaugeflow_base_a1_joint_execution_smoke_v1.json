@@ -15,11 +15,12 @@
       "reason": "The replacement is the unchanged Git blob/Linux LF result used by the CUDA runner; parsed JSON evidence is identical."
     },
     "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
-    "trainer_sha256": "bf7d11d394ca6c6004cad1a50657fe4317d37bb00a70ca35fe7a79bce3579d02",
+    "trainer_sha256": "772c4caa6c0eca42cb9be2d79cc1139157b363ee0c526f4641559e27d2d49f8f",
     "trainer_hash_erratum": {
       "superseded_windows_crlf_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
       "preflight_linux_sha256": "47cb99ddb88592afca3da08a00e98f045d87aed7d1450bc704d7a2dd21d47a48",
-      "reason": "Preflight first rejected the Windows CRLF identity, then exposed an interface-check defect that rejected diagonal shared-time training in the explicit three-clock backbone. No output was created. The frozen implementation now requires separate clocks for joint training while permitting t_A=t_F=t_L."
+      "pre_determinism_sha256": "bf7d11d394ca6c6004cad1a50657fe4317d37bb00a70ca35fe7a79bce3579d02",
+      "reason": "Preflight first rejected the Windows CRLF identity, then exposed an interface-check defect that rejected diagonal shared-time training in the explicit three-clock backbone. The initial CUDA repeat also showed nondeterministic backward reductions before any resume. The frozen implementation requires separate clocks for joint training, permits t_A=t_F=t_L, and enables deterministic CUDA algorithms for an identifiable exact-resume Gate."
     },
     "tensor_condition_enabled": false
   },
