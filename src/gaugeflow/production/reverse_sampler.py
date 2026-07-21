@@ -793,6 +793,10 @@ class TensorFreeReverseSampler:
         if steps < 1:
             raise ValueError("reverse sampler requires at least one step")
         continuous_mode = _validate_continuous_mode(continuous_mode)
+        if self.denoiser.modality_time_conditioning != "separate":
+            raise ValueError(
+                "product-space joint sampling requires separate modality clocks for partial occupation"
+            )
         device = blueprint.batch.device
         dtype = blueprint.shape_projector.dtype
         graphs = blueprint.node_counts.numel()

@@ -143,6 +143,17 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     )
 
 
+def _small_product_model() -> HybridCrystalDenoiser:
+    return HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+
+
 def _small_composition_model() -> StoichiometryFirstCompositionModel:
     catalogue = IntegerPartitionCatalogue.build(maximum_atoms=20, maximum_species=7)
     log_prior = torch.full((catalogue.size,), -torch.inf, dtype=torch.float64)
@@ -968,7 +979,7 @@ def test_production_trainer_updates_ema_and_all_heads():
 
 def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     torch.manual_seed(104)
-    model = _small_model()
+    model = _small_product_model()
     blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
     sampler = TensorFreeReverseSampler(
         model,
@@ -991,6 +1002,11 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     assert generated.lattice.shape == (2, 3, 3)
     assert torch.isfinite(generated.lattice).all()
     assert generated.diagnostics.masked_count[-1] == 0
+    observed_counts = torch.bincount(
+        blueprint.batch * 118 + generated.element_tokens,
+        minlength=2 * 118,
+    ).reshape(2, 118)
+    assert torch.equal(observed_counts, generated.composition_counts)
     for graph in range(2):
         assert torch.allclose(
             generated.log_shape[graph].dot(torch.tensor([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])),
@@ -1157,7 +1173,7 @@ def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
     torch.manual_seed(107)
     blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
     sampler = TensorFreeReverseSampler(
-        _small_model(),
+        _small_product_model(),
         _standardizer(),
         maximum_time=0.8,
         categorical_path="orderless_reveal",
@@ -1185,7 +1201,7 @@ def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
 
 
 def test_reverse_sampler_keeps_universal_cover_until_terminal_decode():
-    model = _small_model()
+    model = _small_product_model()
     seen_coordinates: list[torch.Tensor] = []
 
     def record_coordinates(_module, inputs):
