@@ -10,7 +10,7 @@
     "additional_qualification_results": {
       "h1a_node_count_gate_v1": "f8ee00072bd8077a2b98936856a14183a6f961e5e82eb3d998c3b4f0c4eb23a2"
     },
-    "lattice_standardization_sha256": "c792ccfeabfe0202264f0be7131471b24baae606661b60dc19c8da98be5d1905",
+    "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
     "tensor_condition_enabled": false
   },
   "mechanism": {

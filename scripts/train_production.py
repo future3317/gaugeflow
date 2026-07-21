@@ -229,10 +229,10 @@ def main() -> None:
         report_result = Path("reports") / report_name / "result.json"
         if sha256_file(report_result) != expected_digest:
             raise ValueError(f"additional qualification mismatch: {report_name}")
-    expected_standardization_hash = prerequisites.get("lattice_standardization_sha256")
-    if expected_standardization_hash is not None and sha256_file(args.lattice_standardization) != str(
-        expected_standardization_hash
-    ):
+    expected_standardization_hash = prerequisites.get("lattice_standardization_canonical_sha256")
+    if expected_standardization_hash is not None and canonical_json_hash(
+        load_json_object(args.lattice_standardization)
+    ) != str(expected_standardization_hash):
         raise ValueError("lattice-standardization artifact hash mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
     if objective in {"coordinate", "lattice"}:
