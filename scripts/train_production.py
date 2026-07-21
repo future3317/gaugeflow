@@ -192,6 +192,8 @@ def main() -> None:
         raise ValueError("coordinate training must explicitly declare its observed-side-information contract")
     if objective == "element" and training_spec.get("modality_time_mode") != "element_only":
         raise ValueError("element training must explicitly declare the element-only time contract")
+    if objective == "lattice" and training_spec.get("modality_time_mode") != "lattice_only":
+        raise ValueError("lattice training must explicitly declare the lattice-only time contract")
     log_every = int(training_spec["log_every"])
     num_workers = int(training_spec["num_workers"])
     checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
@@ -270,15 +272,9 @@ def main() -> None:
             "edge_dim": int(model_spec["edge_dim"]),
             "angular_channels": int(model_spec["angular_channels"]),
             "edge_refresh_rank": int(model_spec["edge_refresh_rank"]),
-            "independent_modality_times": bool(
-                model_spec.get("independent_modality_times", False)
-            ),
+            "independent_modality_times": bool(model_spec.get("independent_modality_times", False)),
             **(
-                {
-                    "modality_time_conditioning": str(
-                        model_spec["modality_time_conditioning"]
-                    )
-                }
+                {"modality_time_conditioning": str(model_spec["modality_time_conditioning"])}
                 if "modality_time_conditioning" in model_spec
                 else {}
             ),
@@ -312,12 +308,15 @@ def main() -> None:
     uses_explicit_modality_times = training_config.modality_time_mode in {
         "independent_corner_mixture",
         "element_only",
+        "lattice_only",
     }
     matched_modes = {"matched_single", "side_mean", "separate"}
     if uses_explicit_modality_times != (model.modality_time_conditioning in matched_modes):
         raise ValueError("model and training modality-time contracts do not match")
     if training_config.modality_time_mode == "element_only" and model.modality_time_conditioning != "separate":
         raise ValueError("element-only qualification requires the unified separate-clock backbone")
+    if training_config.modality_time_mode == "lattice_only" and model.modality_time_conditioning != "separate":
+        raise ValueError("lattice-only qualification requires the unified separate-clock backbone")
     diffusion = TensorFreeHybridDiffusion(
         model,
         lattice_standardizer,
@@ -382,14 +381,23 @@ def main() -> None:
         graph_count = int(batch_data.num_graphs)
         counts = torch.bincount(batch_data.batch, minlength=graph_count)
         blueprint = ParentBlueprintBatch.from_node_counts(counts, dtype=batch_data.frac_coords.dtype, device=device)
-        output, gradient_norm = trainer.train_step(
-            batch_data.atom_types,
-            batch_data.frac_coords,
-            batch_data.lattice,
-            batch_data.batch,
-            blueprint,
-            generator=device_generator,
-        )
+        if objective == "lattice":
+            output, gradient_norm = trainer.train_lattice_step(
+                batch_data.atom_types,
+                batch_data.lattice,
+                batch_data.batch,
+                blueprint,
+                generator=device_generator,
+            )
+        else:
+            output, gradient_norm = trainer.train_step(
+                batch_data.atom_types,
+                batch_data.frac_coords,
+                batch_data.lattice,
+                batch_data.batch,
+                blueprint,
+                generator=device_generator,
+            )
         clipped_steps = clipped_steps + (gradient_norm > training_config.gradient_clip_norm)
         throughput_graphs += graph_count
         graphs_seen_this_invocation += graph_count
@@ -397,21 +405,13 @@ def main() -> None:
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             elapsed = time.perf_counter() - throughput_start
-            record = {
+            record: dict[str, object] = {
                 "step": trainer.step,
-                "loss": float(
-                    trainer.optimization_loss(output).detach().cpu()
-                ),
-                "element_loss": float(output.element_loss.detach().cpu()),
-                "composition_loss": float(output.composition_loss.detach().cpu()),
-                "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
+                "loss": float(trainer.optimization_loss(output).detach().cpu()),
                 "volume_loss": float(output.volume_loss.detach().cpu()),
                 "shape_loss": float(output.shape_loss.detach().cpu()),
-                "masked_fraction": float(output.masked_fraction.detach().cpu()),
                 "gradient_norm": float(gradient_norm.cpu()),
-                "post_clip_gradient_norm": min(
-                    float(gradient_norm.cpu()), training_config.gradient_clip_norm
-                ),
+                "post_clip_gradient_norm": min(float(gradient_norm.cpu()), training_config.gradient_clip_norm),
                 "clip_fraction": float(clipped_steps.cpu()) / trainer.step,
                 "clipped_module_gradient_norms": _clipped_module_gradient_norms(model),
                 "modality_time_gradient_norms": _time_embedding_gradient_norms(model),
@@ -421,7 +421,16 @@ def main() -> None:
                     float(torch.cuda.max_memory_allocated(device)) / (1024.0**2) if device.type == "cuda" else 0.0
                 ),
             }
-            if output.noisy.modality_regime is not None:
+            if objective != "lattice":
+                record.update(
+                    {
+                        "element_loss": float(output.element_loss.detach().cpu()),
+                        "composition_loss": float(output.composition_loss.detach().cpu()),
+                        "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
+                        "masked_fraction": float(output.masked_fraction.detach().cpu()),
+                    }
+                )
+            if objective != "lattice" and output.noisy.modality_regime is not None:
                 regime_names = (
                     "clean_clean",
                     "noisy_element",

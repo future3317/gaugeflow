@@ -11,7 +11,11 @@ from torch_geometric.utils import scatter
 
 from .categorical_mask import AbsorbingMaskDiffusion, MaskedCategoricalState
 from .categorical_uniform import UniformCategoricalDiffusion
-from .equivariant_denoiser import HybridCrystalDenoiser, HybridDenoiserOutput
+from .equivariant_denoiser import (
+    HybridCrystalDenoiser,
+    HybridDenoiserOutput,
+    LatticeDenoiserOutput,
+)
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 from .modality_task_measure import FiveRegimeTaskMeasure, ModalityNoiseTimes
@@ -56,6 +60,25 @@ class HybridLossOutput:
     masked_fraction: torch.Tensor
     noisy: TensorFreeNoisyBatch
     prediction: HybridDenoiserOutput
+
+
+@dataclass(frozen=True)
+class LatticeNoisyBatch:
+    element_tokens: torch.Tensor
+    log_volume: torch.Tensor
+    log_shape: torch.Tensor
+    lattice_time: torch.Tensor
+    clean_volume_latent_target: torch.Tensor
+    clean_shape_latent_target: torch.Tensor
+
+
+@dataclass(frozen=True)
+class LatticeLossOutput:
+    loss: torch.Tensor
+    volume_loss: torch.Tensor
+    shape_loss: torch.Tensor
+    noisy: LatticeNoisyBatch
+    prediction: LatticeDenoiserOutput
 
 
 class TensorFreeHybridDiffusion(nn.Module):
@@ -130,10 +153,138 @@ class TensorFreeHybridDiffusion(nn.Module):
 
         return self.task_measure.sample(
             graph_count,
-            lambda count: self.sample_time(
-                count, reference, generator=generator
-            ),
+            lambda count: self.sample_time(count, reference, generator=generator),
             generator=generator,
+        )
+
+    def _encode_clean_lattice(
+        self,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        shape_projector: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Encode the clean volume/shape endpoint once for all objectives."""
+
+        graphs = shape_projector.shape[0]
+        if clean_lattice.shape != (graphs, 3, 3):
+            raise ValueError("clean lattice must provide one [3,3] matrix per graph")
+        if fractional_to_cartesian.shape != (graphs, 3, 3):
+            raise ValueError("fractional-to-Cartesian chart does not match graph count")
+        node_counts = torch.bincount(batch, minlength=graphs)
+        lattice_state = LatticeVolumeShape.from_lattice(
+            clean_lattice,
+            fractional_to_cartesian,
+        )
+        clean_shape = project_lattice_state(lattice_state.log_shape, shape_projector)
+        clean_volume_latent = self.lattice_standardizer.encode_volume(
+            lattice_state.log_volume,
+            node_counts,
+        )
+        clean_shape_latent = self.lattice_standardizer.encode_shape(clean_shape)
+        return node_counts, clean_volume_latent, clean_shape_latent, clean_shape
+
+    def noise_lattice_batch(
+        self,
+        clean_elements: torch.Tensor,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        shape_projector: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
+        *,
+        lattice_time: torch.Tensor | None = None,
+        generator: torch.Generator | None = None,
+    ) -> LatticeNoisyBatch:
+        """Construct only the coordinate-independent lattice probability path."""
+
+        if clean_elements.ndim != 1 or clean_elements.dtype != torch.long:
+            raise ValueError("clean elements must be rank-one int64 tokens")
+        if batch.shape != clean_elements.shape or batch.dtype != torch.long:
+            raise ValueError("batch must provide one graph index per node")
+        graphs = int(batch.max()) + 1 if batch.numel() else 0
+        if graphs < 1 or shape_projector.shape != (graphs, 6, 6):
+            raise ValueError("shape projector does not match a nonempty lattice batch")
+        selected_time = lattice_time
+        if selected_time is None:
+            selected_time = self.sample_time(graphs, clean_lattice, generator=generator)
+        if selected_time.shape != (graphs,):
+            raise ValueError("lattice time must provide one scalar per graph")
+        node_counts, clean_volume_latent, clean_shape_latent, _ = self._encode_clean_lattice(
+            clean_lattice,
+            batch,
+            shape_projector,
+            fractional_to_cartesian,
+        )
+        alpha = self.vp_schedule.alpha(selected_time)
+        sigma = self.vp_schedule.sigma(selected_time)
+        volume_noise = standard_normal(
+            clean_volume_latent.shape,
+            clean_volume_latent,
+            generator,
+        )
+        shape_noise = standard_normal(
+            clean_shape_latent.shape,
+            clean_shape_latent,
+            generator,
+        )
+        noisy_volume_latent = alpha * clean_volume_latent + sigma * volume_noise
+        noisy_shape_latent = alpha.unsqueeze(-1) * clean_shape_latent + sigma.unsqueeze(-1) * shape_noise
+        noisy_volume = self.lattice_standardizer.decode_volume(
+            noisy_volume_latent,
+            node_counts,
+        )
+        noisy_shape = project_lattice_state(
+            self.lattice_standardizer.decode_shape(noisy_shape_latent),
+            shape_projector,
+        )
+        return LatticeNoisyBatch(
+            element_tokens=clean_elements,
+            log_volume=noisy_volume,
+            log_shape=noisy_shape,
+            lattice_time=selected_time,
+            clean_volume_latent_target=clean_volume_latent,
+            clean_shape_latent_target=clean_shape_latent,
+        )
+
+    def forward_lattice(
+        self,
+        clean_elements: torch.Tensor,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        shape_projector: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
+        *,
+        lattice_time: torch.Tensor | None = None,
+        generator: torch.Generator | None = None,
+    ) -> LatticeLossOutput:
+        """Evaluate the lattice-only denoising objective without a graph."""
+
+        with torch.autocast(device_type=clean_lattice.device.type, enabled=False):
+            noisy = self.noise_lattice_batch(
+                clean_elements,
+                clean_lattice,
+                batch,
+                shape_projector,
+                fractional_to_cartesian,
+                lattice_time=lattice_time,
+                generator=generator,
+            )
+        prediction = self.denoiser.forward_lattice(
+            noisy.element_tokens,
+            noisy.log_volume,
+            noisy.log_shape,
+            batch,
+            noisy.lattice_time,
+            shape_projector,
+        )
+        volume_loss = (prediction.clean_volume_latent - noisy.clean_volume_latent_target).square().mean()
+        shape_loss = (prediction.clean_shape_latent - noisy.clean_shape_latent_target).square().mean()
+        return LatticeLossOutput(
+            loss=volume_loss + shape_loss,
+            volume_loss=volume_loss,
+            shape_loss=shape_loss,
+            noisy=noisy,
+            prediction=prediction,
         )
 
     def noise_clean_batch(
@@ -175,29 +326,29 @@ class TensorFreeHybridDiffusion(nn.Module):
         selected_element_time = (
             torch.zeros_like(selected_time)
             if clean_side_information
-            else selected_time if element_time is None else element_time
+            else selected_time
+            if element_time is None
+            else element_time
         )
         selected_lattice_time = (
             torch.zeros_like(selected_time)
             if clean_side_information
-            else selected_time if lattice_time is None else lattice_time
+            else selected_time
+            if lattice_time is None
+            else lattice_time
         )
-        if (
-            selected_element_time.shape != (graphs,)
-            or selected_lattice_time.shape != (graphs,)
-        ):
+        if selected_element_time.shape != (graphs,) or selected_lattice_time.shape != (graphs,):
             raise ValueError("side-modality times must provide one scalar per graph")
-        if modality_regime is not None and (
-            modality_regime.shape != (graphs,) or modality_regime.dtype != torch.long
-        ):
+        if modality_regime is not None and (modality_regime.shape != (graphs,) or modality_regime.dtype != torch.long):
             raise ValueError("modality regime must be an int64 graph vector")
 
         clean_coordinates = project_translation_state(clean_fractional_coordinates, batch, graphs)
-        lattice_state = LatticeVolumeShape.from_lattice(clean_lattice, fractional_to_cartesian)
-        clean_shape = project_lattice_state(lattice_state.log_shape, shape_projector)
-        node_counts = torch.bincount(batch, minlength=graphs)
-        clean_volume_latent = self.lattice_standardizer.encode_volume(lattice_state.log_volume, node_counts)
-        clean_shape_latent = self.lattice_standardizer.encode_shape(clean_shape)
+        node_counts, clean_volume_latent, clean_shape_latent, _ = self._encode_clean_lattice(
+            clean_lattice,
+            batch,
+            shape_projector,
+            fractional_to_cartesian,
+        )
 
         if clean_side_information:
             # This is observed side information, not the t=0 endpoint of the
@@ -356,9 +507,7 @@ class TensorFreeHybridDiffusion(nn.Module):
         node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
         mask = noisy.element_was_masked.to(node_cross_entropy)
         element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
-        predicted_composition = torch.softmax(
-            prediction.clean_composition_logits.float(), dim=-1
-        )
+        predicted_composition = torch.softmax(prediction.clean_composition_logits.float(), dim=-1)
         flat_target = batch * self.categorical.element_count + clean_elements
         target_counts = torch.bincount(
             flat_target,
@@ -369,10 +518,7 @@ class TensorFreeHybridDiffusion(nn.Module):
             dim=-1,
             keepdim=True,
         )
-        composition_loss = -(
-            target_composition
-            * predicted_composition.clamp_min(1.0e-8).log()
-        ).sum(dim=-1).mean()
+        composition_loss = -(target_composition * predicted_composition.clamp_min(1.0e-8).log()).sum(dim=-1).mean()
 
         # The analytic score components become a reverse-drift tangent under
         # the fractional Brownian mobility. With r=fL, its Cartesian target is

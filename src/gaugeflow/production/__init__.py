@@ -88,7 +88,7 @@ from .composition_state import (
     StoichiometryFirstCompositionModel,
     fit_integer_partition_log_prior,
 )
-from .equivariant_denoiser import HybridCrystalDenoiser
+from .equivariant_denoiser import HybridCrystalDenoiser, LatticeDenoiserOutput
 from .generation_law import (
     CarrierSelectionSample,
     CrystalGenerationState,
@@ -96,7 +96,7 @@ from .generation_law import (
     ParentDeltaNodeCountLaw,
     SupportedCarrierSelectionLaw,
 )
-from .hybrid_diffusion import TensorFreeHybridDiffusion
+from .hybrid_diffusion import LatticeLossOutput, LatticeNoisyBatch, TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
     LatticeVolumeShape,
     PointGroupMetricChart,
@@ -109,6 +109,9 @@ from .reverse_sampler import (
     ElementReverseDiagnostics,
     GeneratedElementBatch,
     GeneratedHybridBatch,
+    GeneratedLatticeBatch,
+    LatticeReverseDiagnostics,
+    LatticeReverseInitialState,
     SamplingFailure,
     TensorFreeReverseSampler,
     reverse_time_grid,
@@ -189,7 +192,13 @@ __all__ = [
     "ElementReverseDiagnostics",
     "GeneratedElementBatch",
     "GeneratedHybridBatch",
+    "GeneratedLatticeBatch",
     "HybridCrystalDenoiser",
+    "LatticeDenoiserOutput",
+    "LatticeLossOutput",
+    "LatticeNoisyBatch",
+    "LatticeReverseDiagnostics",
+    "LatticeReverseInitialState",
     "HierarchicalSample",
     "IntegerPartitionCatalogue",
     "FactorizedGenerationLogProbability",

@@ -15,7 +15,7 @@ from .categorical_uniform import UniformCategoricalDiffusion
 from .composition_assignment import composition_counts_from_tokens, count_projected_assignment
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .lattice_standardization import P1LatticeStandardizer
-from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape
+from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape, project_lattice_state
 from .schedules import CosineNoiseSchedule, ExponentialTorusNoiseSchedule, standard_normal
 from .state_projection import project_hybrid_reverse_state, project_translation_state
 
@@ -50,12 +50,8 @@ def reverse_time_grid(
     if spacing == "uniform_time":
         return torch.linspace(maximum_time, 0.0, steps + 1, dtype=dtype, device=device)
     if spacing == "uniform_log_alpha":
-        initial_alpha = schedule.alpha(
-            torch.tensor(maximum_time, dtype=dtype, device=device)
-        )
-        alpha = torch.exp(
-            torch.linspace(initial_alpha.log(), 0.0, steps + 1, dtype=dtype, device=device)
-        )
+        initial_alpha = schedule.alpha(torch.tensor(maximum_time, dtype=dtype, device=device))
+        alpha = torch.exp(torch.linspace(initial_alpha.log(), 0.0, steps + 1, dtype=dtype, device=device))
         return (2.0 / torch.pi) * torch.arccos(alpha.clamp(-1.0, 1.0))
     raise ValueError("reverse time spacing must be 'uniform_time' or 'uniform_log_alpha'")
 
@@ -89,16 +85,11 @@ def quotient_coordinate_reverse_step(
     variance_drop = variance_from - variance_to
     if bool((variance_drop < 0.0).any()) or bool((variance_to < 0.0).any()):
         raise ValueError("coordinate reverse step requires decreasing nonnegative variance")
-    score = (
-        scaled_score
-        / variance_from[batch].sqrt().clamp_min(1.0e-8).unsqueeze(-1)
-    )
+    score = scaled_score / variance_from[batch].sqrt().clamp_min(1.0e-8).unsqueeze(-1)
     drift_multiplier = 1.0 if mode == "reverse_sde" else 0.5
     updated = coordinates + drift_multiplier * variance_drop[batch].unsqueeze(-1) * score
     if mode == "reverse_sde" and bool((variance_to > 0.0).any()):
-        bridge_variance = (
-            variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
-        )
+        bridge_variance = variance_to * variance_drop / variance_from.clamp_min(1.0e-12)
         if standard_noise is not None:
             if generator is not None:
                 raise ValueError("provide either a generator or prescribed coordinate noise")
@@ -139,9 +130,7 @@ def vp_reverse_step(
     sigma_from = schedule.sigma(time_from)
     sigma_to = schedule.sigma(time_to)
     if mode == "probability_flow":
-        predicted_noise = (state - alpha_from * clean_estimate) / sigma_from.clamp_min(
-            schedule.minimum_sigma
-        )
+        predicted_noise = (state - alpha_from * clean_estimate) / sigma_from.clamp_min(schedule.minimum_sigma)
         return alpha_to * clean_estimate + sigma_to * predicted_noise
 
     survival_from = alpha_from.square()
@@ -149,11 +138,7 @@ def vp_reverse_step(
     noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
     step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
     clean_coefficient = alpha_to * step_noise / noise_from
-    state_coefficient = (
-        (survival_from / survival_to.clamp_min(1.0e-12)).sqrt()
-        * (1.0 - survival_to)
-        / noise_from
-    )
+    state_coefficient = (survival_from / survival_to.clamp_min(1.0e-12)).sqrt() * (1.0 - survival_to) / noise_from
     mean = clean_coefficient * clean_estimate + state_coefficient * state
     variance = schedule.posterior_variance(time_from, time_to)
     return mean + variance.sqrt() * standard_normal(state.shape, state, generator)
@@ -210,6 +195,27 @@ class GeneratedElementBatch:
     diagnostics: ElementReverseDiagnostics
 
 
+@dataclass(frozen=True)
+class LatticeReverseInitialState:
+    volume_latent: torch.Tensor
+    shape_latent: torch.Tensor
+
+
+@dataclass(frozen=True)
+class LatticeReverseDiagnostics:
+    time: torch.Tensor
+    volume_step_rms: torch.Tensor
+    shape_step_rms: torch.Tensor
+
+
+@dataclass(frozen=True)
+class GeneratedLatticeBatch:
+    lattice: torch.Tensor
+    log_volume: torch.Tensor
+    log_shape: torch.Tensor
+    diagnostics: LatticeReverseDiagnostics
+
+
 class TensorFreeReverseSampler:
     """Hybrid categorical and continuous reverse process for crystal states."""
 
@@ -242,6 +248,166 @@ class TensorFreeReverseSampler:
         )
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
+
+    def initialize_lattice_state(
+        self,
+        blueprint: ParentBlueprintBatch,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> LatticeReverseInitialState:
+        """Draw a reusable standardized lattice prior without coordinates."""
+
+        graphs = int(blueprint.node_counts.numel())
+        reference = blueprint.shape_projector
+        return LatticeReverseInitialState(
+            volume_latent=torch.randn(
+                (graphs,),
+                dtype=reference.dtype,
+                device=reference.device,
+                generator=generator,
+            ),
+            shape_latent=torch.randn(
+                (graphs, 5),
+                dtype=reference.dtype,
+                device=reference.device,
+                generator=generator,
+            ),
+        )
+
+    def sample_lattice(
+        self,
+        element_tokens: torch.Tensor,
+        blueprint: ParentBlueprintBatch,
+        *,
+        steps: int = 100,
+        initial_state: LatticeReverseInitialState | None = None,
+        initialization_generator: torch.Generator | None = None,
+        continuous_generator: torch.Generator | None = None,
+        continuous_mode: ContinuousReverseMode = "reverse_sde",
+        time_grid: str = "uniform_log_alpha",
+    ) -> GeneratedLatticeBatch:
+        """Reverse only ``L_t`` conditional on an unordered clean composition."""
+
+        if steps < 1:
+            raise ValueError("lattice reverse sampler requires at least one step")
+        if self.denoiser.modality_time_conditioning != "separate":
+            raise ValueError("lattice reverse sampling requires the unified separate-clock backbone")
+        continuous_mode = _validate_continuous_mode(continuous_mode)
+        graphs = int(blueprint.node_counts.numel())
+        if element_tokens.shape != blueprint.batch.shape or element_tokens.dtype != torch.long:
+            raise ValueError("lattice conditioning requires one int64 element token per node")
+        if element_tokens.device != blueprint.batch.device:
+            raise ValueError("element tokens and blueprint must share a device")
+        self.categorical.validate_clean(element_tokens)
+        if initial_state is None:
+            initial_state = self.initialize_lattice_state(
+                blueprint,
+                generator=initialization_generator,
+            )
+        expected = (
+            (initial_state.volume_latent, (graphs,), "volume latent"),
+            (initial_state.shape_latent, (graphs, 5), "shape latent"),
+        )
+        for value, shape, name in expected:
+            if (
+                value.shape != shape
+                or value.dtype != blueprint.shape_projector.dtype
+                or value.device != blueprint.shape_projector.device
+                or not bool(torch.isfinite(value).all())
+            ):
+                raise ValueError(f"initial {name} must match the blueprint")
+        volume_latent = initial_state.volume_latent.clone()
+        shape_latent = initial_state.shape_latent.clone()
+        log_volume = self.lattice_standardizer.decode_volume(
+            volume_latent,
+            blueprint.node_counts,
+        )
+        log_shape = project_lattice_state(
+            self.lattice_standardizer.decode_shape(shape_latent),
+            blueprint.shape_projector,
+        )
+        times = reverse_time_grid(
+            self.vp_schedule,
+            self.maximum_time,
+            steps,
+            dtype=log_volume.dtype,
+            device=log_volume.device,
+            spacing=time_grid,
+        )
+        volume_steps: list[torch.Tensor] = []
+        shape_steps: list[torch.Tensor] = []
+        was_training = self.denoiser.training
+        self.denoiser.eval()
+        trajectory_error: RuntimeError | ValueError | None = None
+        try:
+            with torch.no_grad():
+                for index in range(steps):
+                    time_from = times[index].expand(graphs)
+                    time_to = times[index + 1].expand(graphs)
+                    prediction = self.denoiser.forward_lattice(
+                        element_tokens,
+                        log_volume,
+                        log_shape,
+                        blueprint.batch,
+                        time_from,
+                        blueprint.shape_projector,
+                    )
+                    next_volume_latent = vp_reverse_step(
+                        self.vp_schedule,
+                        volume_latent,
+                        prediction.clean_volume_latent,
+                        time_from,
+                        time_to,
+                        generator=continuous_generator,
+                        mode=continuous_mode,
+                    )
+                    next_shape_latent = vp_reverse_step(
+                        self.vp_schedule,
+                        shape_latent,
+                        prediction.clean_shape_latent,
+                        time_from.unsqueeze(-1),
+                        time_to.unsqueeze(-1),
+                        generator=continuous_generator,
+                        mode=continuous_mode,
+                    )
+                    next_volume = self.lattice_standardizer.decode_volume(
+                        next_volume_latent,
+                        blueprint.node_counts,
+                    )
+                    next_shape = project_lattice_state(
+                        self.lattice_standardizer.decode_shape(next_shape_latent),
+                        blueprint.shape_projector,
+                    )
+                    volume_steps.append((next_volume - log_volume).square().mean().sqrt())
+                    shape_steps.append((next_shape - log_shape).square().mean().sqrt())
+                    volume_latent = next_volume_latent
+                    shape_latent = self.lattice_standardizer.encode_shape(next_shape)
+                    log_volume = next_volume
+                    log_shape = next_shape
+        except (RuntimeError, ValueError) as error:
+            trajectory_error = error
+        finally:
+            self.denoiser.train(was_training)
+        if trajectory_error is not None:
+            raise SamplingFailure(f"lattice reverse trajectory failed: {trajectory_error}") from trajectory_error
+        if not all(torch.isfinite(value).all() for value in (log_volume, log_shape)):
+            raise SamplingFailure("lattice reverse trajectory produced a non-finite state")
+        try:
+            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(blueprint.fractional_to_cartesian)
+            if self.guardrails is not None:
+                self.guardrails.validate(lattice @ lattice.transpose(-1, -2))
+        except (RuntimeError, ValueError) as error:
+            raise SamplingFailure(f"terminal lattice is invalid: {error}") from error
+        return GeneratedLatticeBatch(
+            lattice=lattice,
+            log_volume=log_volume,
+            log_shape=log_shape,
+            diagnostics=LatticeReverseDiagnostics(
+                time=times[1:].detach().cpu(),
+                volume_step_rms=torch.stack(volume_steps).detach().cpu(),
+                shape_step_rms=torch.stack(shape_steps).detach().cpu(),
+            ),
+        )
 
     def sample_elements(
         self,
@@ -355,9 +521,7 @@ class TensorFreeReverseSampler:
         finally:
             self.denoiser.train(was_training)
         if trajectory_error is not None:
-            raise SamplingFailure(
-                f"element reverse trajectory failed: {trajectory_error}"
-            ) from trajectory_error
+            raise SamplingFailure(f"element reverse trajectory failed: {trajectory_error}") from trajectory_error
         if bool((tokens == self.categorical.mask_index).any()):
             raise SamplingFailure("terminal categorical state contains absorbing masks")
         if isinstance(self.categorical, UniformCategoricalDiffusion):
@@ -399,15 +563,9 @@ class TensorFreeReverseSampler:
         nodes = blueprint.batch.numel()
         coordinates = torch.rand((nodes, 3), dtype=dtype, device=device, generator=generator)
         return ContinuousReverseInitialState(
-            fractional_coordinates=project_translation_state(
-                coordinates, blueprint.batch, graphs
-            ),
-            volume_latent=torch.randn(
-                (graphs,), dtype=dtype, device=device, generator=generator
-            ),
-            shape_latent=torch.randn(
-                (graphs, 5), dtype=dtype, device=device, generator=generator
-            ),
+            fractional_coordinates=project_translation_state(coordinates, blueprint.batch, graphs),
+            volume_latent=torch.randn((graphs,), dtype=dtype, device=device, generator=generator),
+            shape_latent=torch.randn((graphs, 5), dtype=dtype, device=device, generator=generator),
         )
 
     @staticmethod
@@ -455,19 +613,13 @@ class TensorFreeReverseSampler:
             generator=categorical_generator,
         )
         if initial_state is None:
-            initial_state = self.initialize_continuous_state(
-                blueprint, generator=initialization_generator
-            )
+            initial_state = self.initialize_continuous_state(blueprint, generator=initialization_generator)
         else:
             self._validate_initial_state(initial_state, blueprint)
-        coordinates = project_translation_state(
-            initial_state.fractional_coordinates.clone(), blueprint.batch, graphs
-        )
+        coordinates = project_translation_state(initial_state.fractional_coordinates.clone(), blueprint.batch, graphs)
         volume_latent = initial_state.volume_latent.clone()
         shape_latent = initial_state.shape_latent.clone()
-        log_volume = self.lattice_standardizer.decode_volume(
-            volume_latent, blueprint.node_counts
-        )
+        log_volume = self.lattice_standardizer.decode_volume(volume_latent, blueprint.node_counts)
         log_shape = self.lattice_standardizer.decode_shape(shape_latent)
         log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, log_shape)
         condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
@@ -555,12 +707,8 @@ class TensorFreeReverseSampler:
                         generator=continuous_generator,
                         mode=continuous_mode,
                     )
-                    next_volume = self.lattice_standardizer.decode_volume(
-                        next_volume_latent, blueprint.node_counts
-                    )
-                    next_shape = self.lattice_standardizer.decode_shape(
-                        next_shape_latent
-                    )
+                    next_volume = self.lattice_standardizer.decode_volume(next_volume_latent, blueprint.node_counts)
+                    next_shape = self.lattice_standardizer.decode_shape(next_shape_latent)
                     projected = project_hybrid_reverse_state(
                         next_coordinates,
                         next_shape,
@@ -589,9 +737,7 @@ class TensorFreeReverseSampler:
         if not all(torch.isfinite(value).all() for value in (coordinates, log_volume, log_shape)):
             raise SamplingFailure("reverse trajectory produced a non-finite continuous state")
         try:
-            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(
-                blueprint.fractional_to_cartesian
-            )
+            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(blueprint.fractional_to_cartesian)
             if self.guardrails is not None:
                 self.guardrails.validate(lattice @ lattice.transpose(-1, -2))
         except (RuntimeError, ValueError) as error:

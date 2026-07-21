@@ -347,11 +347,7 @@ def test_independent_modality_times_are_non_degenerate_and_receive_gradients() -
         "lattice_time_embedding.",
         "modality_time_fusion.",
     ):
-        gradients = [
-            parameter.grad
-            for name, parameter in model.named_parameters()
-            if name.startswith(prefix)
-        ]
+        gradients = [parameter.grad for name, parameter in model.named_parameters() if name.startswith(prefix)]
         assert gradients and all(value is not None and torch.isfinite(value).all() for value in gradients)
         assert sum(float(value.square().sum()) for value in gradients if value is not None) > 0.0
 
@@ -506,9 +502,7 @@ def test_element_only_trainer_updates_element_path_but_not_continuous_heads() ->
         )
     }
     element_before = {
-        name: value.detach().clone()
-        for name, value in model.named_parameters()
-        if name.startswith("element_head.")
+        name: value.detach().clone() for name, value in model.named_parameters() if name.startswith("element_head.")
     }
     output, gradient_norm = trainer.train_step(
         elements,
@@ -525,6 +519,171 @@ def test_element_only_trainer_updates_element_path_but_not_continuous_heads() ->
     current = dict(model.named_parameters())
     assert all(torch.equal(value, current[name]) for name, value in inactive_before.items())
     assert any(not torch.equal(value, current[name]) for name, value in element_before.items())
+
+
+def test_lattice_forward_is_coordinate_free_and_composition_permutation_invariant() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    ).eval()
+    state = LatticeVolumeShape.from_lattice(
+        lattice,
+        blueprint.fractional_to_cartesian,
+    )
+    lattice_time = torch.tensor([0.3, 0.7])
+    block_calls = 0
+
+    def count_block(_module, _inputs, _output):
+        nonlocal block_calls
+        block_calls += 1
+
+    handle = model.blocks[0].register_forward_hook(count_block)
+    first = model.forward_lattice(
+        elements,
+        state.log_volume,
+        state.log_shape,
+        blueprint.batch,
+        lattice_time,
+        blueprint.shape_projector,
+    )
+    handle.remove()
+    permutation = torch.tensor([1, 0, 4, 2, 3])
+    second = model.forward_lattice(
+        elements[permutation],
+        state.log_volume,
+        state.log_shape,
+        blueprint.batch,
+        lattice_time,
+        blueprint.shape_projector,
+    )
+    assert block_calls == 0
+    torch.testing.assert_close(first.clean_volume_latent, second.clean_volume_latent)
+    torch.testing.assert_close(first.clean_shape_latent, second.clean_shape_latent)
+
+    condition = torch.zeros(2, 18)
+    present = torch.zeros(2, 1, dtype=torch.bool)
+    clean_time = torch.zeros(2)
+    full_a = model(
+        elements,
+        coordinates,
+        state.log_volume,
+        state.log_shape,
+        blueprint.batch,
+        clean_time,
+        condition,
+        present,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        element_time=clean_time,
+        lattice_time=lattice_time,
+    )
+    full_b = model(
+        elements,
+        coordinates.roll(1, dims=0),
+        state.log_volume,
+        state.log_shape,
+        blueprint.batch,
+        clean_time,
+        condition,
+        present,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        element_time=clean_time,
+        lattice_time=lattice_time,
+    )
+    torch.testing.assert_close(full_a.clean_volume_latent, full_b.clean_volume_latent)
+    torch.testing.assert_close(full_a.clean_shape_latent, full_b.clean_shape_latent)
+
+
+def test_lattice_only_trainer_updates_no_coordinate_or_element_readout() -> None:
+    elements, _, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    trainer = ProductionTrainer(
+        TensorFreeHybridDiffusion(model, _standardizer()),
+        ProductionTrainingConfig(
+            precision="fp32",
+            objective="lattice",
+            modality_time_mode="lattice_only",
+            ema_decay=0.9,
+        ),
+    )
+    inactive_prefixes = (
+        "blocks.",
+        "degree_embedding.",
+        "element_head.",
+        "composition_head.",
+        "coordinate_control_gate.",
+        "coordinate_edge_encoder.",
+        "coordinate_carrier.",
+        "coordinate_carrier_mixer.",
+    )
+    inactive_before = {
+        name: value.detach().clone() for name, value in model.named_parameters() if name.startswith(inactive_prefixes)
+    }
+    lattice_before = {
+        name: value.detach().clone()
+        for name, value in model.named_parameters()
+        if name.startswith(("volume_head.", "shape_head."))
+    }
+    output, gradient_norm = trainer.train_lattice_step(
+        elements,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(121),
+    )
+    assert gradient_norm > 0.0 and torch.isfinite(output.loss)
+    current = dict(model.named_parameters())
+    assert all(torch.equal(value, current[name]) for name, value in inactive_before.items())
+    assert any(not torch.equal(value, current[name]) for name, value in lattice_before.items())
+
+
+def test_lattice_reverse_sampler_never_calls_full_geometry_forward() -> None:
+    elements, _, _, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    full_forward_calls = 0
+
+    def count_full_forward(_module, _inputs, _output):
+        nonlocal full_forward_calls
+        full_forward_calls += 1
+
+    handle = model.register_forward_hook(count_full_forward)
+    generated = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+    ).sample_lattice(
+        elements,
+        blueprint,
+        steps=3,
+        initialization_generator=torch.Generator().manual_seed(122),
+        continuous_generator=torch.Generator().manual_seed(123),
+        continuous_mode="probability_flow",
+    )
+    handle.remove()
+    assert full_forward_calls == 0
+    assert generated.lattice.shape == (2, 3, 3)
+    assert torch.isfinite(generated.lattice).all()
+    assert bool((torch.linalg.det(generated.lattice) > 0.0).all())
 
 
 def test_uniform_element_training_is_self_correcting_and_uses_composition_loss() -> None:

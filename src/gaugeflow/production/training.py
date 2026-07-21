@@ -9,7 +9,13 @@ import torch
 from torch import nn
 
 from .blueprint import ParentBlueprintBatch
-from .hybrid_diffusion import HybridLossOutput, TensorFreeHybridDiffusion
+from .hybrid_diffusion import (
+    HybridLossOutput,
+    LatticeLossOutput,
+    TensorFreeHybridDiffusion,
+)
+
+TrainingLossOutput = HybridLossOutput | LatticeLossOutput
 
 
 @dataclass(frozen=True)
@@ -44,14 +50,15 @@ class ProductionTrainingConfig:
             raise ValueError("unknown categorical training path")
         if self.composition_loss_weight < 0.0:
             raise ValueError("composition loss weight must be nonnegative")
-        if self.objective not in {"joint", "coordinate", "element"}:
-            raise ValueError("training objective must be joint, coordinate or element")
+        if self.objective not in {"joint", "coordinate", "element", "lattice"}:
+            raise ValueError("training objective must be joint, coordinate, element or lattice")
         if self.coordinate_clean_side_information and self.objective != "coordinate":
             raise ValueError("clean element/lattice side information is coordinate-only")
         if self.modality_time_mode not in {
             "shared",
             "independent_corner_mixture",
             "element_only",
+            "lattice_only",
         }:
             raise ValueError("unknown modality-time training mode")
         if self.modality_time_mode == "independent_corner_mixture" and (
@@ -62,6 +69,8 @@ class ProductionTrainingConfig:
             )
         if (self.objective == "element") != (self.modality_time_mode == "element_only"):
             raise ValueError("element training requires the explicit element-only modality-time mode")
+        if (self.objective == "lattice") != (self.modality_time_mode == "lattice_only"):
+            raise ValueError("lattice training requires the explicit lattice-only modality-time mode")
 
 
 class ExponentialMovingAverage:
@@ -141,6 +150,8 @@ class ProductionTrainer:
         *,
         generator: torch.Generator | None = None,
     ) -> tuple[HybridLossOutput, torch.Tensor]:
+        if self.config.objective == "lattice":
+            raise ValueError("lattice objective must use train_lattice_step without coordinates")
         self.diffusion.train()
         self.optimizer.zero_grad(set_to_none=True)
         use_bf16 = self.config.precision == "bf16" and clean_lattice.device.type == "cuda"
@@ -187,6 +198,49 @@ class ProductionTrainer:
                 clean_side_information=self.config.coordinate_clean_side_information,
                 **modality_arguments,
             )
+        gradient_norm = self._optimize(output)
+        return output, gradient_norm
+
+    def train_lattice_step(
+        self,
+        clean_elements: torch.Tensor,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        blueprint: ParentBlueprintBatch,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> tuple[LatticeLossOutput, torch.Tensor]:
+        """Optimize L1 without accepting target coordinates at the interface."""
+
+        if self.config.objective != "lattice":
+            raise ValueError("train_lattice_step requires the lattice objective")
+        self.diffusion.train()
+        self.optimizer.zero_grad(set_to_none=True)
+        use_bf16 = self.config.precision == "bf16" and clean_lattice.device.type == "cuda"
+        with torch.autocast(
+            device_type=clean_lattice.device.type,
+            dtype=torch.bfloat16,
+            enabled=use_bf16,
+        ):
+            graph_count = int(blueprint.node_counts.numel())
+            lattice_time = self.diffusion.sample_time(
+                graph_count,
+                clean_lattice,
+                generator=generator,
+            )
+            output = self.diffusion.forward_lattice(
+                clean_elements,
+                clean_lattice,
+                batch,
+                blueprint.shape_projector,
+                blueprint.fractional_to_cartesian,
+                lattice_time=lattice_time,
+                generator=generator,
+            )
+        gradient_norm = self._optimize(output)
+        return output, gradient_norm
+
+    def _optimize(self, output: TrainingLossOutput) -> torch.Tensor:
         optimization_loss = self.optimization_loss(output)
         if not torch.isfinite(optimization_loss):
             raise FloatingPointError("selected training loss is non-finite")
@@ -202,13 +256,23 @@ class ProductionTrainer:
         # Keep the scalar on-device.  Production logging materializes it only
         # at the existing synchronized log boundary; converting it here would
         # serialize every CUDA training step.
-        return output, gradient_norm.detach()
+        return gradient_norm.detach()
 
-    def optimization_loss(self, output: HybridLossOutput) -> torch.Tensor:
+    def optimization_loss(self, output: TrainingLossOutput) -> torch.Tensor:
         """Select the sole preregistered objective without mixing inactive heads."""
 
         if self.config.objective == "joint":
+            if not isinstance(output, HybridLossOutput):
+                raise TypeError("joint objective received a lattice loss output")
             return output.loss
         if self.config.objective == "coordinate":
+            if not isinstance(output, HybridLossOutput):
+                raise TypeError("coordinate objective received a lattice loss output")
             return output.coordinate_loss
+        if self.config.objective == "lattice":
+            if not isinstance(output, LatticeLossOutput):
+                raise TypeError("lattice objective received a hybrid loss output")
+            return output.loss
+        if not isinstance(output, HybridLossOutput):
+            raise TypeError("element objective received a lattice loss output")
         return output.element_loss + self.config.composition_loss_weight * output.composition_loss

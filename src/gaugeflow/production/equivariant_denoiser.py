@@ -79,27 +79,17 @@ class EquivariantDenoisingBlock(nn.Module):
         self.vector_gate = nn.Sequential(
             nn.Linear(3 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, vector_dim)
         )
-        self.angular_moments = FactorizedCartesianAngularMoments(
-            edge_dim, angular_channels
-        )
+        self.angular_moments = FactorizedCartesianAngularMoments(edge_dim, angular_channels)
         angular_dim = self.angular_moments.output_dim
         if edge_refresh_rank < 1:
             raise ValueError("edge refresh rank must be positive")
         # Project node-leading context before gathering it onto edges.  This
         # keeps the refresh O(NH+ER) instead of repeating wide H-dimensional
         # transforms for every periodic image.
-        self.edge_source_refresh = nn.Linear(
-            hidden_dim, edge_refresh_rank, bias=False
-        )
-        self.edge_target_refresh = nn.Linear(
-            hidden_dim, edge_refresh_rank, bias=False
-        )
-        self.edge_context_refresh = nn.Linear(
-            3 * hidden_dim, edge_refresh_rank, bias=False
-        )
-        self.edge_vector_refresh = nn.Linear(
-            2 * vector_dim, edge_refresh_rank, bias=False
-        )
+        self.edge_source_refresh = nn.Linear(hidden_dim, edge_refresh_rank, bias=False)
+        self.edge_target_refresh = nn.Linear(hidden_dim, edge_refresh_rank, bias=False)
+        self.edge_context_refresh = nn.Linear(3 * hidden_dim, edge_refresh_rank, bias=False)
+        self.edge_vector_refresh = nn.Linear(2 * vector_dim, edge_refresh_rank, bias=False)
         self.edge_update = nn.Sequential(
             nn.Linear(
                 edge_dim + angular_dim + radial_dim + 4 * edge_refresh_rank,
@@ -150,20 +140,14 @@ class EquivariantDenoisingBlock(nn.Module):
         scalar_aggregate = torch.zeros_like(nodes)
         vector_aggregate = torch.zeros_like(vectors)
         if source.numel():
-            source_projection = torch.einsum(
-                "evc,ec->ev", vectors[source], directions
-            )
-            target_projection = torch.einsum(
-                "evc,ec->ev", vectors[target], directions
-            )
+            source_projection = torch.einsum("evc,ec->ev", vectors[source], directions)
+            target_projection = torch.einsum("evc,ec->ev", vectors[target], directions)
             node_refresh = self.edge_source_refresh(nodes)[source]
             target_refresh = self.edge_target_refresh(nodes)[target]
-            graph_refresh = self.edge_context_refresh(
-                torch.cat((node_time, node_condition, node_state), dim=-1)
-            )[target]
-            vector_refresh = self.edge_vector_refresh(
-                torch.cat((source_projection, target_projection), dim=-1)
-            )
+            graph_refresh = self.edge_context_refresh(torch.cat((node_time, node_condition, node_state), dim=-1))[
+                target
+            ]
+            vector_refresh = self.edge_vector_refresh(torch.cat((source_projection, target_projection), dim=-1))
             angular = self.angular_moments(
                 edge_state,
                 target,
@@ -183,9 +167,7 @@ class EquivariantDenoisingBlock(nn.Module):
                 ),
                 dim=-1,
             )
-            edge_state = self.edge_norm(
-                edge_state + self.edge_update(refresh_context)
-            )
+            edge_state = self.edge_norm(edge_state + self.edge_update(refresh_context))
             # Keep the unnormalized angular contractions in the residual
             # context.  Layer-normalizing the persistent state stabilizes
             # depth, while the raw contractions retain local coordination
@@ -206,13 +188,11 @@ class EquivariantDenoisingBlock(nn.Module):
                 dim=-1,
             )
             scalar_message = (
-                self.scalar_message(features)
-                + self.angular_scalar_residual(edge_context)
+                self.scalar_message(features) + self.angular_scalar_residual(edge_context)
             ) * edge_envelope
-            coefficients = (
-                self.vector_coefficients(features)
-                + self.angular_vector_residual(edge_context)
-            ).reshape(source.numel(), 3, vectors.shape[1])
+            coefficients = (self.vector_coefficients(features) + self.angular_vector_residual(edge_context)).reshape(
+                source.numel(), 3, vectors.shape[1]
+            )
             vector_message = (
                 coefficients[:, 0, :, None] * directions[:, None, :]
                 + coefficients[:, 1, :, None] * edge_response[:, None, :]
@@ -222,12 +202,8 @@ class EquivariantDenoisingBlock(nn.Module):
             # Keep graph reductions in the FP32 residual-state dtype under
             # BF16 autocast; index_add_ requires an exact dtype match and FP32
             # accumulation is numerically preferable for neighbor sums.
-            scalar_aggregate = sorted_segment_sum(
-                scalar_message.to(scalar_aggregate.dtype), target, nodes.shape[0]
-            )
-            vector_aggregate = sorted_segment_sum(
-                vector_message.to(vector_aggregate.dtype), target, nodes.shape[0]
-            )
+            scalar_aggregate = sorted_segment_sum(scalar_message.to(scalar_aggregate.dtype), target, nodes.shape[0])
+            vector_aggregate = sorted_segment_sum(vector_message.to(vector_aggregate.dtype), target, nodes.shape[0])
             degree = torch.bincount(target, minlength=nodes.shape[0]).clamp_min(1).to(nodes)
             scalar_aggregate = scalar_aggregate / degree.unsqueeze(-1)
             vector_aggregate = vector_aggregate / degree[:, None, None]
@@ -257,6 +233,14 @@ class HybridDenoiserOutput:
     gauge_atlas: CartesianGaugeAtlasOutput
 
 
+@dataclass(frozen=True)
+class LatticeDenoiserOutput:
+    """Coordinate-free lattice endpoint prediction."""
+
+    clean_volume_latent: torch.Tensor
+    clean_shape_latent: torch.Tensor
+
+
 class HybridCrystalDenoiser(nn.Module):
     """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
 
@@ -284,9 +268,7 @@ class HybridCrystalDenoiser(nn.Module):
             raise ValueError("edge, angular and refresh dimensions must be positive")
         self.edge_dim = int(edge_dim)
         if modality_time_conditioning is None:
-            modality_time_conditioning = (
-                "separate" if independent_modality_times else "coordinate"
-            )
+            modality_time_conditioning = "separate" if independent_modality_times else "coordinate"
         if modality_time_conditioning not in {
             "coordinate",
             "matched_single",
@@ -295,18 +277,14 @@ class HybridCrystalDenoiser(nn.Module):
         }:
             raise ValueError("unknown modality-time conditioning mode")
         if independent_modality_times and modality_time_conditioning != "separate":
-            raise ValueError(
-                "independent_modality_times is only the archived name for separate clocks"
-            )
+            raise ValueError("independent_modality_times is only the archived name for separate clocks")
         self.modality_time_conditioning = modality_time_conditioning
         self.uses_side_modality_times = modality_time_conditioning in {
             "side_mean",
             "separate",
         }
         self.element_embedding = nn.Embedding(119, hidden_dim)
-        self.degree_embedding = nn.Sequential(
-            nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
-        )
+        self.degree_embedding = nn.Sequential(nn.Linear(1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.time_embedding = FourierTimeEmbedding(hidden_dim)
         self.element_time_embedding: FourierTimeEmbedding | None
         self.lattice_time_embedding: FourierTimeEmbedding | None
@@ -386,12 +364,8 @@ class HybridCrystalDenoiser(nn.Module):
             hidden_dim,
             rank=8,
         )
-        self.volume_head = nn.Sequential(
-            nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1)
-        )
-        self.shape_head = nn.Sequential(
-            nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5)
-        )
+        self.volume_head = nn.Sequential(nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
+        self.shape_head = nn.Sequential(nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5))
 
     @property
     def angular_channels(self) -> int:
@@ -400,6 +374,120 @@ class HybridCrystalDenoiser(nn.Module):
     @property
     def edge_refresh_rank(self) -> int:
         return self.blocks[0].edge_refresh_rank
+
+    def _embed_modality_times(
+        self,
+        time: torch.Tensor,
+        element_time: torch.Tensor | None,
+        lattice_time: torch.Tensor | None,
+    ) -> torch.Tensor:
+        """Embed the explicit clocks while enforcing their declared contract."""
+
+        if time.ndim != 1:
+            raise ValueError("coordinate time must be a graph vector")
+        if self.uses_side_modality_times:
+            if element_time is None or lattice_time is None:
+                raise ValueError("side-time conditioning requires explicit element and lattice times")
+            if element_time.shape != time.shape or lattice_time.shape != time.shape:
+                raise ValueError("all modality times must match the graph vector")
+            assert self.element_time_embedding is not None
+            assert self.lattice_time_embedding is not None
+            assert self.modality_time_fusion is not None
+            coordinate_clock = self.time_embedding(time)
+            if self.modality_time_conditioning == "separate":
+                side_clocks = (
+                    self.element_time_embedding(element_time),
+                    self.lattice_time_embedding(lattice_time),
+                )
+            else:
+                side_mean = 0.5 * (element_time + lattice_time)
+                side_clocks = (
+                    self.element_time_embedding(side_mean),
+                    torch.zeros_like(coordinate_clock),
+                )
+            return self.modality_time_fusion(torch.cat((coordinate_clock, *side_clocks), dim=-1))
+        if (element_time is None) != (lattice_time is None):
+            raise ValueError("element and lattice times must be supplied together")
+        if element_time is not None and (not torch.equal(element_time, time) or not torch.equal(lattice_time, time)):
+            raise ValueError("shared-time denoising cannot silently consume different modality times")
+        return self.time_embedding(time)
+
+    def _composition_lattice_context(
+        self,
+        element_tokens: torch.Tensor,
+        log_volume: torch.Tensor,
+        log_shape: torch.Tensor,
+        batch: torch.Tensor,
+        graph_time: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Summarize the unordered composition without graph geometry."""
+
+        graphs = graph_time.shape[0]
+        element_nodes = self.element_embedding(element_tokens)
+        counts = torch.bincount(batch, minlength=graphs).to(log_volume)
+        composition_mean = graph_mean(element_nodes, batch, graphs)
+        composition_scaled_sum = graph_sum(element_nodes, batch, graphs) / counts.sqrt().unsqueeze(-1)
+        state_features = torch.cat(
+            (
+                log_volume.unsqueeze(-1),
+                log_shape,
+                counts.log().unsqueeze(-1),
+                counts.reciprocal().unsqueeze(-1),
+                composition_mean,
+                composition_scaled_sum,
+            ),
+            dim=-1,
+        )
+        graph_state = self.state_embedding(state_features)
+        lattice_context = torch.cat(
+            (composition_mean, composition_scaled_sum, graph_time, graph_state),
+            dim=-1,
+        )
+        return element_nodes, graph_state, lattice_context
+
+    def forward_lattice(
+        self,
+        element_tokens: torch.Tensor,
+        log_volume: torch.Tensor,
+        log_shape: torch.Tensor,
+        batch: torch.Tensor,
+        lattice_time: torch.Tensor,
+        shape_projector: torch.Tensor,
+    ) -> LatticeDenoiserOutput:
+        """Denoise ``L_t`` without accepting coordinates or building edges."""
+
+        graphs = lattice_time.numel()
+        if self.modality_time_conditioning != "separate":
+            raise ValueError("lattice-only denoising requires the unified separate-clock backbone")
+        if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
+            raise ValueError("element state must be rank-one int64 tokens")
+        if batch.shape != element_tokens.shape or batch.dtype != torch.long:
+            raise ValueError("batch must provide one graph index per element token")
+        if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
+            raise ValueError("element state lies outside 118 elements plus MASK")
+        if log_volume.shape != (graphs,) or log_shape.shape != (graphs, 6):
+            raise ValueError("lattice state must contain graphwise volume and six shape coordinates")
+        if shape_projector.shape != (graphs, 6, 6):
+            raise ValueError("shape projector must have shape [graphs,6,6]")
+        if batch.numel() == 0 or int(batch.min()) != 0 or int(batch.max()) + 1 != graphs:
+            raise ValueError("lattice batch must contain every graph index")
+        with torch.autocast(device_type=log_volume.device.type, enabled=False):
+            projected_shape = project_lattice_state(log_shape, shape_projector)
+            if not torch.allclose(log_shape, projected_shape, atol=2e-6, rtol=2e-6):
+                raise ValueError("denoiser lattice shape is outside the blueprint subspace")
+        clean_time = torch.zeros_like(lattice_time)
+        graph_time = self._embed_modality_times(clean_time, clean_time, lattice_time)
+        _, _, lattice_context = self._composition_lattice_context(
+            element_tokens,
+            log_volume,
+            log_shape,
+            batch,
+            graph_time,
+        )
+        return LatticeDenoiserOutput(
+            clean_volume_latent=self.volume_head(lattice_context).squeeze(-1),
+            clean_shape_latent=self.shape_head(lattice_context),
+        )
 
     def forward(
         self,
@@ -424,49 +512,7 @@ class HybridCrystalDenoiser(nn.Module):
         group, stabilizer, source ID, or endpoint token is accepted.
         """
         graphs = time.numel()
-        if time.ndim != 1:
-            raise ValueError("coordinate time must be a graph vector")
-        if self.uses_side_modality_times:
-            if element_time is None or lattice_time is None:
-                raise ValueError(
-                    "side-time conditioning requires explicit element and lattice times"
-                )
-            if element_time.shape != time.shape or lattice_time.shape != time.shape:
-                raise ValueError("all modality times must match the graph vector")
-            assert self.element_time_embedding is not None
-            assert self.lattice_time_embedding is not None
-            assert self.modality_time_fusion is not None
-            coordinate_clock = self.time_embedding(time)
-            if self.modality_time_conditioning == "separate":
-                side_clocks = (
-                    self.element_time_embedding(element_time),
-                    self.lattice_time_embedding(lattice_time),
-                )
-            else:
-                # C1 exposes exactly one side-uncertainty scalar.  The third
-                # clock MLP and the final H columns of the fusion map are
-                # parameter-matching dummies and do not enter the forward map.
-                side_mean = 0.5 * (element_time + lattice_time)
-                side_clocks = (
-                    self.element_time_embedding(side_mean),
-                    torch.zeros_like(coordinate_clock),
-                )
-            graph_time = self.modality_time_fusion(
-                torch.cat((coordinate_clock, *side_clocks), dim=-1)
-            )
-        else:
-            if (element_time is None) != (lattice_time is None):
-                raise ValueError("element and lattice times must be supplied together")
-            if element_time is not None and (
-                not torch.equal(element_time, time) or not torch.equal(lattice_time, time)
-            ):
-                raise ValueError(
-                    "shared-time denoising cannot silently consume different modality times"
-                )
-            # ``matched_single`` owns the same clock bank as the two controls,
-            # but the dummy bank is deliberately absent from this graph.  It
-            # therefore sees only t_F while matching total parameter count.
-            graph_time = self.time_embedding(time)
+        graph_time = self._embed_modality_times(time, element_time, lattice_time)
         if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
             raise ValueError("element state must be rank-one int64 tokens")
         if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
@@ -490,38 +536,22 @@ class HybridCrystalDenoiser(nn.Module):
         with torch.autocast(device_type=log_volume.device.type, enabled=False):
             projected_shape = project_lattice_state(log_shape, shape_projector)
             if not torch.allclose(log_shape, projected_shape, atol=2e-6, rtol=2e-6):
-                raise ValueError(
-                    "denoiser lattice shape is outside the blueprint subspace"
-                )
-            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(
-                fractional_to_cartesian
-            )
-            edges = periodic_radius_multigraph(
-                frac_coords, lattice, batch, cutoff=self.radial.cutoff
-            )
+                raise ValueError("denoiser lattice shape is outside the blueprint subspace")
+            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(fractional_to_cartesian)
+            edges = periodic_radius_multigraph(frac_coords, lattice, batch, cutoff=self.radial.cutoff)
             radial = self.radial(edges.distance)
             edge_envelope = self.radial.envelope(edges.distance)
         source, target = edges.source, edges.target
         degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
         node_time = graph_time[batch]
-        initial_nodes = self.element_embedding(element_tokens) + self.degree_embedding(
-            degree.log1p().unsqueeze(-1)
+        element_nodes, graph_state, lattice_context = self._composition_lattice_context(
+            element_tokens,
+            log_volume,
+            log_shape,
+            batch,
+            graph_time,
         )
-        counts = torch.bincount(batch, minlength=graphs).to(log_volume)
-        composition_mean = graph_mean(initial_nodes, batch, graphs)
-        composition_scaled_sum = graph_sum(initial_nodes, batch, graphs) / counts.sqrt().unsqueeze(-1)
-        state_features = torch.cat(
-            (
-                log_volume.unsqueeze(-1),
-                log_shape,
-                counts.log().unsqueeze(-1),
-                counts.reciprocal().unsqueeze(-1),
-                composition_mean,
-                composition_scaled_sum,
-            ),
-            dim=-1,
-        )
-        graph_state = self.state_embedding(state_features)
+        initial_nodes = element_nodes + self.degree_embedding(degree.log1p().unsqueeze(-1))
         node_state = graph_state[batch]
         if bool(condition_present.any()):
             # Tensor-free pretraining uses a learned null token but does not
@@ -550,18 +580,13 @@ class HybridCrystalDenoiser(nn.Module):
         node_condition = gauge_atlas.graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition + node_state
         if source.numel():
-            self_image = (
-                (source == target)
-                & edges.image_shift.ne(0).any(dim=-1)
-            ).to(nodes).unsqueeze(-1)
+            self_image = ((source == target) & edges.image_shift.ne(0).any(dim=-1)).to(nodes).unsqueeze(-1)
             edge_state = self.edge_state_initializer(
                 torch.cat((nodes[source], nodes[target], radial, self_image), dim=-1)
             )
         else:
             edge_state = nodes.new_empty((0, self.edge_dim))
-        vectors = nodes.new_zeros(
-            (nodes.shape[0], self.coordinate_carrier.vector_channels, 3)
-        )
+        vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_carrier.vector_channels, 3))
         # BF16 has only seven mantissa bits and turns sub-microangstrom changes
         # in periodic directions into percent-level coordinate-field jumps.
         # Geometry-dependent message propagation is therefore one fixed FP32
@@ -584,13 +609,9 @@ class HybridCrystalDenoiser(nn.Module):
                     edge_state.float(),
                 )
         graph_nodes = graph_mean(nodes, batch, graphs)
-        graph_context = torch.cat(
-            (graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1
-        )
+        graph_context = torch.cat((graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1)
         chemical = element_tokens < CHEMICAL_ELEMENT_COUNT
-        flat_chemical = (
-            batch[chemical] * CHEMICAL_ELEMENT_COUNT + element_tokens[chemical]
-        )
+        flat_chemical = batch[chemical] * CHEMICAL_ELEMENT_COUNT + element_tokens[chemical]
         current_counts = torch.bincount(
             flat_chemical,
             minlength=graphs * CHEMICAL_ELEMENT_COUNT,
@@ -601,9 +622,7 @@ class HybridCrystalDenoiser(nn.Module):
             1.0 / CHEMICAL_ELEMENT_COUNT,
             dtype=nodes.dtype,
         )
-        current_composition = current_counts.to(nodes) / observed_total.clamp_min(1).to(
-            nodes
-        )
+        current_composition = current_counts.to(nodes) / observed_total.clamp_min(1).to(nodes)
         current_composition = torch.where(
             observed_total > 0,
             current_composition,
@@ -625,9 +644,9 @@ class HybridCrystalDenoiser(nn.Module):
                 dim=-1,
             )
         )
-        composition_logits = base_composition.clamp_min(1.0e-8).log() + (
-            1.0 - categorical_survival.unsqueeze(-1)
-        ) * composition_residual
+        composition_logits = (
+            base_composition.clamp_min(1.0e-8).log() + (1.0 - categorical_survival.unsqueeze(-1)) * composition_residual
+        )
         # The graph posterior is predicted only from the current state.  Its
         # expected species embedding gives every site a permutation-invariant
         # global abundance context without exposing target formula or counts.
@@ -645,9 +664,7 @@ class HybridCrystalDenoiser(nn.Module):
         )
         element_logits = self.element_head(node_context)
         coordinate_control = torch.cat((node_time, node_condition, node_state), dim=-1)
-        time_gated_vectors = vectors * torch.sigmoid(
-            self.coordinate_control_gate(coordinate_control)
-        ).unsqueeze(-1)
+        time_gated_vectors = vectors * torch.sigmoid(self.coordinate_control_gate(coordinate_control)).unsqueeze(-1)
         if source.numel():
             edge_features = torch.cat(
                 (
@@ -662,13 +679,9 @@ class HybridCrystalDenoiser(nn.Module):
             )
             with torch.autocast(device_type=edge_features.device.type, enabled=False):
                 edge_hidden = self.coordinate_edge_encoder(edge_features.float())
-                edge_hidden = edge_hidden + self.coordinate_edge_residual(
-                    edge_state.float()
-                )
+                edge_hidden = edge_hidden + self.coordinate_edge_residual(edge_state.float())
         else:
-            edge_hidden = nodes.new_empty(
-                (0, self.coordinate_carrier.moment_projection.in_features)
-            )
+            edge_hidden = nodes.new_empty((0, self.coordinate_carrier.moment_projection.in_features))
         carrier = self.coordinate_carrier(
             time_gated_vectors,
             edge_hidden,
@@ -680,17 +693,15 @@ class HybridCrystalDenoiser(nn.Module):
         )
         with torch.autocast(device_type=carrier.device.type, enabled=False):
             normalized_cartesian_score = self.coordinate_carrier_mixer(carrier, nodes)
-            normalized_cartesian_score = normalized_cartesian_score - graph_mean(
-                normalized_cartesian_score, batch, graphs
-            )[batch]
+            normalized_cartesian_score = (
+                normalized_cartesian_score - graph_mean(normalized_cartesian_score, batch, graphs)[batch]
+            )
             # The fractional torus path is unchanged.  Only the learned output
             # chart is made dimensionless with the O(3)- and GL(3,Z)-invariant
             # cell scale V^(1/3).  The physical Cartesian tangent is restored
             # before the exact fractional pullback consumed by the sampler.
             cell_scale = torch.exp(log_volume.float() / 3.0)
-            cartesian_score = normalized_cartesian_score * cell_scale[
-                batch, None
-            ]
+            cartesian_score = normalized_cartesian_score * cell_scale[batch, None]
             # The reverse sampler consumes a tangent drift because it adds the
             # network output to fractional coordinates. For r=fL, a Cartesian
             # tangent vector obeys v_r=v_f L and hence v_f=v_r L^-1. The prior
@@ -698,16 +709,12 @@ class HybridCrystalDenoiser(nn.Module):
             # covector and then silently used it as a vector. Solve the
             # transposed row-vector system without forming an inverse, and keep
             # this physical chart change in FP32 under BF16 execution.
-            fractional_score = cartesian_tangent_to_fractional(
-                cartesian_score, lattice, batch
-            )
+            fractional_score = cartesian_tangent_to_fractional(cartesian_score, lattice, batch)
             # Fractional zero mean is the translation-horizontal tangent chart
             # used by the coordinate probability path.
-            fractional_score = fractional_score - graph_mean(
-                fractional_score, batch, graphs
-            )[batch]
-        clean_volume_latent = self.volume_head(graph_context).squeeze(-1)
-        clean_shape_latent = self.shape_head(graph_context)
+            fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
+        clean_volume_latent = self.volume_head(lattice_context).squeeze(-1)
+        clean_shape_latent = self.shape_head(lattice_context)
         return HybridDenoiserOutput(
             clean_element_logits=element_logits,
             clean_composition_logits=composition_logits,
