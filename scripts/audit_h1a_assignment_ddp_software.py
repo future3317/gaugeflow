@@ -202,7 +202,6 @@ class _DdpRun:
             device_ids=[device.index],
             broadcast_buffers=False,
             find_unused_parameters=False,
-            static_graph=True,
         )
 
     def step(

@@ -295,7 +295,6 @@ def main() -> None:
         device_ids=[device.index],
         broadcast_buffers=False,
         find_unused_parameters=False,
-        static_graph=True,
     )
     if rank == 0:
         args.output_dir.mkdir(parents=True, exist_ok=True)
