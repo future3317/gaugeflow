@@ -49,7 +49,7 @@
     "angular_channels": 8,
     "edge_refresh_rank": 16,
     "independent_modality_times": true,
-    "parameter_count": 5232057
+    "parameter_count": 5462191
   },
   "training": {
     "seeds": [5705],
