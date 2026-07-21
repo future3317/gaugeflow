@@ -191,24 +191,33 @@ def main() -> None:
     if device.type != "cuda" or not torch.cuda.is_available():
         raise RuntimeError("the generated-side Gate requires CUDA")
     sources = protocol["sources"]
-    hash_contract = {
+    byte_hash_contract = {
         args.cache_root / "manifest.json": sources["cache_manifest_sha256"],
         args.carrier_root / "manifest.json": sources["carrier_manifest_sha256"],
-        Path("reports/h1a_assignment_iid_calibration_split_v1/result.json"): sources[
-            "assignment_role_result_sha256"
-        ],
-        Path("reports/h1a_assignment_iid_gate_v3/result.json"): sources["assignment_result_sha256"],
-        Path("reports/h1a_lattice_l1_v1/result.json"): sources["lattice_result_sha256"],
-        Path("reports/h1a_coordinate_clean_side_current_v1/result.json"): sources[
-            "coordinate_result_sha256"
-        ],
         args.assignment_checkpoint: sources["assignment_checkpoint_sha256"],
         args.lattice_checkpoint: sources["lattice_checkpoint_sha256"],
         args.coordinate_checkpoint: sources["coordinate_checkpoint_sha256"],
     }
-    for path, expected in hash_contract.items():
+    for path, expected in byte_hash_contract.items():
         if sha256_file(path) != str(expected):
             raise ValueError(f"frozen generated-side input hash mismatch: {path}")
+    canonical_hash_contract = {
+        Path("reports/h1a_assignment_iid_calibration_split_v1/result.json"): sources[
+            "assignment_role_result_canonical_sha256"
+        ],
+        Path("reports/h1a_assignment_iid_gate_v3/result.json"): sources[
+            "assignment_result_canonical_sha256"
+        ],
+        Path("reports/h1a_lattice_l1_v1/result.json"): sources[
+            "lattice_result_canonical_sha256"
+        ],
+        Path("reports/h1a_coordinate_clean_side_current_v1/result.json"): sources[
+            "coordinate_result_canonical_sha256"
+        ],
+    }
+    for path, expected in canonical_hash_contract.items():
+        if canonical_json_hash(load_json_object(path)) != str(expected):
+            raise ValueError(f"frozen generated-side JSON identity mismatch: {path}")
 
     evaluation = protocol["evaluation"]
     assignment_protocol = load_json_object(Path("configs/protocols/h1a_assignment_iid_gate_v3.json"))

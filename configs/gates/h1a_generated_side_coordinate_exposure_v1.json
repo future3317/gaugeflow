@@ -5,14 +5,14 @@
   "sources": {
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
     "carrier_manifest_sha256": "37e34e437b7df95314bd0aa1f189d552a7f109f2fc80b7bb03b4202f4b3bfa6d",
-    "assignment_role_result_sha256": "d327c3adff2913c3887ffa184254fa733e253b6d1bf17a9b492075da9d362f0e",
-    "assignment_result_sha256": "93556a9b48887a8a5fbb3cbcd52e6aadd6689d82ea6837a22f5b6ec7a314f5aa",
+    "assignment_role_result_canonical_sha256": "2d1c88330d59171ef124a8120acdc3138e4a3657a68aa9cbea594316db9d106a",
+    "assignment_result_canonical_sha256": "e457fb7002a4b80eae220fb4386e476d126e4cc89f5862aeee3c30b666826742",
     "assignment_checkpoint_sha256": "c7aab55047ca47ec36255371b6e1ea8758dddb0e7342f2883948e7a85478383c",
     "assignment_protocol_sha256": "dfb29ec8ec943dcaa012a861ac20f37965043359ef23911dcc6cea7c9308ef97",
-    "lattice_result_sha256": "8f76a0accbe328354a7d863ac48f3c17b356103213d7a824b816e91c49660529",
+    "lattice_result_canonical_sha256": "a41d88d6d2081d3402de1fa8eb884b99ad5eb56ee5347f02e7650d35f906d557",
     "lattice_checkpoint_sha256": "ef77ff14d10c88a03a7b034a6bebb106e53df37ecbbcd910e275c65dd416c04e",
     "lattice_protocol_sha256": "2ebd4f7ba9c363dc9c281d8c31597d2ba0e6e16f23b3867a388c7810f0d33596",
-    "coordinate_result_sha256": "204ad2f1e9b3c7480f09826b2e7848f836c150ed2f44002c46773fc05d990392",
+    "coordinate_result_canonical_sha256": "a69349e9f40e6e4a2da1a6babb341030beab1f0d343dd1c50262fa72789b85df",
     "coordinate_checkpoint_sha256": "fbede266e8db4d96fb33ce0bb1b902c6f0716fc181d31c1c1b24434bef0ab895",
     "coordinate_protocol_sha256": "8376c13676a872a8cb039c2cb5fcd42249cd109533d7433c3852dfbf3a0c794c"
   },
