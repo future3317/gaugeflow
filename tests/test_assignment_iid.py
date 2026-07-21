@@ -7,6 +7,7 @@ import torch
 
 from gaugeflow.production.assignment_data import AssignmentCarrierExample
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
+from scripts.evaluate_h1a_assignment_iid_precision import _updated_checks
 from scripts.train_h1a_assignment_iid import (
     _material_bootstrap_ucb95,
     _relabel_example,
@@ -101,3 +102,28 @@ def test_exact_panel_is_validated_before_training() -> None:
     assert len(panel) == 6
     with pytest.raises(ValueError, match="iid_calibration_supported has 3"):
         _select_exact_panel(groups, maximum_sites=4, carriers_per_split=4)
+
+
+def test_precision_closure_recomputes_only_likelihood_checks() -> None:
+    checks = {"iid_calibration_mc_precision": False, "exact_composition": True}
+    summary = {
+        "relative_nll_reduction_from_uniform": 0.5,
+        "model_minus_uniform_nll_ucb95": -1.0,
+        "maximum_order_elbo_mc_standard_error": 0.2,
+    }
+    acceptance = {
+        "iid_calibration_relative_nll_reduction_min": 0.05,
+        "iid_test_relative_nll_reduction_min": 0.05,
+        "iid_calibration_model_minus_uniform_nll_ucb95_max": 0.0,
+        "iid_test_model_minus_uniform_nll_ucb95_max": 0.0,
+        "maximum_order_elbo_mc_standard_error": 0.6,
+    }
+    updated = _updated_checks(
+        checks,
+        {
+            "iid_calibration_supported": summary,
+            "iid_test_supported": summary,
+        },
+        acceptance,
+    )
+    assert all(updated.values())
