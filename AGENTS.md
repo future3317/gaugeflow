@@ -158,6 +158,17 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   generated-assignment/generated-lattice exposure panel. It does not qualify a
   full-from-prior coordinate trajectory, free joint H1a, capacity scaling,
   tensor conditioning, relaxation, DFT, or DFPT.
+- The separately frozen 18-material supported-IID generated-side exposure Gate
+  now passes. Clean-A/clean-L, generated-A/clean-L, clean-A/generated-L, and
+  generated-A/generated-L full reverse-SDE-100 coordinate rollouts have
+  normalized nearest-neighbour W1 `0.38042/0.40121/0.40345/0.41566`; assignment,
+  lattice, and joint additive degradations are `0.02079/0.02303/0.03525`. Every
+  arm has minimum-distance validity `1.0` and zero failures, assignment counts
+  are exact, and lattice permutation residual is `1.01e-6`. This authorizes the
+  preregistered GaugeFlow-base capacity screen only. The evidence is bounded to
+  oracle composition and supported parent actions; generated composition,
+  unseen-action closure, free joint M1, tensor work, relaxation, DFT, and DFPT
+  remain blocked.
 - J0 confirms that this qualified field materially uses both side modalities:
   at coordinate time 0.5, controlled element and lattice corruption increase
   score MSE by `5.335x` and `5.163x`, and both give `9.939x`. J1 therefore ran

@@ -1,0 +1,229 @@
+{
+  "additive_w1_degradation": {
+    "assignment": 0.020786329823720195,
+    "joint": 0.035245681237637105,
+    "lattice": 0.02302779072014588
+  },
+  "assignment_protocol_identity": "dfb29ec8ec943dcaa012a861ac20f37965043359ef23911dcc6cea7c9308ef97",
+  "boundary": "This Gate uses oracle composition and a supported-IID parent-carrier subset. It cannot qualify generated composition, unseen parent actions, free joint M1, tensor conditioning, relaxation, DFT, or DFPT. No paired endpoint RMS is defined for a generated lattice.",
+  "checks": {
+    "assignment_exposure_w1": true,
+    "clean_clean_cell_scaled_w1": true,
+    "clean_clean_nearest_w1": true,
+    "clean_clean_valid_distance": true,
+    "exact_assignment_composition": true,
+    "finite_positive_generated_lattice": true,
+    "joint_exposure_w1": true,
+    "joint_valid_distance": true,
+    "lattice_composition_permutation_invariance": true,
+    "lattice_exposure_w1": true,
+    "panel_size": true,
+    "zero_sampling_failures": true
+  },
+  "classification": "generated_side_coordinate_closure_pass",
+  "decision": "qualify only the bounded supported-IID generated-side coordinate exposure and permit the preregistered GaugeFlow-base capacity screen",
+  "exact_assignment_composition": true,
+  "geometry": {
+    "clean_assignment_clean_lattice": {
+      "cell_scaled_nearest_w1_normalized": 0.3087120121423385,
+      "finite": true,
+      "graph_minimum_quantiles_angstrom": [
+        1.7311099641877083,
+        1.792882033967388,
+        2.5401650134929605,
+        3.0702873002667515,
+        3.161862337240208
+      ],
+      "node_nearest_quantiles_angstrom": [
+        1.8065082258305527,
+        1.928789238063219,
+        2.7363282353323033,
+        3.2971558141271897,
+        3.486690765887989
+      ],
+      "node_nearest_w1_angstrom": 0.2290733800786876,
+      "node_nearest_w1_normalized": 0.38041921450492044,
+      "valid_minimum_distance_fraction": 1.0
+    },
+    "clean_assignment_generated_lattice": {
+      "cell_scaled_nearest_w1_normalized": 0.36744461116352845,
+      "finite": true,
+      "graph_minimum_quantiles_angstrom": [
+        1.6271608753588795,
+        1.6923520813984276,
+        2.414848737512817,
+        3.128668162396558,
+        3.1472713610886576
+      ],
+      "node_nearest_quantiles_angstrom": [
+        1.7067324944953868,
+        1.9121868039695435,
+        2.7193027147914712,
+        3.2720174341727555,
+        3.3777983912292044
+      ],
+      "node_nearest_w1_angstrom": 0.2429398033687768,
+      "node_nearest_w1_normalized": 0.4034470052250663,
+      "valid_minimum_distance_fraction": 1.0
+    },
+    "generated_assignment_clean_lattice": {
+      "cell_scaled_nearest_w1_normalized": 0.3277400722273236,
+      "finite": true,
+      "graph_minimum_quantiles_angstrom": [
+        1.6734606351846335,
+        1.6844997441974916,
+        2.5555360618478256,
+        3.0698140430776446,
+        3.159243647460483
+      ],
+      "node_nearest_quantiles_angstrom": [
+        1.6869348417738574,
+        1.8642534248258227,
+        2.7336313857349923,
+        3.2823674827818765,
+        3.4638781433431536
+      ],
+      "node_nearest_w1_angstrom": 0.24159008441589305,
+      "node_nearest_w1_normalized": 0.40120554432864064,
+      "valid_minimum_distance_fraction": 1.0
+    },
+    "generated_assignment_generated_lattice": {
+      "cell_scaled_nearest_w1_normalized": 0.3774224054713336,
+      "finite": true,
+      "graph_minimum_quantiles_angstrom": [
+        1.7227294780276055,
+        1.78671741215648,
+        2.404789421297875,
+        3.1328079131434934,
+        3.1701779818883655
+      ],
+      "node_nearest_quantiles_angstrom": [
+        1.8008323976260847,
+        1.926537842560445,
+        2.726901591176829,
+        3.266388590439169,
+        3.374751181522039
+      ],
+      "node_nearest_w1_angstrom": 0.2502969330077605,
+      "node_nearest_w1_normalized": 0.41566489574255755,
+      "valid_minimum_distance_fraction": 1.0
+    }
+  },
+  "lattice_permutation_residual_max_abs": 1.0132789611816406e-06,
+  "panel_identity_sha256": "07d5be8c01afff476bc4a0cf6c819f3db728029d942a479a14bfc38f5e6358d4",
+  "panel_materials": 18,
+  "panel_rows": [
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+      "material_id_audit_only": "alex<agm001181615>",
+      "nodes": 6
+    },
+    {
+      "assignment_site_accuracy": 0.6666666865348816,
+      "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+      "material_id_audit_only": "alex<agm001187464>",
+      "nodes": 6
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+      "material_id_audit_only": "alex<agm002230475>",
+      "nodes": 10
+    },
+    {
+      "assignment_site_accuracy": 0.0,
+      "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+      "material_id_audit_only": "alex<agm002384806>",
+      "nodes": 6
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "f433643ea538d88d45b5808b561e90b4d14337e7f09d08a535677e8382b93dad",
+      "material_id_audit_only": "alex<agm002386175>",
+      "nodes": 6
+    },
+    {
+      "assignment_site_accuracy": 0.3333333432674408,
+      "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+      "material_id_audit_only": "alex<agm003565512>",
+      "nodes": 18
+    },
+    {
+      "assignment_site_accuracy": 0.3333333432674408,
+      "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+      "material_id_audit_only": "alex<agm003567603>",
+      "nodes": 18
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+      "material_id_audit_only": "alex<agm003568325>",
+      "nodes": 18
+    },
+    {
+      "assignment_site_accuracy": 0.0,
+      "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+      "material_id_audit_only": "alex<agm003641248>",
+      "nodes": 10
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+      "material_id_audit_only": "alex<agm004470427>",
+      "nodes": 10
+    },
+    {
+      "assignment_site_accuracy": 0.800000011920929,
+      "embedding_key": "8dbfa48ec9af5b0d6cd7cf7d9c1326dfa648b5837cbe4a2b9700e0c5d8636dd7",
+      "material_id_audit_only": "alex<agm004518837>",
+      "nodes": 10
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+      "material_id_audit_only": "alex<agm004651781>",
+      "nodes": 12
+    },
+    {
+      "assignment_site_accuracy": 0.6666666865348816,
+      "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+      "material_id_audit_only": "alex<agm004656075>",
+      "nodes": 12
+    },
+    {
+      "assignment_site_accuracy": 0.9000000357627869,
+      "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+      "material_id_audit_only": "alex<agm004704936>",
+      "nodes": 20
+    },
+    {
+      "assignment_site_accuracy": 0.9000000357627869,
+      "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+      "material_id_audit_only": "alex<agm004705500>",
+      "nodes": 20
+    },
+    {
+      "assignment_site_accuracy": 0.9000000357627869,
+      "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+      "material_id_audit_only": "alex<agm004705937>",
+      "nodes": 20
+    },
+    {
+      "assignment_site_accuracy": 0.8125,
+      "embedding_key": "0902aae47f6b437533b3dcce470baf1ae945c096bc67032dacaa68c2840e76da",
+      "material_id_audit_only": "alex<agm004733827>",
+      "nodes": 16
+    },
+    {
+      "assignment_site_accuracy": 1.0,
+      "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+      "material_id_audit_only": "mp-1110703",
+      "nodes": 10
+    }
+  ],
+  "protocol": "h1a_generated_side_coordinate_exposure_v1",
+  "protocol_sha256": "cb1dc78d6bb90a5dd61fcb66270975344e22679518990e3cf77fc6d415f762fa",
+  "qualified": true,
+  "sampling_failures": {}
+}
