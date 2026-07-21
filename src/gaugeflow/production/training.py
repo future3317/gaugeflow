@@ -34,6 +34,7 @@ class ProductionTrainingConfig:
     modality_time_mode: str = "shared"
     categorical_path: str = "absorbing_mask"
     composition_loss_weight: float = 0.0
+    composition_conditioning: bool = False
 
     def validate(self) -> None:
         if self.learning_rate <= 0.0 or self.weight_decay < 0.0:
@@ -46,7 +47,7 @@ class ProductionTrainingConfig:
             raise ValueError("training time interval is invalid")
         if self.precision not in {"fp32", "bf16"}:
             raise ValueError("training precision must be fp32 or bf16")
-        if self.categorical_path not in {"absorbing_mask", "uniform_replacement"}:
+        if self.categorical_path not in {"absorbing_mask", "uniform_replacement", "orderless_reveal"}:
             raise ValueError("unknown categorical training path")
         if self.composition_loss_weight < 0.0:
             raise ValueError("composition loss weight must be nonnegative")
@@ -54,6 +55,10 @@ class ProductionTrainingConfig:
             raise ValueError("training objective must be joint, coordinate, element or lattice")
         if self.coordinate_clean_side_information and self.objective != "coordinate":
             raise ValueError("clean element/lattice side information is coordinate-only")
+        if self.composition_conditioning and self.objective != "joint":
+            raise ValueError("sampled composition conditioning is defined only for the joint product-space objective")
+        if (self.categorical_path == "orderless_reveal") != self.composition_conditioning:
+            raise ValueError("orderless categorical reveal requires composition-conditioned joint training")
         if self.modality_time_mode not in {
             "shared",
             "independent_corner_mixture",

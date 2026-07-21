@@ -19,6 +19,11 @@ from .equivariant_denoiser import (
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeVolumeShape, project_lattice_state
 from .modality_task_measure import FiveRegimeTaskMeasure, ModalityNoiseTimes
+from .orderless_product_state import (
+    OrderlessPartialOccupation,
+    orderless_next_reveal_nll,
+    sample_orderless_partial_occupation,
+)
 from .quotient_score import factorized_translation_quotient_scaled_score
 from .schedules import (
     CosineNoiseSchedule,
@@ -46,6 +51,8 @@ class TensorFreeNoisyBatch:
     clean_volume_latent_target: torch.Tensor
     clean_shape_latent_target: torch.Tensor
     element_was_masked: torch.Tensor
+    composition_counts: torch.Tensor | None
+    orderless_occupation: OrderlessPartialOccupation | None
 
 
 @dataclass(frozen=True)
@@ -100,6 +107,7 @@ class TensorFreeHybridDiffusion(nn.Module):
         minimum_time: float = 1.0e-3,
         maximum_time: float = 0.999,
         categorical_path: str = "absorbing_mask",
+        composition_conditioning: bool = False,
     ) -> None:
         super().__init__()
         if not 0.0 < minimum_time < maximum_time < 1.0:
@@ -107,7 +115,8 @@ class TensorFreeHybridDiffusion(nn.Module):
         self.denoiser = denoiser
         self.lattice_standardizer = lattice_standardizer
         self.categorical: AbsorbingMaskDiffusion | UniformCategoricalDiffusion
-        if categorical_path == "absorbing_mask":
+        self.orderless_reveal = categorical_path == "orderless_reveal"
+        if categorical_path in {"absorbing_mask", "orderless_reveal"}:
             self.categorical = AbsorbingMaskDiffusion()
         elif categorical_path == "uniform_replacement":
             self.categorical = UniformCategoricalDiffusion()
@@ -121,6 +130,9 @@ class TensorFreeHybridDiffusion(nn.Module):
         self.task_measure = FiveRegimeTaskMeasure()
         self.minimum_time = float(minimum_time)
         self.maximum_time = float(maximum_time)
+        self.composition_conditioning = bool(composition_conditioning)
+        if self.orderless_reveal and not self.composition_conditioning:
+            raise ValueError("orderless categorical reveal requires an observed sampled composition")
 
     def sample_time(
         self,
@@ -343,6 +355,13 @@ class TensorFreeHybridDiffusion(nn.Module):
             raise ValueError("modality regime must be an int64 graph vector")
 
         clean_coordinates = project_translation_state(clean_fractional_coordinates, batch, graphs)
+        composition_counts: torch.Tensor | None = None
+        if self.composition_conditioning:
+            flat_target = batch * self.categorical.element_count + clean_elements
+            composition_counts = torch.bincount(
+                flat_target,
+                minlength=graphs * self.categorical.element_count,
+            ).reshape(graphs, self.categorical.element_count)
         node_counts, clean_volume_latent, clean_shape_latent, _ = self._encode_clean_lattice(
             clean_lattice,
             batch,
@@ -350,7 +369,23 @@ class TensorFreeHybridDiffusion(nn.Module):
             fractional_to_cartesian,
         )
 
-        if clean_side_information:
+        orderless_occupation: OrderlessPartialOccupation | None = None
+        if self.orderless_reveal:
+            assert composition_counts is not None
+            orderless_occupation = sample_orderless_partial_occupation(
+                clean_elements,
+                batch,
+                composition_counts,
+                selected_element_time,
+                generator=generator,
+                vocabulary_size=self.categorical.element_count,
+                mask_token=self.categorical.mask_index,
+            )
+            categorical_state = MaskedCategoricalState(
+                tokens=orderless_occupation.partial_tokens,
+                clean_mask=orderless_occupation.partial_tokens != self.categorical.mask_index,
+            )
+        elif clean_side_information:
             # This is observed side information, not the t=0 endpoint of the
             # categorical process.  Construct it directly so its contract is
             # independent of the categorical schedule implementation.
@@ -444,6 +479,8 @@ class TensorFreeHybridDiffusion(nn.Module):
             clean_volume_latent_target=clean_volume_latent,
             clean_shape_latent_target=clean_shape_latent,
             element_was_masked=~categorical_state.clean_mask,
+            composition_counts=composition_counts,
+            orderless_occupation=orderless_occupation,
         )
 
     def forward(
@@ -501,24 +538,40 @@ class TensorFreeHybridDiffusion(nn.Module):
             condition_present,
             shape_projector,
             fractional_to_cartesian,
+            composition_counts=noisy.composition_counts,
             **denoiser_time_arguments,
         )
 
-        node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
-        mask = noisy.element_was_masked.to(node_cross_entropy)
-        element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
-        predicted_composition = torch.softmax(prediction.clean_composition_logits.float(), dim=-1)
-        flat_target = batch * self.categorical.element_count + clean_elements
-        target_counts = torch.bincount(
-            flat_target,
-            minlength=graphs * self.categorical.element_count,
-        ).reshape(graphs, self.categorical.element_count)
-        target_composition = target_counts.to(predicted_composition)
-        target_composition = target_composition / target_composition.sum(
-            dim=-1,
-            keepdim=True,
-        )
-        composition_loss = -(target_composition * predicted_composition.clamp_min(1.0e-8).log()).sum(dim=-1).mean()
+        if noisy.orderless_occupation is None:
+            node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
+            mask = noisy.element_was_masked.to(node_cross_entropy)
+            element_loss = (node_cross_entropy * mask).sum() / mask.sum().clamp_min(1.0)
+        else:
+            _, element_loss = orderless_next_reveal_nll(
+                prediction.clean_element_logits,
+                noisy.orderless_occupation,
+                vocabulary_size=self.categorical.element_count,
+            )
+            mask = noisy.element_was_masked.to(element_loss)
+        if noisy.composition_counts is None:
+            predicted_composition = torch.softmax(prediction.clean_composition_logits.float(), dim=-1)
+            flat_target = batch * self.categorical.element_count + clean_elements
+            target_counts = torch.bincount(
+                flat_target,
+                minlength=graphs * self.categorical.element_count,
+            ).reshape(graphs, self.categorical.element_count)
+            target_composition = target_counts.to(predicted_composition)
+            target_composition = target_composition / target_composition.sum(
+                dim=-1,
+                keepdim=True,
+            )
+            composition_loss = -(
+                target_composition * predicted_composition.clamp_min(1.0e-8).log()
+            ).sum(dim=-1).mean()
+        else:
+            # The sampled composition is supplied by the qualified upstream
+            # law, so relearning it from the endpoint would be target leakage.
+            composition_loss = prediction.clean_element_logits.new_zeros(())
 
         # The analytic score components become a reverse-drift tangent under
         # the fractional Brownian mobility. With r=fL, its Cartesian target is

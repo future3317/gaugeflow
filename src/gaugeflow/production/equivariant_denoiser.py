@@ -419,8 +419,9 @@ class HybridCrystalDenoiser(nn.Module):
         log_shape: torch.Tensor,
         batch: torch.Tensor,
         graph_time: torch.Tensor,
+        composition_counts: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Summarize the unordered composition without graph geometry."""
+        """Summarize current state and, when supplied, sampled composition."""
 
         graphs = graph_time.shape[0]
         element_nodes = self.element_embedding(element_tokens)
@@ -439,6 +440,20 @@ class HybridCrystalDenoiser(nn.Module):
             dim=-1,
         )
         graph_state = self.state_embedding(state_features)
+        if composition_counts is not None:
+            if (
+                composition_counts.shape != (graphs, CHEMICAL_ELEMENT_COUNT)
+                or composition_counts.dtype != torch.long
+                or composition_counts.device != element_tokens.device
+                or bool((composition_counts < 0).any())
+            ):
+                raise ValueError("composition condition must be nonnegative [graphs,elements] int64")
+            if not torch.equal(composition_counts.sum(dim=1), counts.long()):
+                raise ValueError("composition condition does not close on packed node counts")
+            composition_probability = composition_counts.to(element_nodes)
+            composition_probability = composition_probability / counts.unsqueeze(-1)
+            composition_token = composition_probability @ self.element_embedding.weight[:CHEMICAL_ELEMENT_COUNT]
+            graph_state = graph_state + composition_token
         lattice_context = torch.cat(
             (composition_mean, composition_scaled_sum, graph_time, graph_state),
             dim=-1,
@@ -453,6 +468,8 @@ class HybridCrystalDenoiser(nn.Module):
         batch: torch.Tensor,
         lattice_time: torch.Tensor,
         shape_projector: torch.Tensor,
+        *,
+        composition_counts: torch.Tensor | None = None,
     ) -> LatticeDenoiserOutput:
         """Denoise ``L_t`` without accepting coordinates or building edges."""
 
@@ -483,6 +500,7 @@ class HybridCrystalDenoiser(nn.Module):
             log_shape,
             batch,
             graph_time,
+            composition_counts,
         )
         return LatticeDenoiserOutput(
             clean_volume_latent=self.volume_head(lattice_context).squeeze(-1),
@@ -504,6 +522,7 @@ class HybridCrystalDenoiser(nn.Module):
         *,
         element_time: torch.Tensor | None = None,
         lattice_time: torch.Tensor | None = None,
+        composition_counts: torch.Tensor | None = None,
     ) -> HybridDenoiserOutput:
         """Denoise one hybrid state.
 
@@ -550,6 +569,7 @@ class HybridCrystalDenoiser(nn.Module):
             log_shape,
             batch,
             graph_time,
+            composition_counts,
         )
         initial_nodes = element_nodes + self.degree_embedding(degree.log1p().unsqueeze(-1))
         node_state = graph_state[batch]
@@ -610,47 +630,53 @@ class HybridCrystalDenoiser(nn.Module):
                 )
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_context = torch.cat((graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1)
-        chemical = element_tokens < CHEMICAL_ELEMENT_COUNT
-        flat_chemical = batch[chemical] * CHEMICAL_ELEMENT_COUNT + element_tokens[chemical]
-        current_counts = torch.bincount(
-            flat_chemical,
-            minlength=graphs * CHEMICAL_ELEMENT_COUNT,
-        ).reshape(graphs, CHEMICAL_ELEMENT_COUNT)
-        observed_total = current_counts.sum(dim=-1, keepdim=True)
-        uniform_composition = current_counts.new_full(
-            current_counts.shape,
-            1.0 / CHEMICAL_ELEMENT_COUNT,
-            dtype=nodes.dtype,
-        )
-        current_composition = current_counts.to(nodes) / observed_total.clamp_min(1).to(nodes)
-        current_composition = torch.where(
-            observed_total > 0,
-            current_composition,
-            uniform_composition,
-        )
-        active_element_time = element_time if element_time is not None else time
-        categorical_survival = torch.cos(0.5 * math.pi * active_element_time).square()
-        base_composition = (
-            categorical_survival.unsqueeze(-1) * current_composition
-            + (1.0 - categorical_survival.unsqueeze(-1)) * uniform_composition
-        )
-        composition_residual = self.composition_head(
-            torch.cat(
-                (
-                    graph_context,
-                    current_composition,
-                    categorical_survival.unsqueeze(-1),
-                ),
-                dim=-1,
+        if composition_counts is None:
+            chemical = element_tokens < CHEMICAL_ELEMENT_COUNT
+            flat_chemical = batch[chemical] * CHEMICAL_ELEMENT_COUNT + element_tokens[chemical]
+            current_counts = torch.bincount(
+                flat_chemical,
+                minlength=graphs * CHEMICAL_ELEMENT_COUNT,
+            ).reshape(graphs, CHEMICAL_ELEMENT_COUNT)
+            observed_total = current_counts.sum(dim=-1, keepdim=True)
+            uniform_composition = current_counts.new_full(
+                current_counts.shape,
+                1.0 / CHEMICAL_ELEMENT_COUNT,
+                dtype=nodes.dtype,
             )
-        )
-        composition_logits = (
-            base_composition.clamp_min(1.0e-8).log() + (1.0 - categorical_survival.unsqueeze(-1)) * composition_residual
-        )
-        # The graph posterior is predicted only from the current state.  Its
-        # expected species embedding gives every site a permutation-invariant
-        # global abundance context without exposing target formula or counts.
-        composition_probability = torch.softmax(composition_logits.float(), dim=-1)
+            current_composition = current_counts.to(nodes) / observed_total.clamp_min(1).to(nodes)
+            current_composition = torch.where(
+                observed_total > 0,
+                current_composition,
+                uniform_composition,
+            )
+            active_element_time = element_time if element_time is not None else time
+            categorical_survival = torch.cos(0.5 * math.pi * active_element_time).square()
+            base_composition = (
+                categorical_survival.unsqueeze(-1) * current_composition
+                + (1.0 - categorical_survival.unsqueeze(-1)) * uniform_composition
+            )
+            composition_residual = self.composition_head(
+                torch.cat(
+                    (
+                        graph_context,
+                        current_composition,
+                        categorical_survival.unsqueeze(-1),
+                    ),
+                    dim=-1,
+                )
+            )
+            composition_logits = (
+                base_composition.clamp_min(1.0e-8).log()
+                + (1.0 - categorical_survival.unsqueeze(-1)) * composition_residual
+            )
+            composition_probability = torch.softmax(composition_logits.float(), dim=-1)
+        else:
+            composition_probability = composition_counts.to(nodes)
+            composition_probability = composition_probability / composition_probability.sum(dim=-1, keepdim=True)
+            composition_logits = composition_probability.clamp_min(1.0e-8).log()
+        # A sampled composition is a graph-level observed state, not a target
+        # endpoint.  In the product-space path it is injected before every
+        # message block and again here for the categorical readout.
         composition_token = composition_probability @ self.element_embedding.weight[:118].float()
         node_context = torch.cat(
             (

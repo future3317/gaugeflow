@@ -328,6 +328,7 @@ def main() -> None:
             modality_time_mode=str(training_spec.get("modality_time_mode", "shared")),
             categorical_path=str(training_spec.get("categorical_path", "absorbing_mask")),
             composition_loss_weight=float(training_spec.get("composition_loss_weight", 0.0)),
+            composition_conditioning=bool(training_spec.get("composition_conditioning", False)),
         )
     )
     uses_explicit_modality_times = (
@@ -356,6 +357,7 @@ def main() -> None:
         minimum_time=training_config.minimum_time,
         maximum_time=training_config.maximum_time,
         categorical_path=training_config.categorical_path,
+        composition_conditioning=training_config.composition_conditioning,
     )
     trainer = ProductionTrainer(diffusion, training_config)
     if args.resume is not None:

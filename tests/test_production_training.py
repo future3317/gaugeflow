@@ -142,6 +142,65 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     )
 
 
+def test_orderless_product_path_conditions_on_exact_composition_and_has_finite_gradients():
+    torch.manual_seed(110)
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    diffusion = TensorFreeHybridDiffusion(
+        _small_model(),
+        _standardizer(),
+        coordinate_sigma_min=0.005,
+        coordinate_sigma_max=0.5,
+        categorical_path="orderless_reveal",
+        composition_conditioning=True,
+    )
+    output = diffusion(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint.shape_projector,
+        blueprint.fractional_to_cartesian,
+        time=torch.tensor([0.35, 0.65]),
+        generator=torch.Generator().manual_seed(111),
+    )
+    state = output.noisy.orderless_occupation
+    assert state is not None
+    assert output.noisy.composition_counts is not None
+    assert torch.equal(state.composition_counts, output.noisy.composition_counts)
+    assert torch.equal(state.remaining_counts.sum(dim=1), torch.bincount(
+        blueprint.batch, minlength=2
+    ) - state.reveal_count)
+    expected_log_composition = output.noisy.composition_counts.to(torch.float32)
+    expected_log_composition = expected_log_composition / expected_log_composition.sum(dim=1, keepdim=True)
+    assert torch.allclose(
+        output.prediction.clean_composition_logits.float(),
+        expected_log_composition.clamp_min(1.0e-8).log(),
+        atol=1.0e-6,
+        rtol=1.0e-6,
+    )
+    assert torch.isfinite(output.loss)
+    output.loss.backward()
+    assert any(
+        parameter.grad is not None and float(parameter.grad.detach().abs().sum()) > 0.0
+        for parameter in diffusion.denoiser.parameters()
+    )
+
+
+def test_orderless_product_path_requires_joint_composition_conditioning() -> None:
+    try:
+        ProductionTrainingConfig(objective="joint", categorical_path="orderless_reveal").validate()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("orderless product path accepted without sampled composition")
+    try:
+        ProductionTrainingConfig(objective="coordinate", composition_conditioning=True).validate()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("coordinate-only objective accepted product composition conditioning")
+
+
 def test_coordinate_loss_uses_volume_normalized_cartesian_chart() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     diffusion = TensorFreeHybridDiffusion(
