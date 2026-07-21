@@ -208,7 +208,22 @@ def evaluate_checkpoint(
         }
     generated_volume = torch.cat(volumes)
     generated_distance = torch.cat(distances)
-    count_classes = max(int(counts.max()), int(reference["node_counts"].max())) + 1
+    if evaluation.get("node_count_reference") != "declared_train_only_empirical_prior":
+        raise ValueError("A1 node-count metric must reference its declared sampling law")
+    count_classes = (
+        max(
+            int(counts.max()),
+            int(reference["node_counts"].max()),
+            int(node_prior.support.max()),
+        )
+        + 1
+    )
+    generated_count_histogram = torch.bincount(counts, minlength=count_classes)
+    prior_count_histogram = torch.zeros(count_classes, dtype=torch.float64)
+    prior_count_histogram[node_prior.support] = node_prior.probabilities
+    validation_count_histogram = torch.bincount(
+        reference["node_counts"], minlength=count_classes
+    )
     points = int(evaluation["wasserstein_quantile_points"])
     return {
         "checkpoint": str(checkpoint),
@@ -235,9 +250,14 @@ def evaluate_checkpoint(
         )
         / robust_scale(reference["volume_per_atom"]),
         "element_marginal_jsd": jensen_shannon(elements, reference["element_histogram"]),
+        "node_count_reference": "declared_train_only_empirical_prior",
         "node_count_jsd": jensen_shannon(
-            torch.bincount(counts, minlength=count_classes),
-            torch.bincount(reference["node_counts"], minlength=count_classes),
+            generated_count_histogram,
+            prior_count_histogram,
+        ),
+        "node_count_jsd_to_formula_prototype_disjoint_validation_diagnostic": jensen_shannon(
+            generated_count_histogram,
+            validation_count_histogram,
         ),
         "formula_uniqueness_fraction": len(set(formulas)) / len(formulas),
         "generated_minimum_distance_quantiles_angstrom": torch.quantile(

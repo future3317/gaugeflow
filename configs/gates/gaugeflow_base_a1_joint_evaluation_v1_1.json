@@ -1,0 +1,48 @@
+{
+  "protocol": "gaugeflow_base_a1_joint_evaluation_v1_1",
+  "status_before_run": "frozen_not_run",
+  "scope": "Evaluation-only qualification of the one-pass 34.28M exact-count GaugeFlow-base joint product model with the node-count sample checked against its declared train-only sampling law.",
+  "training_protocol": "gaugeflow_base_a1_joint_product_v1",
+  "training_protocol_canonical_sha256": "a2861ab5b79bbf557919414818681ce08ced2e7a1b99b345fa62ef3fe0c2a4df",
+  "evaluator_sha256": "e85dad4b187a61beef70c8eae7dc2d258c1d3b02773da756598eed96f2e6c36c",
+  "superseded_result": {
+    "protocol": "gaugeflow_base_a1_joint_evaluation_v1",
+    "result_sha256": "ed78efce6e4bfef630df790753487715dedf49afc111981c1debc454f09428ce",
+    "decision": "failed_and_frozen",
+    "reason": "v1 compared samples from the explicitly train-fitted p(N) to the formula/prototype-disjoint validation marginal. That split has a different node-count support distribution, producing checkpoint-invariant JSD 0.36364 even though the sampler exactly used its declared law. v1.1 changes only the reference distribution of this engineering closure metric; all samples, thresholds, seeds, geometry references and model weights remain unchanged."
+  },
+  "composition_checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
+  "evaluation": {
+    "validation_graphs": 512,
+    "validation_seed": 15705,
+    "free_samples": 512,
+    "sampling_seed": 15706,
+    "batch_size": 64,
+    "reverse_steps": 100,
+    "continuous_mode": "reverse_sde",
+    "time_grid": "uniform_log_alpha",
+    "wasserstein_quantile_points": 513,
+    "wasserstein_normalization": "validation_IQR",
+    "nearest_neighbor_definition": "minimum_nonself_periodic_distance_with_8_angstrom_complete_radius_multigraph",
+    "node_count_reference": "declared_train_only_empirical_prior",
+    "checkpoints": [0, 2111, 4221, 8441]
+  },
+  "acceptance": {
+    "finite_training_and_sampling": true,
+    "exact_composition_fraction": 1.0,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "finite_positive_lattice_fraction": 1.0,
+    "minimum_distance_fraction_at_0_5_angstrom_min": 0.98,
+    "normalized_nearest_neighbor_wasserstein_max": 0.75,
+    "normalized_volume_wasserstein_max": 0.50,
+    "element_marginal_jsd_max": 0.10,
+    "node_count_jsd_max": 0.01,
+    "formula_uniqueness_fraction_min": 0.50
+  },
+  "decision_rule": {
+    "pass": "qualify GaugeFlow-base A1 only in its tensor-free free-generation scope",
+    "fail": "stop before physical pretraining and attribute assignment, lattice and coordinate oracle-free gaps without tensor, RL, relaxation, DFT or DFPT",
+    "boundary": "This Gate does not qualify OOD parent carriers, tensor conditioning, physical representation transfer, relaxation, DFT, DFPT or materials discovery."
+  }
+}
