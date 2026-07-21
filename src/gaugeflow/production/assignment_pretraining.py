@@ -8,7 +8,7 @@ import torch
 
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
-from .assignment_training import AssignmentCarrierBatch
+from .assignment_training import AssignmentCarrierBatch, sample_uniform_reveal_ranks
 from .autoregressive_assignment import complete_pair_rbf
 from .state_projection import sorted_segment_sum
 
@@ -60,6 +60,34 @@ def ddp_global_mean_loss(
     if local_values.ndim != 1 or global_count < 1 or world_size < 1:
         raise ValueError("DDP global-mean inputs are invalid")
     return local_values.sum() * (world_size / global_count)
+
+
+def sample_rank_sharded_reveal_ranks(
+    global_node_counts: torch.Tensor,
+    *,
+    rank: int,
+    world_size: int,
+    generator: torch.Generator,
+    device: torch.device | str,
+) -> torch.Tensor:
+    """Sample one global order stream, then take the no-padding rank shard."""
+    if (
+        global_node_counts.ndim != 1
+        or global_node_counts.dtype != torch.long
+        or global_node_counts.numel() < world_size
+        or bool((global_node_counts < 1).any())
+        or world_size < 1
+        or rank < 0
+        or rank >= world_size
+    ):
+        raise ValueError("rank-sharded reveal-order inputs are invalid")
+    counts = global_node_counts.to(device="cpu")
+    graph = torch.repeat_interleave(torch.arange(counts.numel()), counts)
+    global_rank = sample_uniform_reveal_ranks(graph, generator=generator)
+    local = global_rank[graph.remainder(world_size) == rank].to(device=device)
+    if local.numel() != int(counts[rank::world_size].sum()):
+        raise RuntimeError("rank-sharded reveal order lost a carrier node")
+    return local
 
 
 def complete_pair_indices(

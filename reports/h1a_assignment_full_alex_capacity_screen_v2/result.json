@@ -1,0 +1,69 @@
+{
+  "boundary": "This screen selects assignment representation capacity only. It does not qualify parent-conditioned assignment, p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "checks": {
+    "all_finite": true,
+    "all_loss_descent": true,
+    "capacity_selected": true,
+    "resource_support": true
+  },
+  "data": {
+    "allowed_index_sha256": "a6cc844abb12fbc91e2342ac7f248565c8d9ea152a7cbca4bcd4da0f54133335",
+    "fit_index_sha256": "8c63d1ed16d1ca08e1196d811f38085879a2e2657dbc673fcb535b655c50f4b8",
+    "gold_leakage": 0,
+    "validation_index_sha256": "030326a9dbb08171df5f0586b7d793e5ab2a841e60e3afeebafb56be8984ca0b"
+  },
+  "decision": "freeze_the_selected_width_for_ddp_software_qualification_and_full_alex_pretraining",
+  "hardware": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4090",
+    "dtype": "float32",
+    "torch": "2.5.1+cu124"
+  },
+  "implementation_commit": "15dab06118b0524b064113d975dabf86f7cd8719",
+  "protocol": "h1a_assignment_full_alex_capacity_screen_v2",
+  "protocol_sha256": "01d8b06a1eb04692dc621b5e0b1affeeb5d51af4d2f0af7685dda3240f91ae8f",
+  "qualified": true,
+  "rows": [
+    {
+      "final_validation_nll": 5.011470248854948,
+      "finite_updates": 100,
+      "first_train_nll": 9.405507299583405,
+      "graphs_per_second": 328.4582772566342,
+      "hidden_dim": 256,
+      "initial_validation_nll": 9.666057177473704,
+      "last_train_nll": 4.648082377738319,
+      "parameters": 3885568,
+      "peak_cuda_mib": 4835.66015625,
+      "validation_nll_reduction": 4.654586928618755
+    },
+    {
+      "final_validation_nll": 5.6525351845930345,
+      "finite_updates": 100,
+      "first_train_nll": 9.862508523627184,
+      "graphs_per_second": 224.71416484858366,
+      "hidden_dim": 384,
+      "initial_validation_nll": 9.812041794317338,
+      "last_train_nll": 5.172637099691201,
+      "parameters": 8531712,
+      "peak_cuda_mib": 7254.60888671875,
+      "validation_nll_reduction": 4.159506609724303
+    },
+    {
+      "final_validation_nll": 6.093659582105829,
+      "finite_updates": 100,
+      "first_train_nll": 8.574625818291679,
+      "graphs_per_second": 175.7155416166586,
+      "hidden_dim": 512,
+      "initial_validation_nll": 8.857679823810031,
+      "last_train_nll": 5.420126123412047,
+      "parameters": 14980096,
+      "peak_cuda_mib": 9695.197265625,
+      "validation_nll_reduction": 2.764020241704202
+    }
+  ],
+  "selection": {
+    "best_final_validation_nll": 5.011470248854948,
+    "rule": "choose the smallest width within 1 percent of the best final fixed-order validation NLL, subject to finite gradients and resource checks",
+    "selected_hidden_dim": 256
+  }
+}

@@ -11,7 +11,9 @@ from gaugeflow.production.assignment_pretraining import (
     ddp_global_mean_loss,
     exact_periodic_pair_distances,
     rank_shard_of_global_batch,
+    sample_rank_sharded_reveal_ranks,
 )
+from gaugeflow.production.assignment_training import sample_uniform_reveal_ranks
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
@@ -183,3 +185,23 @@ def test_ddp_loss_scaling_matches_one_global_mean_with_uneven_ranks() -> None:
     )
     (distributed - torch.cat((rank_zero, rank_one)).mean()).backward()
     assert float(parameter.grad.abs()) <= 1e-6
+
+
+def test_rank_sharded_reveal_order_is_world_size_invariant() -> None:
+    counts = torch.tensor([3, 5, 2, 4, 1], dtype=torch.long)
+    generator = torch.Generator().manual_seed(5705)
+    graph = torch.repeat_interleave(torch.arange(counts.numel()), counts)
+    expected = sample_uniform_reveal_ranks(graph, generator=generator)
+    observed: list[torch.Tensor] = []
+    for rank in range(2):
+        observed.append(
+            sample_rank_sharded_reveal_ranks(
+                counts,
+                rank=rank,
+                world_size=2,
+                generator=torch.Generator().manual_seed(5705),
+                device="cpu",
+            )
+        )
+    for rank, local in enumerate(observed):
+        assert torch.equal(local, expected[graph.remainder(2) == rank])

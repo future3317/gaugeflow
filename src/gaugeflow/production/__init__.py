@@ -17,6 +17,7 @@ from .assignment_pretraining import (
     ddp_global_mean_loss,
     exact_periodic_pair_distances,
     rank_shard_of_global_batch,
+    sample_rank_sharded_reveal_ranks,
 )
 from .assignment_scorer import (
     OrbitAwareAssignmentScorer,
@@ -172,6 +173,7 @@ __all__ = [
     "ddp_global_mean_loss",
     "exact_periodic_pair_distances",
     "rank_shard_of_global_batch",
+    "sample_rank_sharded_reveal_ranks",
     "count_constrained_assignment",
     "count_projected_assignment",
     "occupation_block_composition_feasible",

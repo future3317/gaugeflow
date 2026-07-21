@@ -23,11 +23,9 @@ from gaugeflow.production.assignment_pretraining import (
     compile_masked_assignment_batch,
     ddp_global_mean_loss,
     rank_shard_of_global_batch,
+    sample_rank_sharded_reveal_ranks,
 )
-from gaugeflow.production.assignment_training import (
-    OrderlessAssignmentTrainingModule,
-    sample_uniform_reveal_ranks,
-)
+from gaugeflow.production.assignment_training import OrderlessAssignmentTrainingModule
 from gaugeflow.production.autoregressive_assignment import GeometryAwareRemainingCountScorer
 
 
@@ -103,11 +101,20 @@ def _build_model(protocol: dict[str, Any]) -> GeometryAwareRemainingCountScorer:
     )
 
 
-def _gather_generator_states(generator: torch.Generator, *, rank: int, world_size: int):
+def _gather_shared_generator_state(
+    generator: torch.Generator,
+    *,
+    rank: int,
+    world_size: int,
+) -> torch.Tensor | None:
     local = generator.get_state().cpu()
     gathered: list[torch.Tensor | None] | None = [None] * world_size if rank == 0 else None
     dist.gather_object(local, gathered, dst=0)
-    return gathered
+    if gathered is None:
+        return None
+    if any(value is None or not torch.equal(value, gathered[0]) for value in gathered):
+        raise RuntimeError("rank reveal-order generator states diverged")
+    return gathered[0]
 
 
 def _save_checkpoint(
@@ -118,16 +125,16 @@ def _save_checkpoint(
     next_update: int,
     history: list[dict[str, float]],
     elapsed_seconds: float,
-    generator_states: list[torch.Tensor | None] | None,
+    generator_state: torch.Tensor | None,
     protocol_sha256: str,
     implementation_commit: str,
     allowed_index_sha256: str,
     permutation_sha256: str,
 ) -> None:
-    if generator_states is None or any(value is None for value in generator_states):
-        raise ValueError("rank-zero checkpoint is missing reveal-order generator states")
+    if generator_state is None:
+        raise ValueError("rank-zero checkpoint is missing the reveal-order generator state")
     payload = {
-        "schema": 1,
+        "schema": 2,
         "task": "full_alex_masked_assignment_pretraining",
         "protocol_sha256": protocol_sha256,
         "implementation_commit": implementation_commit,
@@ -138,7 +145,7 @@ def _save_checkpoint(
         "model": module.scorer.state_dict(),
         "optimizer": optimizer.state_dict(),
         "history": history,
-        "reveal_generator_states": generator_states,
+        "reveal_generator_state": generator_state,
     }
     temporary = path.with_suffix(path.suffix + ".tmp")
     torch.save(payload, temporary)
@@ -151,7 +158,6 @@ def _load_checkpoint(
     module: OrderlessAssignmentTrainingModule,
     optimizer: torch.optim.Optimizer,
     generator: torch.Generator,
-    rank: int,
     protocol_sha256: str,
     implementation_commit: str,
     allowed_index_sha256: str,
@@ -160,7 +166,7 @@ def _load_checkpoint(
 ) -> tuple[int, list[dict[str, float]], float]:
     payload = torch.load(path, map_location=device, weights_only=False)
     expected = {
-        "schema": 1,
+        "schema": 2,
         "task": "full_alex_masked_assignment_pretraining",
         "protocol_sha256": protocol_sha256,
         "implementation_commit": implementation_commit,
@@ -169,12 +175,12 @@ def _load_checkpoint(
     }
     if any(payload.get(key) != value for key, value in expected.items()):
         raise ValueError("assignment pretraining checkpoint identity mismatch")
-    states = payload.get("reveal_generator_states")
-    if not isinstance(states, list) or rank >= len(states) or not isinstance(states[rank], torch.Tensor):
-        raise ValueError("assignment pretraining checkpoint has no rank RNG state")
+    state = payload.get("reveal_generator_state")
+    if not isinstance(state, torch.Tensor):
+        raise ValueError("assignment pretraining checkpoint has no reveal-order RNG state")
     module.scorer.load_state_dict(payload["model"])
     optimizer.load_state_dict(payload["optimizer"])
-    generator.set_state(states[rank].cpu())
+    generator.set_state(state.cpu())
     history = payload.get("history")
     if not isinstance(history, list):
         raise ValueError("assignment pretraining checkpoint history is invalid")
@@ -264,7 +270,7 @@ def main() -> None:
         lr=float(training["learning_rate"]),
         weight_decay=float(training["weight_decay"]),
     )
-    reveal_generator = torch.Generator(device=device).manual_seed(seed + 100_003 * rank)
+    reveal_generator = torch.Generator().manual_seed(seed + 100_003)
     checkpoint_path = args.output_dir / "checkpoint.pt"
     history: list[dict[str, float]] = []
     start_update = 0
@@ -277,7 +283,6 @@ def main() -> None:
             module=module,
             optimizer=optimizer,
             generator=reveal_generator,
-            rank=rank,
             protocol_sha256=protocol_sha256,
             implementation_commit=implementation_commit,
             allowed_index_sha256=allowed_sha256,
@@ -337,10 +342,14 @@ def main() -> None:
                 selected.atom_types,
                 maximum_refinement_candidates=maximum_candidates,
             ).carrier
+            global_node_counts = dataset.node_counts[micro_global]
             for _ in range(path_samples):
-                reveal_rank = sample_uniform_reveal_ranks(
-                    carrier.batch,
+                reveal_rank = sample_rank_sharded_reveal_ranks(
+                    global_node_counts,
+                    rank=rank,
+                    world_size=world_size,
                     generator=reveal_generator,
+                    device=device,
                 )
                 local_nll = ddp(carrier, reveal_rank)
                 nll_sum += local_nll.detach().to(torch.float64).sum()
@@ -378,7 +387,7 @@ def main() -> None:
                 )
         save = completed % checkpoint_interval == 0 or completed == updates
         if save:
-            generator_states = _gather_generator_states(
+            generator_state = _gather_shared_generator_state(
                 reveal_generator,
                 rank=rank,
                 world_size=world_size,
@@ -391,7 +400,7 @@ def main() -> None:
                     next_update=completed,
                     history=history,
                     elapsed_seconds=time.perf_counter() - started,
-                    generator_states=generator_states,
+                    generator_state=generator_state,
                     protocol_sha256=protocol_sha256,
                     implementation_commit=implementation_commit,
                     allowed_index_sha256=allowed_sha256,
