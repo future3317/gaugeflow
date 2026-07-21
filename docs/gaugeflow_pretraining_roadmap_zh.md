@@ -217,6 +217,13 @@ collision、异常密度与短键项使用按元素对和密度校准的平滑 g
 4. functional 作为明确 metadata condition 或 auxiliary label，不静默混成一个能量标尺；
 5. Alex test 始终作为固定外部 benchmark，另设 LeMat IID/OOD 评估。
 
+等待 Stage-B 期间已经完成独立的 source-balanced 数据流小测，但尚未启动 Stage-C
+训练。对 16,196 条 bounded train rows（PBE/PBEsol/SCAN 原始计数分别为
+13,826/665/1,705），1,000 个全局 batch 的采样比例为
+0.32967/0.33353/0.33680；两个 rank 各取得 32,000 条且 checkpoint 后精确恢复。
+该实现位于独立模块，不改动 Stage-B 冻结哈希。它只证明数据混合与恢复接口成立，不能
+作为 LeMat 表征学习或生成效果证据。
+
 大数据阶段优先采用 packed graphs、按 node/edge 数动态 batching、向量化 segment
 reduction、BF16 scalar path + FP32 geometry path、预取与 shard-local shuffle。任何加速
 都必须保持 exact count、群作用和 periodic reference test。

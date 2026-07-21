@@ -443,6 +443,15 @@ panel. Full PBE feature-cache construction, the CUDA runner resume smoke and
 the formal one-pass Stage-B run are still pending; no physical effect has yet
 been qualified and LeMat full training remains later.
 
+Stage-C preparation is isolated from the hash-bound Stage-B runtime.  The
+LeMat dataset now exposes split-local functional groups to a deterministic
+balanced stream in a separate module.  On the 16,196-row bounded train split,
+1,000 global batches of 64 produced PBE/PBEsol/SCAN fractions
+`0.32967/0.33353/0.33680` despite the raw `13,826/665/1,705` imbalance.  Two
+rank shards contained 32,000 examples each and resumed exactly.  This is only
+data-stream software evidence; it neither authorizes full LeMat continuation
+nor changes the frozen Stage-B implementation hashes.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`

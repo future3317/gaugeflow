@@ -1,0 +1,29 @@
+{
+  "batches": 1000,
+  "dataset_functional_rows": {
+    "pbe": 13826,
+    "pbesol": 665,
+    "scan": 1705
+  },
+  "exact_resume": true,
+  "finite": true,
+  "functional_names": [
+    "pbe",
+    "pbesol",
+    "scan"
+  ],
+  "global_batch_size": 64,
+  "index": "/home/workspace/lrh/DATA/T2C-Flow/processed/lemat_training_index_smoke_v1",
+  "maximum_absolute_balance_error": 0.0036614583333333117,
+  "rank_examples": [
+    32000,
+    32000
+  ],
+  "sampled_functional_fraction": {
+    "pbe": 0.329671875,
+    "pbesol": 0.33353125,
+    "scan": 0.336796875
+  },
+  "schema": "gaugeflow.lemat_balanced_stream_smoke.v1",
+  "world_size": 2
+}

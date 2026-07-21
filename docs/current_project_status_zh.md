@@ -415,3 +415,9 @@ MatPES/Alex cursor、CPU/CUDA RNG 和显式 noise generator。PBE-only feature l
 以及完全复用 A1-v1.1 口径的 512-reference/512-sample generation retention。完整 PBE
 teacher cache、CUDA runner resume smoke 与正式单遍训练仍未运行，因此尚无 Stage-B 物理
 效果结论；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。
+
+Stage-C 的 LeMat 数据流已做 bounded 软件准备：训练 split 可以直接提供 functional group，
+独立的 source-balanced rank stream 在不 padding 的情况下让各 functional 分别按自身
+permutation 无放回遍历并独立 wrap。16,196-row 小测的 PBE/PBEsol/SCAN 采样比例为
+0.32967/0.33353/0.33680，双 rank 数量相等且恢复精确。这没有改动 Stage-B 的哈希绑定，
+也不构成运行完整 LeMat continued pretraining 的授权。

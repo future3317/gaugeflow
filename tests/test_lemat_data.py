@@ -69,4 +69,6 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     dataset = IndexedLeMatDataset(root, "train", require_qualified=False)
     assert dataset[0].functional == "pbe"
     assert dataset[0].element_tokens.numel() == 2
+    assert dataset.functional_names == ("pbe",)
+    assert torch.equal(dataset.functional_group_index, torch.zeros(len(dataset), dtype=torch.long))
     assert normalize_external_material_id("alex<AGM001>") == "agm001"

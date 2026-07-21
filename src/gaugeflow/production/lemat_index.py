@@ -61,11 +61,20 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
             str(manifest["physical_label_policy"])
         )
         self.source_paths: list[Path] = []
+        source_functionals: list[str] = []
         for source in manifest.get("sources", []):
             path = Path(source["path"])
             if verify_hashes and source.get("sha256") and sha256_file(path) != source["sha256"]:
                 raise ValueError("LeMat parquet hash mismatch")
             self.source_paths.append(path)
+            source_functionals.append(str(source["functional"]).lower())
+        self.functional_names = tuple(dict.fromkeys(source_functionals))
+        if not self.functional_names:
+            raise ValueError("LeMat index has no functional sources")
+        functional_lookup = {name: index for index, name in enumerate(self.functional_names)}
+        source_to_functional = torch.tensor(
+            [functional_lookup[name] for name in source_functionals], dtype=torch.long
+        )
         index_path = self.root / str(manifest["index_file"])
         if verify_hashes and sha256_file(index_path) != manifest["index_sha256"]:
             raise ValueError("LeMat index tensor hash mismatch")
@@ -102,6 +111,9 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
         ).squeeze(1)
         if self.indices.numel() < 1:
             raise ValueError(f"LeMat index has no {split} rows")
+        self._functional_group_index = source_to_functional[
+            self.source_index[self.indices].long()
+        ].contiguous()
         self._files: dict[int, pq.ParquetFile] = {}
         self._group_cache: OrderedDict[tuple[int, int], Any] = OrderedDict()
 
@@ -113,6 +125,12 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
 
     def __len__(self) -> int:
         return int(self.indices.shape[0])
+
+    @property
+    def functional_group_index(self) -> torch.Tensor:
+        """Return split-local functional groups for balanced sampling."""
+
+        return self._functional_group_index
 
     def __getitem__(self, index: int) -> MatPESPhysicalRecord:
         if not -len(self) <= index < len(self):
