@@ -149,7 +149,7 @@ def _load_assignment_model(
     model = GeometryAwareRemainingCountScorer(
         site_feature_dim=examples[0].site_features.shape[1],
         graph_feature_dim=examples[0].graph_features.shape[0],
-        radial_channels=int(model_spec["radial_channels"]),
+        radial_channels=examples[0].edge_rbf.shape[1],
         hidden_dim=int(model_spec["hidden_dim"]),
         message_blocks=int(model_spec["message_blocks"]),
         maximum_sites=int(model_spec["maximum_sites"]),
