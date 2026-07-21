@@ -10,6 +10,7 @@ from typing import Any
 
 import torch
 from diagnose_h1a_coordinate_generator import (
+    _coordinate_side_time_arguments,
     _score_calibration,
     _translation_aligned_endpoint_rms,
 )
@@ -100,6 +101,7 @@ def _rollout_closure(
                         present,
                         blueprint.shape_projector,
                         blueprint.fractional_to_cartesian,
+                        **_coordinate_side_time_arguments(runtime, time_from),
                     )
                 coordinates = quotient_coordinate_reverse_step(
                     coordinates,

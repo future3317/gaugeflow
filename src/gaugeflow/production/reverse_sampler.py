@@ -216,6 +216,33 @@ class GeneratedLatticeBatch:
     diagnostics: LatticeReverseDiagnostics
 
 
+@dataclass(frozen=True)
+class CoordinateReverseInitialState:
+    """Reusable translation-quotient coordinate prior draw."""
+
+    fractional_coordinates: torch.Tensor
+
+
+@dataclass(frozen=True)
+class CoordinateReverseDiagnostics:
+    """Coordinate-only reverse trajectory diagnostics."""
+
+    time: torch.Tensor
+    coordinate_step_rms: torch.Tensor
+
+
+@dataclass(frozen=True)
+class GeneratedCoordinateBatch:
+    """Coordinate sample with observed element and lattice side states."""
+
+    element_tokens: torch.Tensor
+    atomic_numbers: torch.Tensor
+    fractional_coordinates: torch.Tensor
+    lattice: torch.Tensor
+    batch: torch.Tensor
+    diagnostics: CoordinateReverseDiagnostics
+
+
 class TensorFreeReverseSampler:
     """Hybrid categorical and continuous reverse process for crystal states."""
 
@@ -248,6 +275,156 @@ class TensorFreeReverseSampler:
         )
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
+
+    def initialize_coordinate_state(
+        self,
+        blueprint: ParentBlueprintBatch,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> CoordinateReverseInitialState:
+        """Draw a reusable uniform torus prior on the translation quotient."""
+
+        coordinates = torch.rand(
+            (int(blueprint.batch.numel()), 3),
+            dtype=blueprint.shape_projector.dtype,
+            device=blueprint.shape_projector.device,
+            generator=generator,
+        )
+        return CoordinateReverseInitialState(
+            fractional_coordinates=project_translation_state(
+                coordinates,
+                blueprint.batch,
+                int(blueprint.node_counts.numel()),
+            )
+        )
+
+    def sample_coordinates(
+        self,
+        element_tokens: torch.Tensor,
+        lattice: torch.Tensor,
+        blueprint: ParentBlueprintBatch,
+        *,
+        steps: int = 100,
+        initial_state: CoordinateReverseInitialState | None = None,
+        initialization_generator: torch.Generator | None = None,
+        continuous_generator: torch.Generator | None = None,
+        continuous_mode: ContinuousReverseMode = "reverse_sde",
+        time_grid: str = "uniform_log_alpha",
+    ) -> GeneratedCoordinateBatch:
+        """Reverse only ``F_t`` while holding observed ``(A_0,L_0)`` fixed."""
+
+        if steps < 1:
+            raise ValueError("coordinate reverse sampler requires at least one step")
+        if self.denoiser.modality_time_conditioning != "separate":
+            raise ValueError("coordinate reverse sampling requires the unified separate-clock backbone")
+        continuous_mode = _validate_continuous_mode(continuous_mode)
+        device = blueprint.batch.device
+        dtype = blueprint.shape_projector.dtype
+        graphs = int(blueprint.node_counts.numel())
+        nodes = int(blueprint.batch.numel())
+        if element_tokens.shape != (nodes,) or element_tokens.dtype != torch.long:
+            raise ValueError("coordinate conditioning requires one int64 element token per node")
+        if lattice.shape != (graphs, 3, 3):
+            raise ValueError("coordinate conditioning requires one 3x3 lattice per graph")
+        if element_tokens.device != device or lattice.device != device or lattice.dtype != dtype:
+            raise ValueError("coordinate side states must match the blueprint dtype and device")
+        self.categorical.validate_clean(element_tokens)
+        if not bool(torch.isfinite(lattice).all()) or bool((torch.linalg.det(lattice) <= 0.0).any()):
+            raise ValueError("coordinate conditioning lattices must be finite and right handed")
+        if self.guardrails is not None:
+            self.guardrails.validate(lattice @ lattice.transpose(-1, -2))
+
+        if initial_state is None:
+            initial_state = self.initialize_coordinate_state(
+                blueprint,
+                generator=initialization_generator,
+            )
+        coordinates = initial_state.fractional_coordinates
+        if (
+            coordinates.shape != (nodes, 3)
+            or coordinates.dtype != dtype
+            or coordinates.device != device
+            or not bool(torch.isfinite(coordinates).all())
+        ):
+            raise ValueError("initial coordinates must match the blueprint")
+        coordinates = project_translation_state(coordinates.clone(), blueprint.batch, graphs)
+
+        lattice_state = LatticeVolumeShape.from_lattice(
+            lattice,
+            blueprint.fractional_to_cartesian,
+        )
+        log_volume = lattice_state.log_volume
+        log_shape = project_lattice_state(
+            lattice_state.log_shape,
+            blueprint.shape_projector,
+        )
+        clean_time = torch.zeros((graphs,), dtype=dtype, device=device)
+        condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
+        condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
+        times = reverse_time_grid(
+            self.vp_schedule,
+            self.maximum_time,
+            steps,
+            dtype=dtype,
+            device=device,
+            spacing=time_grid,
+        )
+        coordinate_steps: list[torch.Tensor] = []
+        was_training = self.denoiser.training
+        self.denoiser.eval()
+        trajectory_error: RuntimeError | ValueError | None = None
+        try:
+            with torch.no_grad():
+                for index in range(steps):
+                    time_from = times[index].expand(graphs)
+                    time_to = times[index + 1].expand(graphs)
+                    prediction = self.denoiser(
+                        element_tokens,
+                        coordinates,
+                        log_volume,
+                        log_shape,
+                        blueprint.batch,
+                        time_from,
+                        condition,
+                        condition_present,
+                        blueprint.shape_projector,
+                        blueprint.fractional_to_cartesian,
+                        element_time=clean_time,
+                        lattice_time=clean_time,
+                    )
+                    next_coordinates = quotient_coordinate_reverse_step(
+                        coordinates,
+                        prediction.coordinate_fractional_scaled_score,
+                        self.coordinate_schedule.variance(time_from),
+                        self.coordinate_schedule.variance(time_to),
+                        blueprint.batch,
+                        graphs,
+                        generator=continuous_generator,
+                        mode=continuous_mode,
+                    )
+                    coordinate_steps.append((next_coordinates - coordinates).square().mean().sqrt())
+                    coordinates = next_coordinates
+        except (RuntimeError, ValueError) as error:
+            trajectory_error = error
+        finally:
+            self.denoiser.train(was_training)
+        if trajectory_error is not None:
+            raise SamplingFailure(
+                f"coordinate reverse trajectory failed: {trajectory_error}"
+            ) from trajectory_error
+        if not bool(torch.isfinite(coordinates).all()):
+            raise SamplingFailure("coordinate reverse trajectory produced a non-finite state")
+        return GeneratedCoordinateBatch(
+            element_tokens=element_tokens,
+            atomic_numbers=self.categorical.decode(element_tokens),
+            fractional_coordinates=wrap01(coordinates),
+            lattice=lattice,
+            batch=blueprint.batch,
+            diagnostics=CoordinateReverseDiagnostics(
+                time=times[1:].detach().cpu(),
+                coordinate_step_rms=torch.stack(coordinate_steps).detach().cpu(),
+            ),
+        )
 
     def initialize_lattice_state(
         self,

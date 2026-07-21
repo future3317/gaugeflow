@@ -686,6 +686,46 @@ def test_lattice_reverse_sampler_never_calls_full_geometry_forward() -> None:
     assert bool((torch.linalg.det(generated.lattice) > 0.0).all())
 
 
+def test_coordinate_reverse_sampler_holds_side_states_and_replays_common_noise() -> None:
+    elements, _, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+    )
+    initial = sampler.initialize_coordinate_state(
+        blueprint,
+        generator=torch.Generator().manual_seed(124),
+    )
+    outputs = [
+        sampler.sample_coordinates(
+            elements,
+            lattice,
+            blueprint,
+            steps=3,
+            initial_state=initial,
+            continuous_generator=torch.Generator().manual_seed(125),
+        )
+        for _ in range(2)
+    ]
+    torch.testing.assert_close(outputs[0].fractional_coordinates, outputs[1].fractional_coordinates)
+    torch.testing.assert_close(outputs[0].lattice, lattice)
+    torch.testing.assert_close(outputs[0].element_tokens, elements)
+    assert outputs[0].diagnostics.coordinate_step_rms.shape == (3,)
+    assert torch.isfinite(outputs[0].fractional_coordinates).all()
+    assert bool(
+        ((outputs[0].fractional_coordinates >= 0.0) & (outputs[0].fractional_coordinates < 1.0)).all()
+    )
+
+
 def test_uniform_element_training_is_self_correcting_and_uses_composition_loss() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     model = HybridCrystalDenoiser(

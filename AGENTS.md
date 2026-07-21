@@ -150,6 +150,14 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   element-token list, not composition counts alone. It is the conditional-coordinate
   substrate. Historical free joint H1a remains failed. Do not rerun retired
   local/topology branches on the old mismatched task.
+- The same clean-side coordinate law is now strictly requalified in the current
+  unified separate-clock backbone at seed 5705. Its one-pass validation ratio
+  is `0.29798`, t=.6 explained fraction is `0.64857`, t=.005/.1 endpoint RMS is
+  `0.03626/0.04751 A`, and reverse-SDE-100 rollout RMS from t=.1/.2 is
+  `0.05177/0.07040 A`, with zero failures. This authorizes only the frozen
+  generated-assignment/generated-lattice exposure panel. It does not qualify a
+  full-from-prior coordinate trajectory, free joint H1a, capacity scaling,
+  tensor conditioning, relaxation, DFT, or DFPT.
 - J0 confirms that this qualified field materially uses both side modalities:
   at coordinate time 0.5, controlled element and lattice corruption increase
   score MSE by `5.335x` and `5.163x`, and both give `9.939x`. J1 therefore ran

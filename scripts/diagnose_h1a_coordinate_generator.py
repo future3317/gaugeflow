@@ -23,6 +23,22 @@ from gaugeflow.production.runtime import TensorFreeEmaRuntime, load_tensor_free_
 from gaugeflow.production.state_projection import graph_mean
 
 
+def _coordinate_side_time_arguments(
+    runtime: TensorFreeEmaRuntime,
+    coordinate_time: torch.Tensor,
+) -> dict[str, torch.Tensor]:
+    """Return the explicit side clocks required by the checkpoint contract."""
+
+    if not runtime.model.uses_side_modality_times:
+        return {}
+    side_time = (
+        torch.zeros_like(coordinate_time)
+        if bool(runtime.training_config.get("coordinate_clean_side_information", False))
+        else coordinate_time
+    )
+    return {"element_time": side_time, "lattice_time": side_time}
+
+
 def _fixed_indices(length: int, count: int, seed: int) -> torch.Tensor:
     if count < 1 or count > length:
         raise ValueError("diagnostic subset size is outside the dataset")
@@ -151,6 +167,7 @@ def _score_calibration(
                     condition_present,
                     blueprint.shape_projector,
                     blueprint.fractional_to_cartesian,
+                    **_coordinate_side_time_arguments(runtime, time),
                 )
             sigma = diffusion.coordinate_schedule.sigma(time)[packed.batch].unsqueeze(-1)
             predicted = prediction.coordinate_fractional_scaled_score.float() / sigma

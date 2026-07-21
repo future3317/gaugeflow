@@ -1,0 +1,141 @@
+{
+  "absolute_ratio_improvement": 0.19583905443908062,
+  "boundary": "This requalifies only p(F|A_clean,L_clean,N). It does not qualify generated assignment/lattice exposure, joint M1, tensor conditioning, relaxation, DFT or DFPT.",
+  "checkpoint_sha256": "fbede266e8db4d96fb33ce0bb1b902c6f0716fc181d31c1c1b24434bef0ab895",
+  "checks": {
+    "coordinate_contract_recorded": true,
+    "finite_training": true,
+    "material_improvement": true,
+    "memory": true,
+    "sampling_failures": true,
+    "t005_endpoint": true,
+    "t01_endpoint": true,
+    "t01_rollout": true,
+    "t02_rollout": true,
+    "t06_explained_fraction": true,
+    "tensor_bypass": true,
+    "throughput": true,
+    "validation_coordinate_ratio": true
+  },
+  "conditional_rollout": [
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.004286184441298246,
+        0.05510740913450718,
+        0.0816396065056324,
+        0.08406761847436428,
+        0.11376246064901352
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.05176630616188049,
+      "sampling_failures": 0,
+      "start_time": 0.1,
+      "steps": 100
+    },
+    {
+      "endpoint_rms_quantiles_angstrom": [
+        0.002739624585956335,
+        0.06977185979485512,
+        0.1184630535542965,
+        0.13094395473599432,
+        0.1763082891702652
+      ],
+      "failure": null,
+      "mean_endpoint_rms_angstrom": 0.07040110230445862,
+      "sampling_failures": 0,
+      "start_time": 0.2,
+      "steps": 100
+    }
+  ],
+  "decision": "pass",
+  "decision_text": "qualify the current conditional coordinate substrate and permit only the frozen generated-side exposure audit",
+  "historical_h1a_status_changed": false,
+  "peak_cuda_memory_mib": 4975.19189453125,
+  "protocol": "h1a_coordinate_clean_side_current_v1",
+  "protocol_sha256": "8376c13676a872a8cb039c2cb5fcd42249cd109533d7433c3852dfbf3a0c794c",
+  "qualified": true,
+  "reference_validation_ratio": 0.4938223400498962,
+  "score_calibration": [
+    {
+      "endpoint_rms_angstrom": 0.03625612886933409,
+      "oracle_endpoint_rms_angstrom": 2.3084982656255917e-07,
+      "prediction_target_cosine": 0.7164029769134593,
+      "prediction_to_target_norm": 0.7586443043991133,
+      "score_explained_fraction": 0.5114489280420088,
+      "score_mse_per_component": 16503.500959429824,
+      "time": 0.005,
+      "zero_score_mse_per_component": 33780.50301535088
+    },
+    {
+      "endpoint_rms_angstrom": 0.04750732634183805,
+      "oracle_endpoint_rms_angstrom": 2.2615340590645854e-07,
+      "prediction_target_cosine": 0.7940809069723409,
+      "prediction_to_target_norm": 0.8533944549380272,
+      "score_explained_fraction": 0.6270463995441586,
+      "score_mse_per_component": 5270.707922149123,
+      "time": 0.1,
+      "zero_score_mse_per_component": 14132.342242324561
+    },
+    {
+      "endpoint_rms_angstrom": 0.12012626135870136,
+      "oracle_endpoint_rms_angstrom": 2.3328325214707562e-07,
+      "prediction_target_cosine": 0.9151165945459578,
+      "prediction_to_target_norm": 0.9847118453607397,
+      "score_explained_fraction": 0.8325949053085557,
+      "score_mse_per_component": 142.57389108758224,
+      "time": 0.4,
+      "zero_score_mse_per_component": 851.6699647066886
+    },
+    {
+      "endpoint_rms_angstrom": 0.19033181597588364,
+      "oracle_endpoint_rms_angstrom": 2.2740615206732095e-07,
+      "prediction_target_cosine": 0.9147615264849576,
+      "prediction_to_target_norm": 0.9706332933045024,
+      "score_explained_fraction": 0.8336670419310829,
+      "score_mse_per_component": 56.23868547406113,
+      "time": 0.5,
+      "zero_score_mse_per_component": 338.10909231085526
+    },
+    {
+      "endpoint_rms_angstrom": 0.4698989734158563,
+      "oracle_endpoint_rms_angstrom": 2.527310160346275e-07,
+      "prediction_target_cosine": 0.8091105818560885,
+      "prediction_to_target_norm": 0.8871514098274065,
+      "score_explained_fraction": 0.648569548142488,
+      "score_mse_per_component": 51.20351369757401,
+      "time": 0.6,
+      "zero_score_mse_per_component": 145.70027562191612
+    }
+  ],
+  "seed": 5705,
+  "topology_module_authorized": false,
+  "training_throughput_graphs_per_second": 499.22341446342045,
+  "validation": {
+    "0": {
+      "coordinate": 1.0287084765732288,
+      "element": 0.0,
+      "shape": 1.2553935535252094,
+      "tensor_candidate_count": 0.0,
+      "total": 3.640519991517067,
+      "volume": 1.3564179465174675
+    },
+    "2111": {
+      "coordinate": 0.4803959894925356,
+      "element": 0.0,
+      "shape": 1.259071473032236,
+      "tensor_candidate_count": 0.0,
+      "total": 3.1150064021348953,
+      "volume": 1.3755389265716076
+    },
+    "8441": {
+      "coordinate": 0.30653793178498745,
+      "element": 0.0,
+      "shape": 1.2603482194244862,
+      "tensor_candidate_count": 0.0,
+      "total": 2.9650719314813614,
+      "volume": 1.3981857858598232
+    }
+  },
+  "validation_coordinate_ratio": 0.2979832856108156,
+  "validation_indices_sha256": "127f42a8a10c424ea7a93c1f9a38c7e4a4b9b01c7cd2f056aacf6bf691a31d8a"
+}
