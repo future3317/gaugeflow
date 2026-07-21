@@ -1,0 +1,104 @@
+{
+  "datasets": [
+    {
+      "atom_count": {
+        "maximum": 144.0,
+        "mean": 9.6015625,
+        "minimum": 2.0
+      },
+      "cell_volume_angstrom3": {
+        "maximum": 4055.885986328125,
+        "mean": 218.93790980428457,
+        "minimum": 11.386533737182617
+      },
+      "energy_per_atom_ev": {
+        "maximum": -0.9066237211227417,
+        "mean": -5.8535811306210235,
+        "minimum": -11.925630569458008
+      },
+      "failure_reasons": {},
+      "force_rms_ev_per_angstrom": {
+        "maximum": 2.2790660858154297,
+        "mean": 0.49027318401687126,
+        "minimum": 0.0
+      },
+      "functionals": {
+        "PBE": 512
+      },
+      "invalid_rows": 0,
+      "label_presence": {
+        "energy": {
+          "count": 512,
+          "fraction": 1.0
+        },
+        "forces": {
+          "count": 512,
+          "fraction": 1.0
+        },
+        "stress": {
+          "count": 512,
+          "fraction": 1.0
+        }
+      },
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-train.jsonl",
+      "rows_seen": 512,
+      "stress_kelvin_norm_gpa": {
+        "maximum": 195.7454376220703,
+        "mean": 11.400008908578457,
+        "minimum": 0.007071804255247116
+      },
+      "valid_rows": 512
+    },
+    {
+      "atom_count": {
+        "maximum": 108.0,
+        "mean": 7.869140625,
+        "minimum": 2.0
+      },
+      "cell_volume_angstrom3": {
+        "maximum": 8306.2158203125,
+        "mean": 198.45697989687324,
+        "minimum": 10.280417442321777
+      },
+      "energy_per_atom_ev": {
+        "maximum": -4.221563816070557,
+        "mean": -20.23484433069825,
+        "minimum": -75.45712280273438
+      },
+      "failure_reasons": {},
+      "force_rms_ev_per_angstrom": {
+        "maximum": 15.502293586730957,
+        "mean": 0.5842485887769726,
+        "minimum": 0.0
+      },
+      "functionals": {
+        "r2SCAN": 512
+      },
+      "invalid_rows": 0,
+      "label_presence": {
+        "energy": {
+          "count": 512,
+          "fraction": 1.0
+        },
+        "forces": {
+          "count": 512,
+          "fraction": 1.0
+        },
+        "stress": {
+          "count": 512,
+          "fraction": 1.0
+        }
+      },
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-R2SCAN/MatPES-R2SCAN-2025.2-train.jsonl",
+      "rows_seen": 512,
+      "stress_kelvin_norm_gpa": {
+        "maximum": 327.99896240234375,
+        "mean": 13.398810426897509,
+        "minimum": 1.9589495423133485e-05
+      },
+      "valid_rows": 512
+    }
+  ],
+  "max_rows_per_file": 512,
+  "schema": "gaugeflow.matpes_physical_data_audit.v1"
+}
