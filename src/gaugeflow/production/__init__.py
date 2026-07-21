@@ -14,7 +14,10 @@ from .assignment_pretraining import (
     MaskedAssignmentCompilation,
     compile_masked_assignment_batch,
     complete_pair_indices,
+    ddp_global_mean_loss,
     exact_periodic_pair_distances,
+    rank_shard_of_global_batch,
+    repeat_assignment_carrier_batch,
 )
 from .assignment_scorer import (
     OrbitAwareAssignmentScorer,
@@ -25,6 +28,7 @@ from .assignment_scorer import (
 from .assignment_training import (
     AssignmentCarrierBatch,
     OrderlessAssignmentObjective,
+    OrderlessAssignmentTrainingModule,
     orderless_assignment_objective,
     sample_uniform_reveal_ranks,
 )
@@ -147,6 +151,7 @@ __all__ = [
     "AssignmentCarrierExample",
     "MaskedAssignmentCompilation",
     "OrderlessAssignmentObjective",
+    "OrderlessAssignmentTrainingModule",
     "orderless_assignment_objective",
     "pack_assignment_carriers",
     "prepare_assignment_carrier_example",
@@ -165,7 +170,10 @@ __all__ = [
     "complete_pair_indices",
     "complete_pair_rbf",
     "compile_masked_assignment_batch",
+    "ddp_global_mean_loss",
     "exact_periodic_pair_distances",
+    "rank_shard_of_global_batch",
+    "repeat_assignment_carrier_batch",
     "count_constrained_assignment",
     "count_projected_assignment",
     "occupation_block_composition_feasible",

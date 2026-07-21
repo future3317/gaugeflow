@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
+from torch import nn
 
 from .autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
@@ -239,3 +240,22 @@ def orderless_assignment_objective(
         step_log_probability=step_log_probability,
         reveal_rank=reveal_rank,
     )
+
+
+class OrderlessAssignmentTrainingModule(nn.Module):
+    """DDP-safe wrapper whose forward pass is the per-graph orderless NLL."""
+
+    def __init__(self, scorer: GeometryAwareRemainingCountScorer) -> None:
+        super().__init__()
+        self.scorer = scorer
+
+    def forward(
+        self,
+        carrier: AssignmentCarrierBatch,
+        reveal_rank: torch.Tensor,
+    ) -> torch.Tensor:
+        return orderless_assignment_objective(
+            self.scorer,
+            carrier,
+            reveal_rank=reveal_rank,
+        ).graph_nll

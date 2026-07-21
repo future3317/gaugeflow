@@ -6,6 +6,7 @@ import torch
 
 from gaugeflow.production.assignment_training import (
     AssignmentCarrierBatch,
+    OrderlessAssignmentTrainingModule,
     orderless_assignment_objective,
     sample_uniform_reveal_ranks,
 )
@@ -125,6 +126,15 @@ def test_vectorized_objective_matches_explicit_next_site_average() -> None:
         )
         explicit = explicit + terms.mean()
     assert torch.allclose(vectorized.graph_log_probability[0], explicit, atol=1e-12, rtol=1e-12)
+
+
+def test_training_module_returns_the_same_per_graph_objective() -> None:
+    model = _model()
+    carrier = _carrier(model)
+    rank = torch.tensor([2, 0, 3, 1], dtype=torch.long)
+    expected = orderless_assignment_objective(model, carrier, reveal_rank=rank).graph_nll
+    observed = OrderlessAssignmentTrainingModule(model)(carrier, rank)
+    assert torch.equal(observed, expected)
 
 
 def test_rao_blackwellized_and_path_estimators_have_same_order_expectation() -> None:

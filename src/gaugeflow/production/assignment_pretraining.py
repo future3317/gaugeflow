@@ -23,6 +23,115 @@ class MaskedAssignmentCompilation:
     refined_edge_mask: torch.Tensor
 
 
+def rank_shard_of_global_batch(
+    permutation: torch.Tensor,
+    *,
+    update: int,
+    global_batch_size: int,
+    rank: int,
+    world_size: int,
+) -> torch.Tensor:
+    """Return one no-padding DDP shard of a globally ordered training batch."""
+    if (
+        permutation.ndim != 1
+        or permutation.dtype != torch.long
+        or permutation.numel() < 1
+        or update < 0
+        or global_batch_size < world_size
+        or world_size < 1
+        or rank < 0
+        or rank >= world_size
+    ):
+        raise ValueError("global assignment batch shard inputs are invalid")
+    start = update * global_batch_size
+    stop = min(start + global_batch_size, permutation.numel())
+    if start >= permutation.numel():
+        raise IndexError("assignment update lies beyond the global permutation")
+    return permutation[start:stop][rank::world_size]
+
+
+def ddp_global_mean_loss(
+    local_values: torch.Tensor,
+    *,
+    global_count: int,
+    world_size: int,
+) -> torch.Tensor:
+    """Scale a local sum so DDP's rank average equals the global mean."""
+    if local_values.ndim != 1 or global_count < 1 or world_size < 1:
+        raise ValueError("DDP global-mean inputs are invalid")
+    return local_values.sum() * (world_size / global_count)
+
+
+def repeat_assignment_carrier_batch(
+    carrier: AssignmentCarrierBatch,
+    *,
+    repeats: int,
+    vocabulary_size: int = CHEMICAL_ELEMENT_COUNT,
+) -> AssignmentCarrierBatch:
+    """Repeat compiled carriers without recomputing periodic geometry features."""
+    carrier.validate(vocabulary_size=vocabulary_size)
+    if repeats < 1:
+        raise ValueError("assignment carrier repeats must be positive")
+    if repeats == 1:
+        return carrier
+    device = carrier.batch.device
+    graphs = carrier.graph_count
+    node_counts = torch.bincount(carrier.batch, minlength=graphs)
+    node_offset = torch.cumsum(node_counts, dim=0) - node_counts
+    original_graph = torch.repeat_interleave(
+        torch.arange(graphs, device=device),
+        repeats,
+    )
+    replica_node_counts = node_counts[original_graph]
+    replica_node_offset = torch.cumsum(replica_node_counts, dim=0) - replica_node_counts
+    replica_batch = torch.repeat_interleave(
+        torch.arange(original_graph.numel(), device=device),
+        replica_node_counts,
+    )
+    local_node = torch.arange(replica_batch.numel(), device=device) - torch.repeat_interleave(
+        replica_node_offset,
+        replica_node_counts,
+    )
+    original_node = node_offset[original_graph[replica_batch]] + local_node
+
+    edge_graph = carrier.batch[carrier.edge_source]
+    edge_counts = torch.bincount(edge_graph, minlength=graphs)
+    edge_offset = torch.cumsum(edge_counts, dim=0) - edge_counts
+    replica_edge_counts = edge_counts[original_graph]
+    replica_edge_offset = torch.cumsum(replica_edge_counts, dim=0) - replica_edge_counts
+    replica_edge_graph = torch.repeat_interleave(
+        torch.arange(original_graph.numel(), device=device),
+        replica_edge_counts,
+    )
+    local_edge = torch.arange(replica_edge_graph.numel(), device=device) - torch.repeat_interleave(
+        replica_edge_offset,
+        replica_edge_counts,
+    )
+    original_edge = edge_offset[original_graph[replica_edge_graph]] + local_edge
+    source_local = carrier.edge_source[original_edge] - node_offset[
+        original_graph[replica_edge_graph]
+    ]
+    target_local = carrier.edge_target[original_edge] - node_offset[
+        original_graph[replica_edge_graph]
+    ]
+    edge_source = replica_node_offset[replica_edge_graph] + source_local
+    edge_target = replica_node_offset[replica_edge_graph] + target_local
+    repeated = AssignmentCarrierBatch(
+        site_features=carrier.site_features[original_node],
+        graph_features=carrier.graph_features[original_graph],
+        batch=replica_batch,
+        edge_source=edge_source,
+        edge_target=edge_target,
+        edge_rbf=carrier.edge_rbf[original_edge],
+        composition_counts=carrier.composition_counts[original_graph],
+        target_assignment=carrier.target_assignment[original_node],
+        parent_space_group=carrier.parent_space_group[original_graph],
+        cell_index=carrier.cell_index[original_graph],
+    )
+    repeated.validate(vocabulary_size=vocabulary_size)
+    return repeated
+
+
 def complete_pair_indices(
     node_counts: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
