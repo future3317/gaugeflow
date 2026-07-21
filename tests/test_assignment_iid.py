@@ -11,7 +11,7 @@ from scripts.train_h1a_assignment_iid import (
 
 
 def _example() -> AssignmentCarrierExample:
-    source, target = torch.nonzero(~torch.eye(4, dtype=torch.bool), as_tuple=True)
+    target, source = torch.nonzero(~torch.eye(4, dtype=torch.bool), as_tuple=True)
     assignment = torch.tensor([2, 5, 2, 5], dtype=torch.long)
     counts = torch.bincount(assignment, minlength=CHEMICAL_ELEMENT_COUNT)
     return AssignmentCarrierExample(
@@ -42,12 +42,17 @@ def test_iid_relabel_preserves_edges_counts_and_parent_orbit() -> None:
     order = torch.tensor([2, 0, 3, 1], dtype=torch.long)
     inverse = torch.argsort(order)
     changed = _relabel_example(example, order)
+    changed_key = changed.edge_target * 4 + changed.edge_source
+    expected_source = inverse[example.edge_source]
+    expected_target = inverse[example.edge_target]
+    expected_order = torch.argsort(expected_target * 4 + expected_source, stable=True)
     assert torch.equal(changed.site_features, example.site_features[order])
     assert torch.equal(changed.target_assignment, example.target_assignment[order])
     assert torch.equal(changed.composition_counts, example.composition_counts)
-    assert torch.equal(changed.edge_source, inverse[example.edge_source])
-    assert torch.equal(changed.edge_target, inverse[example.edge_target])
-    assert torch.equal(changed.edge_rbf, example.edge_rbf)
+    assert torch.equal(changed.edge_source, expected_source[expected_order])
+    assert torch.equal(changed.edge_target, expected_target[expected_order])
+    assert torch.equal(changed.edge_rbf, example.edge_rbf[expected_order])
+    assert bool((changed_key[1:] > changed_key[:-1]).all())
     original_orbit = torch.unique(
         example.target_assignment[example.parent_permutations],
         dim=0,

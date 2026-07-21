@@ -1,0 +1,37 @@
+{
+  "protocol": "h1a_assignment_deterministic_reduction_v1",
+  "status_before_run": "frozen_not_run",
+  "purpose": "Qualify strict-FP32 target-major deterministic reductions before any successor assignment training.",
+  "source": {
+    "checkpoint_sha256": "410a407ead5d9407efb3dbed49c3f79dc61351183f13c529612d85683805c160",
+    "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
+    "iid_role_result_normalized_sha256": "2b756a257b547e710aed377b1a5c660d0a526b72cdf0a4666b89d303d2a9a3f6"
+  },
+  "numerics": {
+    "dtype": "float32",
+    "matmul_precision": "highest",
+    "edge_order": "target_major_then_source",
+    "reduction": "torch_segment_reduce_without_atomics",
+    "relabel_carriers": 8,
+    "repeat_evaluations": 8,
+    "benchmark_materials": 16,
+    "paths_per_carrier": 8,
+    "benchmark_warmup": 5,
+    "benchmark_steps": 20,
+    "seed": 5705,
+    "cuda_device": 1
+  },
+  "acceptance": {
+    "raw_logit_relabel_max_abs": 0.00002,
+    "fixed_path_relabel_max_abs": 0.00002,
+    "exact_repeat_max_abs": 0.0,
+    "finite_gradient_fraction": 1.0,
+    "peak_cuda_mib_max": 11000.0,
+    "mean_train_step_ms_max": 100.0
+  },
+  "decision_rule": {
+    "pass": "authorize_freezing_a_successor_assignment_protocol_only",
+    "fail": "stop_and_repair_assignment_reduction_before_training"
+  },
+  "boundary": "This numerical qualification cannot pass assignment likelihood, p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT."
+}

@@ -39,6 +39,19 @@ the aggregate likelihood failure.  A successor protocol must preregister a
 supported-carrier IID calibration Gate and retain unseen carrier topology as a
 separate stress panel.  This diagnosis does not retroactively pass v1.
 
+The archived `read_only_audit.json` adds three checks without updating model
+parameters.  At 256 reveal-order samples per IID-test carrier, the mean path
+log-probability standard deviation is 3.1861 and the maximum is 8.1021; the
+corresponding Monte Carlo standard errors are 0.1991 and 0.5064.  Re-evaluating
+the historically exponentiated overflow rows with 1,024 orders removes every
+value above one, confirming finite-order Monte Carlo error rather than a
+normalized-probability implementation failure.  The input edge features are
+exactly relabel consistent.  Strict FP32 matmul reduces the maximum raw-logit
+residual to `5.52e-6`, FP64 gives `1.62e-14`, while the fixed-path objective
+retains a small reduction-order residual.  The successor therefore uses strict
+FP32 and deterministic sorted segment reductions rather than widening the
+threshold.
+
 Boundary: this result does not authorize generated composition, `p(N)`,
 lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT,
 or DFPT.

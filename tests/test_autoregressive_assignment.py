@@ -89,7 +89,7 @@ def test_unique_orbit_probability_deduplicates_group_operations() -> None:
 
 def _complete_edges(distance: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     nodes = distance.shape[0]
-    source, target = torch.nonzero(
+    target, source = torch.nonzero(
         ~torch.eye(nodes, dtype=torch.bool, device=distance.device),
         as_tuple=True,
     )

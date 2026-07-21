@@ -1,0 +1,826 @@
+{
+  "decision": "v1 remains failed; separate supported-action IID calibration from unseen-action stress, rename the large-N metric as an order ELBO, and repair deterministic relabel reductions before freezing v2",
+  "order_variance_iid_test": {
+    "draws_per_carrier": 256,
+    "finite_sample_exp_exceeds_one_count": 1,
+    "maximum_estimator_se": 0.5063811515397431,
+    "maximum_path_log_probability_std": 8.102098424635889,
+    "mean_estimator_se": 0.19913120508020318,
+    "mean_path_log_probability_std": 3.186099281283251,
+    "rows": [
+      {
+        "embedding_key": "1906669f1805187098a6f896c55a6bdf50bb73a5a4015c12d0f4adef79aafae3",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002138566>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7035736441612244,
+        "path_log_probability_mean_se": 0.0,
+        "path_log_probability_std": 0.0,
+        "quotient_order_elbo_log_mean": -0.010426463601279079,
+        "sites": 2
+      },
+      {
+        "embedding_key": "a55d0d1ca50b30c7ccea369c78a4a6ddc9f24b8db9cfbe3694fde526cc0e1a8c",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005197955>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -8.508828558959067,
+        "path_log_probability_mean_se": 0.3326519275476669,
+        "path_log_probability_std": 5.322430840762671,
+        "quotient_order_elbo_log_mean": -7.815681378399122,
+        "sites": 4
+      },
+      {
+        "embedding_key": "ace5ae950bf233cc602190aa33aa74fdea34a53e3dcbabb6c3da1f288b967c00",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005197955>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -8.414918569847941,
+        "path_log_probability_mean_se": 0.32979044198970375,
+        "path_log_probability_std": 5.27664707183526,
+        "quotient_order_elbo_log_mean": -7.721771389287997,
+        "sites": 4
+      },
+      {
+        "embedding_key": "c37d93c91a7ed349c7a048d1e4f4f8b10b06f5d341041556dab8dbc338f60475",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005197955>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -8.549145516008139,
+        "path_log_probability_mean_se": 0.329187578274529,
+        "path_log_probability_std": 5.267001252392464,
+        "quotient_order_elbo_log_mean": -7.855998335448195,
+        "sites": 4
+      },
+      {
+        "embedding_key": "d64c5a535625e3576cdc459d563e30568f6ffa71ebb23e86f520a8ad1d9d2d98",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005197955>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -8.710774045437574,
+        "path_log_probability_mean_se": 0.33309926298882647,
+        "path_log_probability_std": 5.3295882078212236,
+        "quotient_order_elbo_log_mean": -8.01762686487763,
+        "sites": 4
+      },
+      {
+        "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003565512>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -22.753704369068146,
+        "path_log_probability_mean_se": 0.26614888691469735,
+        "path_log_probability_std": 4.2583821906351575,
+        "quotient_order_elbo_log_mean": -22.0605571885082,
+        "sites": 18
+      },
+      {
+        "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003565512>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -22.492365177720785,
+        "path_log_probability_mean_se": 0.2747412069613941,
+        "path_log_probability_std": 4.3958593113823055,
+        "quotient_order_elbo_log_mean": -21.799217997160838,
+        "sites": 18
+      },
+      {
+        "embedding_key": "8dbfa48ec9af5b0d6cd7cf7d9c1326dfa648b5837cbe4a2b9700e0c5d8636dd7",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004518837>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -10.442290716804564,
+        "path_log_probability_mean_se": 0.1766282979021092,
+        "path_log_probability_std": 2.8260527664337474,
+        "quotient_order_elbo_log_mean": -9.749143536244619,
+        "sites": 10
+      },
+      {
+        "embedding_key": "191292a2749f7f91c90f40850b91d1575a04e18ebce74f1f3ab0a6f043f3ef9c",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 3,
+        "path_log_probability_mean": -6.725146166980267,
+        "path_log_probability_mean_se": 0.2058446328054218,
+        "path_log_probability_std": 3.293514124886749,
+        "quotient_order_elbo_log_mean": -5.6265338783121575,
+        "sites": 8
+      },
+      {
+        "embedding_key": "20c9526c3f06d786b4d0bf6ec07d84181a2c3c35d6d44ab9ab450dd4f57b1437",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 3,
+        "path_log_probability_mean": -6.956795843318105,
+        "path_log_probability_mean_se": 0.19941510883846247,
+        "path_log_probability_std": 3.1906417414153996,
+        "quotient_order_elbo_log_mean": -5.858183554649996,
+        "sites": 8
+      },
+      {
+        "embedding_key": "44f4846183e2619b04dd5d27976fa6ad7722ff0488723137ea369f68ca571993",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 2,
+        "path_log_probability_mean": -5.706149615813047,
+        "path_log_probability_mean_se": 0.18842467551404485,
+        "path_log_probability_std": 3.0147948082247176,
+        "quotient_order_elbo_log_mean": -5.013002435253101,
+        "sites": 8
+      },
+      {
+        "embedding_key": "8db7f6ba204022a3bf44b94ccd1a74e020a59e80a4eebcb3ef9ee7e03684e703",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 3,
+        "path_log_probability_mean": -7.073447971139103,
+        "path_log_probability_mean_se": 0.1993386014874612,
+        "path_log_probability_std": 3.189417623799379,
+        "quotient_order_elbo_log_mean": -5.974835682470994,
+        "sites": 8
+      },
+      {
+        "embedding_key": "9491dd4d4855fe929d08468096b3f5d079173a98798551f987642cc1f8b05a86",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 2,
+        "path_log_probability_mean": -5.509869864908978,
+        "path_log_probability_mean_se": 0.1906202284517167,
+        "path_log_probability_std": 3.049923655227467,
+        "quotient_order_elbo_log_mean": -4.816722684349033,
+        "sites": 8
+      },
+      {
+        "embedding_key": "9dc8dd3e251d8237210abb0192b49aae4c2462ac79c540ae1cf23a23fe2ec17c",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 2,
+        "path_log_probability_mean": -5.365112797357142,
+        "path_log_probability_mean_se": 0.17888363010489508,
+        "path_log_probability_std": 2.8621380816783213,
+        "quotient_order_elbo_log_mean": -4.671965616797197,
+        "sites": 8
+      },
+      {
+        "embedding_key": "b7d219f4c0b94212c8eb43565eca06662b1dd00107a1fefcd4d2706ff6f5c780",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 2,
+        "path_log_probability_mean": -5.739187971688807,
+        "path_log_probability_mean_se": 0.14703084101340505,
+        "path_log_probability_std": 2.352493456214481,
+        "quotient_order_elbo_log_mean": -5.046040791128862,
+        "sites": 8
+      },
+      {
+        "embedding_key": "c505b364226ae32699f472131cefe300af936b533a1419a1c9a62382d2a27b76",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1021380",
+        "orbit_size": 2,
+        "path_log_probability_mean": -5.982370988465846,
+        "path_log_probability_mean_se": 0.190773011887239,
+        "path_log_probability_std": 3.052368190195824,
+        "quotient_order_elbo_log_mean": -5.2892238079059,
+        "sites": 8
+      },
+      {
+        "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003567603>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -18.0191778736189,
+        "path_log_probability_mean_se": 0.49909450712649084,
+        "path_log_probability_std": 7.985512114023853,
+        "quotient_order_elbo_log_mean": -17.326030693058954,
+        "sites": 18
+      },
+      {
+        "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003567603>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -18.678346282802522,
+        "path_log_probability_mean_se": 0.5063811515397431,
+        "path_log_probability_std": 8.102098424635889,
+        "quotient_order_elbo_log_mean": -17.985199102242575,
+        "sites": 18
+      },
+      {
+        "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003641248>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -21.055000407621264,
+        "path_log_probability_mean_se": 0.44697888912879946,
+        "path_log_probability_std": 7.151662226060791,
+        "quotient_order_elbo_log_mean": -20.361853227061317,
+        "sites": 10
+      },
+      {
+        "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004704936>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.697901542123873,
+        "path_log_probability_mean_se": 0.11902178297861729,
+        "path_log_probability_std": 1.9043485276578767,
+        "quotient_order_elbo_log_mean": -1.311607181003982,
+        "sites": 20
+      },
+      {
+        "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004704936>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.610607323644217,
+        "path_log_probability_mean_se": 0.11618441159723357,
+        "path_log_probability_std": 1.8589505855557371,
+        "quotient_order_elbo_log_mean": -1.2243129625243263,
+        "sites": 20
+      },
+      {
+        "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm001181615>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.9780745672760531,
+        "path_log_probability_mean_se": 0.04525000606230222,
+        "path_log_probability_std": 0.7240000969968355,
+        "quotient_order_elbo_log_mean": -0.28492738671610773,
+        "sites": 6
+      },
+      {
+        "embedding_key": "0902aae47f6b437533b3dcce470baf1ae945c096bc67032dacaa68c2840e76da",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -15.730975651182234,
+        "path_log_probability_mean_se": 0.260702143538711,
+        "path_log_probability_std": 4.171234296619376,
+        "quotient_order_elbo_log_mean": -14.344681290062343,
+        "sites": 16
+      },
+      {
+        "embedding_key": "158eaf5ceec364b3e647c6bd4f6ccfcd3d3d2c9f4afd507cf1e0707457b87fb2",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -16.51010437309742,
+        "path_log_probability_mean_se": 0.22529359705841745,
+        "path_log_probability_std": 3.604697552934679,
+        "quotient_order_elbo_log_mean": -15.123810011977529,
+        "sites": 16
+      },
+      {
+        "embedding_key": "4f18d811cf46d124d28cf0640d6818063ddd511c42b50dda7ec8eb68ecc451c9",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -24.893831338733435,
+        "path_log_probability_mean_se": 0.34447549869938937,
+        "path_log_probability_std": 5.51160797919023,
+        "quotient_order_elbo_log_mean": -23.507536977613544,
+        "sites": 16
+      },
+      {
+        "embedding_key": "5519537d4f123a281813cd60aa6025fda08eb340ed98bd4d7d319f31da4781a9",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -15.25894515402615,
+        "path_log_probability_mean_se": 0.28936939194121364,
+        "path_log_probability_std": 4.629910271059418,
+        "quotient_order_elbo_log_mean": -13.87265079290626,
+        "sites": 16
+      },
+      {
+        "embedding_key": "576c2f27e184ebb18ea5748903b935151747928a6cd1f9d1d90ec1e5e21296d5",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -15.818160710856318,
+        "path_log_probability_mean_se": 0.29549831082851263,
+        "path_log_probability_std": 4.727972973256202,
+        "quotient_order_elbo_log_mean": -14.431866349736428,
+        "sites": 16
+      },
+      {
+        "embedding_key": "6b87faa1ffdc91b502ed53321f206ab16d74caab79facf8fe457644267243738",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -25.038370702415705,
+        "path_log_probability_mean_se": 0.322589894853577,
+        "path_log_probability_std": 5.161438317657232,
+        "quotient_order_elbo_log_mean": -23.652076341295817,
+        "sites": 16
+      },
+      {
+        "embedding_key": "94decc774fec95e0980822dd785a09a2ce8133f70672d486cd40e158458156d7",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -15.948871640488505,
+        "path_log_probability_mean_se": 0.2956861131984072,
+        "path_log_probability_std": 4.730977811174515,
+        "quotient_order_elbo_log_mean": -14.562577279368615,
+        "sites": 16
+      },
+      {
+        "embedding_key": "caa5460dc50a2cdeaaa4f384d8ac79929a804f75ba231c022d117a4e90382df2",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -25.308180920779705,
+        "path_log_probability_mean_se": 0.3010895533755008,
+        "path_log_probability_std": 4.817432854008013,
+        "quotient_order_elbo_log_mean": -23.921886559659818,
+        "sites": 16
+      },
+      {
+        "embedding_key": "eb3a8bcf7d843ee31435085e36d8b8b7380e11f0798b09876b04c388c822b7ac",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004733827>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -25.151961870491505,
+        "path_log_probability_mean_se": 0.33075161479881626,
+        "path_log_probability_std": 5.29202583678106,
+        "quotient_order_elbo_log_mean": -23.765667509371617,
+        "sites": 16
+      },
+      {
+        "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004705500>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.872617617365904,
+        "path_log_probability_mean_se": 0.12185918444505336,
+        "path_log_probability_std": 1.9497469511208538,
+        "quotient_order_elbo_log_mean": -1.4863232562460134,
+        "sites": 20
+      },
+      {
+        "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004705500>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.7549178524059244,
+        "path_log_probability_mean_se": 0.11427311589929899,
+        "path_log_probability_std": 1.8283698543887839,
+        "quotient_order_elbo_log_mean": -1.3686234912860336,
+        "sites": 20
+      },
+      {
+        "embedding_key": "3e9d501577894ef124addeacd51407ab28687383c9e3abbae4fad2a4f1d8ec32",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005013462>",
+        "orbit_size": 3,
+        "path_log_probability_mean": -4.59011160582304,
+        "path_log_probability_mean_se": 0.08836333005535096,
+        "path_log_probability_std": 1.4138132808856154,
+        "quotient_order_elbo_log_mean": -3.49149931715493,
+        "sites": 5
+      },
+      {
+        "embedding_key": "6275eed9f81efe5d30c2ab5f364f24ffe11aa6d401dd470ad96540aa54a6f5f4",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005013462>",
+        "orbit_size": 3,
+        "path_log_probability_mean": -4.6274115880951285,
+        "path_log_probability_mean_se": 0.0867900459375129,
+        "path_log_probability_std": 1.3886407350002063,
+        "quotient_order_elbo_log_mean": -3.5287992994270185,
+        "sites": 5
+      },
+      {
+        "embedding_key": "fce72d5c8eace07adce38b842a2cfafe88674fedfc5907bf5e2cc332718be5cb",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm005013462>",
+        "orbit_size": 3,
+        "path_log_probability_mean": -4.508894789963961,
+        "path_log_probability_mean_se": 0.09022762414865965,
+        "path_log_probability_std": 1.4436419863785543,
+        "quotient_order_elbo_log_mean": -3.4102825012958506,
+        "sites": 5
+      },
+      {
+        "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002230475>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7329417064902373,
+        "path_log_probability_mean_se": 0.0395928499324715,
+        "path_log_probability_std": 0.633485598919544,
+        "quotient_order_elbo_log_mean": -0.03979452593029196,
+        "sites": 10
+      },
+      {
+        "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002230475>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7811233838438056,
+        "path_log_probability_mean_se": 0.04000157938879556,
+        "path_log_probability_std": 0.640025270220729,
+        "quotient_order_elbo_log_mean": -0.08797620328386035,
+        "sites": 10
+      },
+      {
+        "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1110703",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7808953875210136,
+        "path_log_probability_mean_se": 0.040555350786539816,
+        "path_log_probability_std": 0.6488856125846371,
+        "quotient_order_elbo_log_mean": -0.08774820696106833,
+        "sites": 10
+      },
+      {
+        "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+        "finite_sample_exp_exceeds_one": true,
+        "material_id": "mp-1110703",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.676031154289376,
+        "path_log_probability_mean_se": 0.034896375485720166,
+        "path_log_probability_std": 0.5583420077715227,
+        "quotient_order_elbo_log_mean": 0.017116026270569296,
+        "sites": 10
+      },
+      {
+        "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm001187464>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -1.212311793700792,
+        "path_log_probability_mean_se": 0.0542972183783965,
+        "path_log_probability_std": 0.868755494054344,
+        "quotient_order_elbo_log_mean": -0.5191646131408465,
+        "sites": 6
+      },
+      {
+        "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004651781>",
+        "orbit_size": 3,
+        "path_log_probability_mean": -3.2201002845540643,
+        "path_log_probability_mean_se": 0.09816117217530058,
+        "path_log_probability_std": 1.5705787548048094,
+        "quotient_order_elbo_log_mean": -2.1214879958859543,
+        "sites": 12
+      },
+      {
+        "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004705937>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.6049133329070173,
+        "path_log_probability_mean_se": 0.121121947124995,
+        "path_log_probability_std": 1.93795115399992,
+        "quotient_order_elbo_log_mean": -1.2186189717871265,
+        "sites": 20
+      },
+      {
+        "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004705937>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -2.5232557728304528,
+        "path_log_probability_mean_se": 0.11252809743895915,
+        "path_log_probability_std": 1.8004495590233465,
+        "quotient_order_elbo_log_mean": -1.136961411710562,
+        "sites": 20
+      },
+      {
+        "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003568325>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -14.046474546194077,
+        "path_log_probability_mean_se": 0.21136615283629356,
+        "path_log_probability_std": 3.381858445380697,
+        "quotient_order_elbo_log_mean": -13.353327365634133,
+        "sites": 18
+      },
+      {
+        "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003568325>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -14.037311559543014,
+        "path_log_probability_mean_se": 0.18995765203470763,
+        "path_log_probability_std": 3.039322432555322,
+        "quotient_order_elbo_log_mean": -13.34416437898307,
+        "sites": 18
+      },
+      {
+        "embedding_key": "f433643ea538d88d45b5808b561e90b4d14337e7f09d08a535677e8382b93dad",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002386175>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -7.021472551859915,
+        "path_log_probability_mean_se": 0.13269208441915178,
+        "path_log_probability_std": 2.1230733507064286,
+        "quotient_order_elbo_log_mean": -6.32832537129997,
+        "sites": 6
+      },
+      {
+        "embedding_key": "027d51634fa0c200386f483acf48229ea1bac3562a2dae42326d4a67b26ca1a3",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm003174170>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -4.638762324117124,
+        "path_log_probability_mean_se": 0.08602712311459229,
+        "path_log_probability_std": 1.3764339698334767,
+        "quotient_order_elbo_log_mean": -3.9456151435571787,
+        "sites": 4
+      },
+      {
+        "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004656075>",
+        "orbit_size": 3,
+        "path_log_probability_mean": -14.585152704268694,
+        "path_log_probability_mean_se": 0.23061420701246155,
+        "path_log_probability_std": 3.6898273121993848,
+        "quotient_order_elbo_log_mean": -13.486540415600583,
+        "sites": 12
+      },
+      {
+        "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002384806>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -9.592136004008353,
+        "path_log_probability_mean_se": 0.3410923131088408,
+        "path_log_probability_std": 5.457477009741453,
+        "quotient_order_elbo_log_mean": -8.89898882344841,
+        "sites": 6
+      },
+      {
+        "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004470427>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -1.541403618059121,
+        "path_log_probability_mean_se": 0.08464486392808736,
+        "path_log_probability_std": 1.3543178228493977,
+        "quotient_order_elbo_log_mean": -0.8482564374991757,
+        "sites": 10
+      },
+      {
+        "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004470427>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -1.7748392127687111,
+        "path_log_probability_mean_se": 0.09481517711207123,
+        "path_log_probability_std": 1.5170428337931396,
+        "quotient_order_elbo_log_mean": -1.0816920322087658,
+        "sites": 10
+      }
+    ]
+  },
+  "order_variance_probability_overflow_rows": {
+    "draws_per_carrier": 1024,
+    "finite_sample_exp_exceeds_one_count": 0,
+    "maximum_estimator_se": 0.035253745574024845,
+    "maximum_path_log_probability_std": 1.128119858368795,
+    "mean_estimator_se": 0.022516060128351917,
+    "mean_path_log_probability_std": 0.7205139241072613,
+    "rows": [
+      {
+        "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1112160",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7879758523777127,
+        "path_log_probability_mean_se": 0.01950967501473423,
+        "path_log_probability_std": 0.6243096004714953,
+        "quotient_order_elbo_log_mean": -0.09482867181776741,
+        "sites": 10
+      },
+      {
+        "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1112160",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7829712654493051,
+        "path_log_probability_mean_se": 0.02035724957280999,
+        "path_log_probability_std": 0.6514319863299197,
+        "quotient_order_elbo_log_mean": -0.08982408488935975,
+        "sites": 10
+      },
+      {
+        "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm004705339>",
+        "orbit_size": 4,
+        "path_log_probability_mean": -1.6239431507128756,
+        "path_log_probability_mean_se": 0.035253745574024845,
+        "path_log_probability_std": 1.128119858368795,
+        "quotient_order_elbo_log_mean": -0.23764878959298508,
+        "sites": 20
+      },
+      {
+        "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "alex<agm002230475>",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7503103233757429,
+        "path_log_probability_mean_se": 0.018788095005079195,
+        "path_log_probability_std": 0.6012190401625342,
+        "quotient_order_elbo_log_mean": -0.05716314281579758,
+        "sites": 10
+      },
+      {
+        "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+        "finite_sample_exp_exceeds_one": false,
+        "material_id": "mp-1110703",
+        "orbit_size": 2,
+        "path_log_probability_mean": -0.7317066647374304,
+        "path_log_probability_mean_se": 0.018671535475111335,
+        "path_log_probability_std": 0.5974891352035627,
+        "quotient_order_elbo_log_mean": -0.03855948417748511,
+        "sites": 10
+      }
+    ]
+  },
+  "protocol": "h1a_assignment_iid_gate_v1_read_only_audit",
+  "relabel_chain": {
+    "fp32": [
+      {
+        "matmul_precision": "high",
+        "maximum_edge_feature_residual": 0.0,
+        "maximum_fixed_path_log_probability_residual": 3.0517578125e-05,
+        "maximum_raw_logit_residual": 0.0
+      },
+      {
+        "matmul_precision": "highest",
+        "maximum_edge_feature_residual": 0.0,
+        "maximum_fixed_path_log_probability_residual": 3.814697265625e-06,
+        "maximum_raw_logit_residual": 5.513429641723633e-06
+      }
+    ],
+    "fp64_maximum_raw_logit_residual": 1.6181500583911657e-14
+  },
+  "source_gate_commit": "885ff40158c36d2f9779fff810688fd90b2f0aca",
+  "source_gate_qualified": false,
+  "stratified_likelihood": {
+    "action_signature": {
+      "iid_calibration": {
+        "supported": {
+          "carrier_mean_model_minus_uniform_nll": -6.256128548719833,
+          "carriers": 35,
+          "material_bootstrap_ucb95": -0.446221237955941,
+          "material_mean_model_minus_uniform_nll": -3.664830469677623,
+          "materials": 18
+        },
+        "unseen": {
+          "carrier_mean_model_minus_uniform_nll": 7.271321483424673,
+          "carriers": 7,
+          "material_bootstrap_ucb95": 11.465259692886338,
+          "material_mean_model_minus_uniform_nll": 6.224767922889919,
+          "materials": 5
+        }
+      },
+      "iid_test": {
+        "supported": {
+          "carrier_mean_model_minus_uniform_nll": -1.2846745472547776,
+          "carriers": 35,
+          "material_bootstrap_ucb95": 1.1840315777239971,
+          "material_mean_model_minus_uniform_nll": -1.916380746122102,
+          "materials": 18
+        },
+        "unseen": {
+          "carrier_mean_model_minus_uniform_nll": 2.341867287641829,
+          "carriers": 17,
+          "material_bootstrap_ucb95": 3.4072730189235387,
+          "material_mean_model_minus_uniform_nll": 1.9777545479538052,
+          "materials": 5
+        }
+      }
+    },
+    "by_sites": {
+      "iid_calibration": {
+        "10": {
+          "carriers": 8,
+          "mean_model_minus_uniform_nll": -3.4842019355175213
+        },
+        "12": {
+          "carriers": 2,
+          "mean_model_minus_uniform_nll": 11.51244488200154
+        },
+        "16": {
+          "carriers": 9,
+          "mean_model_minus_uniform_nll": -8.115471329813502
+        },
+        "18": {
+          "carriers": 6,
+          "mean_model_minus_uniform_nll": -8.36391278301366
+        },
+        "2": {
+          "carriers": 1,
+          "mean_model_minus_uniform_nll": 0.38413047980992776
+        },
+        "20": {
+          "carriers": 6,
+          "mean_model_minus_uniform_nll": -14.712679226345486
+        },
+        "4": {
+          "carriers": 2,
+          "mean_model_minus_uniform_nll": 1.3085043601779796
+        },
+        "5": {
+          "carriers": 3,
+          "mean_model_minus_uniform_nll": 9.887705384761555
+        },
+        "6": {
+          "carriers": 4,
+          "mean_model_minus_uniform_nll": 3.7576356909487205
+        },
+        "8": {
+          "carriers": 1,
+          "mean_model_minus_uniform_nll": 0.5874728051466467
+        }
+      },
+      "iid_test": {
+        "10": {
+          "carriers": 8,
+          "mean_model_minus_uniform_nll": -3.2302010299655732
+        },
+        "12": {
+          "carriers": 2,
+          "mean_model_minus_uniform_nll": -2.423066483531333
+        },
+        "16": {
+          "carriers": 9,
+          "mean_model_minus_uniform_nll": 5.211123429793151
+        },
+        "18": {
+          "carriers": 6,
+          "mean_model_minus_uniform_nll": 4.423935155002398
+        },
+        "2": {
+          "carriers": 1,
+          "mean_model_minus_uniform_nll": 0.010468723294424831
+        },
+        "20": {
+          "carriers": 6,
+          "mean_model_minus_uniform_nll": -14.948306063739375
+        },
+        "4": {
+          "carriers": 5,
+          "mean_model_minus_uniform_nll": 4.662083241178644
+        },
+        "5": {
+          "carriers": 3,
+          "mean_model_minus_uniform_nll": 0.5999927958552663
+        },
+        "6": {
+          "carriers": 4,
+          "mean_model_minus_uniform_nll": 0.4925616592883866
+        },
+        "8": {
+          "carriers": 8,
+          "mean_model_minus_uniform_nll": 1.8363600716447053
+        }
+      }
+    },
+    "embedding_key": {
+      "iid_calibration": {
+        "supported": {
+          "carrier_mean_model_minus_uniform_nll": -5.575819560435332,
+          "carriers": 36,
+          "material_bootstrap_ucb95": 1.0274864186975943,
+          "material_mean_model_minus_uniform_nll": -2.5122080749828966,
+          "materials": 19
+        },
+        "unseen": {
+          "carrier_mean_model_minus_uniform_nll": 5.4440425590750925,
+          "carriers": 6,
+          "material_bootstrap_ucb95": 6.062444140408423,
+          "material_mean_model_minus_uniform_nll": 3.2222111462318606,
+          "materials": 4
+        }
+      },
+      "iid_test": {
+        "supported": {
+          "carrier_mean_model_minus_uniform_nll": -1.2245114122103904,
+          "carriers": 36,
+          "material_bootstrap_ucb95": 1.1364853770031216,
+          "material_mean_model_minus_uniform_nll": -1.7691397429397195,
+          "materials": 19
+        },
+        "unseen": {
+          "carrier_mean_model_minus_uniform_nll": 2.433159098472996,
+          "carriers": 16,
+          "material_bootstrap_ucb95": 3.407273018923538,
+          "material_mean_model_minus_uniform_nll": 2.0050448838767063,
+          "materials": 5
+        }
+      }
+    }
+  }
+}

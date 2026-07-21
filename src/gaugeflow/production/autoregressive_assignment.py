@@ -10,6 +10,8 @@ from torch import nn
 
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
+from .state_projection import sorted_segment_sum
+
 AssignmentScore = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 
 
@@ -280,11 +282,7 @@ class _AssignmentMessageBlock(nn.Module):
                 dim=-1,
             )
         )
-        # Autocast can keep embedding residuals in FP32 while linear messages
-        # are BF16.  ``index_add_`` requires an exact dtype match, so the
-        # reduction buffer follows the quantity being accumulated.
-        aggregated = message.new_zeros(node_state.shape)
-        aggregated.index_add_(0, edge_target, message)
+        aggregated = sorted_segment_sum(message, edge_target, node_state.shape[0])
         degree = torch.bincount(
             edge_target,
             minlength=node_state.shape[0],
@@ -417,6 +415,10 @@ class GeometryAwareRemainingCountScorer(nn.Module):
             or not torch.equal(batch[edge_source], batch[edge_target])
         ):
             raise ValueError("assignment pair edge crosses a graph boundary")
+        if edge_source.numel() > 1:
+            edge_key = edge_target * nodes + edge_source
+            if not bool((edge_key[1:] > edge_key[:-1]).all()):
+                raise ValueError("assignment pair edges must be unique and target-major")
 
         token = torch.arange(CHEMICAL_ELEMENT_COUNT, device=site_features.device)
         species = self.species_embedding(token).unsqueeze(0).expand(graphs, -1, -1)

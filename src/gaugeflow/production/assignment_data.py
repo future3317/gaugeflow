@@ -44,7 +44,9 @@ def _exact_complete_pair_distances(
     lattice: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     sites = fractional.shape[0]
-    source, target = torch.nonzero(~torch.eye(sites, dtype=torch.bool), as_tuple=True)
+    # Target-major ordering is a production invariant.  It permits a
+    # deterministic linear-time segment reduction in every message block.
+    target, source = torch.nonzero(~torch.eye(sites, dtype=torch.bool), as_tuple=True)
     delta = (
         fractional[target].to(dtype=torch.float64, device="cpu")
         - fractional[source].to(dtype=torch.float64, device="cpu")

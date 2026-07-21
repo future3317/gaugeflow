@@ -10,6 +10,7 @@ from .autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
     RemainingCountAssignmentLaw,
 )
+from .state_projection import sorted_segment_sum
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,10 @@ class AssignmentCarrierBatch:
             or not torch.equal(self.batch[self.edge_source], self.batch[self.edge_target])
         ):
             raise ValueError("assignment edge crosses a packed carrier boundary")
+        if self.edge_source.numel() > 1:
+            edge_key = self.edge_target * nodes + self.edge_source
+            if not bool((edge_key[1:] > edge_key[:-1]).all()):
+                raise ValueError("assignment edges must be unique and target-major")
 
 
 @dataclass(frozen=True)
@@ -175,18 +180,21 @@ def orderless_assignment_objective(
     remaining_counts = expanded_composition - observed
 
     edge_graph = batch[carrier.edge_source]
-    edge_replica_size = node_counts[edge_graph]
-    original_edge = torch.repeat_interleave(
-        torch.arange(carrier.edge_source.numel(), device=batch.device),
-        edge_replica_size,
+    edge_counts = torch.bincount(edge_graph, minlength=graphs)
+    edge_offsets = torch.cumsum(edge_counts, dim=0) - edge_counts
+    replica_edge_count = edge_counts[batch]
+    edge_replica = torch.repeat_interleave(
+        torch.arange(nodes, device=batch.device),
+        replica_edge_count,
     )
-    edge_copy_start = torch.cumsum(edge_replica_size, dim=0) - edge_replica_size
-    edge_state_local = torch.arange(original_edge.numel(), device=batch.device) - torch.repeat_interleave(
-        edge_copy_start, edge_replica_size
+    replica_edge_start = torch.cumsum(replica_edge_count, dim=0) - replica_edge_count
+    local_edge = torch.arange(edge_replica.numel(), device=batch.device) - torch.repeat_interleave(
+        replica_edge_start,
+        replica_edge_count,
     )
-    edge_replica = graph_offsets[edge_graph[original_edge]] + edge_state_local
-    source_local = carrier.edge_source[original_edge] - graph_offsets[edge_graph[original_edge]]
-    target_local = carrier.edge_target[original_edge] - graph_offsets[edge_graph[original_edge]]
+    original_edge = edge_offsets[batch[edge_replica]] + local_edge
+    source_local = carrier.edge_source[original_edge] - graph_offsets[batch[edge_replica]]
+    target_local = carrier.edge_target[original_edge] - graph_offsets[batch[edge_replica]]
     expanded_edge_source = replica_start[edge_replica] + source_local
     expanded_edge_target = replica_start[edge_replica] + target_local
 
@@ -213,18 +221,16 @@ def orderless_assignment_objective(
         carrier.target_assignment[original_node],
     ]
     eligible = ~revealed
-    step_log_probability = candidate_log_probability.new_zeros(nodes)
-    step_log_probability.index_add_(
-        0,
-        replica[eligible],
+    step_log_probability = sorted_segment_sum(
         candidate_log_probability[eligible],
+        replica[eligible],
+        nodes,
     )
     eligible_count = torch.bincount(replica[eligible], minlength=nodes)
     step_log_probability = step_log_probability / eligible_count.clamp_min(1).to(
         step_log_probability.dtype
     )
-    graph_log_probability = step_log_probability.new_zeros(graphs)
-    graph_log_probability.index_add_(0, batch, step_log_probability)
+    graph_log_probability = sorted_segment_sum(step_log_probability, batch, graphs)
     graph_nll = -graph_log_probability
     return OrderlessAssignmentObjective(
         loss=graph_nll.mean(),

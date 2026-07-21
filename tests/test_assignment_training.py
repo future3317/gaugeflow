@@ -47,7 +47,7 @@ def _carrier(
         target = target[order]
         site = site[order]
         distance = distance[order][:, order]
-    source, edge_target = torch.nonzero(~torch.eye(4, dtype=torch.bool), as_tuple=True)
+    edge_target, source = torch.nonzero(~torch.eye(4, dtype=torch.bool), as_tuple=True)
     return AssignmentCarrierBatch(
         site_features=site,
         graph_features=torch.tensor([[0.25, -0.5]]),
@@ -240,6 +240,64 @@ def test_vectorized_objective_is_relabel_consistent_and_has_finite_gradients() -
     assert gradients
     assert all(torch.isfinite(value).all() for value in gradients)
     assert sum(float(torch.linalg.vector_norm(value)) for value in gradients) > 0.0
+
+
+def test_vectorized_objective_preserves_mixed_graph_boundaries() -> None:
+    model = _model().double()
+    first = _carrier(model)
+    second = _carrier(model, order=torch.tensor([1, 3, 0, 2]))
+    first = AssignmentCarrierBatch(
+        **{
+            name: value.double() if value.is_floating_point() else value
+            for name, value in first.__dict__.items()
+        }
+    )
+    second = AssignmentCarrierBatch(
+        **{
+            name: value.double() if value.is_floating_point() else value
+            for name, value in second.__dict__.items()
+        }
+    )
+    mixed = AssignmentCarrierBatch(
+        site_features=torch.cat((first.site_features, second.site_features)),
+        graph_features=torch.cat((first.graph_features, second.graph_features)),
+        batch=torch.tensor([0] * 4 + [1] * 4, dtype=torch.long),
+        edge_source=torch.cat((first.edge_source, second.edge_source + 4)),
+        edge_target=torch.cat((first.edge_target, second.edge_target + 4)),
+        edge_rbf=torch.cat((first.edge_rbf, second.edge_rbf)),
+        composition_counts=torch.cat((first.composition_counts, second.composition_counts)),
+        target_assignment=torch.cat((first.target_assignment, second.target_assignment)),
+        parent_space_group=torch.cat((first.parent_space_group, second.parent_space_group)),
+        cell_index=torch.cat((first.cell_index, second.cell_index)),
+    )
+    first_rank = torch.tensor([2, 0, 3, 1], dtype=torch.long)
+    second_rank = torch.tensor([1, 3, 0, 2], dtype=torch.long)
+    observed = orderless_assignment_objective(
+        model,
+        mixed,
+        reveal_rank=torch.cat((first_rank, second_rank)),
+    ).graph_log_probability
+    repeated = orderless_assignment_objective(
+        model,
+        mixed,
+        reveal_rank=torch.cat((first_rank, second_rank)),
+    ).graph_log_probability
+    expected = torch.stack(
+        (
+            orderless_assignment_objective(
+                model,
+                first,
+                reveal_rank=first_rank,
+            ).graph_log_probability[0],
+            orderless_assignment_objective(
+                model,
+                second,
+                reveal_rank=second_rank,
+            ).graph_log_probability[0],
+        )
+    )
+    assert torch.equal(observed, repeated)
+    assert torch.allclose(observed, expected, atol=1e-12, rtol=1e-12)
 
 
 def test_reveal_order_sampling_is_target_independent_and_graphwise_permuted() -> None:

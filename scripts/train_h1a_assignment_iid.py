@@ -373,11 +373,18 @@ def _exact_subset_rows(
 
 def _relabel_example(example: AssignmentCarrierExample, order: torch.Tensor) -> AssignmentCarrierExample:
     inverse = torch.argsort(order)
+    edge_source = inverse[example.edge_source]
+    edge_target = inverse[example.edge_target]
+    edge_order = torch.argsort(
+        edge_target * example.target_assignment.numel() + edge_source,
+        stable=True,
+    )
     return replace(
         example,
         site_features=example.site_features[order],
-        edge_source=inverse[example.edge_source],
-        edge_target=inverse[example.edge_target],
+        edge_source=edge_source[edge_order],
+        edge_target=edge_target[edge_order],
+        edge_rbf=example.edge_rbf[edge_order],
         target_assignment=example.target_assignment[order],
         parent_permutations=inverse[example.parent_permutations[:, order]],
     )
@@ -460,7 +467,7 @@ def main() -> None:
     device = torch.device("cuda", int(training["cuda_device"]))
     torch.cuda.set_device(device)
     torch.cuda.manual_seed_all(seed)
-    torch.set_float32_matmul_precision("high")
+    torch.set_float32_matmul_precision("highest")
 
     model_config = protocol["model"]
     examples = _load_examples(
