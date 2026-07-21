@@ -12,6 +12,7 @@ from gaugeflow.file_utils import canonical_json_hash, sha256_file
 
 from .physical_pretraining import PhysicalRepresentationModel
 from .physical_training import PhysicalTransferTrainer
+from .training import ExponentialMovingAverage
 
 PHYSICAL_CHECKPOINT_SCHEMA = 1
 
@@ -105,3 +106,25 @@ def load_physical_checkpoint(
     if not isinstance(runtime, list) or not runtime or not all(isinstance(item, dict) for item in runtime):
         raise ValueError("physical checkpoint rank runtime state is invalid")
     return runtime, metadata
+
+
+def load_physical_ema_for_evaluation(
+    path: Path,
+    *,
+    model: PhysicalRepresentationModel,
+    ema: ExponentialMovingAverage,
+    map_location: str | torch.device,
+) -> tuple[int, dict[str, Any]]:
+    """Load model and EMA only, without constructing/restoring an optimizer."""
+
+    metadata = read_physical_checkpoint_metadata(path)
+    payload = torch.load(path, map_location=map_location, weights_only=True)
+    if not isinstance(payload, dict) or payload.get("schema") != PHYSICAL_CHECKPOINT_SCHEMA:
+        raise ValueError("physical evaluation checkpoint schema mismatch")
+    trainer = payload.get("trainer")
+    if not isinstance(trainer, dict) or not isinstance(trainer.get("step"), int):
+        raise ValueError("physical evaluation checkpoint trainer state is invalid")
+    model.load_state_dict(payload["model"], strict=True)
+    ema.load_state_dict(trainer["ema"])
+    ema.copy_to(model)
+    return int(trainer["step"]), metadata

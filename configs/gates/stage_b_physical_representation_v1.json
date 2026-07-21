@@ -13,8 +13,10 @@
     "implementation_commits": ["371e639", "90e83b3", "fbcf37b"],
     "runner_sha256": "670a2ee6600ddd5c10e46391332a67cc3369ce2973e6d566c49b539ae5314ccf",
     "physical_training_sha256": "a5c53119d7ae657faa18264c6a38b56e82094a2942124049c7ac647290888762",
-    "physical_checkpointing_sha256": "eb5e173278aa9334c79a1ef1126acc80973a6a3c994e248b250bb4bc97eac65d",
-    "rank_sharded_data_sha256": "d09a79e1f6020fe435d16239b9b8bb4375ba1535fa17e48028e8ef7a8cd20549"
+    "physical_checkpointing_sha256": "82fcb46e2efb9469701836386e3a3ffbfb9aaa77d56b5b3ad13bfdb283aebe34",
+    "rank_sharded_data_sha256": "d09a79e1f6020fe435d16239b9b8bb4375ba1535fa17e48028e8ef7a8cd20549",
+    "evaluator_sha256": "ebb505c6bd41e4ede3266d7ee5b599272e390f14c12d282988fbbd915756fc34",
+    "physical_evaluation_sha256": "dd2d1a20593989ec417ba81fa6db3da3d2d496821df6149ca0c22cc4b37eaddf"
   },
   "data": {
     "matpes_train_functional_rows": 674709,

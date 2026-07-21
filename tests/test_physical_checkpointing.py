@@ -7,6 +7,7 @@ from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.physical_checkpointing import (
     load_physical_checkpoint,
+    load_physical_ema_for_evaluation,
     read_physical_checkpoint_metadata,
     save_physical_checkpoint,
 )
@@ -15,6 +16,7 @@ from gaugeflow.production.physical_training import (
     PhysicalTransferTrainer,
     PhysicalTransferTrainingConfig,
 )
+from gaugeflow.production.training import ExponentialMovingAverage
 
 
 def _objects() -> tuple[PhysicalRepresentationModel, PhysicalTransferTrainer]:
@@ -77,3 +79,17 @@ def test_physical_checkpoint_round_trip_and_hash_validation(tmp_path: Path) -> N
     assert all(torch.equal(value, model.state_dict()[name]) for name, value in original.items())
     assert torch.equal(restored_runtime[0]["generator"], runtime[0]["generator"])
     assert restored_metadata == metadata == read_physical_checkpoint_metadata(path)
+
+    evaluation_model, _ = _objects()
+    evaluation_ema = ExponentialMovingAverage(evaluation_model, 0.999)
+    step, evaluation_metadata = load_physical_ema_for_evaluation(
+        path,
+        model=evaluation_model,
+        ema=evaluation_ema,
+        map_location="cpu",
+    )
+    assert step == 0 and evaluation_metadata == metadata
+    assert all(
+        torch.equal(value, evaluation_model.state_dict()[name])
+        for name, value in original.items()
+    )

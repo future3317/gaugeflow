@@ -13,5 +13,7 @@ def test_stage_b_protocol_binds_active_training_implementation() -> None:
             "src/gaugeflow/production/physical_checkpointing.py"
         ),
         "rank_sharded_data_sha256": Path("src/gaugeflow/production/rank_sharded_data.py"),
+        "evaluator_sha256": Path("scripts/evaluate_physical_representation.py"),
+        "physical_evaluation_sha256": Path("src/gaugeflow/production/physical_evaluation.py"),
     }
     assert all(sha256_file(path) == prerequisites[name] for name, path in paths.items())
