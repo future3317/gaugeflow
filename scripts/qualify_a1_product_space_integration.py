@@ -55,7 +55,7 @@ def main() -> None:
         raise FileExistsError(f"refusing to overwrite an integration result: {args.output}")
     protocol = load_json_object(args.protocol)
     if (
-        protocol.get("protocol") != "a1_product_space_integration_v1"
+        protocol.get("protocol") != "a1_product_space_integration_v2"
         or protocol.get("status_before_run") != "frozen_not_run"
     ):
         raise ValueError("unexpected or unfrozen A1 integration protocol")
@@ -89,7 +89,20 @@ def main() -> None:
     model = _model_from_protocol(protocol["model"], device)
     standardizer = P1LatticeStandardizer.from_mapping(load_json_object(args.lattice_standardization))
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
-    smoke_indices = torch.tensor(protocol["smoke"]["cache_rows"], dtype=torch.long)
+    selected_rows: list[int] = []
+    for row in range(int(protocol["smoke"]["scan_prefix_rows"])):
+        start = int(dataset.offsets[row])
+        stop = int(dataset.offsets[row + 1])
+        species = torch.unique(dataset.atom_tokens[start:stop]).numel()
+        if stop - start >= int(protocol["smoke"]["minimum_nodes"]) and species >= int(
+            protocol["smoke"]["minimum_species"]
+        ):
+            selected_rows.append(row)
+        if len(selected_rows) == int(protocol["smoke"]["graph_count"]):
+            break
+    if len(selected_rows) != int(protocol["smoke"]["graph_count"]):
+        raise ValueError("frozen smoke prefix does not contain enough multi-species structures")
+    smoke_indices = torch.tensor(selected_rows, dtype=torch.long)
     clean = dataset.select_model_batch(smoke_indices, device=device)
     node_counts = torch.bincount(clean.batch, minlength=smoke_indices.numel())
     blueprint = ParentBlueprintBatch.from_node_counts(node_counts, device=device)
@@ -106,6 +119,12 @@ def main() -> None:
     model.train()
     model.zero_grad(set_to_none=True)
     generator = torch.Generator(device=device).manual_seed(int(protocol["seed"]) + 1)
+    smoke_time = torch.full(
+        (smoke_indices.numel(),),
+        float(protocol["smoke"]["joint_time"]),
+        dtype=clean.lattice.dtype,
+        device=device,
+    )
     with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         output = diffusion(
             clean.atom_types,
@@ -114,6 +133,9 @@ def main() -> None:
             clean.batch,
             blueprint.shape_projector,
             blueprint.fractional_to_cartesian,
+            time=smoke_time,
+            element_time=smoke_time,
+            lattice_time=smoke_time,
             generator=generator,
         )
     output.loss.backward()
@@ -125,6 +147,18 @@ def main() -> None:
     if not gradient_squares:
         raise RuntimeError("product field produced no gradients")
     gradient_norm = torch.stack(gradient_squares).sum().sqrt()
+    element_gradient_squares = [
+        parameter.grad.detach().float().square().sum()
+        for name, parameter in model.named_parameters()
+        if name.startswith("element_head.") and parameter.grad is not None
+    ]
+    if not element_gradient_squares:
+        raise RuntimeError("product field produced no assignment-head gradients")
+    element_gradient_norm = torch.stack(element_gradient_squares).sum().sqrt()
+    occupation = output.noisy.orderless_occupation
+    if occupation is None:
+        raise RuntimeError("product smoke did not construct an orderless occupation state")
+    remaining_species = (occupation.remaining_counts > 0).sum(dim=1)
 
     sample_counts = torch.tensor(protocol["smoke"]["sample_node_counts"], device=device)
     sample_blueprint = ParentBlueprintBatch.from_node_counts(sample_counts, device=device)
@@ -165,6 +199,15 @@ def main() -> None:
         == int(protocol["model"]["parameter_count"]),
         "finite_forward_backward": finite,
         "positive_gradient_norm": bool(gradient_norm > 0),
+        "multispecies_assignment_support": bool(
+            (remaining_species >= int(protocol["smoke"]["minimum_species"])).all()
+        ),
+        "positive_assignment_loss": bool(
+            output.element_loss.detach() > float(protocol["acceptance"]["assignment_loss_min"])
+        ),
+        "positive_assignment_head_gradient": bool(
+            element_gradient_norm > float(protocol["acceptance"]["assignment_gradient_norm_min"])
+        ),
         "sampled_composition_exact": torch.equal(observed_counts, sampled.composition_counts),
         "sampled_node_count_exact": torch.equal(sampled.composition_counts.sum(dim=1), sample_counts),
         "every_step_composition_closure": bool((sampled.diagnostics.composition_closure_error == 0).all()),
@@ -187,6 +230,7 @@ def main() -> None:
             "volume": float(output.volume_loss.detach()),
             "shape": float(output.shape_loss.detach()),
             "gradient_norm": float(gradient_norm.detach()),
+            "assignment_head_gradient_norm": float(element_gradient_norm.detach()),
         },
         "terminal_mask_count": int(sampled.diagnostics.masked_count[-1]),
         "maximum_composition_closure_error": int(sampled.diagnostics.composition_closure_error.max()),

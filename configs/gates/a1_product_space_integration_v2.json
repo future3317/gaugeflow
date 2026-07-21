@@ -1,14 +1,15 @@
 {
-  "protocol": "a1_product_space_integration_v1",
+  "protocol": "a1_product_space_integration_v2",
   "status_before_run": "frozen_not_run",
-  "scope": "No-training integration qualification of the GaugeFlow-base flexible-stratum product-space runtime before any A1 checkpoint is trained.",
+  "scope": "Production-scale no-training integration qualification of the GaugeFlow-base flexible-stratum product runtime on an explicitly multi-species assignment state before any A1 checkpoint is trained.",
+  "supersedes": "The unarchived v1 smoke selected deterministic one-species next actions (assignment loss 0) and therefore did not authorize A1 despite its other checks passing.",
   "mathematical_law": "p(N,C,B,A,L,F)=p(N) p(C|N) p(B|N,C) p_theta(A,L,F|C,N,B)",
   "seed": 5705,
   "prerequisites": {
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
     "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
     "composition_protocol_canonical_sha256": "ecee3e7ad8988d6f79d9a4ded6111535db6cb8029991afab4881ddb0a4401cac",
-    "runner_sha256": "9522a273a628c9373db5f628f540428ba254f785aa8400af713e92f083eb8a7b"
+    "runner_sha256": "169a5be4333570a0a1a60cfa7621bb714dd839439588b18e9f50a08a9b629159"
   },
   "runtime": {
     "stratum": "flexible_P1",
@@ -45,7 +46,11 @@
     "precision": "bf16_geometry_fp32"
   },
   "smoke": {
-    "cache_rows": [0, 1],
+    "scan_prefix_rows": 256,
+    "graph_count": 4,
+    "minimum_nodes": 4,
+    "minimum_species": 2,
+    "joint_time": 0.999,
     "sample_node_counts": [2, 3],
     "reverse_steps": 8
   },
@@ -66,6 +71,8 @@
     "terminal_masks": 0,
     "sampling_failures": 0,
     "all_values_finite": true,
+    "assignment_loss_min": 0.0001,
+    "assignment_gradient_norm_min": 1e-08,
     "legacy_independent_site_runtime_allowed": false
   },
   "boundary": "A pass authorizes one from-scratch A1 product-space training protocol only. It does not qualify free joint quality, OOD carrier generalization, tensor conditioning, oracle, RL, relaxation, DFT, or DFPT."
