@@ -11,7 +11,11 @@
       "h1a_e1_absolute_likelihood_v1": "1f6ad69ee6e2c6873780a70ada4335dac182698949c1c1fd1aafd2d37dad5189"
     },
     "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
-    "trainer_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
+    "trainer_sha256": "47cb99ddb88592afca3da08a00e98f045d87aed7d1450bc704d7a2dd21d47a48",
+    "trainer_hash_erratum": {
+      "superseded_windows_crlf_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
+      "reason": "Preflight rejected before output creation because the original hash covered Windows CRLF checkout bytes; the replacement is the unchanged Git blob/Linux LF checkout used for CUDA execution."
+    },
     "tensor_condition_enabled": false
   },
   "model": {

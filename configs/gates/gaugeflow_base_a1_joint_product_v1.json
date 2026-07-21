@@ -13,7 +13,11 @@
       "h1a_generated_side_coordinate_exposure_v1": "852825d8ab34e10a9fc536e6e262ec4ce78e84723dbaa66b5093d07f47ac7013"
     },
     "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
-    "trainer_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
+    "trainer_sha256": "47cb99ddb88592afca3da08a00e98f045d87aed7d1450bc704d7a2dd21d47a48",
+    "trainer_hash_erratum": {
+      "superseded_windows_crlf_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
+      "reason": "Preflight rejected before output creation because the original hash covered Windows CRLF checkout bytes; the replacement is the unchanged Git blob/Linux LF checkout used for CUDA execution."
+    },
     "composition_checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
     "tensor_condition_enabled": false
   },
