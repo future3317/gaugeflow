@@ -1,5 +1,5 @@
 {
-  "protocol": "h1a_assignment_quotient_orbit_overfit_v3",
+  "protocol": "h1a_assignment_rao_blackwell_overfit_v3",
   "status_before_run": "frozen_not_run",
   "source": {
     "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
@@ -12,7 +12,7 @@
     "radial_channels": 16,
     "pair_context": "symmetric_two_point_rbf_gram",
     "pair_context_feature_dim": 152,
-    "target_quotient_training": "uniform_unique_parent_orbit_representative",
+    "orderless_estimator": "sample_prefix_exact_next_site_average",
     "hidden_dim": 96,
     "message_blocks": 3
   },
@@ -21,6 +21,7 @@
     "seed_count": 1,
     "cuda_device": 1,
     "fixed_materials": 8,
+    "path_samples_per_carrier": 8,
     "steps": 2000,
     "learning_rate": 0.0005,
     "weight_decay": 0.0001,

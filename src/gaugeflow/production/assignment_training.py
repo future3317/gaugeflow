@@ -112,59 +112,6 @@ def sample_uniform_reveal_ranks(
     return rank
 
 
-def sample_parent_orbit_representatives(
-    target_assignment: torch.Tensor,
-    batch: torch.Tensor,
-    parent_permutations: tuple[torch.Tensor, ...],
-    *,
-    generator: torch.Generator | None = None,
-) -> torch.Tensor:
-    """Uniformly sample one unique quotient representative per carrier.
-
-    Operation multiplicity is removed before sampling.  This is label-side
-    training marginalization: target species never enter a model feature, and
-    the independently sampled reveal order remains target-independent.
-    """
-    if (
-        target_assignment.shape != batch.shape
-        or target_assignment.dtype != torch.long
-        or batch.dtype != torch.long
-        or batch.ndim != 1
-        or batch.numel() < 1
-    ):
-        raise ValueError("target assignment and packed batch must be aligned int64 vectors")
-    graphs = len(parent_permutations)
-    if (
-        graphs < 1
-        or int(batch.min()) != 0
-        or int(batch.max()) != graphs - 1
-        or not bool((batch[1:] >= batch[:-1]).all())
-    ):
-        raise ValueError("parent actions do not align with the packed assignment batch")
-    output = target_assignment.clone()
-    for graph, permutations in enumerate(parent_permutations):
-        selected = torch.nonzero(batch == graph, as_tuple=False).flatten()
-        nodes = selected.numel()
-        if permutations.ndim != 2 or permutations.shape[1] != nodes or permutations.dtype != torch.long:
-            raise ValueError("parent action does not cover its packed assignment")
-        expected = torch.arange(nodes, device=permutations.device)
-        if not torch.equal(
-            torch.sort(permutations, dim=1).values,
-            expected.expand_as(permutations),
-        ):
-            raise ValueError("parent action contains a non-permutation")
-        local_target = target_assignment[selected]
-        orbit = torch.unique(local_target[permutations.to(target_assignment.device)], dim=0)
-        index = torch.randint(
-            orbit.shape[0],
-            (1,),
-            device=target_assignment.device,
-            generator=generator,
-        )[0]
-        output[selected] = orbit[index]
-    return output
-
-
 def orderless_assignment_objective(
     scorer: GeometryAwareRemainingCountScorer,
     carrier: AssignmentCarrierBatch,
@@ -172,15 +119,19 @@ def orderless_assignment_objective(
     reveal_rank: torch.Tensor | None = None,
     generator: torch.Generator | None = None,
 ) -> OrderlessAssignmentObjective:
-    """Evaluate every depth of one reveal path in one packed model call.
+    """Evaluate a Rao--Blackwellized uniform-order bound in one model call.
 
     The sampled path objective is
 
-    ``E_Z[-log p_theta(A | Z, C, carrier)]``.
+    ``sum_d E_{S_d} E_{i not-in S_d}[-log p(A_i | A_S, C)]``.
 
-    It is a target-independent uniform-order training bound, not the exact
-    order-marginal likelihood.  Exact subset marginalization remains an audit
-    operation for small carriers.
+    One uniform reveal order supplies a prefix ``S_d`` at every depth.  The
+    expectation over the next site is evaluated exactly from logits already
+    produced for that prefix, removing next-site Monte Carlo variance without
+    another scorer call.  This has the same expectation as the old one-next-
+    site path estimator.  It remains an orderless training bound, not the
+    exact order-marginal likelihood; exact subset marginalization is retained
+    only as a bounded audit for small carriers.
     """
     vocabulary_size = scorer.species_embedding.num_embeddings
     carrier.validate(vocabulary_size=vocabulary_size)
@@ -252,14 +203,26 @@ def orderless_assignment_objective(
         carrier.parent_space_group[batch],
         carrier.cell_index[batch],
     )
-    next_local = torch.arange(nodes, device=batch.device) - graph_offsets[batch]
-    next_expanded_node = replica_start + next_local
-    next_logits = logits[next_expanded_node]
     law = RemainingCountAssignmentLaw(vocabulary_size=vocabulary_size)
-    step_log_distribution = law.batched_step_log_probabilities(next_logits, remaining_counts)
-    step_log_probability = step_log_distribution[
-        torch.arange(nodes, device=batch.device), carrier.target_assignment
+    step_log_distribution = law.batched_step_log_probabilities(
+        logits,
+        remaining_counts[replica],
+    )
+    candidate_log_probability = step_log_distribution[
+        torch.arange(replica.numel(), device=batch.device),
+        carrier.target_assignment[original_node],
     ]
+    eligible = ~revealed
+    step_log_probability = candidate_log_probability.new_zeros(nodes)
+    step_log_probability.index_add_(
+        0,
+        replica[eligible],
+        candidate_log_probability[eligible],
+    )
+    eligible_count = torch.bincount(replica[eligible], minlength=nodes)
+    step_log_probability = step_log_probability / eligible_count.clamp_min(1).to(
+        step_log_probability.dtype
+    )
     graph_log_probability = step_log_probability.new_zeros(graphs)
     graph_log_probability.index_add_(0, batch, step_log_probability)
     graph_nll = -graph_log_probability

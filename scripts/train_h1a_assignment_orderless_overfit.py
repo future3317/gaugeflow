@@ -12,7 +12,6 @@ import random
 import subprocess
 import time
 from collections import defaultdict
-from dataclasses import replace
 from pathlib import Path
 from typing import Sequence
 
@@ -26,7 +25,6 @@ from gaugeflow.production.assignment_data import (
 )
 from gaugeflow.production.assignment_training import (
     orderless_assignment_objective,
-    sample_parent_orbit_representatives,
 )
 from gaugeflow.production.autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
@@ -273,7 +271,7 @@ def main() -> None:
     repository = Path(__file__).resolve().parents[1]
     protocol = load_json_object(args.protocol)
     if (
-        protocol.get("protocol") != "h1a_assignment_quotient_orbit_overfit_v3"
+        protocol.get("protocol") != "h1a_assignment_rao_blackwell_overfit_v3"
         or protocol.get("status_before_run") != "frozen_not_run"
     ):
         raise ValueError("unexpected or unfrozen orderless-assignment overfit protocol")
@@ -320,8 +318,11 @@ def main() -> None:
         lr=float(protocol["training"]["learning_rate"]),
         weight_decay=float(protocol["training"]["weight_decay"]),
     )
-    packed = pack_assignment_carriers(examples, device=device)
-    parent_permutations = tuple(value.parent_permutations.to(device) for value in examples)
+    path_samples = int(protocol["training"]["path_samples_per_carrier"])
+    if path_samples < 1:
+        raise ValueError("path samples per carrier must be positive")
+    training_examples = [example for example in examples for _ in range(path_samples)]
+    packed = pack_assignment_carriers(training_examples, device=device)
     generator = torch.Generator(device=device).manual_seed(seed)
     history: list[dict[str, float]] = []
     steps = int(protocol["training"]["steps"])
@@ -332,17 +333,7 @@ def main() -> None:
     for step in range(1, steps + 1):
         model.train()
         optimizer.zero_grad(set_to_none=True)
-        orbit_target = sample_parent_orbit_representatives(
-            packed.target_assignment,
-            packed.batch,
-            parent_permutations,
-            generator=generator,
-        )
-        objective = orderless_assignment_objective(
-            model,
-            replace(packed, target_assignment=orbit_target),
-            generator=generator,
-        )
+        objective = orderless_assignment_objective(model, packed, generator=generator)
         objective.loss.backward()
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             model.parameters(),
