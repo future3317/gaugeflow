@@ -1,0 +1,79 @@
+{
+  "boundary": "This interface Gate does not train or qualify parent-conditioned assignment and cannot authorize p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "checks": {
+    "allowed_rows": true,
+    "compile_memory": true,
+    "compile_throughput": true,
+    "cvp_candidate_cap": true,
+    "exact_cvp": true,
+    "finite_features": true,
+    "gold_leakage": true,
+    "iid_holdout_leakage": true,
+    "refinement_candidates": true,
+    "source_nodes": true,
+    "source_rows": true
+  },
+  "decision": "authorize_freezing_full_alex_masked_assignment_pretraining",
+  "exact_cvp": {
+    "directed_pairs": 208980,
+    "distance_max_abs": 1.5249186446908425e-06,
+    "structures": 2048
+  },
+  "exact_scan": {
+    "candidate_cap_failures": 0,
+    "candidate_count_boundaries": [
+      27,
+      64,
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "candidate_count_histogram": [
+      55130826,
+      160896,
+      62910,
+      4044,
+      60,
+      0,
+      0,
+      0,
+      0
+    ],
+    "elapsed_seconds": 25.192316390923224,
+    "graphs": 540164,
+    "maximum_candidate_count": 450,
+    "pairs": 55358736,
+    "refined_graphs": 49692,
+    "refined_pairs": 1269844
+  },
+  "feature_compile": {
+    "graphs_per_second": 5469.779247996492,
+    "maximum_candidate_count": 200,
+    "nonfinite_compilations": 0,
+    "peak_cuda_mib": 172.59521484375,
+    "refined_edges": 17468,
+    "structures": 8192,
+    "timed_structures": 7552
+  },
+  "hardware": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4090",
+    "torch": "2.5.1+cu124"
+  },
+  "implementation_commit": "a4410accd8d4eda5a32d7d354307a19a0a71f776",
+  "leakage": {
+    "allowed_index_sha256": "a6cc844abb12fbc91e2342ac7f248565c8d9ea152a7cbca4bcd4da0f54133335",
+    "allowed_train_rows": 539983,
+    "excluded_train_rows": 181,
+    "gold_material_leakage": 0,
+    "gold_materials_present_in_train": 181,
+    "gold_unique_materials": 224,
+    "iid_calibration_test_leakage": 0
+  },
+  "protocol": "h1a_assignment_full_alex_pretraining_interface_v3",
+  "protocol_sha256": "6805d93f1bb1d00663d87fc0b7d0c1deff5a00bec6312fe0258312386b8324e8",
+  "qualified": true
+}
