@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 from pathlib import Path
 from typing import Any, Iterator
@@ -16,7 +17,9 @@ from gaugeflow.production.teacher_feature_cache import write_matpes_teacher_feat
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--index", type=Path, required=True)
+    parser.add_argument("--protocol", type=Path, required=True)
     parser.add_argument("--teacher-manifest", type=Path, required=True)
+    parser.add_argument("--teacher-checkpoint-manifest", type=Path, required=True)
     parser.add_argument("--teacher-model", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True)
@@ -192,11 +195,42 @@ def _iter_completed_rows(
 
 def main() -> None:
     arguments = parse_args()
+    protocol = load_json_object(arguments.protocol)
+    if protocol.get("protocol") != "stage_b_physical_representation_v1":
+        raise ValueError("teacher cache received an unexpected Stage-B protocol")
+    prerequisites = protocol.get("prerequisites")
+    if not isinstance(prerequisites, dict):
+        raise ValueError("Stage-B protocol has no prerequisites")
+    implementation_paths = {
+        "teacher_cache_builder_sha256": Path(__file__),
+        "teacher_feature_cache_sha256": Path(
+            inspect.getsourcefile(write_matpes_teacher_feature_cache) or ""
+        ),
+    }
+    for name, path in implementation_paths.items():
+        if not path.is_file() or sha256_file(path) != prerequisites[name]:
+            raise ValueError(f"teacher cache implementation hash mismatch: {name}")
     if arguments.feature_dim < 1 or arguments.graphs_per_batch < 1 or arguments.nodes_per_batch < 1:
         raise ValueError("teacher feature batch dimensions must be positive")
     if arguments.rows_per_shard < 1:
         raise ValueError("teacher feature shard size must be positive")
     manifest, payload = _load_index(arguments.index)
+    if (
+        sha256_file(arguments.index / "manifest.json")
+        != prerequisites["matpes_index_manifest_sha256"]
+        or sha256_file(arguments.index / "index.pt") != prerequisites["matpes_index_sha256"]
+    ):
+        raise ValueError("teacher cache MatPES index disagrees with Stage-B protocol")
+    teacher_qualification = load_json_object(arguments.teacher_manifest)
+    teacher_checkpoints = load_json_object(arguments.teacher_checkpoint_manifest)
+    if (
+        not bool(teacher_qualification.get("qualified"))
+        or teacher_qualification.get("protocol") != prerequisites["teacher_protocol"]
+        or sha256_file(arguments.teacher_checkpoint_manifest)
+        != teacher_qualification.get("checkpoint_manifest_sha256")
+        or not bool(teacher_checkpoints.get("qualified_snapshot_identity"))
+    ):
+        raise ValueError("teacher cache received an unqualified teacher identity")
     sources = manifest.get("sources")
     if not isinstance(sources, list) or not sources:
         raise ValueError("MatPES index sources are invalid")
@@ -221,10 +255,25 @@ def main() -> None:
     }
     if not teacher_files:
         raise ValueError("teacher model directory is empty")
+    primary = teacher_checkpoints.get("teachers", {}).get("primary", {})
+    declared_files = {
+        str(item["path"]): str(item["sha256"])
+        for item in primary.get("files", [])
+        if isinstance(item, dict) and "path" in item and "sha256" in item
+    }
+    if (
+        primary.get("architecture") != "TensorNet"
+        or primary.get("dataset") != "MatPES-PBE-2025.2"
+        or declared_files != teacher_files
+    ):
+        raise ValueError("teacher model files disagree with the qualified primary snapshot")
     teacher_model_sha256 = canonical_json_hash(teacher_files)
     contract = {
         "index_manifest_sha256": sha256_file(arguments.index / "manifest.json"),
         "teacher_manifest_sha256": sha256_file(arguments.teacher_manifest),
+        "teacher_checkpoint_manifest_sha256": sha256_file(
+            arguments.teacher_checkpoint_manifest
+        ),
         "teacher_model_sha256": teacher_model_sha256,
         "functional": arguments.functional,
         "feature_dim": arguments.feature_dim,
@@ -291,6 +340,7 @@ def main() -> None:
         feature_dim=arguments.feature_dim,
         index_manifest=arguments.index / "manifest.json",
         teacher_manifest=arguments.teacher_manifest,
+        teacher_checkpoint_manifest=arguments.teacher_checkpoint_manifest,
         teacher_model_sha256=teacher_model_sha256,
         functional_scope=(arguments.functional,),
         expected_feature_rows=expected_feature_rows,

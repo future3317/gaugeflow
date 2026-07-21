@@ -37,6 +37,8 @@ def test_teacher_cache_is_index_aligned_and_keeps_ids_out_of_batches(tmp_path: P
     build_matpes_index({"PBE": [source]}, index, max_rows_per_source=50)
     teacher_manifest = tmp_path / "teacher.json"
     teacher_manifest.write_text('{"qualified": true}\n', encoding="utf-8")
+    checkpoint_manifest = tmp_path / "checkpoint.json"
+    checkpoint_manifest.write_text('{"qualified": true}\n', encoding="utf-8")
     features = [
         (row, torch.full((2, 3), float(row)) if row % 2 == 0 else None)
         for row in range(50)
@@ -49,6 +51,7 @@ def test_teacher_cache_is_index_aligned_and_keeps_ids_out_of_batches(tmp_path: P
         feature_dim=3,
         index_manifest=index / "manifest.json",
         teacher_manifest=teacher_manifest,
+        teacher_checkpoint_manifest=checkpoint_manifest,
         teacher_model_sha256="0" * 64,
         functional_scope=("PBE",),
         expected_feature_rows=25,

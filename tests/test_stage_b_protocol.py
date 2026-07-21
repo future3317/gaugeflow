@@ -15,5 +15,9 @@ def test_stage_b_protocol_binds_active_training_implementation() -> None:
         "rank_sharded_data_sha256": Path("src/gaugeflow/production/rank_sharded_data.py"),
         "evaluator_sha256": Path("scripts/evaluate_physical_representation.py"),
         "physical_evaluation_sha256": Path("src/gaugeflow/production/physical_evaluation.py"),
+        "teacher_cache_builder_sha256": Path("scripts/build_matpes_teacher_feature_cache.py"),
+        "teacher_feature_cache_sha256": Path(
+            "src/gaugeflow/production/teacher_feature_cache.py"
+        ),
     }
     assert all(sha256_file(path) == prerequisites[name] for name, path in paths.items())

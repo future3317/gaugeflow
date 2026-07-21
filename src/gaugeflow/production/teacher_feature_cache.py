@@ -107,6 +107,7 @@ def write_matpes_teacher_feature_cache(
     feature_dim: int,
     index_manifest: str | Path,
     teacher_manifest: str | Path,
+    teacher_checkpoint_manifest: str | Path,
     teacher_model_sha256: str,
     functional_scope: tuple[str, ...],
     expected_feature_rows: int,
@@ -155,6 +156,7 @@ def write_matpes_teacher_feature_cache(
     )
     index_manifest_path = Path(index_manifest)
     teacher_manifest_path = Path(teacher_manifest)
+    teacher_checkpoint_manifest_path = Path(teacher_checkpoint_manifest)
     if feature_rows != expected_feature_rows:
         raise ValueError("teacher feature cache coverage disagrees with its frozen scope")
     qualified = not bounded_smoke
@@ -173,6 +175,8 @@ def write_matpes_teacher_feature_cache(
         "index_manifest_sha256": sha256_file(index_manifest_path),
         "teacher_manifest": str(teacher_manifest_path.resolve()),
         "teacher_manifest_sha256": sha256_file(teacher_manifest_path),
+        "teacher_checkpoint_manifest": str(teacher_checkpoint_manifest_path.resolve()),
+        "teacher_checkpoint_manifest_sha256": sha256_file(teacher_checkpoint_manifest_path),
         "teacher_model_sha256": teacher_model_sha256,
         "offsets_file": offsets_path.name,
         "offsets_sha256": sha256_file(offsets_path),

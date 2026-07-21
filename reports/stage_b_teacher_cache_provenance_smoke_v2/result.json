@@ -1,0 +1,27 @@
+{
+  "protocol": "stage_b_teacher_cache_provenance_smoke_v2",
+  "scope": "one-real-row CPU software smoke; not a teacher or physical-learning qualification",
+  "source_protocol": "stage_b_physical_representation_v1",
+  "row_count": 1,
+  "feature_rows": 1,
+  "feature_dim": 128,
+  "storage_dtype": "float16",
+  "functional_scope": [
+    "PBE"
+  ],
+  "finite": true,
+  "bounded_smoke": true,
+  "qualified": false,
+  "teacher_model_sha256": "064352951979d567aaf1f05a27a6543faca50ec7cfae96c221454a2e14ea2d3c",
+  "teacher_checkpoint_manifest_sha256": "c975c76f44be340b91cc6e716cbfb5a80c77f05309e7da5f8185ccca5f6d191f",
+  "features_sha256": "fd68a9d0baf4100f9a5c97a73ea25f1925a063aa859b9414abb4b2027e794aae",
+  "checks": {
+    "fresh_extraction": "passed",
+    "same_contract_resume": "passed",
+    "changed_batch_contract_rejected": "passed",
+    "index_identity_bound": "passed",
+    "teacher_qualification_bound": "passed",
+    "checkpoint_manifest_bound": "passed",
+    "actual_teacher_file_tree_bound": "passed"
+  }
+}
