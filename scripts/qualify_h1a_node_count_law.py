@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import subprocess
@@ -13,6 +14,11 @@ import torch
 
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior
+
+
+def _normalized_text_sha256(path: Path) -> str:
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _git_identity(repository: Path) -> str:
@@ -147,7 +153,7 @@ def main() -> None:
     cache_manifest = load_json_object(paths["cache_manifest"])
     iid_manifest = load_json_object(paths["iid_manifest"])
     iid_audit_path = repository / source["iid_independent_audit"]
-    if sha256_file(iid_audit_path) != source["iid_independent_audit_sha256"]:
+    if _normalized_text_sha256(iid_audit_path) != source["iid_independent_audit_sha256"]:
         raise ValueError("node-count IID independent audit identity changed")
     iid_audit = load_json_object(iid_audit_path)
     if cache_manifest.get("qualified") is not True:
