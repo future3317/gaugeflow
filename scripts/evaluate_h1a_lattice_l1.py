@@ -403,7 +403,11 @@ def main() -> None:
         protocol_name=str(protocol["protocol"]),
         protocol_sha256=canonical_json_hash(protocol),
     )
-    dataset = PackedAlexP1Dataset(arguments.cache_root, str(protocol["evaluation"]["split"]))
+    declared_split = str(protocol["evaluation"]["split"])
+    cache_split = {"validation": "val"}.get(declared_split)
+    if cache_split is None:
+        raise ValueError("L1 protocol must use the independent validation split")
+    dataset = PackedAlexP1Dataset(arguments.cache_root, cache_split)
     indices = _load_panel(
         dataset,
         int(protocol["evaluation"]["graphs"]),
