@@ -12,7 +12,10 @@ from gaugeflow.manifold import wrap01
 from .blueprint import ParentBlueprintBatch
 from .categorical_mask import AbsorbingMaskDiffusion
 from .categorical_uniform import UniformCategoricalDiffusion
+from .autoregressive_assignment import RemainingCountAssignmentLaw
+from .assignment_training import sample_uniform_reveal_ranks
 from .composition_assignment import composition_counts_from_tokens, count_projected_assignment
+from .composition_state import StoichiometryFirstCompositionModel
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .lattice_standardization import P1LatticeStandardizer
 from .lattice_volume_shape import LatticeGuardrails, LatticeVolumeShape, project_lattice_state
@@ -170,6 +173,7 @@ class GeneratedHybridBatch:
     lattice: torch.Tensor
     log_volume: torch.Tensor
     log_shape: torch.Tensor
+    composition_counts: torch.Tensor
     batch: torch.Tensor
     diagnostics: ReverseTrajectoryDiagnostics
 
@@ -256,18 +260,27 @@ class TensorFreeReverseSampler:
         maximum_time: float = 0.999,
         guardrails: LatticeGuardrails | None = None,
         categorical_path: str = "absorbing_mask",
+        composition_model: StoichiometryFirstCompositionModel | None = None,
     ) -> None:
         if not 0.0 < maximum_time < 1.0:
             raise ValueError("maximum reverse time must lie in (0,1)")
         self.denoiser = denoiser
         self.lattice_standardizer = lattice_standardizer
         self.categorical: AbsorbingMaskDiffusion | UniformCategoricalDiffusion
-        if categorical_path == "absorbing_mask":
+        self.orderless_reveal = categorical_path == "orderless_reveal"
+        if categorical_path in {"absorbing_mask", "orderless_reveal"}:
             self.categorical = AbsorbingMaskDiffusion()
         elif categorical_path == "uniform_replacement":
             self.categorical = UniformCategoricalDiffusion()
         else:
             raise ValueError("unknown categorical probability path")
+        if self.orderless_reveal != (composition_model is not None):
+            raise ValueError(
+                "orderless product sampling requires a composition model, and composition models "
+                "must not be silently ignored by a legacy categorical sampler"
+            )
+        self.composition_model = composition_model
+        self.assignment_law = RemainingCountAssignmentLaw()
         self.vp_schedule = CosineNoiseSchedule()
         self.coordinate_schedule = ExponentialTorusNoiseSchedule(
             sigma_min=coordinate_sigma_min,
@@ -784,11 +797,35 @@ class TensorFreeReverseSampler:
         dtype = blueprint.shape_projector.dtype
         graphs = blueprint.node_counts.numel()
         nodes = blueprint.batch.numel()
-        tokens = self.categorical.sample_prior(
-            nodes,
-            blueprint.shape_projector,
+        if not self.orderless_reveal:
+            raise ValueError(
+                "the joint sampler is defined only for the composition-conditioned "
+                "orderless exact-count product path; use the component samplers for "
+                "historical conditional audits"
+            )
+        assert self.composition_model is not None
+        if int(blueprint.node_counts.max()) > self.composition_model.maximum_atoms:
+            raise ValueError("blueprint node count exceeds the qualified composition-law support")
+        if self.composition_model.vocabulary_size != self.categorical.element_count:
+            raise ValueError("composition and categorical vocabularies disagree")
+        # The qualified C law is unconditional conditional on N: its frozen
+        # context is the constant unit token used during its likelihood gate.
+        # This is an explicit model state, never a target-derived composition.
+        composition_context = torch.ones(
+            (graphs, self.composition_model.context_dim), dtype=dtype, device=device
+        )
+        composition_sample = self.composition_model.sample(
+            composition_context,
+            blueprint.node_counts.long(),
             generator=categorical_generator,
         )
+        composition_counts = composition_sample.state.to_dense(self.categorical.element_count)
+        if not torch.equal(composition_counts.sum(dim=1), blueprint.node_counts.long()):
+            raise SamplingFailure("sampled composition does not close on the sampled node count")
+        tokens = self.categorical.sample_prior(nodes, blueprint.shape_projector, generator=categorical_generator)
+        reveal_rank = sample_uniform_reveal_ranks(blueprint.batch, generator=categorical_generator)
+        reveal_count = torch.zeros((graphs,), dtype=torch.long, device=device)
+        remaining_counts = composition_counts.clone()
         if initial_state is None:
             initial_state = self.initialize_continuous_state(blueprint, generator=initialization_generator)
         else:
@@ -824,6 +861,60 @@ class TensorFreeReverseSampler:
                     scalar_to = times[index + 1]
                     time_from = scalar_from.expand(graphs)
                     time_to = scalar_to.expand(graphs)
+                    # Reveal according to the same time-to-prefix convention
+                    # used by the product-field objective.  A fixed uniform
+                    # auxiliary order is sampled once; every reveal is legal
+                    # under the persisted remaining-count state.  There is no
+                    # independent-site kernel and no terminal count repair.
+                    target_reveal = torch.floor(
+                        (1.0 - scalar_to) * blueprint.node_counts.to(dtype)
+                    ).long().clamp_max(blueprint.node_counts)
+                    while bool((reveal_count < target_reveal).any()):
+                        element_time = (
+                            1.0 - reveal_count.to(dtype) / blueprint.node_counts.to(dtype)
+                        ).clamp(max=self.maximum_time)
+                        categorical_prediction = self.denoiser(
+                            tokens,
+                            coordinates,
+                            log_volume,
+                            log_shape,
+                            blueprint.batch,
+                            time_from,
+                            condition,
+                            condition_present,
+                            blueprint.shape_projector,
+                            blueprint.fractional_to_cartesian,
+                            element_time=element_time,
+                            lattice_time=time_from,
+                            composition_counts=composition_counts,
+                        )
+                        active = reveal_count < target_reveal
+                        next_site = torch.nonzero(
+                            reveal_rank == reveal_count[blueprint.batch], as_tuple=False
+                        ).flatten()
+                        next_site = next_site[active[blueprint.batch[next_site]]]
+                        active_graph = torch.nonzero(active, as_tuple=False).flatten()
+                        if next_site.shape != active_graph.shape or not torch.equal(
+                            blueprint.batch[next_site], active_graph
+                        ):
+                            raise RuntimeError("orderless reveal order lost one next site per active graph")
+                        active_site = next_site
+                        log_probability = self.assignment_law.batched_step_log_probabilities(
+                            categorical_prediction.clean_element_logits[active_site],
+                            remaining_counts[active],
+                        )
+                        selected = torch.multinomial(
+                            log_probability.exp(), 1, replacement=True, generator=categorical_generator
+                        ).squeeze(1)
+                        tokens[active_site] = selected
+                        remaining_counts[active, selected] -= 1
+                        reveal_count[active] += 1
+
+                    # Re-evaluate after the discrete transition so continuous
+                    # drifts condition on the actual current partial occupation.
+                    element_time = (
+                        1.0 - reveal_count.to(dtype) / blueprint.node_counts.to(dtype)
+                    ).clamp(max=self.maximum_time)
                     prediction = self.denoiser(
                         tokens,
                         coordinates,
@@ -835,23 +926,10 @@ class TensorFreeReverseSampler:
                         condition_present,
                         blueprint.shape_projector,
                         blueprint.fractional_to_cartesian,
-                        element_time=time_from,
+                        element_time=element_time,
                         lattice_time=time_from,
+                        composition_counts=composition_counts,
                     )
-
-                    probabilities = self.categorical.reverse_probabilities(
-                        tokens,
-                        prediction.clean_element_logits,
-                        time_from,
-                        time_to,
-                        blueprint.batch,
-                    )
-                    tokens = torch.multinomial(
-                        probabilities,
-                        1,
-                        replacement=True,
-                        generator=categorical_generator,
-                    ).squeeze(-1)
 
                     variance_from = self.coordinate_schedule.variance(time_from)
                     variance_to = self.coordinate_schedule.variance(time_to)
@@ -909,8 +987,13 @@ class TensorFreeReverseSampler:
         if trajectory_error is not None:
             raise SamplingFailure(f"joint reverse trajectory failed: {trajectory_error}") from trajectory_error
 
-        if bool((tokens == self.categorical.mask_index).any()):
+        if bool((tokens == self.categorical.mask_index).any()) or bool((reveal_count != blueprint.node_counts).any()):
             raise SamplingFailure("terminal categorical state contains absorbing masks")
+        if bool(remaining_counts.any()):
+            raise SamplingFailure("terminal orderless assignment did not consume its composition")
+        observed_counts = composition_counts_from_tokens(tokens, blueprint.batch, graphs)
+        if not torch.equal(observed_counts, composition_counts):
+            raise SamplingFailure("terminal orderless assignment violates its sampled composition")
         if not all(torch.isfinite(value).all() for value in (coordinates, log_volume, log_shape)):
             raise SamplingFailure("reverse trajectory produced a non-finite continuous state")
         try:
@@ -926,6 +1009,7 @@ class TensorFreeReverseSampler:
             lattice=lattice,
             log_volume=log_volume,
             log_shape=log_shape,
+            composition_counts=composition_counts,
             batch=blueprint.batch,
             diagnostics=ReverseTrajectoryDiagnostics(
                 time=times[1:].detach().cpu(),

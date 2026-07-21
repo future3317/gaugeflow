@@ -14,6 +14,7 @@ from gaugeflow.production.checkpointing import (
     load_production_checkpoint,
     read_production_checkpoint_metadata,
 )
+from gaugeflow.production.composition_runtime import load_qualified_composition_model
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
@@ -23,6 +24,19 @@ from gaugeflow.production.training import ExponentialMovingAverage
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument(
+        "--composition-checkpoint",
+        type=Path,
+        required=True,
+        help="Frozen qualified p(C|N) checkpoint; it is part of the joint law, not an optional postprocessor.",
+    )
+    parser.add_argument(
+        "--composition-protocol",
+        type=Path,
+        required=True,
+        help="Frozen protocol used to reconstruct and verify the composition law.",
+    )
+    parser.add_argument("--composition-checkpoint-sha256", default=None)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--num-samples", type=int, default=100)
     parser.add_argument("--sampler-steps", type=int, default=100)
@@ -54,6 +68,12 @@ def main() -> None:
         or not isinstance(standardization_config, dict)
     ):
         raise ValueError("checkpoint does not contain production model/training configuration")
+    if training_config.get("categorical_path") != "orderless_reveal" or not bool(
+        training_config.get("composition_conditioning", False)
+    ):
+        raise ValueError(
+            "this checkpoint predates the exact-count product-space runtime and cannot be sampled as A1"
+        )
     lattice_standardizer = P1LatticeStandardizer.from_mapping(
         standardization_config
     )
@@ -63,12 +83,20 @@ def main() -> None:
         args.checkpoint, model=model, ema=ema, map_location=device
     )
     ema.copy_to(model)
+    composition_model = load_qualified_composition_model(
+        args.composition_checkpoint,
+        args.composition_protocol,
+        device=device,
+        expected_checkpoint_sha256=args.composition_checkpoint_sha256,
+    )
     sampler = TensorFreeReverseSampler(
         model,
         lattice_standardizer,
         coordinate_sigma_min=float(training_config["coordinate_sigma_min"]),
         coordinate_sigma_max=float(training_config["coordinate_sigma_max"]),
         maximum_time=float(training_config["maximum_time"]),
+        categorical_path="orderless_reveal",
+        composition_model=composition_model,
     )
     args.output.mkdir(parents=True, exist_ok=True)
     count_generator = torch.Generator().manual_seed(args.seed)
@@ -120,6 +148,8 @@ def main() -> None:
         "failures": failures,
         "sampler_steps": args.sampler_steps,
         "continuous_mode": args.continuous_mode,
+        "composition_checkpoint": str(args.composition_checkpoint),
+        "composition_protocol": str(args.composition_protocol),
         "records": records,
     }
     (args.output / "sampling_summary.json").write_text(

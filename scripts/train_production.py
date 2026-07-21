@@ -331,6 +331,14 @@ def main() -> None:
             composition_conditioning=bool(training_spec.get("composition_conditioning", False)),
         )
     )
+    if training_config.objective == "joint" and (
+        training_config.categorical_path != "orderless_reveal"
+        or not training_config.composition_conditioning
+    ):
+        raise ValueError(
+            "production joint training requires the composition-conditioned orderless exact-count "
+            "product path; historical independent site-token checkpoints are not A1"
+        )
     uses_explicit_modality_times = (
         training_config.modality_time_mode
         in {

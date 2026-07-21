@@ -5,6 +5,7 @@ import torch
 
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import load_production_checkpoint, save_production_checkpoint
+from gaugeflow.production.composition_state import IntegerPartitionCatalogue, StoichiometryFirstCompositionModel
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
@@ -139,6 +140,21 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     output.loss.backward()
     assert all(
         parameter.grad is None or torch.isfinite(parameter.grad).all() for parameter in diffusion.denoiser.parameters()
+    )
+
+
+def _small_composition_model() -> StoichiometryFirstCompositionModel:
+    catalogue = IntegerPartitionCatalogue.build(maximum_atoms=20, maximum_species=7)
+    log_prior = torch.full((catalogue.size,), -torch.inf, dtype=torch.float32)
+    for count in range(1, 21):
+        support = catalogue.node_count == count
+        log_prior[support] = -torch.log(support.sum().to(torch.float32))
+    return StoichiometryFirstCompositionModel(
+        context_dim=1,
+        hidden_dim=8,
+        partition_log_prior=log_prior,
+        maximum_atoms=20,
+        maximum_species=7,
     )
 
 
@@ -960,6 +976,8 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
         coordinate_sigma_min=0.005,
         coordinate_sigma_max=0.5,
         maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=_small_composition_model(),
     )
     generated = sampler.sample(
         blueprint,
@@ -1142,6 +1160,8 @@ def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
         _small_model(),
         _standardizer(),
         maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=_small_composition_model(),
     )
     initial = sampler.initialize_continuous_state(blueprint, generator=torch.Generator().manual_seed(108))
     outputs = []
@@ -1173,7 +1193,13 @@ def test_reverse_sampler_keeps_universal_cover_until_terminal_decode():
 
     handle = model.register_forward_pre_hook(record_coordinates)
     blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2]))
-    sampler = TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8)
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=_small_composition_model(),
+    )
     initial = ContinuousReverseInitialState(
         fractional_coordinates=torch.tensor([[-0.75, 0.0, 0.0], [0.75, 0.0, 0.0]]),
         volume_latent=torch.zeros(1),

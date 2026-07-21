@@ -90,6 +90,7 @@ from .composition_state import (
     StoichiometryFirstCompositionModel,
     fit_integer_partition_log_prior,
 )
+from .composition_runtime import load_qualified_composition_model
 from .equivariant_denoiser import HybridCrystalDenoiser, LatticeDenoiserOutput
 from .generation_law import (
     CarrierSelectionSample,
@@ -260,6 +261,7 @@ __all__ = [
     "audit_terminal_symmetry",
     "detect_cartesian_point_group",
     "fit_integer_partition_log_prior",
+    "load_qualified_composition_model",
     "faithful_parent_action",
     "load_production_checkpoint",
     "read_production_checkpoint_metadata",
