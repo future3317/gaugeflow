@@ -226,9 +226,20 @@ def main() -> None:
     roles = load_json_object(role_path)
     if roles.get("qualified") is not True:
         raise ValueError("assignment role source is unqualified")
+    software_path = repository / source["ddp_software_result"]
+    if _normalized_sha256(software_path) != source["ddp_software_result_normalized_sha256"]:
+        raise ValueError("assignment DDP software result identity changed")
+    software = load_json_object(software_path)
+    if software.get("qualified") is not True or not all(software["checks"].values()):
+        raise ValueError("assignment DDP software path is not qualified")
 
     training = protocol["training"]
+    visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")
+    if len(visible_devices) != int(training["world_size"]):
+        raise ValueError("CUDA_VISIBLE_DEVICES must expose exactly the frozen world size")
     rank, world_size, device = _initialize_distributed(int(training["world_size"]))
+    if torch.cuda.get_device_name(device) != training["device_class"]:
+        raise RuntimeError("assignment pretraining device class differs from the protocol")
     seed = int(training["seed"])
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed + rank)
@@ -471,6 +482,7 @@ def main() -> None:
             },
             "hardware": {
                 "devices": devices,
+                "physical_cuda_devices": [int(value) for value in visible_devices],
                 "world_size": world_size,
                 "torch": torch.__version__,
                 "cuda": torch.version.cuda,

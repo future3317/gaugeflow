@@ -1,0 +1,56 @@
+{
+  "boundary": "This is a software and execution qualification of the selected assignment pretrainer. It does not qualify parent-conditioned assignment, p(N), lattice, coordinates, joint generation or tensor conditioning.",
+  "checks": {
+    "exact_unique_coverage": true,
+    "finite_gradient_updates": true,
+    "loss_descent": true,
+    "one_step_gradient_equivalence": true,
+    "one_step_update_equivalence": true,
+    "peak_memory": true,
+    "resume_equivalence": true,
+    "throughput": true,
+    "zero_gold_leakage": true
+  },
+  "decision": "freeze_and_run_one_exact_full_alex_assignment_pretraining_pass",
+  "equivalence": {
+    "one_step_gradient_cosine": 0.9999999999999571,
+    "one_step_update_cosine": 0.9999999999593552,
+    "one_step_update_relative_l2": 9.431767466594465e-06,
+    "resume_parameter_max_abs_error": 0.0
+  },
+  "hardware": {
+    "cuda": "12.4",
+    "devices": [
+      "NVIDIA GeForce RTX 4090",
+      "NVIDIA GeForce RTX 4090"
+    ],
+    "dtype": "float32",
+    "physical_cuda_devices": [
+      1,
+      2
+    ],
+    "torch": "2.5.1+cu124",
+    "world_size": 2
+  },
+  "implementation_commit": "7b5023972ed246b0cb510b7a349328e37a8ce9ae",
+  "model": {
+    "hidden_dim": 256,
+    "parameters": 3885568
+  },
+  "protocol": "h1a_assignment_ddp_software_qualification_v1",
+  "protocol_sha256": "2caeedf4efca79a2d34ea27520c4ec174c99c6eba7a89421287bc2ab801f6280",
+  "qualified": true,
+  "smoke": {
+    "final_nll": 4.750881611655547,
+    "final_to_initial_nll": 0.49724959414272685,
+    "global_graphs_per_second": 312.39542823711423,
+    "gold_leakage": 0,
+    "initial_nll": 9.55431973724626,
+    "panel_index_sha256": "cbd6731e4e8f9a7a9c9369c5800b9228c316d54e57aad58f2b68dd425aef9f43",
+    "peak_cuda_mib_per_rank": 4392.31201171875,
+    "processed_structures": 12799,
+    "second_update_nll": 21.117761630564928,
+    "structures": 12799,
+    "updates": 100
+  }
+}
