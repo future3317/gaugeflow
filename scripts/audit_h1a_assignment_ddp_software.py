@@ -348,6 +348,9 @@ def main() -> None:
     if len(visible_devices) != int(training["world_size"]):
         raise ValueError("CUDA_VISIBLE_DEVICES must expose exactly the frozen world size")
     rank, world_size, device = _initialize_distributed(int(training["world_size"]))
+    if rank == 0:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+    dist.barrier()
     seed = int(training["seed"])
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
