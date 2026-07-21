@@ -65,8 +65,6 @@ class PhysicalTransferTrainer:
         self.config = config
         parameters = list(model.parameters())
         fused = bool(parameters) and all(parameter.device.type == "cuda" for parameter in parameters)
-        if fused:
-            torch.set_float32_matmul_precision("high")
         self.optimizer = torch.optim.AdamW(
             parameters,
             lr=config.learning_rate,

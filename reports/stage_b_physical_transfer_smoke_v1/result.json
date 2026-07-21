@@ -1,0 +1,37 @@
+{
+  "a1_checkpoint": "/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_a1_joint_product_v1/seed_5705/checkpoint_step_00008441.pt",
+  "a1_checkpoint_sha256": "7c8fb7afc3aee6d4723d700b59f2a0523da25e897a46de8e9d2c7e5db824b6da",
+  "exact_resume": true,
+  "finite": true,
+  "graphs": 2,
+  "index_manifest_sha256": "fc2474d6fc4be356b852d8657b7b10a52b7a566268d0ecaf33324710a3b04a5e",
+  "normalizer_sha256": "6935ea4f5d9963a4fa2179b44539b6fa38657f5f780b466ab7c18b38c46f5cca",
+  "peak_cuda_memory_bytes": 1557303296,
+  "qualified": false,
+  "resume_metric_max_abs_error": 0.0,
+  "resume_parameter_max_abs_error": 0.0,
+  "resume_reference": [
+    0.3343169391155243,
+    8.816144943237305,
+    11.018622398376465
+  ],
+  "resume_repeated": [
+    0.3343169391155243,
+    8.816144943237305,
+    11.018622398376465
+  ],
+  "schema": "gaugeflow.physical_transfer_smoke.v1",
+  "scope": "bounded software/CUDA smoke; not a Stage-B scientific qualification",
+  "warmup_curve": [
+    {
+      "alex_replay_loss": 5.614656925201416,
+      "gradient_norm": 22.288591384887695,
+      "physical_loss": 1.002526879310608
+    },
+    {
+      "alex_replay_loss": 3.9702529907226562,
+      "gradient_norm": 13.932352066040039,
+      "physical_loss": 0.5207999348640442
+    }
+  ]
+}

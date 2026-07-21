@@ -396,5 +396,15 @@ p(L\mid A,C,N,B)p(F\mid A,L,N,B).
 Gate、同预算 baseline、计算策略和 B--F 协议见
 [`gaugeflow_pretraining_roadmap_zh.md`](gaugeflow_pretraining_roadmap_zh.md)。
 
-目前不需要用户补数据或修改阈值。下一步是 learned orderless oracle-C IID assignment
-Gate；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。
+上述 A0/A1 已完成到 tensor-free free-generation A1-v1.1。Stage-B 的六文件 MatPES
+(N\le20) byte-offset index 也已正式闭合：749,866 functional-rows、387,697 个 unique
+IDs、按 ID 分组的 674,709/37,054/38,103 split、零坏行。train-only PBE/r2SCAN
+normalization 已拟合并绑定 index manifest hash。
+
+物理迁移代码现在复用 A1 唯一的 periodic message encoder，只跳过生成 terminal heads；
+functional 信息仅进入 Cartesian physical readout。MatPES physical loss 与 Alex replay
+由同一个 optimizer owner 累加。34.28M A1-EMA 的两图 CUDA smoke 得到 physical loss
+`1.00253 -> 0.52080`、replay loss `5.61466 -> 3.97025`，全部 finite，逐参数 exact-resume
+误差为零，峰值 CUDA allocation 为 `1.56 GB`。这只是软件 smoke，不是 Stage-B 效果
+资格。下一步是冻结 teacher feature 来源、replay 比例、exposure 与 validation Gate，再运行
+正式双 GPU 物理表征预训练；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。

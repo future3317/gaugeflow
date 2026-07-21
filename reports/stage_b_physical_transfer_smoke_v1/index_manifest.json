@@ -1,0 +1,65 @@
+{
+  "bounded_smoke": false,
+  "calibration_fraction": 0.05,
+  "energy_target": "cohesive_energy_per_atom",
+  "excluded_large_cells": 69867,
+  "index_file": "index.pt",
+  "index_sha256": "e01c2e9cb4b134920a1a7667f734ae500dc2929b997fb1e93695b2e8d795b488",
+  "invalid_rows": {},
+  "maximum_atoms": 20,
+  "qualified": true,
+  "schema": 1,
+  "scope": "MatPES N<=20 physical-representation pretraining index",
+  "seed": 5705,
+  "sources": [
+    {
+      "functional": "PBE",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-train.jsonl",
+      "rows_seen": 389870,
+      "rows_selected": 348450,
+      "sha256": "cb92d9cc1f68ac7b7e52eb3b22f9fd5a304d1ad3cbc581de665e22287ec644fb"
+    },
+    {
+      "functional": "PBE",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-valid.jsonl",
+      "rows_seen": 21659,
+      "rows_selected": 19338,
+      "sha256": "2e39908974a4d30de472b0fc1e15bc307c721aed6e7758baaed0860fd24a13d1"
+    },
+    {
+      "functional": "PBE",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-PBE/MatPES-PBE-2025.2-test.jsonl",
+      "rows_seen": 21660,
+      "rows_selected": 19341,
+      "sha256": "4a3b6cbf402d52f4e97c3cc733f96939acbc51ce48bb76d52fe0e05140935a07"
+    },
+    {
+      "functional": "r2SCAN",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-R2SCAN/MatPES-R2SCAN-2025.2-train.jsonl",
+      "rows_seen": 347889,
+      "rows_selected": 326437,
+      "sha256": "c4a7b6c7b18b6d7b1b1fa4ed1e5a4d08be32ef457ff842d2ef2be36c7de90d02"
+    },
+    {
+      "functional": "r2SCAN",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-R2SCAN/MatPES-R2SCAN-2025.2-valid.jsonl",
+      "rows_seen": 19327,
+      "rows_selected": 18125,
+      "sha256": "c2fe7fcdb52ea446a9885eb8194293621129d2bdf8e98b3d2ffcfafda4f98a2f"
+    },
+    {
+      "functional": "r2SCAN",
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/raw/huggingface/MatPES-R2SCAN/MatPES-R2SCAN-2025.2-test.jsonl",
+      "rows_seen": 19328,
+      "rows_selected": 18175,
+      "sha256": "12e1a6eefc84f2dc83f1e8718bcb8e687925951ee4de0313f29ce2cfee33f192"
+    }
+  ],
+  "split_counts": {
+    "calibration": 37054,
+    "test": 38103,
+    "train": 674709
+  },
+  "test_fraction": 0.05,
+  "unique_material_ids": 387697
+}

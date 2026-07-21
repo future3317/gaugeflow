@@ -131,6 +131,34 @@ def test_physical_transfer_gradients_reach_heads_and_shared_backbone() -> None:
     assert float(model.heads.energy_head[0].weight.grad.norm()) > 0.0
 
 
+def test_clean_physical_backbone_keeps_geometry_fp32_under_cuda_bf16() -> None:
+    if not torch.cuda.is_available():
+        return
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        radial_cutoff=4.0,
+        edge_dim=8,
+        angular_channels=2,
+        edge_refresh_rank=4,
+    ).cuda()
+    elements = torch.tensor([10, 16], device="cuda")
+    coordinates = torch.tensor(
+        [[0.0, 0.0, 0.0], [0.3, 0.2, 0.1]],
+        device="cuda",
+    )
+    lattice = torch.diag(torch.tensor([5.0, 6.0, 7.0], device="cuda")).unsqueeze(0)
+    batch = torch.zeros(2, dtype=torch.long, device="cuda")
+    with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        features = model.forward_physical_features(elements, coordinates, lattice, batch)
+    assert features.node_scalar.dtype == torch.float32
+    assert features.node_vectors.dtype == torch.float32
+    assert torch.isfinite(features.node_scalar).all()
+    assert torch.isfinite(features.node_vectors).all()
+
+
 def test_kelvin_round_trip_is_orthonormal() -> None:
     raw = torch.tensor(
         [[[2.0, -0.3, 0.7], [-0.3, 1.0, 0.2], [0.7, 0.2, -1.0]]]

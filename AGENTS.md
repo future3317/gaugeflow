@@ -408,13 +408,17 @@ No result yet authorizes OOD parent generation, H1b-H6, tensor condition,
 oracle, relaxation, DFT or DFPT.
 
 Post-A1 Stage-B software preparation may proceed without training physical
-weights. The server MatPES artifacts contain `389870/347889` PBE/r2SCAN rows
-and `348450/326437` rows at `N<=20`; `293449` eligible material IDs are shared
-across functionals, so splits must group by `matpes_id`. Cohesive energy,
+weights. The six immutable MatPES PBE/r2SCAN artifacts contain `433189/386544`
+rows and `387129/362737` rows at `N<=20`. The qualified byte-offset index has
+`749866` functional rows, `387697` unique IDs, zero invalid rows and an
+ID-grouped `674709/37054/38103` train/calibration/test split. Cohesive energy,
 forces and stress are complete in this domain; formation energy is partial and
-must not be a fallback target. The active preparation uses a byte-offset
-random-access index, explicit cohesive-energy target, vectorized collation and
-functional scalar/Kelvin normalization that preserves Cartesian covariance.
+must not be a fallback target. IDs never enter model batches. The active
+preparation uses explicit cohesive-energy targets, vectorized collation and
+train-only functional scalar/Kelvin normalization that preserves Cartesian
+covariance. Physical and Alex replay losses have one optimizer owner; the
+clean physical path shares the production message encoder but skips all
+generation terminal heads.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

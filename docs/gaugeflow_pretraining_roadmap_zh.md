@@ -51,7 +51,7 @@ carrier。两者是模型状态，不是运行时 fallback。
 |---|---:|---|---|
 | Alex-MP-20 | 675,204 总计；540,164 train | GaugeFlow-base 结构先验与固定 benchmark | validation/test 不进入后续大数据训练 |
 | geometry-complete parent carriers | 454 candidates | parent-aware exact assignment 的资格与小规模学习 | 不能代表全 Alex 覆盖 |
-| MatPES-PBE / r2SCAN | 当前 artifacts 为 389,870 / 347,889 行；(N\le20) 为 348,450 / 326,437 | PES 表征、energy/force/stress 与 noisy-state distillation | 293,449 个 eligible ID 跨 functional 重复，必须按 ID 联合 split |
+| MatPES-PBE / r2SCAN | 六个 immutable artifacts 合计 433,189 / 386,544 行；(N\le20) 为 387,129 / 362,737 | PES 表征、energy/force/stress 与 noisy-state distillation | 以 `matpes_id` 跨 artifact/functional 联合 split，ID 不进入模型 batch |
 | LeMat force-labelled data | 待 manifest 资格化 | off-equilibrium force/stress 表征 | 缺失标签使用 mask，不做数值填充 |
 | LeMat-BulkUnique | 5,438,436 总库存；5,005,017 `unique_pbe` | 大规模结构 continued pretraining | 先去重并排除 Alex val/test overlap |
 | TensorOrbit-JARVIS-v2 | 4,998 | 后期 tensor adapter 与独立 oracle 数据接口 | 当前 base 不读取 |
@@ -153,14 +153,22 @@ GaugeFlow 的 Alex-only 预算直接比较。
 
 目标是改善当前短键/过度压缩问题，而不是在采样时调用 learned energy guidance。
 
-训练前数据闭包已完成小规模软件验证。当前 MatPES 2025.2 artifacts 共 737,759 行；
-第一版与 GaugeFlow-base 共享 (N\le20) 域，共 674,887 functional-rows、381,438 个
-unique material IDs。PBE/r2SCAN 共有 293,449 个 eligible IDs，因此随机逐行 split
-被禁止；random-access index 以 `matpes_id` 为联合 split 单元且绝不把 ID 放入 model
-batch。cohesive energy、force、stress 在 eligible rows 上全覆盖；formation energy 仅有
-67,832/66,645 条，因此统一 energy auxiliary 使用显式 cohesive-energy-per-atom target，
-不允许字段回退。functional normalization 只使用标量 energy shift/scale、force scalar
-scale、isotropic stress shift 与 Kelvin scalar scale，从而保持旋转协变。
+训练前数据闭包现已覆盖 PBE/r2SCAN 各自 train/valid/test 六个 immutable artifacts。
+原始 819,733 functional-rows 中有 69,867 条因 (N>20) 被排除；合格索引包含
+749,866 functional-rows、387,697 个 unique material IDs，并按 `matpes_id` 重新得到
+674,709/37,054/38,103 的 train/calibration/test。索引中坏行数为零；随机逐行 split
+被禁止，ID 绝不进入 model batch。cohesive energy、force、stress 在 eligible rows 上
+全覆盖；formation energy 仍只部分覆盖，因此统一 energy auxiliary 使用显式
+cohesive-energy-per-atom target，不允许字段回退。functional normalization 只使用
+train split，并采用标量 energy shift/scale、force scalar scale、isotropic stress shift
+与 Kelvin scalar scale，从而保持旋转协变。
+
+实现上，生成 forward 与物理预训练共享唯一的 periodic message-passing 编码路径；
+clean physical 接口在编码后直接返回 scalar/vector features，不再白算 composition、
+assignment、lattice 与 coordinate terminal heads。PBE/r2SCAN functional embedding 只在
+Cartesian readout 前注入，保留共享几何表示且允许两个泛函拥有不同归一化预测。
+MatPES loss 与 Alex replay loss 由同一个 optimizer 在同一步累加，避免两个 optimizer
+竞争修改同一 backbone。
 
 ### B0 teacher qualification
 

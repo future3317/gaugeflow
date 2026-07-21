@@ -1,0 +1,35 @@
+{
+  "energy_location": [
+    -4.1109795570373535,
+    -3.995079755783081
+  ],
+  "energy_scale": [
+    1.442719578742981,
+    1.3536999225616455
+  ],
+  "fit_split": "train",
+  "force_scale": [
+    1.2097361087799072,
+    1.2036545276641846
+  ],
+  "functional_row_counts": {
+    "PBE": 348319,
+    "r2SCAN": 326390
+  },
+  "functional_vocabulary": {
+    "PBE": 0,
+    "r2SCAN": 1
+  },
+  "index_manifest": "/home/workspace/lrh/DATA/T2C-Flow/processed/matpes_physical_index_v1/manifest.json",
+  "index_manifest_sha256": "fc2474d6fc4be356b852d8657b7b10a52b7a566268d0ecaf33324710a3b04a5e",
+  "qualified": true,
+  "schema": "gaugeflow.matpes_physical_normalizer.v1",
+  "stress_isotropic_location": [
+    -1.6726605892181396,
+    -0.9588103294372559
+  ],
+  "stress_scale": [
+    10.152501106262207,
+    10.580857276916504
+  ]
+}

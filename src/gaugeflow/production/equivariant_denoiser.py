@@ -714,7 +714,11 @@ class HybridCrystalDenoiser(nn.Module):
         ):
             raise ValueError("physical structure tensors must share one device")
         identity_chart = torch.eye(3, dtype=lattice.dtype, device=lattice.device).expand(graphs, 3, 3)
-        lattice_state = LatticeVolumeShape.from_lattice(lattice.float(), identity_chart.float())
+        with torch.autocast(device_type=lattice.device.type, enabled=False):
+            lattice_state = LatticeVolumeShape.from_lattice(
+                lattice.float(),
+                identity_chart.float(),
+            )
         shape_projector = torch.eye(6, dtype=lattice.dtype, device=lattice.device).expand(graphs, 6, 6)
         clean_time = lattice_state.log_volume.new_zeros(graphs)
         tensor_condition = lattice_state.log_volume.new_zeros(graphs, 18)

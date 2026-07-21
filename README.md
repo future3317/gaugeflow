@@ -109,10 +109,11 @@ H(d,a) = G_parent^B ∩ H_occ(a) ∩ intersection_l H_(l,c_l)
   matcher envelope 和 connected component overlap 均为零。
 - PhononDB：10,034 个 compact Hessian/force-constant records；按需计算
   dynamical matrix，不保存 dense q-grid。
-- MatPES：当前服务器 2025.2 train artifacts 实际为 `389,870` PBE 与 `347,889`
-  r2SCAN 行；其中 (N\le20) 为 `348,450/326,437`。两者共有 `293,449` 个
-  (N\le20) material IDs，必须跨 functional 联合分组 split。eligible rows 的 cohesive
-  energy、force、stress 全覆盖；formation energy 仅部分覆盖，因此不作静默回退。
+- MatPES：服务器 2025.2 的 PBE/r2SCAN train/valid/test 六个 immutable artifacts
+  合计 `433,189/386,544` 行，其中 (N\le20) 为 `387,129/362,737`。全量 byte-offset
+  index 含 `749,866` functional-rows、`387,697` 个 unique IDs，并按 `matpes_id`
+  联合分成 `674,709/37,054/38,103`；坏行数为零。eligible rows 的 cohesive energy、
+  force、stress 全覆盖；formation energy 仅部分覆盖，因此不作静默回退。
 - LeMat：计划先使用 force-labelled trajectory 子集，再在去除 Alex validation/test
   重叠后使用 LeMat-BulkUnique；当前公开卡片为 5,438,436 总记录，其中
   5,005,017 条属于 `unique_pbe`，不能把“5.4M 总库存”写成同质 PBE 训练集。
