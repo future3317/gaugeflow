@@ -151,6 +151,8 @@ def vp_reverse_step(
 class ReverseTrajectoryDiagnostics:
     time: torch.Tensor
     masked_count: torch.Tensor
+    remaining_atom_count: torch.Tensor
+    composition_closure_error: torch.Tensor
     coordinate_step_rms: torch.Tensor
     volume_step_rms: torch.Tensor
     shape_step_rms: torch.Tensor
@@ -670,6 +672,8 @@ class TensorFreeReverseSampler:
             spacing=time_grid,
         )
         masked_counts: list[torch.Tensor] = []
+        remaining_atom_counts: list[torch.Tensor] = []
+        composition_closure_errors: list[torch.Tensor] = []
         was_training = self.denoiser.training
         self.denoiser.eval()
         trajectory_error: RuntimeError | ValueError | None = None
@@ -983,6 +987,15 @@ class TensorFreeReverseSampler:
                     volume_latent = next_volume_latent
                     shape_latent = self.lattice_standardizer.encode_shape(log_shape)
                     masked_counts.append((tokens == self.categorical.mask_index).sum())
+                    observed_partial = composition_counts_from_tokens(
+                        tokens[tokens != self.categorical.mask_index],
+                        blueprint.batch[tokens != self.categorical.mask_index],
+                        graphs,
+                    )
+                    composition_closure_errors.append(
+                        (observed_partial + remaining_counts - composition_counts).abs().sum(dim=1)
+                    )
+                    remaining_atom_counts.append(remaining_counts.sum(dim=1))
         except (RuntimeError, ValueError) as error:
             trajectory_error = error
         finally:
@@ -1018,6 +1031,8 @@ class TensorFreeReverseSampler:
             diagnostics=ReverseTrajectoryDiagnostics(
                 time=times[1:].detach().cpu(),
                 masked_count=torch.stack(masked_counts).detach().cpu(),
+                remaining_atom_count=torch.stack(remaining_atom_counts).detach().cpu(),
+                composition_closure_error=torch.stack(composition_closure_errors).detach().cpu(),
                 coordinate_step_rms=torch.stack(coordinate_steps).detach().cpu(),
                 volume_step_rms=torch.stack(volume_steps).detach().cpu(),
                 shape_step_rms=torch.stack(shape_steps).detach().cpu(),

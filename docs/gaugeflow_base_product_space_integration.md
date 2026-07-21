@@ -2,11 +2,15 @@
 
 ## Status
 
-`draft_before_implementation`.  This document defines the object that replaces
-the historical independent site-token reverse path.  It is not evidence for an
-A1 checkpoint.  The existing `p(C|N)`, remaining-count assignment, lattice,
-and conditional-coordinate Gates remain component evidence only until the
-integration Gate below passes.
+`implemented_pending_integration_gate`.  The active joint sampler now draws
+the frozen qualified `p(C|N)` composition, initializes `MASK` occupations,
+persists exact remaining counts, and performs only legal orderless reveals
+while interleaving continuous reverse-SDE steps.  It has no terminal count
+projection.  The entrypoint rejects historical independent-site joint
+checkpoints rather than treating them as A1-compatible.  This implementation
+is not evidence for an A1 checkpoint: the existing `p(C|N)`, remaining-count
+assignment, lattice, and conditional-coordinate Gates remain component
+evidence only until the integration Gate below passes.
 
 ## State and probability law
 

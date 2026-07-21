@@ -1002,6 +1002,8 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
     assert generated.lattice.shape == (2, 3, 3)
     assert torch.isfinite(generated.lattice).all()
     assert generated.diagnostics.masked_count[-1] == 0
+    assert bool((generated.diagnostics.composition_closure_error == 0).all())
+    assert torch.equal(generated.diagnostics.remaining_atom_count[-1], torch.zeros(2, dtype=torch.long))
     observed_counts = torch.bincount(
         blueprint.batch * 118 + generated.element_tokens,
         minlength=2 * 118,
@@ -1231,8 +1233,10 @@ def test_reverse_sampler_keeps_universal_cover_until_terminal_decode():
         )
     finally:
         handle.remove()
-    assert len(seen_coordinates) == 1
-    assert torch.equal(seen_coordinates[0], initial.fractional_coordinates)
+    # Product sampling may make several categorical reveal queries before the
+    # continuous update, but every query must stay on the unwrapped state.
+    assert len(seen_coordinates) >= 1
+    assert all(torch.equal(value, initial.fractional_coordinates) for value in seen_coordinates)
     assert bool(((generated.fractional_coordinates >= 0.0) & (generated.fractional_coordinates < 1.0)).all())
 
 
