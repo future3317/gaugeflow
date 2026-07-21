@@ -157,6 +157,13 @@ def load_production_checkpoint(
         torch.set_rng_state(payload["cpu_rng_state"].cpu())
         cuda_state = payload["cuda_rng_state"]
         if torch.cuda.is_available() and cuda_state:
-            torch.cuda.set_rng_state_all(cuda_state)
+            if not isinstance(cuda_state, list) or not all(
+                isinstance(state, torch.Tensor) and state.dtype == torch.uint8
+                for state in cuda_state
+            ):
+                raise ValueError("checkpoint CUDA RNG state is invalid")
+            # map_location may place every payload tensor on CUDA, while the
+            # PyTorch RNG API intentionally accepts CPU ByteTensor states.
+            torch.cuda.set_rng_state_all([state.cpu() for state in cuda_state])
     prior = EmpiricalNodeCountPrior.from_state_dict(payload["node_count_prior"])
     return int(payload["training_step"]), prior, metadata
