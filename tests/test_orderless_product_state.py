@@ -54,11 +54,12 @@ def test_zero_logits_use_exchangeable_remaining_count_base_measure() -> None:
     assert float(mean_nll) == 0.0
 
     # At depth zero, species 0 has two of three remaining slots in graph 0.
+    rank_with_species_zero_next = torch.tensor([0, 1, 2, 1, 0], dtype=torch.long)
     state_zero = partial_occupation_from_reveal_rank(
         assignment,
         batch,
         counts,
-        rank,
+        rank_with_species_zero_next,
         torch.zeros(2, dtype=torch.long),
         vocabulary_size=4,
         mask_token=4,
