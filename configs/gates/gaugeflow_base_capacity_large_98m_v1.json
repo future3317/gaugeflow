@@ -1,0 +1,55 @@
+{
+  "protocol": "gaugeflow_base_capacity_large_98m_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed exact-one-pass clean-side coordinate capacity screen for the 98M GaugeFlow-base candidate",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_lattice_l1_v1",
+    "qualification_result_sha256": "8f76a0accbe328354a7d863ac48f3c17b356103213d7a824b816e91c49660529",
+    "additional_qualification_results": {
+      "h1a_coordinate_clean_side_current_v1": "204ad2f1e9b3c7480f09826b2e7848f836c150ed2f44002c46773fc05d990392",
+      "h1a_generated_side_coordinate_exposure_v1": "852825d8ab34e10a9fc536e6e262ec4ce78e84723dbaa66b5093d07f47ac7013"
+    },
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 544,
+    "vector_dim": 112,
+    "layers": 12,
+    "radial_dim": 24,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 224,
+    "angular_channels": 28,
+    "edge_refresh_rank": 56,
+    "modality_time_conditioning": "separate",
+    "parameter_count": 97580719
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 8441,
+    "batch_size": 16,
+    "gradient_accumulation_steps": 4,
+    "log_every": 100,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "coordinate",
+    "coordinate_clean_side_information": true,
+    "modality_time_mode": "shared",
+    "categorical_path": "absorbing_mask",
+    "composition_loss_weight": 0.0,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 2111, 8441],
+    "exposure_mode": "complete_passes",
+    "graph_presentations": 540164,
+    "data_passes": 1.0,
+    "from_scratch_required": true
+  }
+}

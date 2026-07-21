@@ -1,0 +1,60 @@
+{
+  "protocol": "gaugeflow_base_capacity_screen_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "equal-exposure capacity selection for GaugeFlow-base; capacity is the only changed variable",
+  "candidates": [
+    {
+      "name": "small_34m",
+      "protocol": "configs/gates/gaugeflow_base_capacity_small_34m_v1.json",
+      "protocol_sha256": "73e260f00fbf032ff222f9583395805a248d11b977a4689eb976ca4c429a3b20",
+      "parameter_count": 34284207,
+      "smoke_result_sha256": "2a61437476b157b858fe9f2bfd10b9bae00a74f379bb4aca4e0a66aec12ed536"
+    },
+    {
+      "name": "base_58m",
+      "protocol": "configs/gates/gaugeflow_base_capacity_base_58m_v1.json",
+      "protocol_sha256": "934b82e65006def2863a5059b41d90ab6232d0263e59abd5369e77c497cf9850",
+      "parameter_count": 57682095,
+      "smoke_result_sha256": "d0c8bf0a7a4a9068a6e1dab0e2cf7532d0ea42c05b6f6c43fe674e75e827448d"
+    },
+    {
+      "name": "large_98m",
+      "protocol": "configs/gates/gaugeflow_base_capacity_large_98m_v1.json",
+      "protocol_sha256": "a239f8bac033c4cad48946292d90a2605b72a163a1147889562145e9565f7ebe",
+      "parameter_count": 97580719,
+      "smoke_result_sha256": "3244aa96062bc89b135198d50904229af413b818e248473f1b00728351fba98d"
+    }
+  ],
+  "evaluation": {
+    "validation_graphs": 256,
+    "validation_seed": 8501,
+    "validation_noise_seed": 8502,
+    "score_graphs": 128,
+    "score_seed": 8503,
+    "score_noise_seed": 8504,
+    "score_times": [0.005, 0.1, 0.4, 0.5, 0.6],
+    "full_prior_graphs": 64,
+    "full_prior_batch_size": 8,
+    "full_prior_seed": 8511,
+    "coordinate_initial_seed": 8512,
+    "coordinate_brownian_seed": 8513,
+    "coordinate_steps": 100,
+    "wasserstein_points": 257,
+    "minimum_distance_angstrom": 0.5
+  },
+  "eligibility": {
+    "validation_coordinate_ratio_max": 0.297983,
+    "t06_score_explained_fraction_min": 0.64857,
+    "full_prior_node_nearest_w1_normalized_max": 0.38042,
+    "full_prior_valid_minimum_distance_fraction_min": 1.0,
+    "sampling_failures": 0,
+    "finite": true
+  },
+  "selection": {
+    "validation_ratio_best_absolute_margin": 0.02,
+    "full_prior_w1_best_absolute_margin": 0.03,
+    "rule": "among eligible candidates within both frozen margins of the best eligible validation ratio and full-prior NN-W1, select the smallest parameter count",
+    "tie_break": "lower validation ratio, then lower full-prior NN-W1, then lower parameter count"
+  },
+  "boundary": "This selects GaugeFlow-base capacity only. It does not qualify joint sampling, tensor conditioning, RL, relaxation, DFT or DFPT."
+}

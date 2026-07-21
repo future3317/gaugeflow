@@ -1,0 +1,32 @@
+{
+  "boundary": "This is an execution qualification, not evidence that a capacity is scientifically better.",
+  "checks": {
+    "exact_effective_batch": true,
+    "finite_gradient": true,
+    "finite_loss": true,
+    "memory": true,
+    "throughput": true
+  },
+  "decision": "permit the candidate to enter the equal-exposure one-pass capacity screen with its frozen microbatch geometry",
+  "metrics": {
+    "candidate": "large_98m",
+    "effective_batch_size": 64,
+    "gradient_accumulation_steps": 4,
+    "gradient_norms": [
+      15.354269981384277,
+      6.397343158721924
+    ],
+    "graphs_per_second": 70.59687970910097,
+    "hardware": "NVIDIA GeForce RTX 4090",
+    "losses": [
+      1.9549163579940796,
+      0.9632202088832855
+    ],
+    "parameter_count": 97580719,
+    "peak_cuda_memory_mib": 10470.1025390625,
+    "physical_batch_size": 16
+  },
+  "protocol": "gaugeflow_base_capacity_execution_smoke_v1",
+  "protocol_sha256": "fec0ce61bf4b27e10b23f75e2d7ccf6e2cb131866c448ea90ae523b22e590ac1",
+  "qualified": true
+}
