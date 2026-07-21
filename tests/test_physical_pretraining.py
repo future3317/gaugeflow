@@ -174,17 +174,17 @@ def test_physical_loss_masks_missing_labels_and_weights_graphs_equally() -> None
         energy_per_atom=torch.zeros(2),
         forces=torch.zeros(4, 3),
         stress_kelvin=torch.zeros(2, 6),
-        teacher_features=torch.zeros(2, 3),
+        teacher_features=torch.zeros(4, 3),
     )
     target = PhysicalTargets(
         energy_per_atom=torch.tensor([1000.0, 2.0]),
         forces=torch.tensor([[1.0] * 3] + [[2.0] * 3] * 3),
         stress_kelvin=torch.full((2, 6), 1000.0),
-        teacher_features=torch.full((2, 3), 1000.0),
+        teacher_features=torch.full((4, 3), 1000.0),
         energy_mask=torch.tensor([False, True]),
         force_mask=torch.ones(4, dtype=torch.bool),
         stress_mask=torch.zeros(2, dtype=torch.bool),
-        teacher_mask=torch.zeros(2, dtype=torch.bool),
+        teacher_mask=torch.zeros(4, dtype=torch.bool),
     )
     output = physical_multitask_loss(prediction, target, batch)
     assert torch.allclose(output.energy_loss, torch.tensor(4.0))
@@ -245,11 +245,11 @@ def test_functional_normalization_preserves_force_and_stress_covariance() -> Non
         energy_per_atom=torch.tensor([-4.0]),
         forces=force,
         stress_kelvin=symmetric_cartesian_to_kelvin(stress),
-        teacher_features=torch.zeros(1, 2),
+        teacher_features=torch.zeros(2, 2),
         energy_mask=torch.ones(1, dtype=torch.bool),
         force_mask=torch.ones(2, dtype=torch.bool),
         stress_mask=torch.ones(1, dtype=torch.bool),
-        teacher_mask=torch.zeros(1, dtype=torch.bool),
+        teacher_mask=torch.zeros(2, dtype=torch.bool),
     )
     rotated = PhysicalTargets(
         energy_per_atom=target.energy_per_atom,
@@ -338,6 +338,31 @@ def test_matpes_collation_packs_graphs_and_masks_without_ids() -> None:
     assert packed.targets.force_mask.tolist() == [True, True]
     assert packed.targets.stress_mask.tolist() == [False, False]
     assert packed.targets.teacher_features.shape == (2, 4)
+
+
+def test_matpes_collation_preserves_type_matched_per_atom_teacher_features() -> None:
+    row = {
+        "matpes_id": "teacher-row",
+        "functional": "PBE",
+        "nsites": 2,
+        "structure": {
+            "lattice": {"matrix": [[4.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 4.0]]},
+            "sites": [
+                {"species": [{"element": "Na", "occu": 1.0}], "abc": [0.0, 0.0, 0.0]},
+                {"species": [{"element": "Cl", "occu": 1.0}], "abc": [0.5, 0.5, 0.5]},
+            ],
+        },
+        "energy": -8.0,
+        "forces": [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        "stress": [0.0] * 6,
+    }
+    feature = torch.arange(6, dtype=torch.float32).reshape(2, 3)
+    record = replace(parse_matpes_row(row), teacher_features=feature)
+    packed = collate_matpes_records(
+        [record], functional_vocabulary={"PBE": 0}, teacher_dim=3
+    )
+    assert torch.equal(packed.targets.teacher_features, feature)
+    assert packed.targets.teacher_mask.tolist() == [True, True]
 
 
 def test_matpes_train_statistics_are_functional_and_streaming() -> None:

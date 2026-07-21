@@ -179,11 +179,11 @@ def test_physical_transfer_uses_one_optimizer_for_matpes_and_alex_replay() -> No
             energy_per_atom=torch.tensor([-2.0, -3.0]),
             forces=torch.zeros(elements.numel(), 3),
             stress_kelvin=torch.zeros(graph_count, 6),
-            teacher_features=torch.zeros(graph_count, 3),
+            teacher_features=torch.zeros(elements.numel(), 3),
             energy_mask=torch.ones(graph_count, dtype=torch.bool),
             force_mask=torch.ones(elements.numel(), dtype=torch.bool),
             stress_mask=torch.ones(graph_count, dtype=torch.bool),
-            teacher_mask=torch.zeros(graph_count, dtype=torch.bool),
+            teacher_mask=torch.zeros(elements.numel(), dtype=torch.bool),
         ),
     )
     normalizer = FunctionalPhysicalNormalizer(

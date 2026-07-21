@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence, cast
 
@@ -20,6 +20,7 @@ from .matpes_data import (
     matpes_iid_split,
     parse_matpes_row,
 )
+from .teacher_feature_cache import MatPESTeacherFeatureCache
 
 MATPES_INDEX_SCHEMA = 1
 SPLIT_TO_INDEX = {"train": 0, "calibration": 1, "test": 2}
@@ -48,6 +49,8 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
         *,
         verify_hashes: bool = True,
         require_qualified: bool = True,
+        teacher_feature_cache: str | Path | None = None,
+        require_qualified_teacher_cache: bool = True,
     ) -> None:
         if split not in SPLIT_TO_INDEX:
             raise ValueError("MatPES split must be train, calibration, or test")
@@ -108,6 +111,18 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
         }:
             raise ValueError("MatPES index energy target is invalid")
         self.energy_target = cast(MatPESEnergyTarget, energy_target)
+        self.teacher_feature_cache = (
+            MatPESTeacherFeatureCache(
+                teacher_feature_cache,
+                index_manifest=self.root / "manifest.json",
+                verify_hashes=verify_hashes,
+                require_qualified=require_qualified_teacher_cache,
+            )
+            if teacher_feature_cache is not None
+            else None
+        )
+        if self.teacher_feature_cache is not None and self.teacher_feature_cache.row_count != rows:
+            raise ValueError("teacher feature cache and MatPES index row counts differ")
         self._handles: dict[int, Any] = {}
 
     def __getstate__(self) -> dict[str, Any]:
@@ -138,6 +153,13 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
         )
         if record.element_tokens.numel() != int(self.node_count[row]):
             raise ValueError("MatPES indexed node count changed after cache construction")
+        if self.teacher_feature_cache is not None:
+            record = replace(
+                record,
+                teacher_features=self.teacher_feature_cache.get(
+                    row, record.element_tokens.numel()
+                ),
+            )
         return record
 
 

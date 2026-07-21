@@ -246,7 +246,10 @@ class CartesianPhysicalHeads(nn.Module):
             energy_per_atom=energy,
             forces=forces,
             stress_kelvin=symmetric_cartesian_to_kelvin(stress),
-            teacher_features=self.teacher_projection(graph_scalar),
+            # The qualified TensorNet contract exposes one invariant readout
+            # vector per atom.  Distilling a graph mean here would erase the
+            # local environments that Stage-B is intended to transfer.
+            teacher_features=self.teacher_projection(node_scalar),
         )
 
 
@@ -359,10 +362,25 @@ def physical_multitask_loss(
         (prediction.stress_kelvin - target.stress_kelvin).square().mean(dim=-1),
         target.stress_mask,
     )
-    feature_loss = _masked_mean(
-        (prediction.teacher_features - target.teacher_features).square().mean(dim=-1),
-        target.teacher_mask,
+    if prediction.teacher_features.shape[:1] != (batch.numel(),):
+        raise ValueError("teacher features must provide one vector per node")
+    # Directional feature matching is insensitive to arbitrary teacher-layer
+    # scale while retaining the full type-matched, per-site representation.
+    node_feature_error = 1.0 - torch.nn.functional.cosine_similarity(
+        prediction.teacher_features.float(),
+        target.teacher_features.float(),
+        dim=-1,
+        eps=1.0e-8,
     )
+    feature_sum = sorted_segment_sum(
+        node_feature_error * target.teacher_mask.to(node_feature_error),
+        batch,
+        graph_count,
+    )
+    feature_count = torch.bincount(batch[target.teacher_mask], minlength=graph_count)
+    feature_graph_mask = feature_count > 0
+    feature_graph_mean = feature_sum / feature_count.clamp_min(1).to(feature_sum)
+    feature_loss = _masked_mean(feature_graph_mean, feature_graph_mask)
     loss = (
         energy_weight * energy_loss
         + force_weight * force_loss

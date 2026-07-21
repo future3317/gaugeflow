@@ -31,6 +31,7 @@ class MatPESPhysicalRecord:
     energy_present: bool
     forces_present: bool
     stress_present: bool
+    teacher_features: torch.Tensor | None = None
 
 
 @dataclass(frozen=True)
@@ -228,6 +229,14 @@ def collate_matpes_records(
     for record in records:
         if record.functional not in functional_vocabulary:
             raise ValueError(f"unregistered MatPES functional {record.functional!r}")
+        if record.teacher_features is not None:
+            expected = (record.element_tokens.numel(), teacher_dim)
+            if record.teacher_features.shape != expected or not bool(
+                torch.isfinite(record.teacher_features).all()
+            ):
+                raise ValueError(
+                    "teacher features must be finite with one vector per MatPES node"
+                )
         functional.append(functional_vocabulary[record.functional])
     graph_count = len(records)
     return MatPESPhysicalBatch(
@@ -240,13 +249,31 @@ def collate_matpes_records(
             energy_per_atom=torch.stack([record.energy_per_atom_ev for record in records]),
             forces=torch.cat([record.forces_ev_per_angstrom for record in records]),
             stress_kelvin=torch.stack([record.stress_kelvin_gpa for record in records]),
-            teacher_features=torch.zeros(graph_count, teacher_dim),
+            teacher_features=torch.cat(
+                [
+                    (
+                        record.teacher_features
+                        if record.teacher_features is not None
+                        else torch.zeros(record.element_tokens.numel(), teacher_dim)
+                    )
+                    for record in records
+                ]
+            ),
             energy_mask=torch.tensor([record.energy_present for record in records]),
             force_mask=torch.repeat_interleave(
                 torch.tensor([record.forces_present for record in records]), counts
             ),
             stress_mask=torch.tensor([record.stress_present for record in records]),
-            teacher_mask=torch.zeros(graph_count, dtype=torch.bool),
+            teacher_mask=torch.cat(
+                [
+                    torch.full(
+                        (record.element_tokens.numel(),),
+                        record.teacher_features is not None,
+                        dtype=torch.bool,
+                    )
+                    for record in records
+                ]
+            ),
         ),
     )
 
