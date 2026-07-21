@@ -1,0 +1,53 @@
+{
+  "protocol": "gaugeflow_base_a1_joint_execution_smoke_v1",
+  "status": "pass",
+  "code_commit": "298de0840",
+  "device": "NVIDIA GeForce RTX 4090",
+  "driver": "535.247.01",
+  "seed": 5705,
+  "steps": 3,
+  "parameter_count": 34284207,
+  "precision": "bf16_learned_fp32_geometry",
+  "deterministic_cuda_algorithms": true,
+  "categorical_path": "orderless_reveal_exact_remaining_counts",
+  "composition_conditioning": true,
+  "joint_time_path": "explicit_diagonal_t_A_equals_t_F_equals_t_L",
+  "losses": {
+    "step_1": {
+      "assignment": 0.7740491628646851,
+      "coordinate": 1.034829020500183,
+      "volume": 0.9818088412284851,
+      "shape": 1.0926281213760376
+    },
+    "step_2": {
+      "assignment": 0.8249027729034424,
+      "coordinate": 1.4568151235580444,
+      "volume": 1.5517852306365967,
+      "shape": 1.059006929397583
+    },
+    "step_3": {
+      "assignment": 0.7434759140014648,
+      "coordinate": 1.0202528238296509,
+      "volume": 1.4589576721191406,
+      "shape": 1.1805027723312378
+    }
+  },
+  "all_modality_clock_gradients_finite_nonzero": true,
+  "all_losses_finite": true,
+  "assignment_loss_positive": true,
+  "peak_cuda_memory_mib": 14866.009765625,
+  "peak_cuda_memory_mib_max": 23500,
+  "checkpoint_exact_resume": true,
+  "checkpoint_mismatch_count": 0,
+  "resume_comparison_sha256": "7a8fa34319f2e1ebc2de8054e347538fe5128b11ea40560259cd413d434f974f",
+  "reference_step_3_checkpoint_sha256": "471093d7ba5208e488ef1bb50c2775526ebd342bb64f5c70055c4e8b1c6fcc86",
+  "failures": 0,
+  "preflight_repairs": [
+    "replaced platform-dependent CRLF artifact identities with Git/Linux LF identities",
+    "allowed diagonal shared-time training only inside the explicit separate-clock joint backbone",
+    "restored mapped CUDA RNG states through CPU uint8 tensors",
+    "enabled deterministic CUDA algorithms so exact-resume equality is identifiable"
+  ],
+  "decision": "authorize_the_separately_frozen_one_pass_A1_joint_run",
+  "boundary": "This smoke supplies no initialization weights and is not generation-quality evidence. It does not authorize tensor conditioning, oracle, RL, relaxation, DFT or DFPT."
+}

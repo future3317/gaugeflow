@@ -1,0 +1,8 @@
+{
+  "exact": true,
+  "left": "/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_a1_joint_execution_smoke_v1/reference_deterministic/checkpoint_step_00000003.pt",
+  "mismatch_count": 0,
+  "mismatches": [],
+  "protocol": "production_checkpoint_exact_resume_comparison_v1",
+  "right": "/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_a1_joint_execution_smoke_v1/resumed_deterministic/checkpoint_step_00000003.pt"
+}
