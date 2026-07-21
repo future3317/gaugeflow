@@ -146,8 +146,27 @@ def main() -> None:
             raise ValueError(f"node-count source identity changed: {name}")
     cache_manifest = load_json_object(paths["cache_manifest"])
     iid_manifest = load_json_object(paths["iid_manifest"])
-    if cache_manifest.get("qualified") is not True or iid_manifest.get("qualified") is not True:
-        raise ValueError("node-count source split is not qualified")
+    iid_audit_path = repository / source["iid_independent_audit"]
+    if sha256_file(iid_audit_path) != source["iid_independent_audit_sha256"]:
+        raise ValueError("node-count IID independent audit identity changed")
+    iid_audit = load_json_object(iid_audit_path)
+    if cache_manifest.get("qualified") is not True:
+        raise ValueError("node-count structure cache is not qualified")
+    if (
+        iid_manifest.get("protocol") != "h1a_e1_absolute_calibration_split_v2"
+        or iid_manifest.get("schema") != 1
+        or iid_manifest.get("source", {}).get("cache_manifest_sha256")
+        != source["cache_manifest_sha256"]
+    ):
+        raise ValueError("node-count IID manifest contract changed")
+    if (
+        iid_audit.get("qualified") is not True
+        or not all(iid_audit.get("checks", {}).values())
+        or iid_audit.get("artifact_hashes", {}).get("manifest")
+        != source["iid_manifest_sha256"]
+        or iid_audit.get("source_protocol_sha256") != iid_manifest.get("protocol_sha256")
+    ):
+        raise ValueError("node-count IID split lacks its independent qualification")
     for split in ("train", "val", "test"):
         split_manifest = cache_manifest["splits"][split]
         if sha256_file(args.cache_root / split_manifest["tensor_file"]) != split_manifest[

@@ -5,6 +5,8 @@
   "source": {
     "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
     "iid_manifest_sha256": "330ed91af499385d9ef5f80aa50132e0eaaa44dc953a80379ab754374072d79b",
+    "iid_independent_audit": "reports/h1a_e1_absolute_calibration_split_v2/independent_audit.json",
+    "iid_independent_audit_sha256": "552714527d14eb93869ab64a0980360205486d194a530d5d1bfb415fde6eb144",
     "fit_index_sha256": "f2d2f35465955b343141532dbb1278591d40b157ede230ed99b9f2b9488fb7a6",
     "calibration_index_sha256": "443339d82d94bf973bf79e5dfd1598a6e741c9e4f1086f9668017dc6fbf0c609",
     "test_index_sha256": "cae993fa6d1a54d6d668e217998c76879decdc3270cc10289822746e0916fc40"
