@@ -350,18 +350,14 @@ def main() -> None:
             "production joint training requires the composition-conditioned orderless exact-count "
             "product path; historical independent site-token checkpoints are not A1"
         )
-    uses_explicit_modality_times = (
-        training_config.modality_time_mode
-        in {
-            "independent_corner_mixture",
-            "element_only",
-            "lattice_only",
-        }
-        or training_config.coordinate_clean_side_information
-    )
     matched_modes = {"matched_single", "side_mean", "separate"}
-    if uses_explicit_modality_times != (model.modality_time_conditioning in matched_modes):
-        raise ValueError("model and training modality-time contracts do not match")
+    if (
+        training_config.modality_time_mode == "independent_corner_mixture"
+        and model.modality_time_conditioning not in matched_modes
+    ):
+        raise ValueError("independent modality times require an explicit side-clock model")
+    if training_config.objective == "joint" and model.modality_time_conditioning != "separate":
+        raise ValueError("product-space joint training requires the unified separate-clock backbone")
     if training_config.modality_time_mode == "element_only" and model.modality_time_conditioning != "separate":
         raise ValueError("element-only qualification requires the unified separate-clock backbone")
     if training_config.modality_time_mode == "lattice_only" and model.modality_time_conditioning != "separate":
