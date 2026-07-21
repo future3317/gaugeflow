@@ -114,7 +114,20 @@ class ExponentialMovingAverage:
         if shadow.keys() != self.shadow.keys():
             raise ValueError("EMA checkpoint does not match model")
         self.decay = decay
-        self.shadow = {name: value.detach().clone() for name, value in shadow.items()}
+        restored: dict[str, torch.Tensor] = {}
+        for name, value in shadow.items():
+            target = self.shadow[name]
+            if (
+                not isinstance(value, torch.Tensor)
+                or value.shape != target.shape
+                or value.dtype != target.dtype
+            ):
+                raise ValueError("EMA checkpoint tensor contract does not match model")
+            # Checkpoints are intentionally CPU-portable.  Restore each shadow
+            # onto the live model state's device so the next EMA update cannot
+            # mix CPU and CUDA tensors.
+            restored[name] = value.detach().to(device=target.device).clone()
+        self.shadow = restored
 
 
 class ProductionTrainer:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import torch
+import torch.distributed as dist
 
 from .blueprint import ParentBlueprintBatch
 from .hybrid_diffusion import TensorFreeHybridDiffusion
@@ -56,6 +57,8 @@ class PhysicalTransferTrainer:
         model: PhysicalRepresentationModel,
         diffusion: TensorFreeHybridDiffusion,
         config: PhysicalTransferTrainingConfig,
+        *,
+        optimizer_owner: bool = True,
     ) -> None:
         config.validate()
         if diffusion.denoiser is not model.backbone:
@@ -65,13 +68,17 @@ class PhysicalTransferTrainer:
         self.config = config
         parameters = list(model.parameters())
         fused = bool(parameters) and all(parameter.device.type == "cuda" for parameter in parameters)
-        self.optimizer = torch.optim.AdamW(
-            parameters,
-            lr=config.learning_rate,
-            weight_decay=config.weight_decay,
-            fused=fused,
+        self.optimizer = (
+            torch.optim.AdamW(
+                parameters,
+                lr=config.learning_rate,
+                weight_decay=config.weight_decay,
+                fused=fused,
+            )
+            if optimizer_owner
+            else None
         )
-        self.ema = ExponentialMovingAverage(model, config.ema_decay)
+        self.ema = ExponentialMovingAverage(model, config.ema_decay) if optimizer_owner else None
         self._step = 0
 
     @property
@@ -80,7 +87,7 @@ class PhysicalTransferTrainer:
 
     def begin_optimization_step(self) -> None:
         self.model.train()
-        self.optimizer.zero_grad(set_to_none=True)
+        self.model.zero_grad(set_to_none=True)
 
     def accumulate_physical_step(
         self,
@@ -151,6 +158,8 @@ class PhysicalTransferTrainer:
         return output.loss.detach()
 
     def finish_optimization_step(self) -> torch.Tensor:
+        if self.optimizer is None or self.ema is None:
+            raise RuntimeError("only the optimizer-owning rank can finish a local step")
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             self.model.parameters(),
             self.config.gradient_clip_norm,
@@ -162,7 +171,82 @@ class PhysicalTransferTrainer:
         self._step += 1
         return gradient_norm.detach()
 
+    @staticmethod
+    def distributed_local_fraction(local_count: int, *, device: torch.device) -> float:
+        """Return the exact local/global example fraction without padded samples."""
+
+        if local_count < 0 or not dist.is_available() or not dist.is_initialized():
+            raise RuntimeError("distributed count reduction requires an initialized process group")
+        count = torch.tensor(float(local_count), device=device, dtype=torch.float64)
+        dist.all_reduce(count, op=dist.ReduceOp.SUM)
+        total = float(count)
+        if total <= 0.0:
+            raise ValueError("distributed optimization received no examples")
+        return local_count / total
+
+    def finish_distributed_optimization_step(self, *, owner_rank: int = 0) -> torch.Tensor:
+        """Sum globally weighted gradients, update once, then broadcast parameters."""
+
+        if not dist.is_available() or not dist.is_initialized():
+            raise RuntimeError("distributed physical transfer requires a process group")
+        rank = dist.get_rank()
+        world_size = dist.get_world_size()
+        if world_size < 2 or not 0 <= owner_rank < world_size:
+            raise ValueError("distributed physical transfer needs a valid multi-rank owner")
+        if (self.optimizer is not None) != (rank == owner_rank) or (
+            self.ema is not None
+        ) != (rank == owner_rank):
+            raise RuntimeError("optimizer and EMA ownership disagree with distributed rank")
+        parameters = tuple(self.model.parameters())
+        for parameter in parameters:
+            if parameter.grad is None:
+                parameter.grad = torch.zeros_like(parameter)
+            dist.all_reduce(parameter.grad, op=dist.ReduceOp.SUM)
+        if rank == owner_rank:
+            assert self.optimizer is not None and self.ema is not None
+            gradient_norm = torch.nn.utils.clip_grad_norm_(
+                parameters,
+                self.config.gradient_clip_norm,
+            )
+            if not torch.isfinite(gradient_norm):
+                raise FloatingPointError("distributed physical transfer gradient is non-finite")
+            self.optimizer.step()
+            self.ema.update(self.model)
+            self._step += 1
+        else:
+            gradient_norm = next(self.model.parameters()).new_zeros(())
+        self._broadcast_model(owner_rank)
+        step_and_norm = next(self.model.parameters()).new_tensor(
+            [float(self._step), float(gradient_norm)], dtype=torch.float64
+        )
+        dist.broadcast(step_and_norm, src=owner_rank)
+        self._step = int(step_and_norm[0])
+        self.model.zero_grad(set_to_none=True)
+        return step_and_norm[1].to(dtype=torch.float32)
+
+    def _broadcast_model(self, owner_rank: int) -> None:
+        for parameter in self.model.parameters():
+            dist.broadcast(parameter.data, src=owner_rank)
+        for buffer in self.model.buffers():
+            dist.broadcast(buffer.data, src=owner_rank)
+
+    def broadcast_distributed_state(self, *, owner_rank: int = 0) -> None:
+        """Restore non-owner model/step replicas after a rank-0 checkpoint load."""
+
+        if not dist.is_available() or not dist.is_initialized():
+            raise RuntimeError("distributed state broadcast requires a process group")
+        rank = dist.get_rank()
+        if (self.optimizer is not None) != (rank == owner_rank):
+            raise RuntimeError("distributed state owner disagrees with optimizer ownership")
+        self._broadcast_model(owner_rank)
+        step = next(self.model.parameters()).new_tensor([self._step], dtype=torch.int64)
+        dist.broadcast(step, src=owner_rank)
+        self._step = int(step[0])
+        self.model.zero_grad(set_to_none=True)
+
     def state_dict(self) -> dict[str, Any]:
+        if self.optimizer is None or self.ema is None:
+            raise RuntimeError("only the optimizer-owning rank has trainer checkpoint state")
         return {
             "step": self._step,
             "optimizer": self.optimizer.state_dict(),
@@ -170,6 +254,8 @@ class PhysicalTransferTrainer:
         }
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
+        if self.optimizer is None or self.ema is None:
+            raise RuntimeError("only the optimizer-owning rank can restore trainer state")
         step = state.get("step")
         optimizer = state.get("optimizer")
         ema = state.get("ema")

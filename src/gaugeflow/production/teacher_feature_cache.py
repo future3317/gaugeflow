@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import torch
 
 from gaugeflow.file_utils import load_json_object, sha256_file
-
 
 TEACHER_FEATURE_CACHE_SCHEMA = 1
 
@@ -49,16 +48,17 @@ class MatPESTeacherFeatureCache:
         payload = torch.load(offsets_path, map_location="cpu", weights_only=True, mmap=True)
         if not isinstance(payload, dict) or payload.get("schema") != TEACHER_FEATURE_CACHE_SCHEMA:
             raise ValueError("teacher feature offset payload is invalid")
-        self.offsets = payload.get("node_offsets")
+        offsets = payload.get("node_offsets")
         if (
-            not isinstance(self.offsets, torch.Tensor)
-            or self.offsets.dtype != torch.int64
-            or self.offsets.shape != (self.row_count + 1,)
-            or int(self.offsets[0]) != 0
-            or bool((self.offsets[1:] < self.offsets[:-1]).any())
+            not isinstance(offsets, torch.Tensor)
+            or offsets.dtype != torch.int64
+            or offsets.shape != (self.row_count + 1,)
+            or int(offsets[0]) != 0
+            or bool((offsets[1:] < offsets[:-1]).any())
         ):
             raise ValueError("teacher feature offsets are invalid")
-        feature_values = int(self.offsets[-1]) * self.feature_dim
+        self.offsets: torch.Tensor = offsets
+        feature_values = int(offsets[-1]) * self.feature_dim
         expected_bytes = feature_values * torch.tensor([], dtype=torch.float16).element_size()
         if feature_path.stat().st_size != expected_bytes:
             raise ValueError("teacher feature binary size disagrees with offsets")

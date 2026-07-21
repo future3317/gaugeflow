@@ -1,0 +1,46 @@
+{
+  "schema": "gaugeflow.stage_b_teacher_and_distributed_smoke.v1",
+  "qualified": false,
+  "scope": "bounded software/CUDA evidence only; not Stage-B physical qualification",
+  "hardware": {
+    "teacher_cache_device": "NVIDIA GeForce RTX 4090, server physical GPU 1",
+    "distributed_devices": "two NVIDIA GeForce RTX 4090 devices, server physical GPUs 1 and 2"
+  },
+  "teacher_cache": {
+    "functional": "PBE",
+    "rows": 256,
+    "atoms": 1723,
+    "feature_dim": 128,
+    "storage_dtype": "float16",
+    "finite": true,
+    "reader_open_seconds": 0.004132702015340328,
+    "features_sha256": "dea6f2ce58878ab85f49e51b0ac8cca619367838b01345af70574dd5c206c0db",
+    "offsets_sha256": "9f06b76a33de54387fd12bf79c63a2a072f84a5468799c87985d6604e3f05af6",
+    "teacher_manifest_sha256": "a7a870c14eb768f2b9b4a003aaee7a933c8f95f4fe7c80cdd6ef5c24d95d9c3b"
+  },
+  "real_feature_backward": {
+    "graphs": 4,
+    "atoms": 53,
+    "teacher_mask_atoms": 53,
+    "initial_feature_cosine_loss": 1.0016520023345947,
+    "gradient_norm": 1.8730826377868652,
+    "finite": true
+  },
+  "distributed": {
+    "world_size": 2,
+    "optimizer_owner_count": 1,
+    "exact_parameter_replication": true,
+    "exact_resume": true,
+    "resume_metric_max_abs_error": 0.0,
+    "model_digest": "5b2b38437cf585695c489858dca08fbf284a177eda3d757e1f9597700f1e01bb",
+    "trainer_digest": "12f44253b76c3ebf9312d4795fabc97b7902317e74e485d70c2bfd076fdb959c",
+    "global_gradient_norm": 14.335386276245117,
+    "peak_cuda_memory_bytes_per_rank": [1176154112, 1162265088],
+    "finite": true
+  },
+  "implementation_findings": [
+    "The qualified TensorNet readout is per atom [N,128], so the prior graph-level placeholder was corrected before feature-weighted training.",
+    "The first distributed resume attempt exposed CPU-resident EMA shadows after a CPU-portable restore; EMA loading now preserves the live model device and validates tensor shape/dtype.",
+    "No model weights were qualified or promoted by these bounded smokes."
+  ]
+}

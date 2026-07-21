@@ -26,7 +26,7 @@
   "training": {
     "seed": 5705,
     "devices": [1, 2],
-    "distributed_semantics": "rank-sharded data, globally reduced gradients, one rank-0 optimizer owner, parameter and EMA broadcast after every update",
+    "distributed_semantics": "rank-sharded data, globally weighted and summed gradients, one rank-0 optimizer/EMA owner, train-parameter broadcast after every update; EMA is checkpointed and evaluated only on rank 0",
     "matpes_passes": 1.0,
     "matpes_rows_without_replacement": 674709,
     "matpes_graphs_per_rank": 32,

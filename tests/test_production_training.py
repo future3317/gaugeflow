@@ -32,7 +32,11 @@ from gaugeflow.production.reverse_sampler import (
 )
 from gaugeflow.production.schedules import CosineNoiseSchedule
 from gaugeflow.production.state_projection import fractional_tangent_to_cartesian
-from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
+from gaugeflow.production.training import (
+    ExponentialMovingAverage,
+    ProductionTrainer,
+    ProductionTrainingConfig,
+)
 from scripts.train_production import (
     _GRADIENT_GROUPS,
     _clipped_module_gradient_norms,
@@ -220,6 +224,38 @@ def test_physical_transfer_uses_one_optimizer_for_matpes_and_alex_replay() -> No
     restored.load_state_dict(trainer.state_dict())
     assert restored.step == trainer.step
     assert restored.ema.state_dict()["decay"] == trainer.ema.state_dict()["decay"]
+
+
+def test_physical_transfer_nonowner_has_no_optimizer_or_ema_state() -> None:
+    backbone = _small_model()
+    model = PhysicalRepresentationModel(backbone, teacher_dim=3)
+    trainer = PhysicalTransferTrainer(
+        model,
+        TensorFreeHybridDiffusion(backbone, _standardizer()),
+        PhysicalTransferTrainingConfig(precision="fp32"),
+        optimizer_owner=False,
+    )
+    assert trainer.optimizer is None and trainer.ema is None
+    try:
+        trainer.state_dict()
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("non-owner exposed duplicate optimizer checkpoint state")
+
+
+def test_ema_portable_restore_returns_shadows_to_live_model_device() -> None:
+    if not torch.cuda.is_available():
+        return
+    model = torch.nn.Linear(3, 2).cuda()
+    ema = ExponentialMovingAverage(model, 0.9)
+    portable = {
+        "decay": ema.decay,
+        "shadow": {name: value.cpu() for name, value in ema.shadow.items()},
+    }
+    ema.load_state_dict(portable)
+    assert all(value.device.type == "cuda" for value in ema.shadow.values())
+    ema.update(model)
 
 
 def _small_product_model() -> HybridCrystalDenoiser:
