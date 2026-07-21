@@ -10,7 +10,7 @@
     "teacher_protocol": "h0_c_matpes_teacher_qualification_v2",
     "primary_teacher": "TensorNet-PES-MatPES-PBE-2025.2",
     "teacher_feature_contract": "type-matched per-atom 128-dimensional feature_dict['readout']; PBE rows only; offline stop-gradient targets",
-    "implementation_commit": "fill_after_software_preflight_before_training"
+    "implementation_commits": ["371e639", "90e83b3"]
   },
   "data": {
     "matpes_train_functional_rows": 674709,

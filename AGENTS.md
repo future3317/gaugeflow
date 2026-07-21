@@ -420,6 +420,19 @@ covariance. Physical and Alex replay losses have one optimizer owner; the
 clean physical path shares the production message encoder but skips all
 generation terminal heads.
 
+The Stage-B method is now frozen but formal physical training has not run.
+The qualified TensorNet feature contract is per atom (`N x 128`), not per
+graph; production therefore uses a type-matched node projection and a
+graph-equal mean of per-node cosine distances. A real 256-row cache smoke
+covers 1,723 atoms with finite memory-mapped FP16 storage, and a real A1
+backward pass has nonzero finite feature gradients on all 53 selected atoms.
+The two-RTX-4090 execution smoke uses rank-sharded MatPES/Alex batches,
+globally weighted/summed gradients, one rank-0 AdamW/EMA owner and parameter
+broadcast. It passes exact model replication and interrupted-resume equality
+for model, optimizer, EMA, per-rank generator state and metrics. This remains
+software evidence only. Full PBE feature-cache construction and the formal
+one-pass Stage-B run are still pending; LeMat full training remains later.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`
