@@ -148,6 +148,13 @@ class PackedAlexP1Dataset(Dataset[Data]):
     def node_counts(self) -> torch.Tensor:
         return self.offsets[1:] - self.offsets[:-1]
 
+    @property
+    def material_ids_audit_only(self) -> list[str]:
+        """Offline IDs loaded only when explicitly requested by an auditor."""
+        if self._material_ids is None:
+            raise ValueError("material IDs were not loaded for this dataset")
+        return self._material_ids
+
     def __len__(self) -> int:
         return self.lattice.shape[0]
 

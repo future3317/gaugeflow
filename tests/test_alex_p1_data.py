@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 import torch
 
 from gaugeflow.file_utils import sha256_file
@@ -72,6 +73,8 @@ def test_packed_alex_dataset_exposes_only_model_state_by_default(tmp_path: Path)
     assert first.lattice.shape == (1, 3, 3)
     assert "material_id" not in first
     assert "niggli_transform" not in first
+    with pytest.raises(ValueError, match="not loaded"):
+        _ = dataset.material_ids_audit_only
 
 
 def test_packed_alex_dataset_can_load_ids_for_offline_evaluation(tmp_path: Path):
@@ -81,6 +84,7 @@ def test_packed_alex_dataset_can_load_ids_for_offline_evaluation(tmp_path: Path)
     )
     assert dataset[0].material_id == "a"
     assert dataset[-1].material_id == "b"
+    assert dataset.material_ids_audit_only == ["a", "b"]
 
 
 def test_packed_alex_dataset_vectorizes_ragged_model_rows(tmp_path: Path):
