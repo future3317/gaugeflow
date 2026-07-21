@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
-import gzip
 import hashlib
 import json
 import math
@@ -22,8 +21,8 @@ import torch
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.assignment_data import (
     AssignmentCarrierExample,
+    load_assignment_carrier_examples,
     pack_assignment_carriers,
-    prepare_assignment_carrier_example,
 )
 from gaugeflow.production.assignment_training import (
     orderless_assignment_objective,
@@ -57,49 +56,6 @@ def _git_identity(repository: Path) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
-
-
-def _load_examples(
-    carrier_root: Path,
-    role_result_path: Path,
-    *,
-    maximum_sites: int,
-    radial_channels: int,
-) -> list[AssignmentCarrierExample]:
-    role_result = load_json_object(role_result_path)
-    if role_result.get("qualified") is not True or not all(role_result["checks"].values()):
-        raise ValueError("assignment IID role split is not qualified")
-    roles = {
-        (str(row["material_id"]), int(row["candidate_index"]), str(row["embedding_key"])): str(
-            row["role"]
-        )
-        for row in role_result["carrier_rows"]
-    }
-    with gzip.open(carrier_root / "records.json.gz", "rt", encoding="utf-8") as handle:
-        records = json.load(handle)
-    examples: list[AssignmentCarrierExample] = []
-    seen: set[tuple[str, int, str]] = set()
-    for record in records:
-        material_id = str(record["material_id_audit_only"])
-        for candidate_index, candidate in enumerate(record["candidates"]):
-            embedding_key = str(candidate["embedding_key"])
-            key = (material_id, candidate_index, embedding_key)
-            if key not in roles or key in seen:
-                raise ValueError(f"carrier role identity is missing or duplicated: {key}")
-            seen.add(key)
-            examples.append(
-                prepare_assignment_carrier_example(
-                    candidate,
-                    embedding_key=embedding_key,
-                    material_id_audit_only=material_id,
-                    evidence_role_audit_only=roles[key],
-                    maximum_sites=maximum_sites,
-                    radial_channels=radial_channels,
-                )
-            )
-    if seen != set(roles):
-        raise ValueError("geometry-complete carriers and frozen IID roles differ")
-    return examples
 
 
 def _orbit_size(example: AssignmentCarrierExample) -> int:
@@ -508,7 +464,7 @@ def main() -> None:
     torch.backends.cuda.matmul.allow_tf32 = False
 
     model_config = protocol["model"]
-    examples = _load_examples(
+    examples = load_assignment_carrier_examples(
         args.carrier_root,
         role_path,
         maximum_sites=int(model_config["maximum_sites"]),

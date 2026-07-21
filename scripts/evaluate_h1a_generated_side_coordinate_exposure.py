@@ -18,6 +18,7 @@ from gaugeflow.geometry import closest_image_displacements_numpy
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.assignment_data import (
     AssignmentCarrierExample,
+    load_assignment_carrier_examples,
     pack_assignment_carriers,
 )
 from gaugeflow.production.assignment_training import sample_orderless_assignment
@@ -25,7 +26,6 @@ from gaugeflow.production.autoregressive_assignment import GeometryAwareRemainin
 from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
 from gaugeflow.production.runtime import load_tensor_free_ema_runtime
-from scripts.train_h1a_assignment_iid import _load_examples
 
 
 def _wasserstein(left: torch.Tensor, right: torch.Tensor, points: int) -> float:
@@ -212,7 +212,7 @@ def main() -> None:
 
     evaluation = protocol["evaluation"]
     assignment_protocol = load_json_object(Path("configs/protocols/h1a_assignment_iid_gate_v3.json"))
-    examples = _load_examples(
+    examples = load_assignment_carrier_examples(
         args.carrier_root,
         Path("reports/h1a_assignment_iid_calibration_split_v1/result.json"),
         maximum_sites=int(protocol["assignment_model"]["maximum_sites"]),

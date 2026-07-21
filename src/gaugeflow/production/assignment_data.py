@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import gzip
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Sequence
 
 import numpy as np
 import torch
 
+from gaugeflow.file_utils import load_json_object
 from gaugeflow.geometry import closest_image_displacements_numpy
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
@@ -37,6 +41,51 @@ class AssignmentCarrierExample:
     parent_permutations: torch.Tensor
     parent_space_group: int
     cell_index: int
+
+
+def load_assignment_carrier_examples(
+    carrier_root: Path,
+    role_result_path: Path,
+    *,
+    maximum_sites: int,
+    radial_channels: int,
+) -> list[AssignmentCarrierExample]:
+    """Load geometry-complete carriers with frozen audit-only evidence roles."""
+
+    role_result = load_json_object(role_result_path)
+    if role_result.get("qualified") is not True or not all(role_result["checks"].values()):
+        raise ValueError("assignment IID role split is not qualified")
+    roles = {
+        (str(row["material_id"]), int(row["candidate_index"]), str(row["embedding_key"])): str(
+            row["role"]
+        )
+        for row in role_result["carrier_rows"]
+    }
+    with gzip.open(carrier_root / "records.json.gz", "rt", encoding="utf-8") as handle:
+        records = json.load(handle)
+    examples: list[AssignmentCarrierExample] = []
+    seen: set[tuple[str, int, str]] = set()
+    for record in records:
+        material_id = str(record["material_id_audit_only"])
+        for candidate_index, candidate in enumerate(record["candidates"]):
+            embedding_key = str(candidate["embedding_key"])
+            key = (material_id, candidate_index, embedding_key)
+            if key not in roles or key in seen:
+                raise ValueError(f"carrier role identity is missing or duplicated: {key}")
+            seen.add(key)
+            examples.append(
+                prepare_assignment_carrier_example(
+                    candidate,
+                    embedding_key=embedding_key,
+                    material_id_audit_only=material_id,
+                    evidence_role_audit_only=roles[key],
+                    maximum_sites=maximum_sites,
+                    radial_channels=radial_channels,
+                )
+            )
+    if seen != set(roles):
+        raise ValueError("geometry-complete carriers and frozen IID roles differ")
+    return examples
 
 
 def _exact_complete_pair_distances(

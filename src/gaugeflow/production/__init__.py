@@ -7,6 +7,7 @@ prototype.  Importing it never selects a legacy probability-path fallback.
 from .alex_p1_data import PackedAlexModelBatch, PackedAlexP1Dataset
 from .assignment_data import (
     AssignmentCarrierExample,
+    load_assignment_carrier_examples,
     pack_assignment_carriers,
     prepare_assignment_carrier_example,
 )
@@ -210,6 +211,7 @@ __all__ = [
     "IntegerPartitionCatalogue",
     "FactorizedGenerationLogProbability",
     "LatticeVolumeShape",
+    "load_assignment_carrier_examples",
     "ModeCatalog",
     "ModeCatalogEntry",
     "ModeDiffusionState",
