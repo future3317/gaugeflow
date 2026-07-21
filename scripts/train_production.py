@@ -6,9 +6,12 @@ import argparse
 import dataclasses
 import json
 import math
+import os
 import time
 from pathlib import Path
 from typing import Any
+
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 import torch
 from torch.utils.data import DataLoader
@@ -181,6 +184,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    torch.use_deterministic_algorithms(True)
     protocol = load_json_object(args.protocol)
     if protocol.get("status_before_run") != "frozen_not_run":
         raise ValueError("training protocol was not frozen before execution")
