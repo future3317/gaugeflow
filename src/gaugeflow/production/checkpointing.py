@@ -58,6 +58,7 @@ def save_production_checkpoint(
     training_step: int,
     node_count_prior: EmpiricalNodeCountPrior,
     metadata: Mapping[str, Any],
+    runtime_state: Mapping[str, Any] | None = None,
 ) -> Path:
     """Atomically save model, EMA, optimizer and CPU/CUDA RNG state."""
     if training_step < 0:
@@ -73,6 +74,7 @@ def save_production_checkpoint(
         "node_count_prior": _cpu_tree(node_count_prior.state_dict()),
         "cpu_rng_state": torch.get_rng_state(),
         "cuda_rng_state": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [],
+        "runtime_state": _cpu_tree(dict(runtime_state)) if runtime_state is not None else None,
     }
     torch.save(payload, temporary)
     temporary.replace(path)
@@ -91,6 +93,31 @@ def save_production_checkpoint(
     )
     sidecar_temporary.replace(sidecar)
     return sidecar
+
+
+def load_production_runtime_state(
+    path: Path,
+    *,
+    map_location: str | torch.device = "cpu",
+) -> dict[str, Any]:
+    """Load the private data/noise-generator state required for exact resume."""
+
+    read_production_checkpoint_metadata(path)
+    payload = torch.load(path, map_location=map_location, weights_only=True)
+    if not isinstance(payload, dict) or payload.get("schema") != PRODUCTION_CHECKPOINT_SCHEMA:
+        raise ValueError("unsupported production checkpoint schema")
+    state = payload.get("runtime_state")
+    if not isinstance(state, dict):
+        raise ValueError("production checkpoint lacks exact-resume runtime state")
+    required = {"epoch_loader_generator_state", "batches_consumed_in_epoch", "device_generator_state"}
+    if not required.issubset(state):
+        raise ValueError("production checkpoint runtime state is incomplete")
+    if not isinstance(state["batches_consumed_in_epoch"], int) or state["batches_consumed_in_epoch"] < 0:
+        raise ValueError("production checkpoint has an invalid epoch cursor")
+    for name in ("epoch_loader_generator_state", "device_generator_state"):
+        if not isinstance(state[name], torch.Tensor) or state[name].dtype != torch.uint8:
+            raise ValueError(f"production checkpoint {name} is not a generator state")
+    return state
 
 
 def load_production_checkpoint(

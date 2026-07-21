@@ -1,0 +1,43 @@
+{
+  "boundary": "A pass authorizes one from-scratch A1 product-space training protocol only. It does not qualify free joint quality, OOD carrier generalization, tensor conditioning, oracle, RL, relaxation, DFT, or DFPT.",
+  "checks": {
+    "every_step_composition_closure": true,
+    "finite_forward_backward": true,
+    "lattice_positive_volume": true,
+    "multispecies_assignment_support": true,
+    "parameter_count": true,
+    "positive_assignment_head_gradient": true,
+    "positive_assignment_loss": true,
+    "positive_gradient_norm": true,
+    "sampled_composition_exact": true,
+    "sampled_node_count_exact": true,
+    "terminal_masks_zero": true,
+    "terminal_remaining_atoms_zero": true
+  },
+  "composition_checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
+  "losses": {
+    "assignment": 0.514502763748169,
+    "assignment_head_gradient_norm": 2.593656301498413,
+    "coordinate": 0.03944587707519531,
+    "gradient_norm": 9.587063789367676,
+    "shape": 0.6852394938468933,
+    "total": 1.3645744323730469,
+    "volume": 0.12538626790046692
+  },
+  "maximum_composition_closure_error": 0,
+  "parameter_count": 34284207,
+  "protocol": "a1_product_space_integration_v2",
+  "protocol_sha256": "11376de1ef402c4e087389606b0ad4e9520e5ff7a9668042dd05a6916301ae8f",
+  "qualified": true,
+  "sample_node_counts": [
+    2,
+    3
+  ],
+  "smoke_cache_rows": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "terminal_mask_count": 0
+}

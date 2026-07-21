@@ -4,7 +4,11 @@ from pathlib import Path
 import torch
 
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
-from gaugeflow.production.checkpointing import load_production_checkpoint, save_production_checkpoint
+from gaugeflow.production.checkpointing import (
+    load_production_checkpoint,
+    load_production_runtime_state,
+    save_production_checkpoint,
+)
 from gaugeflow.production.composition_state import IntegerPartitionCatalogue, StoichiometryFirstCompositionModel
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
@@ -1286,6 +1290,13 @@ def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(
     trainer = ProductionTrainer(diffusion, ProductionTrainingConfig())
     prior = EmpiricalNodeCountPrior.fit(torch.tensor([2, 2, 3, 4]))
     path = tmp_path / "production.pt"
+    loader_generator = torch.Generator().manual_seed(701)
+    device_generator = torch.Generator().manual_seed(702)
+    runtime_state = {
+        "epoch_loader_generator_state": loader_generator.get_state(),
+        "batches_consumed_in_epoch": 7,
+        "device_generator_state": device_generator.get_state(),
+    }
     save_production_checkpoint(
         path,
         model=model,
@@ -1294,6 +1305,7 @@ def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(
         training_step=17,
         node_count_prior=prior,
         metadata={"model": {"hidden_dim": 16}, "protocol": "s1a_tensor_free_v1"},
+        runtime_state=runtime_state,
     )
     restored_model = _small_model()
     restored_diffusion = TensorFreeHybridDiffusion(restored_model, _standardizer())
@@ -1307,5 +1319,12 @@ def test_production_checkpoint_restores_model_optimizer_ema_rng_and_count_prior(
     assert step == 17 and metadata["protocol"] == "s1a_tensor_free_v1"
     assert torch.equal(restored_prior.support, prior.support)
     assert torch.equal(restored_prior.probabilities, prior.probabilities)
+    restored_runtime = load_production_runtime_state(path)
+    assert restored_runtime["batches_consumed_in_epoch"] == 7
+    assert torch.equal(
+        restored_runtime["epoch_loader_generator_state"],
+        runtime_state["epoch_loader_generator_state"],
+    )
+    assert torch.equal(restored_runtime["device_generator_state"], runtime_state["device_generator_state"])
     for name, value in model.state_dict().items():
         assert torch.equal(value, restored_model.state_dict()[name])

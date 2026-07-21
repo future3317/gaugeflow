@@ -64,6 +64,7 @@ from .categorical_mask import AbsorbingMaskDiffusion
 from .categorical_uniform import UniformCategoricalDiffusion
 from .checkpointing import (
     load_production_checkpoint,
+    load_production_runtime_state,
     read_production_checkpoint_metadata,
     save_production_checkpoint,
 )
@@ -264,6 +265,7 @@ __all__ = [
     "load_qualified_composition_model",
     "faithful_parent_action",
     "load_production_checkpoint",
+    "load_production_runtime_state",
     "read_production_checkpoint_metadata",
     "reverse_time_grid",
     "project_hybrid_reverse_state",

@@ -8,6 +8,7 @@ import json
 import math
 import time
 from pathlib import Path
+from typing import Any
 
 import torch
 from torch.utils.data import DataLoader
@@ -17,6 +18,7 @@ from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset, collate_packe
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import (
     load_production_checkpoint,
+    load_production_runtime_state,
     read_production_checkpoint_metadata,
     save_production_checkpoint,
 )
@@ -182,6 +184,9 @@ def main() -> None:
     prerequisites = protocol.get("prerequisites")
     if not isinstance(model_spec, dict) or not isinstance(training_spec, dict) or not isinstance(prerequisites, dict):
         raise ValueError("production protocol requires model, training and prerequisites objects")
+    expected_trainer_hash = prerequisites.get("trainer_sha256")
+    if expected_trainer_hash is not None and sha256_file(Path(__file__)) != str(expected_trainer_hash):
+        raise ValueError("production trainer changed after protocol freeze")
     seeds = [int(value) for value in training_spec["seeds"]]
     if args.seed not in seeds:
         raise ValueError("seed is not preregistered by the production protocol")
@@ -246,15 +251,13 @@ def main() -> None:
     ) != str(expected_standardization_hash):
         raise ValueError("lattice-standardization artifact hash mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
-    if objective in {"coordinate", "lattice"}:
+    if objective in {"joint", "coordinate", "lattice"}:
         _validate_data_exposure(
             training_spec,
             dataset_size=len(dataset),
             steps=steps,
             batch_size=effective_batch_size,
         )
-    if bool(training_spec.get("from_scratch_required", False)) and args.resume is not None:
-        raise ValueError("this frozen protocol requires a from-scratch run")
     node_prior = EmpiricalNodeCountPrior.fit(dataset.node_counts)
     loader_generator = torch.Generator().manual_seed(args.seed)
     loader = DataLoader(
@@ -368,6 +371,8 @@ def main() -> None:
         composition_conditioning=training_config.composition_conditioning,
     )
     trainer = ProductionTrainer(diffusion, training_config)
+    device_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
+    resume_runtime: dict[str, Any] | None = None
     if args.resume is not None:
         step, node_prior, _ = load_production_checkpoint(
             args.resume,
@@ -378,6 +383,8 @@ def main() -> None:
             restore_rng=True,
         )
         trainer.step = step
+        resume_runtime = load_production_runtime_state(args.resume)
+        device_generator.set_state(resume_runtime["device_generator_state"].cpu())
     if args.resume is None and args.output.exists() and any(args.output.iterdir()):
         raise FileExistsError("refusing to append a from-scratch run to a nonempty output")
     args.output.mkdir(parents=True, exist_ok=True)
@@ -396,6 +403,27 @@ def main() -> None:
         "gradient_accumulation_steps": gradient_accumulation_steps,
         "effective_batch_size": effective_batch_size,
     }
+    if resume_runtime is None:
+        epoch_loader_generator_state = loader_generator.get_state().clone()
+        data_iterator = iter(loader)
+        batches_consumed_in_epoch = 0
+    else:
+        epoch_loader_generator_state = resume_runtime["epoch_loader_generator_state"].cpu()
+        batches_consumed_in_epoch = int(resume_runtime["batches_consumed_in_epoch"])
+        if batches_consumed_in_epoch > len(loader):
+            raise ValueError("resume data cursor lies beyond the frozen epoch")
+        loader_generator.set_state(epoch_loader_generator_state)
+        data_iterator = iter(loader)
+        for _ in range(batches_consumed_in_epoch):
+            next(data_iterator)
+
+    def exact_resume_state() -> dict[str, object]:
+        return {
+            "epoch_loader_generator_state": epoch_loader_generator_state.clone(),
+            "batches_consumed_in_epoch": batches_consumed_in_epoch,
+            "device_generator_state": device_generator.get_state(),
+        }
+
     if args.resume is None:
         save_production_checkpoint(
             args.output / "checkpoint_step_00000000.pt",
@@ -405,10 +433,24 @@ def main() -> None:
             training_step=0,
             node_count_prior=node_prior,
             metadata=checkpoint_metadata,
+            runtime_state=exact_resume_state(),
         )
     log_path = args.output / "training_metrics.jsonl"
-    data_iterator = iter(loader)
-    device_generator = torch.Generator(device=device).manual_seed(args.seed + 1)
+
+    def next_host_batch(*, allow_epoch_wrap: bool = True) -> Any:
+        nonlocal data_iterator, epoch_loader_generator_state, batches_consumed_in_epoch
+        try:
+            value = next(data_iterator)
+        except StopIteration:
+            if not allow_epoch_wrap:
+                raise
+            epoch_loader_generator_state = loader_generator.get_state().clone()
+            data_iterator = iter(loader)
+            batches_consumed_in_epoch = 0
+            value = next(data_iterator)
+        batches_consumed_in_epoch += 1
+        return value
+
     throughput_start = time.perf_counter()
     throughput_graphs = 0
     graphs_seen_this_invocation = 0
@@ -420,12 +462,11 @@ def main() -> None:
             host_microbatches: list[object] = []
             for _ in range(gradient_accumulation_steps):
                 try:
-                    host_microbatches.append(next(data_iterator))
+                    host_microbatches.append(next_host_batch(allow_epoch_wrap=False))
                 except StopIteration:
-                    data_iterator = iter(loader)
                     break
             if not host_microbatches:
-                host_microbatches.append(next(data_iterator))
+                host_microbatches.append(next_host_batch())
             microbatch_graphs = [int(value.num_graphs) for value in host_microbatches]
             optimizer_graphs = sum(microbatch_graphs)
             trainer.begin_optimization_step()
@@ -471,11 +512,7 @@ def main() -> None:
             gradient_norm = trainer.finish_optimization_step()
             graph_count = optimizer_graphs
         else:
-            try:
-                batch_data = next(data_iterator)
-            except StopIteration:
-                data_iterator = iter(loader)
-                batch_data = next(data_iterator)
+            batch_data = next_host_batch()
             batch_data = batch_data.to(device, non_blocking=True)
             graph_count = int(batch_data.num_graphs)
             counts = torch.bincount(batch_data.batch, minlength=graph_count)
@@ -573,6 +610,7 @@ def main() -> None:
                 training_step=trainer.step,
                 node_count_prior=node_prior,
                 metadata=checkpoint_metadata,
+                runtime_state=exact_resume_state(),
             )
 
 
