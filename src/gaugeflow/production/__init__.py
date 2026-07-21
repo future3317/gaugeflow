@@ -83,6 +83,7 @@ from .composition_assignment import (
     occupation_block_composition_feasible,
     rounded_graph_composition,
 )
+from .composition_runtime import load_qualified_composition_model
 from .composition_state import (
     IntegerPartitionCatalogue,
     SparseCompositionLogProbability,
@@ -91,7 +92,6 @@ from .composition_state import (
     StoichiometryFirstCompositionModel,
     fit_integer_partition_log_prior,
 )
-from .composition_runtime import load_qualified_composition_model
 from .equivariant_denoiser import HybridCrystalDenoiser, LatticeDenoiserOutput
 from .generation_law import (
     CarrierSelectionSample,
