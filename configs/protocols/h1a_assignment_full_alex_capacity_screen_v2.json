@@ -1,7 +1,7 @@
 {
-  "protocol": "h1a_assignment_full_alex_capacity_screen_v1",
+  "protocol": "h1a_assignment_full_alex_capacity_screen_v2",
   "status_before_run": "frozen_not_run",
-  "purpose": "Select the smallest non-underfitting assignment representation width before the one-pass full-Alex pretraining run, without reading any Gold assignment target or calibration result.",
+  "purpose": "Select the smallest non-underfitting assignment representation width before one-pass full-Alex pretraining. Preserve the v1 capacity candidates while using exact sequential reveal-path and graph-microbatch gradient accumulation instead of carrier duplication.",
   "source": {
     "qualified_interface_result": "reports/h1a_assignment_full_alex_pretraining_interface_v3/result.json",
     "qualified_interface_normalized_sha256": "6f63f79c6ecf2273f3705599d91720cccf2930c44fbcbd3b6fffa5ea24d5d166",
@@ -24,6 +24,7 @@
     "train_structures": 12800,
     "validation_structures": 1024,
     "graph_batch_size": 128,
+    "graph_microbatch_size": 32,
     "updates": 100,
     "path_samples_per_carrier": 2,
     "learning_rate": 0.0005,
@@ -32,7 +33,7 @@
     "maximum_refinement_candidates_per_pair": 4096
   },
   "evaluation": {
-    "graph_batch_size": 64,
+    "graph_batch_size": 32,
     "order_samples": 8,
     "fixed_reveal_seed": 15705
   },

@@ -11,7 +11,6 @@ from gaugeflow.production.assignment_pretraining import (
     ddp_global_mean_loss,
     exact_periodic_pair_distances,
     rank_shard_of_global_batch,
-    repeat_assignment_carrier_batch,
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
@@ -184,27 +183,3 @@ def test_ddp_loss_scaling_matches_one_global_mean_with_uneven_ranks() -> None:
     )
     (distributed - torch.cat((rank_zero, rank_one)).mean()).backward()
     assert float(parameter.grad.abs()) <= 1e-6
-
-
-def test_compiled_carrier_repetition_reuses_exact_features() -> None:
-    fractional = torch.tensor(
-        [[0.1, 0.2, 0.3], [0.7, 0.2, 0.4], [0.2, 0.8, 0.6]],
-        dtype=torch.float32,
-    )
-    lattice = torch.tensor(
-        [[[3.2, 0.0, 0.0], [0.1, 3.7, 0.0], [0.2, 0.3, 4.1]]],
-        dtype=torch.float32,
-    )
-    batch = torch.zeros(3, dtype=torch.long)
-    token = torch.tensor([2, 5, 2])
-    carrier = compile_masked_assignment_batch(fractional, lattice, batch, token).carrier
-    repeated = repeat_assignment_carrier_batch(carrier, repeats=3)
-    assert repeated.graph_count == 3
-    assert repeated.node_count == 9
-    for graph in range(3):
-        node = repeated.batch == graph
-        edge = repeated.batch[repeated.edge_source] == graph
-        assert torch.equal(repeated.site_features[node], carrier.site_features)
-        assert torch.equal(repeated.target_assignment[node], carrier.target_assignment)
-        assert torch.equal(repeated.edge_rbf[edge], carrier.edge_rbf)
-        assert torch.equal(repeated.composition_counts[graph], carrier.composition_counts[0])

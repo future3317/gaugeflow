@@ -23,7 +23,6 @@ from gaugeflow.production.assignment_pretraining import (
     compile_masked_assignment_batch,
     ddp_global_mean_loss,
     rank_shard_of_global_batch,
-    repeat_assignment_carrier_batch,
 )
 from gaugeflow.production.assignment_training import (
     OrderlessAssignmentTrainingModule,
@@ -246,9 +245,15 @@ def main() -> None:
         raise RuntimeError("training permutation is not one exact allowed-index pass")
 
     global_batch_size = int(training["global_graph_batch_size"])
+    global_microbatch_size = int(training["global_graph_microbatch_size"])
     updates = math.ceil(allowed.numel() / global_batch_size)
     if updates != int(training["updates"]) or int(training["exact_passes"]) != 1:
         raise ValueError("frozen updates do not equal one exact full-Alex pass")
+    if (
+        global_microbatch_size < world_size
+        or global_batch_size % global_microbatch_size != 0
+    ):
+        raise ValueError("global assignment microbatch is incompatible with DDP")
     path_samples = int(training["path_samples_per_carrier"])
     maximum_candidates = int(protocol["geometry"]["maximum_refinement_candidates_per_pair"])
 
@@ -307,38 +312,45 @@ def main() -> None:
     dist.barrier()
     started = time.perf_counter() - elapsed_before_resume
     for update in range(start_update, updates):
-        selected_indices = rank_shard_of_global_batch(
-            permutation,
-            update=update,
-            global_batch_size=global_batch_size,
-            rank=rank,
-            world_size=world_size,
-        )
-        selected = dataset.select_model_batch(selected_indices, device=device)
-        compiled = compile_masked_assignment_batch(
-            selected.fractional_coordinates,
-            selected.lattice,
-            selected.batch,
-            selected.atom_types,
-            maximum_refinement_candidates=maximum_candidates,
-        )
-        carrier = repeat_assignment_carrier_batch(compiled.carrier, repeats=path_samples)
-        reveal_rank = sample_uniform_reveal_ranks(carrier.batch, generator=reveal_generator)
-        global_graphs = min(
-            global_batch_size,
-            allowed.numel() - update * global_batch_size,
-        )
+        global_start = update * global_batch_size
+        global_indices = permutation[
+            global_start : min(global_start + global_batch_size, allowed.numel())
+        ]
+        global_graphs = global_indices.numel()
         global_paths = global_graphs * path_samples
 
         ddp.train()
         optimizer.zero_grad(set_to_none=True)
-        local_nll = ddp(carrier, reveal_rank)
-        loss = ddp_global_mean_loss(
-            local_nll,
-            global_count=global_paths,
-            world_size=world_size,
-        )
-        loss.backward()
+        nll_sum = torch.zeros((), dtype=torch.float64, device=device)
+        for micro_start in range(0, global_graphs, global_microbatch_size):
+            micro_global = global_indices[
+                micro_start : micro_start + global_microbatch_size
+            ]
+            if micro_global.numel() < world_size:
+                raise RuntimeError("a no-padding DDP microbatch cannot cover every rank")
+            selected_indices = micro_global[rank::world_size]
+            selected = dataset.select_model_batch(selected_indices, device=device)
+            carrier = compile_masked_assignment_batch(
+                selected.fractional_coordinates,
+                selected.lattice,
+                selected.batch,
+                selected.atom_types,
+                maximum_refinement_candidates=maximum_candidates,
+            ).carrier
+            for _ in range(path_samples):
+                reveal_rank = sample_uniform_reveal_ranks(
+                    carrier.batch,
+                    generator=reveal_generator,
+                )
+                local_nll = ddp(carrier, reveal_rank)
+                nll_sum += local_nll.detach().to(torch.float64).sum()
+                loss = ddp_global_mean_loss(
+                    local_nll,
+                    global_count=global_paths,
+                    world_size=world_size,
+                )
+                loss.backward()
+            local_processed_graphs += selected_indices.numel()
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             ddp.module.parameters(),
             float(training["gradient_clip_norm"]),
@@ -348,12 +360,10 @@ def main() -> None:
             raise RuntimeError("full-Alex assignment pretraining produced a nonfinite gradient")
         finite_gradient_updates += 1
         optimizer.step()
-        local_processed_graphs += selected_indices.numel()
 
         completed = update + 1
         record = completed == 1 or completed % interval == 0 or completed == updates
         if record:
-            nll_sum = local_nll.detach().to(torch.float64).sum()
             dist.all_reduce(nll_sum, op=dist.ReduceOp.SUM)
             elapsed = time.perf_counter() - started
             if rank == 0:

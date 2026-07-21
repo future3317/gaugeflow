@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "capacity_selected": false,
+    "completed": false,
+    "finite_backward": false,
+    "resource_support": false
+  },
+  "decision": "stop_before_full_alex_pretraining_and_replace_carrier_duplication_with_exact_gradient_accumulation",
+  "failure": {
+    "attempted_allocation_gib": 3.41,
+    "device_capacity_gib": 23.65,
+    "free_at_failure_gib": 2.24,
+    "hidden_dim": 256,
+    "model_parameters": 3885568,
+    "process_memory_at_failure_gib": 21.41,
+    "stage": "first_backward_before_first_optimizer_update",
+    "type": "torch.cuda.OutOfMemoryError"
+  },
+  "hardware": {
+    "device": "NVIDIA GeForce RTX 4090",
+    "physical_cuda_device": 3
+  },
+  "implementation_commit": "8b31ae5df0cca173b1330063010d020672f87333",
+  "protocol": "h1a_assignment_full_alex_capacity_screen_v1",
+  "protocol_sha256": "75b7f15f8fea0f43bbddc220b18306e6d749b44e23a92456daf7411135381f76",
+  "qualified": false,
+  "runtime_log_sha256": "513c07e5f373374033ece0aa8de58749ef7cd71f57c3651401b7afb013b9387a"
+}
+

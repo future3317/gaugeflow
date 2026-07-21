@@ -16,7 +16,6 @@ from gaugeflow.file_utils import canonical_json_hash, load_json_object
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.assignment_pretraining import (
     compile_masked_assignment_batch,
-    repeat_assignment_carrier_batch,
 )
 from gaugeflow.production.assignment_training import orderless_assignment_objective
 from gaugeflow.production.autoregressive_assignment import GeometryAwareRemainingCountScorer
@@ -115,7 +114,7 @@ def main() -> None:
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[1]
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_assignment_full_alex_capacity_screen_v1":
+    if protocol.get("protocol") != "h1a_assignment_full_alex_capacity_screen_v2":
         raise ValueError("unexpected assignment capacity-screen protocol")
     if protocol.get("status_before_run") != "frozen_not_run":
         raise ValueError("assignment capacity-screen protocol is not frozen")
@@ -157,8 +156,11 @@ def main() -> None:
     train_indices = permutation[:train_count]
     validation_indices = permutation[train_count : train_count + validation_count]
     batch_size = int(training["graph_batch_size"])
+    microbatch_size = int(training["graph_microbatch_size"])
     if train_count != int(training["updates"]) * batch_size:
         raise ValueError("capacity screen must use every fit structure exactly once")
+    if microbatch_size < 1 or batch_size % microbatch_size != 0:
+        raise ValueError("capacity screen microbatch must divide the graph batch")
     maximum_candidates = int(training["maximum_refinement_candidates_per_pair"])
 
     evaluation = protocol["evaluation"]
@@ -193,24 +195,29 @@ def main() -> None:
         model.train()
         for update in range(int(training["updates"])):
             begin = update * batch_size
-            selected = dataset.select_model_batch(
-                train_indices[begin : begin + batch_size],
-                device=device,
-            )
-            carrier = compile_masked_assignment_batch(
-                selected.fractional_coordinates,
-                selected.lattice,
-                selected.batch,
-                selected.atom_types,
-                maximum_refinement_candidates=maximum_candidates,
-            ).carrier
-            carrier = repeat_assignment_carrier_batch(
-                carrier,
-                repeats=int(training["path_samples_per_carrier"]),
-            )
             optimizer.zero_grad(set_to_none=True)
-            objective = orderless_assignment_objective(model, carrier, generator=generator)
-            objective.loss.backward()
+            path_samples = int(training["path_samples_per_carrier"])
+            nll_sum = torch.zeros((), dtype=torch.float64, device=device)
+            for micro_start in range(0, batch_size, microbatch_size):
+                micro_indices = train_indices[
+                    begin + micro_start : begin + micro_start + microbatch_size
+                ]
+                selected = dataset.select_model_batch(micro_indices, device=device)
+                carrier = compile_masked_assignment_batch(
+                    selected.fractional_coordinates,
+                    selected.lattice,
+                    selected.batch,
+                    selected.atom_types,
+                    maximum_refinement_candidates=maximum_candidates,
+                ).carrier
+                for _ in range(path_samples):
+                    objective = orderless_assignment_objective(
+                        model,
+                        carrier,
+                        generator=generator,
+                    )
+                    nll_sum += objective.graph_nll.detach().to(torch.float64).sum()
+                    (objective.graph_nll.sum() / (batch_size * path_samples)).backward()
             gradient_norm = torch.nn.utils.clip_grad_norm_(
                 model.parameters(),
                 float(training["gradient_clip_norm"]),
@@ -219,7 +226,7 @@ def main() -> None:
                 raise RuntimeError("capacity screen produced a nonfinite gradient")
             finite_updates += 1
             optimizer.step()
-            observed = float(objective.loss.detach())
+            observed = float(nll_sum / (batch_size * path_samples))
             if update == 0:
                 first_train_nll = observed
             last_train_nll = observed
