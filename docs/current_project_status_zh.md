@@ -2,9 +2,9 @@
 
 ## 一句话结论
 
-GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。历史真实数据 free H1a 的局部 packing 失败仍然保留；此后 `p(C|N)`、supported-IID exact-count assignment、显式 `p(N)`、lattice L1、clean/generated side-state coordinate exposure 已分别通过。34M/58M/98M 等 exposure 筛选选择 34.28M 作为最小充分 backbone。完整 joint A1 尚未训练，因此当前仍不能声称已生成满足目标压电张量的晶体。
+GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。历史真实数据 free H1a 的局部 packing 失败仍然保留；此后 `p(C|N)`、supported-IID exact-count assignment、显式 `p(N)`、lattice L1、clean/generated side-state coordinate exposure 已分别通过。34M/58M/98M 等 exposure 筛选选择 34.28M 作为最小充分 coordinate backbone。完整 joint A1 尚未训练，因此当前仍不能声称已生成满足目标压电张量的晶体。
 
-本项目已完成 GaugeFlow-base 的 bounded supported-IID A0 接口闭包，下一步是使用选定 34.28M backbone 的 tensor-free A1 联合预训练。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
+本项目已完成 GaugeFlow-base 的 bounded supported-IID 组件资格化，但尚未完成 product-space runtime 闭合：当前 `joint` trainer 和 reverse sampler 未调用已通过的 `p(C|N)` 与 orderless exact-count assignment。下一步是将两者接入选定的 34.28M tensor-free sampler，并对 composition exactness、assignment equivariance、joint state closure 和 zero-failure 进行独立资格化；之后才可冻结 A1 联合预训练。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
 
 ### 最新容量资格结果
 

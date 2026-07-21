@@ -360,9 +360,9 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   used to fabricate them. Do not choose a hard chain, start free joint
   training, or enter later Gates before these prerequisites are satisfied.
 
-GaugeFlow-base A0 interface closure is complete on its bounded supported-IID
-domain. Exact-count assignment, explicit `p(N)`, lattice L1 and the four-arm
-generated-side coordinate exposure Gate have passed. The equal-exposure
+GaugeFlow-base has completed bounded supported-IID *component* qualification:
+exact-count assignment, explicit `p(N)`, lattice L1 and the four-arm
+generated-side coordinate exposure Gate have passed separately. The equal-exposure
 capacity screen then compared 34.28M/57.68M/97.58M parameters for exactly
 540,164 graph presentations at effective batch 64. All three candidates were
 eligible; the frozen minimum-sufficient rule selected 34.28M. Its validation
@@ -373,10 +373,14 @@ atom types, lattice and node count; it is not free joint generation. The 98M
 candidate improved conditional-rollout NN-W1 to `0.131120` and t=.6
 explained fraction to `0.771143`, but remained inside the frozen quality
 margins while reducing throughput to `69.88 graphs/s`; it is not the production
-default. The next permitted learned operation is a separately frozen,
-tensor-free GaugeFlow-base A1 joint pretraining run using the selected 34M
-backbone. H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue
-completed protocols or revive failed reciprocal/topology branches.
+default. A production-interface trace found that the current `joint` trainer
+and reverse sampler still use the legacy independent categorical path: they do
+not invoke the qualified `p(C|N)` law or the orderless exact-count assignment
+law. Therefore the factorized joint runtime is not yet closed and A1 training
+is blocked. The next permitted work is to integrate and test those two
+discrete interfaces in the selected 34M tensor-free product-space sampler,
+then freeze A1. H1b and H2--H6 remain prohibited. Do not add seeds or steps to
+rescue completed protocols or revive failed reciprocal/topology branches.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.

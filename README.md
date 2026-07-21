@@ -28,11 +28,13 @@ fallback。
 | 完整 parent blueprint 与 H2--H6 | 尚未开始 |
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
-GaugeFlow-base 的 bounded supported-IID A0 生成接口已经闭合。P1 cache、条件坐标、
+GaugeFlow-base 的 bounded supported-IID 组件资格已经完成：P1 cache、条件坐标、
 exact-count assignment、显式 `p(N)`、lattice L1、generated-side exposure 和容量选择
-均已完成；局部算子、reciprocal、topology carrier 和 sampler 搜索也已收口。这些结果
-不改写历史 free H1a 失败。当前下一项且唯一允许的大规模实验是使用选定 34.28M
-backbone 的 tensor-free A1 联合预训练；tensor 条件与 RL 均在更后阶段。
+均有各自的通过证据；局部算子、reciprocal、topology carrier 和 sampler 搜索也已收口。
+这些结果不改写历史 free H1a 失败。接口追踪同时发现现有 joint trainer/sampler 仍使用
+逐 site categorical reverse，尚未接入已资格化的 `p(C|N)` 与 orderless exact-count
+assignment。因此 A1 训练尚未获准；下一步是先完成、测试并冻结该 product-space 接口。
+tensor 条件与 RL 均在更后阶段。
 
 ## 当前方法
 

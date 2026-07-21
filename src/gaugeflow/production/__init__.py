@@ -105,6 +105,12 @@ from .lattice_volume_shape import (
     SymmetryShapeBasis,
     project_lattice_state,
 )
+from .orderless_product_state import (
+    OrderlessPartialOccupation,
+    orderless_next_reveal_nll,
+    partial_occupation_from_reveal_rank,
+    sample_orderless_partial_occupation,
+)
 from .reverse_sampler import (
     ContinuousReverseInitialState,
     ContinuousReverseMode,
@@ -158,8 +164,10 @@ __all__ = [
     "AssignmentCarrierExample",
     "MaskedAssignmentCompilation",
     "OrderlessAssignmentObjective",
+    "OrderlessPartialOccupation",
     "OrderlessAssignmentTrainingModule",
     "orderless_assignment_objective",
+    "orderless_next_reveal_nll",
     "pack_assignment_carriers",
     "prepare_assignment_carrier_example",
     "sample_uniform_reveal_ranks",
@@ -233,6 +241,7 @@ __all__ = [
     "ReachableChildPath",
     "rounded_graph_composition",
     "sample_orderless_assignment",
+    "sample_orderless_partial_occupation",
     "SparseCompositionLogProbability",
     "SparseCompositionSample",
     "SparseCompositionState",
@@ -260,5 +269,6 @@ __all__ = [
     "parent_carrier_graph_features",
     "project_lattice_state",
     "project_translation_state",
+    "partial_occupation_from_reveal_rank",
     "save_production_checkpoint",
 ]
