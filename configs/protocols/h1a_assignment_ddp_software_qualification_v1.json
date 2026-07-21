@@ -20,7 +20,7 @@
   "training": {
     "seed": 5705,
     "world_size": 2,
-    "physical_cuda_devices": [3, 4],
+    "device_class": "NVIDIA GeForce RTX 4090",
     "structures": 12799,
     "global_graph_batch_size": 128,
     "global_graph_microbatch_size": 64,

@@ -345,6 +345,9 @@ def main() -> None:
     roles = load_json_object(role_path)
 
     training = protocol["training"]
+    visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")
+    if len(visible_devices) != int(training["world_size"]):
+        raise ValueError("CUDA_VISIBLE_DEVICES must expose exactly the frozen world size")
     rank, world_size, device = _initialize_distributed(int(training["world_size"]))
     seed = int(training["seed"])
     torch.manual_seed(seed)
@@ -475,6 +478,8 @@ def main() -> None:
     del run
 
     if rank == 0:
+        if devices is None or any(name != training["device_class"] for name in devices):
+            raise RuntimeError("assignment DDP device class differs from the frozen protocol")
         equivalence = protocol["equivalence"]
         acceptance = protocol["acceptance"]
         checks = {
@@ -528,7 +533,7 @@ def main() -> None:
             },
             "hardware": {
                 "devices": devices,
-                "physical_cuda_devices": training["physical_cuda_devices"],
+                "physical_cuda_devices": [int(value) for value in visible_devices],
                 "world_size": world_size,
                 "torch": torch.__version__,
                 "cuda": torch.version.cuda,
