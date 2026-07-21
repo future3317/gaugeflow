@@ -25,7 +25,10 @@ from gaugeflow.production.assignment_data import (
     pack_assignment_carriers,
     prepare_assignment_carrier_example,
 )
-from gaugeflow.production.assignment_training import orderless_assignment_objective
+from gaugeflow.production.assignment_training import (
+    orderless_assignment_objective,
+    sample_orderless_assignment,
+)
 from gaugeflow.production.autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
     RemainingCountAssignmentLaw,
@@ -263,38 +266,12 @@ def _sample_example(
 ) -> torch.Tensor:
     model.eval()
     packed = pack_assignment_carriers([example] * draws, device=device)
-    nodes = example.target_assignment.numel()
     generator = torch.Generator(device=device).manual_seed(seed)
-    reveal_order = torch.argsort(torch.rand(draws, nodes, generator=generator, device=device), dim=1)
-    partial = torch.full((draws, nodes), -1, dtype=torch.long, device=device)
-    remaining = packed.composition_counts.clone()
-    law = RemainingCountAssignmentLaw()
-    row = torch.arange(draws, device=device)
-    for depth in range(nodes):
-        logits = model(
-            packed.site_features,
-            packed.graph_features,
-            packed.batch,
-            packed.edge_source,
-            packed.edge_target,
-            packed.edge_rbf,
-            partial.reshape(-1),
-            packed.composition_counts,
-            remaining,
-            packed.parent_space_group,
-            packed.cell_index,
-        )
-        site = reveal_order[:, depth]
-        log_probability = law.batched_step_log_probabilities(
-            logits[row * nodes + site],
-            remaining,
-        )
-        token = torch.multinomial(log_probability.exp(), 1, generator=generator).squeeze(1)
-        partial[row, site] = token
-        remaining[row, token] -= 1
-    if bool((remaining != 0).any()) or bool((partial < 0).any()):
-        raise RuntimeError("assignment sampler failed exact-count closure")
-    return partial
+    return sample_orderless_assignment(
+        model,
+        packed,
+        generator=generator,
+    ).reshape(draws, -1)
 
 
 @torch.no_grad()

@@ -30,6 +30,7 @@ from .assignment_training import (
     OrderlessAssignmentObjective,
     OrderlessAssignmentTrainingModule,
     orderless_assignment_objective,
+    sample_orderless_assignment,
     sample_uniform_reveal_ranks,
 )
 from .autoregressive_assignment import (
@@ -229,6 +230,7 @@ __all__ = [
     "ReachableChildCompatibilityRouter",
     "ReachableChildPath",
     "rounded_graph_composition",
+    "sample_orderless_assignment",
     "SparseCompositionLogProbability",
     "SparseCompositionSample",
     "SparseCompositionState",

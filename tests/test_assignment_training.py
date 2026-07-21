@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+from dataclasses import replace
 
 import torch
 
@@ -8,6 +9,7 @@ from gaugeflow.production.assignment_training import (
     AssignmentCarrierBatch,
     OrderlessAssignmentTrainingModule,
     orderless_assignment_objective,
+    sample_orderless_assignment,
     sample_uniform_reveal_ranks,
 )
 from gaugeflow.production.autoregressive_assignment import (
@@ -318,3 +320,25 @@ def test_reveal_order_sampling_is_target_independent_and_graphwise_permuted() ->
     for graph in range(3):
         selected = first[batch == graph]
         assert torch.equal(torch.sort(selected).values, torch.arange(selected.numel()))
+
+
+def test_orderless_sampler_is_replayable_and_exhausts_exact_counts() -> None:
+    model = _model().eval()
+    carrier = _carrier(model)
+    target_free = replace(
+        carrier,
+        target_assignment=torch.full_like(carrier.target_assignment, -1),
+    )
+    reveal_rank = torch.tensor([2, 0, 3, 1], dtype=torch.long)
+    outputs = [
+        sample_orderless_assignment(
+            model,
+            target_free,
+            reveal_rank=reveal_rank,
+            generator=torch.Generator().manual_seed(5706),
+        )
+        for _ in range(2)
+    ]
+
+    assert torch.equal(outputs[0], outputs[1])
+    assert torch.equal(_counts(outputs[0]), carrier.composition_counts[0])

@@ -1,0 +1,58 @@
+{
+  "protocol": "h1a_generated_side_coordinate_exposure_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "supported-IID oracle-composition assignment and qualified P1 lattice exposure into the current full-from-prior conditional-coordinate sampler",
+  "sources": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "carrier_manifest_sha256": "37e34e437b7df95314bd0aa1f189d552a7f109f2fc80b7bb03b4202f4b3bfa6d",
+    "assignment_role_result_sha256": "d327c3adff2913c3887ffa184254fa733e253b6d1bf17a9b492075da9d362f0e",
+    "assignment_result_sha256": "93556a9b48887a8a5fbb3cbcd52e6aadd6689d82ea6837a22f5b6ec7a314f5aa",
+    "assignment_checkpoint_sha256": "c7aab55047ca47ec36255371b6e1ea8758dddb0e7342f2883948e7a85478383c",
+    "assignment_protocol_sha256": "dfb29ec8ec943dcaa012a861ac20f37965043359ef23911dcc6cea7c9308ef97",
+    "lattice_result_sha256": "8f76a0accbe328354a7d863ac48f3c17b356103213d7a824b816e91c49660529",
+    "lattice_checkpoint_sha256": "ef77ff14d10c88a03a7b034a6bebb106e53df37ecbbcd910e275c65dd416c04e",
+    "lattice_protocol_sha256": "2ebd4f7ba9c363dc9c281d8c31597d2ba0e6e16f23b3867a388c7810f0d33596",
+    "coordinate_result_sha256": "204ad2f1e9b3c7480f09826b2e7848f836c150ed2f44002c46773fc05d990392",
+    "coordinate_checkpoint_sha256": "fbede266e8db4d96fb33ce0bb1b902c6f0716fc181d31c1c1b24434bef0ab895",
+    "coordinate_protocol_sha256": "8376c13676a872a8cb039c2cb5fcd42249cd109533d7433c3852dfbf3a0c794c"
+  },
+  "assignment_model": {
+    "maximum_sites": 20,
+    "maximum_cell_index": 4,
+    "radial_channels": 16,
+    "hidden_dim": 256,
+    "message_blocks": 3
+  },
+  "evaluation": {
+    "seed": 5705,
+    "maximum_materials": 18,
+    "assignment_seed": 9201,
+    "lattice_initial_seed": 9202,
+    "lattice_brownian_seed": 9203,
+    "coordinate_initial_seed": 9204,
+    "coordinate_brownian_seed": 9205,
+    "lattice_steps": 100,
+    "coordinate_steps": 100,
+    "wasserstein_points": 257,
+    "minimum_distance_angstrom": 0.5,
+    "common_noise_contract": "one shared coordinate prior and reset-identical Brownian generator for all four arms",
+    "panel_selection": "one lexicographically first supported-action iid_test carrier per material, material IDs sorted, capped at 18 before sampling"
+  },
+  "acceptance": {
+    "minimum_materials": 18,
+    "lattice_permutation_max_abs": 0.00001,
+    "clean_clean_nearest_w1_normalized_max": 0.75,
+    "clean_clean_cell_scaled_w1_normalized_max": 0.75,
+    "clean_clean_valid_minimum_distance_fraction_min": 0.9,
+    "assignment_w1_additive_degradation_max": 0.15,
+    "lattice_w1_additive_degradation_max": 0.35,
+    "joint_w1_additive_degradation_max": 0.45,
+    "joint_valid_minimum_distance_fraction_min": 0.85,
+    "sampling_failures": 0
+  },
+  "decision_rule": {
+    "pass": "qualify only the bounded supported-IID generated-side coordinate exposure and permit the preregistered GaugeFlow-base capacity screen",
+    "fail": "stop before capacity scaling and joint pretraining; classify full-prior, assignment, lattice, or interaction failure without changing thresholds",
+    "boundary": "This Gate uses oracle composition and a supported-IID parent-carrier subset. It cannot qualify generated composition, unseen parent actions, free joint M1, tensor conditioning, relaxation, DFT, or DFPT. No paired endpoint RMS is defined for a generated lattice."
+  }
+}

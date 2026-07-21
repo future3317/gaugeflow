@@ -37,7 +37,7 @@ class AssignmentCarrierBatch:
     def node_count(self) -> int:
         return int(self.batch.numel())
 
-    def validate(self, *, vocabulary_size: int) -> None:
+    def validate(self, *, vocabulary_size: int, require_target: bool = True) -> None:
         graphs = self.graph_count
         nodes = self.node_count
         if graphs < 1 or nodes < 1:
@@ -48,10 +48,11 @@ class AssignmentCarrierBatch:
             raise ValueError("assignment batch index must cover every packed graph")
         if not bool((self.batch[1:] >= self.batch[:-1]).all()):
             raise ValueError("assignment nodes must be contiguous by graph")
-        if self.target_assignment.shape != (nodes,) or self.target_assignment.dtype != torch.long:
-            raise ValueError("target assignment must contain one int64 token per node")
-        if bool(((self.target_assignment < 0) | (self.target_assignment >= vocabulary_size)).any()):
-            raise ValueError("target assignment token lies outside the vocabulary")
+        if require_target:
+            if self.target_assignment.shape != (nodes,) or self.target_assignment.dtype != torch.long:
+                raise ValueError("target assignment must contain one int64 token per node")
+            if bool(((self.target_assignment < 0) | (self.target_assignment >= vocabulary_size)).any()):
+                raise ValueError("target assignment token lies outside the vocabulary")
         if self.composition_counts.shape != (graphs, vocabulary_size):
             raise ValueError("composition counts have the wrong packed shape")
         if self.composition_counts.dtype != torch.long or bool((self.composition_counts < 0).any()):
@@ -59,12 +60,13 @@ class AssignmentCarrierBatch:
         node_counts = torch.bincount(self.batch, minlength=graphs)
         if not torch.equal(node_counts, self.composition_counts.sum(dim=1)):
             raise ValueError("composition counts do not close on carrier nodes")
-        observed = torch.bincount(
-            self.batch * vocabulary_size + self.target_assignment,
-            minlength=graphs * vocabulary_size,
-        ).reshape(graphs, vocabulary_size)
-        if not torch.equal(observed, self.composition_counts):
-            raise ValueError("target assignment does not realize the supplied composition")
+        if require_target:
+            observed = torch.bincount(
+                self.batch * vocabulary_size + self.target_assignment,
+                minlength=graphs * vocabulary_size,
+            ).reshape(graphs, vocabulary_size)
+            if not torch.equal(observed, self.composition_counts):
+                raise ValueError("target assignment does not realize the supplied composition")
         if self.site_features.shape[0] != nodes or self.graph_features.shape[0] != graphs:
             raise ValueError("assignment features do not align with the packed carriers")
         if self.parent_space_group.shape != (graphs,) or self.cell_index.shape != (graphs,):
@@ -240,6 +242,76 @@ def orderless_assignment_objective(
         step_log_probability=step_log_probability,
         reveal_rank=reveal_rank,
     )
+
+
+@torch.no_grad()
+def sample_orderless_assignment(
+    scorer: GeometryAwareRemainingCountScorer,
+    carrier: AssignmentCarrierBatch,
+    *,
+    reveal_rank: torch.Tensor | None = None,
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Sample one exact-count coloring per packed carrier.
+
+    Sites are revealed in an independently uniform order for every carrier.
+    The scorer sees only the partial coloring, target-free carrier features,
+    total composition and remaining counts. All active carriers at a reveal
+    depth share one vectorized model call.
+    """
+
+    vocabulary_size = scorer.species_embedding.num_embeddings
+    carrier.validate(vocabulary_size=vocabulary_size, require_target=False)
+    graphs = carrier.graph_count
+    nodes = carrier.node_count
+    batch = carrier.batch
+    node_counts = torch.bincount(batch, minlength=graphs)
+    graph_offsets = torch.cumsum(node_counts, dim=0) - node_counts
+    if reveal_rank is None:
+        reveal_rank = sample_uniform_reveal_ranks(batch, generator=generator)
+    if reveal_rank.shape != (nodes,) or reveal_rank.dtype != torch.long:
+        raise ValueError("reveal rank must contain one int64 rank per node")
+    if not torch.equal(
+        torch.sort(reveal_rank + graph_offsets[batch]).values,
+        torch.arange(nodes, device=batch.device),
+    ):
+        raise ValueError("reveal rank must be a site permutation within each graph")
+
+    partial = torch.full((nodes,), -1, dtype=torch.long, device=batch.device)
+    remaining = carrier.composition_counts.clone()
+    law = RemainingCountAssignmentLaw(vocabulary_size=vocabulary_size)
+    for depth in range(int(node_counts.max())):
+        active_graph = torch.nonzero(node_counts > depth, as_tuple=False).squeeze(1)
+        active_node = torch.nonzero(reveal_rank == depth, as_tuple=False).squeeze(1)
+        if active_node.shape != active_graph.shape or not torch.equal(batch[active_node], active_graph):
+            raise ValueError("reveal ranks do not select one site per active carrier")
+        logits = scorer(
+            carrier.site_features,
+            carrier.graph_features,
+            batch,
+            carrier.edge_source,
+            carrier.edge_target,
+            carrier.edge_rbf,
+            partial,
+            carrier.composition_counts,
+            remaining,
+            carrier.parent_space_group,
+            carrier.cell_index,
+        )
+        log_probability = law.batched_step_log_probabilities(
+            logits[active_node],
+            remaining[active_graph],
+        )
+        token = torch.multinomial(
+            log_probability.exp(),
+            1,
+            generator=generator,
+        ).squeeze(1)
+        partial[active_node] = token
+        remaining[active_graph, token] -= 1
+    if bool((partial < 0).any()) or bool((remaining != 0).any()):
+        raise RuntimeError("assignment sampling did not exhaust the exact composition")
+    return partial
 
 
 class OrderlessAssignmentTrainingModule(nn.Module):
