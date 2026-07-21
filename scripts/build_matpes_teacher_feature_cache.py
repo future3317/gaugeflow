@@ -9,7 +9,7 @@ from typing import Any, Iterator
 
 import torch
 
-from gaugeflow.file_utils import load_json_object
+from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 from gaugeflow.production.teacher_feature_cache import write_matpes_teacher_feature_cache
 
 
@@ -80,6 +80,7 @@ def _extract_shard(
     feature_dim: int,
     graphs_per_batch: int,
     nodes_per_batch: int,
+    contract: dict[str, Any],
 ) -> dict[str, Any]:
     from pymatgen.core import Structure
     from pymatgen.io.ase import AseAtomsAdaptor
@@ -145,7 +146,8 @@ def _extract_shard(
     if features.shape[0] != int(offsets[-1]):
         raise AssertionError("teacher feature shard offsets do not close")
     return {
-        "schema": 1,
+        "schema": 2,
+        "contract": contract,
         "start": start,
         "stop": stop,
         "node_offsets": offsets,
@@ -154,15 +156,20 @@ def _extract_shard(
 
 
 def _iter_completed_rows(
-    parts: list[Path], *, row_count: int, feature_dim: int
+    parts: list[Path],
+    *,
+    row_count: int,
+    feature_dim: int,
+    contract: dict[str, Any],
 ) -> Iterator[tuple[int, torch.Tensor | None]]:
     next_row = 0
     for path in parts:
         shard: Any = torch.load(path, map_location="cpu", weights_only=True)
         if (
             not isinstance(shard, dict)
-            or shard.get("schema") != 1
+            or shard.get("schema") != 2
             or shard.get("start") != next_row
+            or shard.get("contract") != contract
         ):
             raise ValueError("teacher feature shard sequence is invalid")
         stop = int(shard["stop"])
@@ -207,6 +214,23 @@ def main() -> None:
     )
     if expected_feature_rows < 1:
         raise ValueError("requested teacher functional has no indexed rows")
+    teacher_files = {
+        path.relative_to(arguments.teacher_model).as_posix(): sha256_file(path)
+        for path in sorted(arguments.teacher_model.rglob("*"))
+        if path.is_file()
+    }
+    if not teacher_files:
+        raise ValueError("teacher model directory is empty")
+    teacher_model_sha256 = canonical_json_hash(teacher_files)
+    contract = {
+        "index_manifest_sha256": sha256_file(arguments.index / "manifest.json"),
+        "teacher_manifest_sha256": sha256_file(arguments.teacher_manifest),
+        "teacher_model_sha256": teacher_model_sha256,
+        "functional": arguments.functional,
+        "feature_dim": arguments.feature_dim,
+        "graphs_per_batch": arguments.graphs_per_batch,
+        "nodes_per_batch": arguments.nodes_per_batch,
+    }
 
     import matgl
     from matgl.ext.ase import Atoms2Graph
@@ -229,7 +253,13 @@ def main() -> None:
         path = arguments.work / f"rows_{start:09d}_{stop:09d}.pt"
         if path.exists():
             shard: Any = torch.load(path, map_location="cpu", weights_only=True)
-            if not isinstance(shard, dict) or shard.get("start") != start or shard.get("stop") != stop:
+            if (
+                not isinstance(shard, dict)
+                or shard.get("schema") != 2
+                or shard.get("start") != start
+                or shard.get("stop") != stop
+                or shard.get("contract") != contract
+            ):
                 raise ValueError(f"existing teacher shard is invalid: {path}")
         else:
             shard = _extract_shard(
@@ -244,17 +274,24 @@ def main() -> None:
                 feature_dim=arguments.feature_dim,
                 graphs_per_batch=arguments.graphs_per_batch,
                 nodes_per_batch=arguments.nodes_per_batch,
+                contract=contract,
             )
             torch.save(shard, path)
         parts.append(path)
         print(json.dumps({"completed_rows": stop, "total_rows": row_count}), flush=True)
     write_matpes_teacher_feature_cache(
         arguments.output,
-        _iter_completed_rows(parts, row_count=row_count, feature_dim=arguments.feature_dim),
+        _iter_completed_rows(
+            parts,
+            row_count=row_count,
+            feature_dim=arguments.feature_dim,
+            contract=contract,
+        ),
         row_count=row_count,
         feature_dim=arguments.feature_dim,
         index_manifest=arguments.index / "manifest.json",
         teacher_manifest=arguments.teacher_manifest,
+        teacher_model_sha256=teacher_model_sha256,
         functional_scope=(arguments.functional,),
         expected_feature_rows=expected_feature_rows,
         bounded_smoke=bounded,

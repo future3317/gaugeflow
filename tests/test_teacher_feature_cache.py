@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 
+import pytest
 import torch
+from build_matpes_teacher_feature_cache import _iter_completed_rows
 
 from gaugeflow.production.matpes_index import IndexedMatPESDataset, build_matpes_index
 from gaugeflow.production.teacher_feature_cache import (
@@ -47,6 +49,7 @@ def test_teacher_cache_is_index_aligned_and_keeps_ids_out_of_batches(tmp_path: P
         feature_dim=3,
         index_manifest=index / "manifest.json",
         teacher_manifest=teacher_manifest,
+        teacher_model_sha256="0" * 64,
         functional_scope=("PBE",),
         expected_feature_rows=25,
         bounded_smoke=True,
@@ -77,3 +80,34 @@ def test_teacher_cache_is_index_aligned_and_keeps_ids_out_of_batches(tmp_path: P
             )
         else:
             assert record.teacher_features is None
+
+
+def test_teacher_shard_resume_fails_closed_on_provenance_change(tmp_path: Path) -> None:
+    contract = {
+        "index_manifest_sha256": "a" * 64,
+        "teacher_manifest_sha256": "b" * 64,
+        "teacher_model_sha256": "c" * 64,
+        "functional": "PBE",
+        "feature_dim": 3,
+        "graphs_per_batch": 2,
+        "nodes_per_batch": 8,
+    }
+    part = tmp_path / "part.pt"
+    torch.save(
+        {
+            "schema": 2,
+            "contract": contract,
+            "start": 0,
+            "stop": 2,
+            "node_offsets": torch.tensor([0, 1, 1]),
+            "features": torch.ones(1, 3, dtype=torch.float16),
+        },
+        part,
+    )
+    rows = list(
+        _iter_completed_rows([part], row_count=2, feature_dim=3, contract=contract)
+    )
+    assert rows[0][1] is not None and rows[1][1] is None
+    changed = dict(contract, teacher_model_sha256="d" * 64)
+    with pytest.raises(ValueError, match="sequence"):
+        list(_iter_completed_rows([part], row_count=2, feature_dim=3, contract=changed))
