@@ -14,6 +14,16 @@ from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
+from gaugeflow.production.matpes_data import MatPESPhysicalBatch
+from gaugeflow.production.physical_pretraining import (
+    FunctionalPhysicalNormalizer,
+    PhysicalRepresentationModel,
+    PhysicalTargets,
+)
+from gaugeflow.production.physical_training import (
+    PhysicalTransferTrainer,
+    PhysicalTransferTrainingConfig,
+)
 from gaugeflow.production.reverse_sampler import (
     ContinuousReverseInitialState,
     TensorFreeReverseSampler,
@@ -145,6 +155,71 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
     assert all(
         parameter.grad is None or torch.isfinite(parameter.grad).all() for parameter in diffusion.denoiser.parameters()
     )
+
+
+def test_physical_transfer_uses_one_optimizer_for_matpes_and_alex_replay() -> None:
+    torch.manual_seed(77)
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    backbone = _small_model()
+    model = PhysicalRepresentationModel(backbone, teacher_dim=3)
+    diffusion = TensorFreeHybridDiffusion(backbone, _standardizer())
+    trainer = PhysicalTransferTrainer(
+        model,
+        diffusion,
+        PhysicalTransferTrainingConfig(precision="fp32"),
+    )
+    graph_count = lattice.shape[0]
+    physical_batch = MatPESPhysicalBatch(
+        element_tokens=elements,
+        fractional_coordinates=coordinates,
+        lattice=lattice,
+        batch=blueprint.batch,
+        functional_index=torch.zeros(graph_count, dtype=torch.long),
+        targets=PhysicalTargets(
+            energy_per_atom=torch.tensor([-2.0, -3.0]),
+            forces=torch.zeros(elements.numel(), 3),
+            stress_kelvin=torch.zeros(graph_count, 6),
+            teacher_features=torch.zeros(graph_count, 3),
+            energy_mask=torch.ones(graph_count, dtype=torch.bool),
+            force_mask=torch.ones(elements.numel(), dtype=torch.bool),
+            stress_mask=torch.ones(graph_count, dtype=torch.bool),
+            teacher_mask=torch.zeros(graph_count, dtype=torch.bool),
+        ),
+    )
+    normalizer = FunctionalPhysicalNormalizer(
+        energy_location=torch.zeros(1),
+        energy_scale=torch.ones(1),
+        force_scale=torch.ones(1),
+        stress_isotropic_location=torch.zeros(1),
+        stress_scale=torch.ones(1),
+    )
+    old_backbone = backbone.blocks[0].scalar_update[0].weight.detach().clone()
+    old_head = model.heads.energy_head[0].weight.detach().clone()
+    trainer.begin_optimization_step()
+    physical = trainer.accumulate_physical_step(physical_batch, normalizer, loss_weight=0.7)
+    replay = trainer.accumulate_alex_replay_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        loss_weight=0.3,
+        generator=torch.Generator().manual_seed(78),
+    )
+    gradient_norm = trainer.finish_optimization_step()
+    assert torch.isfinite(physical.loss) and torch.isfinite(replay) and torch.isfinite(gradient_norm)
+    assert trainer.step == 1
+    assert not torch.equal(old_backbone, backbone.blocks[0].scalar_update[0].weight)
+    assert not torch.equal(old_head, model.heads.energy_head[0].weight)
+    restored_model = copy.deepcopy(model)
+    restored = PhysicalTransferTrainer(
+        restored_model,
+        TensorFreeHybridDiffusion(restored_model.backbone, _standardizer()),
+        PhysicalTransferTrainingConfig(precision="fp32"),
+    )
+    restored.load_state_dict(trainer.state_dict())
+    assert restored.step == trainer.step
+    assert restored.ema.state_dict()["decay"] == trainer.ema.state_dict()["decay"]
 
 
 def _small_product_model() -> HybridCrystalDenoiser:

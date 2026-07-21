@@ -1,7 +1,11 @@
+import json
 from dataclasses import replace
+from pathlib import Path
 
 import torch
 
+from gaugeflow.file_utils import sha256_file
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.matpes_data import (
     collate_matpes_records,
     fit_functional_physical_normalizer,
@@ -13,8 +17,10 @@ from gaugeflow.production.physical_pretraining import (
     CartesianPhysicalHeads,
     FunctionalPhysicalNormalizer,
     PhysicalPredictions,
+    PhysicalRepresentationModel,
     PhysicalTargets,
     kelvin_to_symmetric_cartesian,
+    load_functional_physical_normalizer,
     physical_multitask_loss,
     symmetric_cartesian_to_kelvin,
 )
@@ -46,6 +52,82 @@ def test_cartesian_physical_heads_are_rotation_covariant() -> None:
     assert torch.allclose(reference.teacher_features, transformed.teacher_features, atol=1e-6)
     assert torch.allclose(transformed.forces, reference.forces @ rotation.T, atol=2e-5)
     assert torch.allclose(transformed_stress, expected_stress, atol=2e-5)
+
+
+def test_clean_physical_backbone_is_covariant_and_skips_generation_heads() -> None:
+    torch.manual_seed(8)
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        radial_cutoff=4.0,
+        edge_dim=8,
+        angular_channels=2,
+        edge_refresh_rank=4,
+    ).eval()
+    elements = torch.tensor([10, 16])
+    coordinates = torch.tensor([[0.0, 0.0, 0.0], [0.3, 0.2, 0.1]])
+    lattice = torch.diag(torch.tensor([5.0, 6.0, 7.0])).unsqueeze(0)
+    batch = torch.zeros(2, dtype=torch.long)
+    rotation = _rotation()
+    carrier_calls = 0
+
+    def count_carrier_calls(_module: object, _inputs: object, _output: object) -> None:
+        nonlocal carrier_calls
+        carrier_calls += 1
+
+    handle = model.coordinate_carrier.register_forward_hook(count_carrier_calls)
+    with torch.no_grad():
+        reference = model.forward_physical_features(elements, coordinates, lattice, batch)
+        transformed = model.forward_physical_features(
+            elements,
+            coordinates,
+            lattice @ rotation.T,
+            batch,
+        )
+    handle.remove()
+    assert carrier_calls == 0
+    assert torch.allclose(reference.node_scalar, transformed.node_scalar, atol=2e-5, rtol=2e-5)
+    assert torch.allclose(
+        transformed.node_vectors,
+        reference.node_vectors @ rotation.T,
+        atol=3e-5,
+        rtol=3e-5,
+    )
+
+
+def test_physical_transfer_gradients_reach_heads_and_shared_backbone() -> None:
+    torch.manual_seed(9)
+    backbone = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        radial_cutoff=4.0,
+        edge_dim=8,
+        angular_channels=2,
+        edge_refresh_rank=4,
+    )
+    model = PhysicalRepresentationModel(backbone, teacher_dim=3)
+    elements = torch.tensor([10, 16])
+    coordinates = torch.tensor([[0.0, 0.0, 0.0], [0.3, 0.2, 0.1]])
+    lattice = torch.diag(torch.tensor([5.0, 6.0, 7.0])).unsqueeze(0)
+    batch = torch.zeros(2, dtype=torch.long)
+    prediction = model(elements, coordinates, lattice, batch, torch.zeros(1, dtype=torch.long))
+    alternate = model(elements, coordinates, lattice, batch, torch.ones(1, dtype=torch.long))
+    assert not torch.allclose(prediction.energy_per_atom, alternate.energy_per_atom)
+    loss = (
+        prediction.energy_per_atom.square().mean()
+        + prediction.forces.square().mean()
+        + prediction.stress_kelvin.square().mean()
+        + prediction.teacher_features.square().mean()
+    )
+    loss.backward()
+    assert backbone.blocks[0].scalar_update[0].weight.grad is not None
+    assert float(backbone.blocks[0].scalar_update[0].weight.grad.norm()) > 0.0
+    assert model.heads.energy_head[0].weight.grad is not None
+    assert float(model.heads.energy_head[0].weight.grad.norm()) > 0.0
 
 
 def test_kelvin_round_trip_is_orthonormal() -> None:
@@ -166,6 +248,35 @@ def test_functional_normalization_preserves_force_and_stress_covariance() -> Non
         rotation @ kelvin_to_symmetric_cartesian(normalized.stress_kelvin) @ rotation.T,
         atol=1e-6,
     )
+
+
+def test_physical_normalizer_loader_verifies_index_provenance(tmp_path: Path) -> None:
+    index_manifest = tmp_path / "manifest.json"
+    index_manifest.write_text('{"qualified": true}\n', encoding="utf-8")
+    normalizer_path = tmp_path / "normalizer.json"
+    payload = {
+        "schema": "gaugeflow.matpes_physical_normalizer.v1",
+        "qualified": True,
+        "index_manifest": str(index_manifest),
+        "index_manifest_sha256": sha256_file(index_manifest),
+        "functional_vocabulary": {"PBE": 0, "r2SCAN": 1},
+        "energy_location": [-2.0, -3.0],
+        "energy_scale": [1.0, 2.0],
+        "force_scale": [3.0, 4.0],
+        "stress_isotropic_location": [5.0, 6.0],
+        "stress_scale": [7.0, 8.0],
+    }
+    normalizer_path.write_text(json.dumps(payload), encoding="utf-8")
+    normalizer, vocabulary = load_functional_physical_normalizer(normalizer_path)
+    assert vocabulary == {"PBE": 0, "r2SCAN": 1}
+    assert normalizer.energy_location.tolist() == [-2.0, -3.0]
+    index_manifest.write_text('{"qualified": false}\n', encoding="utf-8")
+    try:
+        load_functional_physical_normalizer(normalizer_path)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("stale physical normalization provenance was accepted")
 
 
 def test_matpes_collation_packs_graphs_and_masks_without_ids() -> None:

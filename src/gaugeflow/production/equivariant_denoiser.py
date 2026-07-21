@@ -241,6 +241,34 @@ class LatticeDenoiserOutput:
     clean_shape_latent: torch.Tensor
 
 
+@dataclass(frozen=True)
+class HybridBackboneFeatures:
+    """Cartesian node features shared by generation and physical transfer."""
+
+    node_scalar: torch.Tensor
+    node_vectors: torch.Tensor
+
+
+@dataclass(frozen=True)
+class _EncodedHybridState:
+    nodes: torch.Tensor
+    vectors: torch.Tensor
+    edge_state: torch.Tensor
+    source: torch.Tensor
+    target: torch.Tensor
+    direction: torch.Tensor
+    radial: torch.Tensor
+    edge_envelope: torch.Tensor
+    graph_time: torch.Tensor
+    graph_state: torch.Tensor
+    lattice_context: torch.Tensor
+    node_time: torch.Tensor
+    node_condition: torch.Tensor
+    node_state: torch.Tensor
+    lattice: torch.Tensor
+    gauge_atlas: CartesianGaugeAtlasOutput
+
+
 class HybridCrystalDenoiser(nn.Module):
     """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
 
@@ -507,6 +535,216 @@ class HybridCrystalDenoiser(nn.Module):
             clean_shape_latent=self.shape_head(lattice_context),
         )
 
+    def _encode_hybrid_state(
+        self,
+        element_tokens: torch.Tensor,
+        frac_coords: torch.Tensor,
+        log_volume: torch.Tensor,
+        log_shape: torch.Tensor,
+        batch: torch.Tensor,
+        time: torch.Tensor,
+        tensor_condition: torch.Tensor,
+        condition_present: torch.Tensor,
+        shape_projector: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
+        *,
+        element_time: torch.Tensor | None,
+        lattice_time: torch.Tensor | None,
+        composition_counts: torch.Tensor | None,
+        geometry_lattice: torch.Tensor | None = None,
+    ) -> _EncodedHybridState:
+        """Run the sole geometry/message path shared by every terminal head."""
+
+        graphs = time.numel()
+        graph_time = self._embed_modality_times(time, element_time, lattice_time)
+        if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
+            raise ValueError("element state must be rank-one int64 tokens")
+        if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
+            raise ValueError("element state lies outside 118 elements plus MASK")
+        if frac_coords.shape != (element_tokens.numel(), 3) or batch.shape != element_tokens.shape:
+            raise ValueError("coordinate and batch shapes do not match element tokens")
+        if log_volume.shape != (graphs,) or log_shape.shape != (graphs, 6):
+            raise ValueError("lattice state must contain graphwise volume and six shape coordinates")
+        if tensor_condition.shape != (graphs, 18):
+            raise ValueError("tensor condition must have shape [graphs,18]")
+        if condition_present.shape != (graphs, 1) or condition_present.dtype != torch.bool:
+            raise ValueError("condition presence must contain one boolean per graph")
+        if shape_projector.shape != (graphs, 6, 6):
+            raise ValueError("shape projector must have shape [graphs,6,6]")
+        if fractional_to_cartesian.shape != (graphs, 3, 3):
+            raise ValueError("fractional-to-Cartesian chart must have shape [graphs,3,3]")
+        if batch.numel() == 0 or int(batch.min()) != 0 or int(batch.max()) + 1 != graphs:
+            raise ValueError("hybrid batch must contain every graph index")
+        # Geometry kernels and state charts stay FP32 under learned-path AMP.
+        with torch.autocast(device_type=log_volume.device.type, enabled=False):
+            projected_shape = project_lattice_state(log_shape, shape_projector)
+            if not torch.allclose(log_shape, projected_shape, atol=2e-6, rtol=2e-6):
+                raise ValueError("denoiser lattice shape is outside the blueprint subspace")
+            chart_lattice = LatticeVolumeShape(log_volume, log_shape).lattice(fractional_to_cartesian)
+            if geometry_lattice is None:
+                lattice = chart_lattice
+            else:
+                if geometry_lattice.shape != (graphs, 3, 3):
+                    raise ValueError("explicit geometry lattice must have shape [graphs,3,3]")
+                lattice = geometry_lattice.float()
+                metric_error = torch.linalg.matrix_norm(
+                    lattice @ lattice.transpose(-1, -2)
+                    - chart_lattice @ chart_lattice.transpose(-1, -2),
+                    dim=(-2, -1),
+                )
+                metric_scale = torch.linalg.matrix_norm(
+                    chart_lattice @ chart_lattice.transpose(-1, -2),
+                    dim=(-2, -1),
+                )
+                if bool((metric_error > 2.0e-5 * metric_scale.clamp_min(1.0)).any()):
+                    raise ValueError("explicit geometry lattice disagrees with lattice state")
+            edges = periodic_radius_multigraph(frac_coords, lattice, batch, cutoff=self.radial.cutoff)
+            radial = self.radial(edges.distance)
+            edge_envelope = self.radial.envelope(edges.distance)
+        source, target = edges.source, edges.target
+        degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
+        node_time = graph_time[batch]
+        element_nodes, graph_state, lattice_context = self._composition_lattice_context(
+            element_tokens,
+            log_volume,
+            log_shape,
+            batch,
+            graph_time,
+            composition_counts,
+        )
+        initial_nodes = element_nodes + self.degree_embedding(degree.log1p().unsqueeze(-1))
+        node_state = graph_state[batch]
+        if bool(condition_present.any()):
+            edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
+            geometry_queries = self.geometry_query_encoder(
+                initial_nodes + node_state,
+                node_time,
+                source,
+                target,
+                edges.direction,
+                radial,
+                batch,
+                graphs,
+            )
+            gauge_atlas = self.gauge_atlas(
+                tensor_condition,
+                condition_present,
+                edges.direction,
+                edge_graph,
+                geometry_queries,
+                time,
+            )
+        else:
+            gauge_atlas = self.gauge_atlas.null_output(
+                graph_count=graphs,
+                edge_count=edges.direction.shape[0],
+                reference=tensor_condition,
+            )
+        node_condition = gauge_atlas.graph_condition[batch]
+        nodes = initial_nodes + node_time + node_condition + node_state
+        if source.numel():
+            self_image = ((source == target) & edges.image_shift.ne(0).any(dim=-1)).to(nodes).unsqueeze(-1)
+            edge_state = self.edge_state_initializer(
+                torch.cat((nodes[source], nodes[target], radial, self_image), dim=-1)
+            )
+        else:
+            edge_state = nodes.new_empty((0, self.edge_dim))
+        vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_carrier.vector_channels, 3))
+        with torch.autocast(device_type=nodes.device.type, enabled=False):
+            for block in self.blocks:
+                nodes, vectors, edge_state = block(
+                    nodes.float(),
+                    vectors.float(),
+                    source,
+                    target,
+                    edges.direction.float(),
+                    gauge_atlas.edge_response.float(),
+                    radial.float(),
+                    edge_envelope.float(),
+                    node_time.float(),
+                    node_condition.float(),
+                    node_state.float(),
+                    edge_state.float(),
+                )
+        return _EncodedHybridState(
+            nodes=nodes,
+            vectors=vectors,
+            edge_state=edge_state,
+            source=source,
+            target=target,
+            direction=edges.direction,
+            radial=radial,
+            edge_envelope=edge_envelope,
+            graph_time=graph_time,
+            graph_state=graph_state,
+            lattice_context=lattice_context,
+            node_time=node_time,
+            node_condition=node_condition,
+            node_state=node_state,
+            lattice=lattice,
+            gauge_atlas=gauge_atlas,
+        )
+
+    def forward_physical_features(
+        self,
+        element_tokens: torch.Tensor,
+        frac_coords: torch.Tensor,
+        lattice: torch.Tensor,
+        batch: torch.Tensor,
+    ) -> HybridBackboneFeatures:
+        """Encode clean periodic structures without evaluating generation heads."""
+
+        if lattice.ndim != 3 or lattice.shape[-2:] != (3, 3):
+            raise ValueError("physical lattice must have shape [graphs,3,3]")
+        graphs = lattice.shape[0]
+        if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
+            raise ValueError("physical elements must be rank-one int64 tokens")
+        if element_tokens.numel() == 0 or bool(
+            ((element_tokens < 0) | (element_tokens >= CHEMICAL_ELEMENT_COUNT)).any()
+        ):
+            raise ValueError("physical structures require nonempty chemical element tokens")
+        if batch.shape != element_tokens.shape or batch.dtype != torch.long:
+            raise ValueError("physical batch must index every node")
+        if frac_coords.shape != (element_tokens.numel(), 3):
+            raise ValueError("physical fractional coordinates must have shape [nodes,3]")
+        if (
+            element_tokens.device != lattice.device
+            or frac_coords.device != lattice.device
+            or batch.device != lattice.device
+        ):
+            raise ValueError("physical structure tensors must share one device")
+        identity_chart = torch.eye(3, dtype=lattice.dtype, device=lattice.device).expand(graphs, 3, 3)
+        lattice_state = LatticeVolumeShape.from_lattice(lattice.float(), identity_chart.float())
+        shape_projector = torch.eye(6, dtype=lattice.dtype, device=lattice.device).expand(graphs, 6, 6)
+        clean_time = lattice_state.log_volume.new_zeros(graphs)
+        tensor_condition = lattice_state.log_volume.new_zeros(graphs, 18)
+        condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=lattice.device)
+        flat = batch * CHEMICAL_ELEMENT_COUNT + element_tokens
+        composition_counts = torch.bincount(
+            flat,
+            minlength=graphs * CHEMICAL_ELEMENT_COUNT,
+        ).reshape(graphs, CHEMICAL_ELEMENT_COUNT)
+        encoded = self._encode_hybrid_state(
+            element_tokens,
+            frac_coords,
+            lattice_state.log_volume,
+            lattice_state.log_shape,
+            batch,
+            clean_time,
+            tensor_condition,
+            condition_present,
+            shape_projector,
+            identity_chart,
+            element_time=clean_time,
+            lattice_time=clean_time,
+            composition_counts=composition_counts,
+            geometry_lattice=lattice,
+        )
+        return HybridBackboneFeatures(
+            node_scalar=encoded.nodes,
+            node_vectors=encoded.vectors,
+        )
+
     def forward(
         self,
         element_tokens: torch.Tensor,
@@ -531,103 +769,36 @@ class HybridCrystalDenoiser(nn.Module):
         group, stabilizer, source ID, or endpoint token is accepted.
         """
         graphs = time.numel()
-        graph_time = self._embed_modality_times(time, element_time, lattice_time)
-        if element_tokens.ndim != 1 or element_tokens.dtype != torch.long:
-            raise ValueError("element state must be rank-one int64 tokens")
-        if element_tokens.numel() and bool(((element_tokens < 0) | (element_tokens > 118)).any()):
-            raise ValueError("element state lies outside 118 elements plus MASK")
-        if frac_coords.shape != (element_tokens.numel(), 3) or batch.shape != element_tokens.shape:
-            raise ValueError("coordinate and batch shapes do not match element tokens")
-        if log_volume.shape != (graphs,) or log_shape.shape != (graphs, 6):
-            raise ValueError("lattice state must contain graphwise volume and six shape coordinates")
-        if tensor_condition.shape != (graphs, 18):
-            raise ValueError("tensor condition must have shape [graphs,18]")
-        if shape_projector.shape != (graphs, 6, 6):
-            raise ValueError("shape projector must have shape [graphs,6,6]")
-        if fractional_to_cartesian.shape != (graphs, 3, 3):
-            raise ValueError("fractional-to-Cartesian chart must have shape [graphs,3,3]")
-        # The diffusion and every reverse step own projection. Re-projecting
-        # here is a redundant, non-idempotent FP32 operation whose tiny chart
-        # drift is amplified by a large periodic multigraph. Fail closed on a
-        # caller that violates the state contract instead of silently fixing it.
-        # Lattice exponentials, reciprocal bounds and neighbor selection are
-        # geometry kernels, not learned matmuls; retain FP32 under AMP.
-        with torch.autocast(device_type=log_volume.device.type, enabled=False):
-            projected_shape = project_lattice_state(log_shape, shape_projector)
-            if not torch.allclose(log_shape, projected_shape, atol=2e-6, rtol=2e-6):
-                raise ValueError("denoiser lattice shape is outside the blueprint subspace")
-            lattice = LatticeVolumeShape(log_volume, log_shape).lattice(fractional_to_cartesian)
-            edges = periodic_radius_multigraph(frac_coords, lattice, batch, cutoff=self.radial.cutoff)
-            radial = self.radial(edges.distance)
-            edge_envelope = self.radial.envelope(edges.distance)
-        source, target = edges.source, edges.target
-        degree = torch.bincount(target, minlength=element_tokens.numel()).to(log_volume)
-        node_time = graph_time[batch]
-        element_nodes, graph_state, lattice_context = self._composition_lattice_context(
+        encoded = self._encode_hybrid_state(
             element_tokens,
+            frac_coords,
             log_volume,
             log_shape,
             batch,
-            graph_time,
-            composition_counts,
+            time,
+            tensor_condition,
+            condition_present,
+            shape_projector,
+            fractional_to_cartesian,
+            element_time=element_time,
+            lattice_time=lattice_time,
+            composition_counts=composition_counts,
         )
-        initial_nodes = element_nodes + self.degree_embedding(degree.log1p().unsqueeze(-1))
-        node_state = graph_state[batch]
-        if bool(condition_present.any()):
-            # Tensor-free pretraining uses a learned null token but does not
-            # construct an atlas.  Keep its expensive geometry-query encoder
-            # outside that path instead of computing an unused tensor.
-            edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
-            geometry_queries = self.geometry_query_encoder(
-                initial_nodes + node_state,
-                node_time,
-                source,
-                target,
-                edges.direction,
-                radial,
-                batch,
-                graphs,
-            )
-            gauge_atlas = self.gauge_atlas(
-                tensor_condition, condition_present, edges.direction, edge_graph, geometry_queries, time
-            )
-        else:
-            gauge_atlas = self.gauge_atlas.null_output(
-                graph_count=graphs,
-                edge_count=edges.direction.shape[0],
-                reference=tensor_condition,
-            )
-        node_condition = gauge_atlas.graph_condition[batch]
-        nodes = initial_nodes + node_time + node_condition + node_state
-        if source.numel():
-            self_image = ((source == target) & edges.image_shift.ne(0).any(dim=-1)).to(nodes).unsqueeze(-1)
-            edge_state = self.edge_state_initializer(
-                torch.cat((nodes[source], nodes[target], radial, self_image), dim=-1)
-            )
-        else:
-            edge_state = nodes.new_empty((0, self.edge_dim))
-        vectors = nodes.new_zeros((nodes.shape[0], self.coordinate_carrier.vector_channels, 3))
-        # BF16 has only seven mantissa bits and turns sub-microangstrom changes
-        # in periodic directions into percent-level coordinate-field jumps.
-        # Geometry-dependent message propagation is therefore one fixed FP32
-        # typed path. Scalar terminal heads remain AMP eligible; this is not a
-        # runtime precision fallback.
-        with torch.autocast(device_type=nodes.device.type, enabled=False):
-            for block in self.blocks:
-                nodes, vectors, edge_state = block(
-                    nodes.float(),
-                    vectors.float(),
-                    source,
-                    target,
-                    edges.direction.float(),
-                    gauge_atlas.edge_response.float(),
-                    radial.float(),
-                    edge_envelope.float(),
-                    node_time.float(),
-                    node_condition.float(),
-                    node_state.float(),
-                    edge_state.float(),
-                )
+        nodes = encoded.nodes
+        vectors = encoded.vectors
+        edge_state = encoded.edge_state
+        source = encoded.source
+        target = encoded.target
+        radial = encoded.radial
+        edge_envelope = encoded.edge_envelope
+        graph_time = encoded.graph_time
+        graph_state = encoded.graph_state
+        lattice_context = encoded.lattice_context
+        node_time = encoded.node_time
+        node_condition = encoded.node_condition
+        node_state = encoded.node_state
+        lattice = encoded.lattice
+        gauge_atlas = encoded.gauge_atlas
         graph_nodes = graph_mean(nodes, batch, graphs)
         graph_context = torch.cat((graph_nodes, graph_time, gauge_atlas.graph_condition, graph_state), dim=-1)
         if composition_counts is None:
@@ -712,7 +883,7 @@ class HybridCrystalDenoiser(nn.Module):
             time_gated_vectors,
             edge_hidden,
             target,
-            edges.direction,
+            encoded.direction,
             edge_envelope,
             batch,
             graphs,

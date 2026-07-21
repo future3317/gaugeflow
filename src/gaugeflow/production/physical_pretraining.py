@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import torch
 from torch import nn
 
+from gaugeflow.file_utils import load_json_object, sha256_file
+
+from .equivariant_denoiser import HybridCrystalDenoiser
 from .state_projection import graph_mean, sorted_segment_sum
 
 
@@ -138,6 +143,49 @@ class FunctionalPhysicalNormalizer:
         )
 
 
+def load_functional_physical_normalizer(
+    path: str | Path,
+) -> tuple[FunctionalPhysicalNormalizer, dict[str, int]]:
+    """Load a train-only normalizer and verify its qualified index provenance."""
+
+    payload = load_json_object(Path(path))
+    if payload.get("schema") != "gaugeflow.matpes_physical_normalizer.v1" or not bool(
+        payload.get("qualified")
+    ):
+        raise ValueError("physical normalizer is not qualified")
+    vocabulary_value: Any = payload.get("functional_vocabulary")
+    if not isinstance(vocabulary_value, dict) or not all(
+        isinstance(key, str) and isinstance(value, int)
+        for key, value in vocabulary_value.items()
+    ):
+        raise ValueError("physical normalizer vocabulary is invalid")
+    vocabulary = dict(vocabulary_value)
+    if set(vocabulary.values()) != set(range(len(vocabulary))):
+        raise ValueError("physical normalizer vocabulary must be contiguous")
+    manifest_path = Path(str(payload.get("index_manifest", "")))
+    if not manifest_path.is_file() or sha256_file(manifest_path) != payload.get(
+        "index_manifest_sha256"
+    ):
+        raise ValueError("physical normalizer index provenance failed verification")
+
+    def vector(name: str) -> torch.Tensor:
+        value = payload.get(name)
+        if not isinstance(value, list) or len(value) != len(vocabulary):
+            raise ValueError(f"physical normalizer {name} is invalid")
+        return torch.tensor(value, dtype=torch.float32)
+
+    return (
+        FunctionalPhysicalNormalizer(
+            energy_location=vector("energy_location"),
+            energy_scale=vector("energy_scale"),
+            force_scale=vector("force_scale"),
+            stress_isotropic_location=vector("stress_isotropic_location"),
+            stress_scale=vector("stress_scale"),
+        ),
+        vocabulary,
+    )
+
+
 class CartesianPhysicalHeads(nn.Module):
     """Linear-complexity invariant/vector/symmetric-tensor readouts."""
 
@@ -199,6 +247,56 @@ class CartesianPhysicalHeads(nn.Module):
             forces=forces,
             stress_kelvin=symmetric_cartesian_to_kelvin(stress),
             teacher_features=self.teacher_projection(graph_scalar),
+        )
+
+
+class PhysicalRepresentationModel(nn.Module):
+    """A1 backbone plus Cartesian physical heads, without generation-head work."""
+
+    def __init__(
+        self,
+        backbone: HybridCrystalDenoiser,
+        *,
+        teacher_dim: int,
+        functional_count: int = 2,
+    ) -> None:
+        super().__init__()
+        if teacher_dim < 1 or functional_count < 1:
+            raise ValueError("teacher and functional dimensions must be positive")
+        self.backbone = backbone
+        scalar_dim = backbone.element_embedding.embedding_dim
+        self.functional_embedding = nn.Embedding(functional_count, scalar_dim)
+        self.heads = CartesianPhysicalHeads(
+            scalar_dim=scalar_dim,
+            vector_dim=backbone.coordinate_carrier.vector_channels,
+            teacher_dim=teacher_dim,
+        )
+
+    def forward(
+        self,
+        element_tokens: torch.Tensor,
+        fractional_coordinates: torch.Tensor,
+        lattice: torch.Tensor,
+        batch: torch.Tensor,
+        functional_index: torch.Tensor,
+    ) -> PhysicalPredictions:
+        graph_count = lattice.shape[0]
+        if functional_index.shape != (graph_count,) or functional_index.dtype != torch.long:
+            raise ValueError("physical functional index must contain one integer per graph")
+        if int(functional_index.min()) < 0 or int(functional_index.max()) >= self.functional_embedding.num_embeddings:
+            raise ValueError("physical functional index lies outside the registered vocabulary")
+        features = self.backbone.forward_physical_features(
+            element_tokens,
+            fractional_coordinates,
+            lattice,
+            batch,
+        )
+        node_scalar = features.node_scalar + self.functional_embedding(functional_index)[batch]
+        return self.heads(
+            node_scalar,
+            features.node_vectors,
+            batch,
+            graph_count,
         )
 
 
