@@ -4,7 +4,8 @@
   "scope": "Evaluation-only qualification of the one-pass 34.28M exact-count GaugeFlow-base joint product model.",
   "training_protocol": "gaugeflow_base_a1_joint_product_v1",
   "training_protocol_canonical_sha256": "a2861ab5b79bbf557919414818681ce08ced2e7a1b99b345fa62ef3fe0c2a4df",
-  "evaluator_sha256": "8358826fb6410c889ec145a2b4ff4a9c990221de116e598b88dac6bda887c091",
+  "evaluator_sha256": "71405005018ff68d12cbbd483d0311fc9766ccfa9f204a52da5eac5f81b7325b",
+  "evaluator_preflight_erratum": "A four-sample software smoke failed before checkpoint loading because the packed cache API names the held-out split 'val', not 'validation'; no metric, threshold or sample identity changed.",
   "composition_checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
   "evaluation": {
     "validation_graphs": 512,

@@ -263,7 +263,7 @@ def main() -> None:
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is unavailable")
     evaluation = protocol["evaluation"]
-    dataset = PackedAlexP1Dataset(args.cache_root, "validation")
+    dataset = PackedAlexP1Dataset(args.cache_root, "val")
     indices = torch.randperm(
         len(dataset),
         generator=torch.Generator().manual_seed(int(evaluation["validation_seed"])),
