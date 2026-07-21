@@ -83,6 +83,24 @@ def test_packed_alex_dataset_can_load_ids_for_offline_evaluation(tmp_path: Path)
     assert dataset[-1].material_id == "b"
 
 
+def test_packed_alex_dataset_vectorizes_ragged_model_rows(tmp_path: Path):
+    _write_cache(tmp_path / "cache")
+    dataset = PackedAlexP1Dataset(tmp_path / "cache", "train")
+    selected = dataset.select_model_batch(
+        torch.tensor([1, 0], dtype=torch.long),
+        device="cpu",
+    )
+    assert selected.atom_types.tolist() == [12, 4, 7]
+    assert torch.equal(selected.batch, torch.tensor([0, 1, 1]))
+    assert torch.equal(selected.lattice, torch.stack((3.0 * torch.eye(3), 2.0 * torch.eye(3))))
+    assert torch.equal(
+        selected.fractional_coordinates,
+        torch.tensor(
+            [[0.2, 0.3, 0.4], [0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
+        ),
+    )
+
+
 def test_packed_alex_dataset_rejects_unqualified_manifest(tmp_path: Path):
     root = tmp_path / "cache"
     _write_cache(root)

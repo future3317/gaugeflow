@@ -1,0 +1,63 @@
+{
+  "protocol": "h1a_assignment_full_alex_pretraining_interface_v1",
+  "status_before_run": "frozen_not_run",
+  "purpose": "Qualify leakage-safe, vectorized masked-occupation pretraining on Alex-MP-20 before any learned parent-assignment successor is trained.",
+  "source": {
+    "p1_manifest_protocol": "h1a_p1_structure_cache_v1",
+    "train_tensor_sha256": "57cd1e98cb0cb966534ef21abd2881f0ca7e1eba15e98505c761958a5a8c8b4b",
+    "train_index_sha256": "9cdabc34dfc4bc7962a07549afa20268ea189d9208715451931fd348bdb8d14c",
+    "iid_role_result": "reports/h1a_assignment_iid_calibration_split_v1/result.json",
+    "iid_role_result_normalized_sha256": "2b756a257b547e710aed377b1a5c660d0a526b72cdf0a4666b89d303d2a9a3f6"
+  },
+  "data_law": {
+    "structure_split": "train_only",
+    "excluded_materials": "every material appearing in the 454-carrier Gold assignment catalogue",
+    "input": "clean species-free fractional geometry, lattice, exact unordered composition counts",
+    "target": "masked ordered atom tokens",
+    "parent_metadata": "identity action, space group 1, cell index 1",
+    "forbidden_inputs": [
+      "material_id",
+      "split_role",
+      "target_parent_action",
+      "target_space_group",
+      "embedding_key",
+      "occupational_stabilizer"
+    ],
+    "scientific_scope": "representation pretraining only; not parent-conditioned assignment evidence"
+  },
+  "geometry": {
+    "method": "adaptive_finite_images_with_smallest_singular_value_certificate",
+    "initial_image_shell": 1,
+    "maximum_image_shell": 4,
+    "radial_channels": 16,
+    "pair_context": "symmetric_two_point_rbf_gram",
+    "maximum_sites": 20
+  },
+  "audit": {
+    "seed": 5705,
+    "cuda_device": 1,
+    "certificate_graph_batch_size": 512,
+    "exact_cvp_structures": 2048,
+    "feature_compile_structures": 8192,
+    "feature_compile_graph_batch_size": 128,
+    "warmup_batches": 5
+  },
+  "acceptance": {
+    "source_rows": 540164,
+    "source_nodes": 5161621,
+    "allowed_rows_min": 539900,
+    "gold_material_leakage": 0,
+    "iid_calibration_test_leakage": 0,
+    "cvp_certificate_failures": 0,
+    "maximum_image_shell": 4,
+    "exact_cvp_distance_max_abs": 0.00002,
+    "nonfinite_compilations": 0,
+    "feature_compile_graphs_per_second_min": 500.0,
+    "feature_compile_peak_cuda_mib_max": 8000.0
+  },
+  "decision_rule": {
+    "pass": "authorize_freezing_full_alex_masked_assignment_pretraining",
+    "fail": "stop_before_pretraining_and_repair_the_data_or_geometry_interface"
+  },
+  "boundary": "This interface Gate does not train or qualify parent-conditioned assignment and cannot authorize p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT."
+}

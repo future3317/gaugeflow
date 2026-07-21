@@ -182,6 +182,71 @@ class RemainingCountAssignmentLaw:
         return float(dynamic[-1])
 
     @torch.no_grad()
+    def exact_order_elbo_log_probability(
+        self,
+        score: AssignmentScore,
+        assignment: torch.Tensor,
+        composition_counts: torch.Tensor,
+    ) -> float:
+        """Exactly average the log path law over every uniform reveal order.
+
+        This is the deterministic small-system reference for the stochastic
+        orderless training objective.  It is a Jensen lower bound on the log
+        order-marginal probability, not the marginal itself.
+        """
+        sites = assignment.numel()
+        if sites > 20:
+            raise ValueError("exact subset audit is bounded to at most 20 sites")
+        self._validate_counts(assignment, composition_counts)
+        assignment_cpu = assignment.detach().to(device="cpu", dtype=torch.long)
+        counts_cpu = composition_counts.detach().to(device="cpu", dtype=torch.long)
+        value = torch.zeros((), dtype=torch.float64)
+        for mask in range((1 << sites) - 1):
+            revealed = [site for site in range(sites) if mask & (1 << site)]
+            partial = torch.full((sites,), -1, dtype=torch.long)
+            if revealed:
+                index = torch.tensor(revealed, dtype=torch.long)
+                partial[index] = assignment_cpu[index]
+            remaining = counts_cpu - torch.bincount(
+                assignment_cpu[revealed] if revealed else assignment_cpu.new_empty(0),
+                minlength=self.vocabulary_size,
+            )
+            logits = score(partial, remaining).detach().to(dtype=torch.float64, device="cpu")
+            if logits.shape != (sites, self.vocabulary_size):
+                raise ValueError("assignment scorer must return [sites,vocabulary]")
+            terms = [
+                self.step_log_probabilities(logits[site], remaining)[assignment_cpu[site]]
+                for site in range(sites)
+                if not mask & (1 << site)
+            ]
+            prefix_probability = 1.0 / math.comb(sites, len(revealed))
+            value = value + prefix_probability * torch.stack(terms).mean()
+        return float(value)
+
+    @torch.no_grad()
+    def exact_quotient_order_elbo_log_probability(
+        self,
+        score: AssignmentScore,
+        assignment: torch.Tensor,
+        composition_counts: torch.Tensor,
+        parent_permutations: torch.Tensor,
+    ) -> float:
+        """Log-sum-exp exact order ELBOs over unique parent-orbit labels."""
+        orbit = self._validated_assignment_orbit(assignment, parent_permutations)
+        member_elbo = torch.tensor(
+            [
+                self.exact_order_elbo_log_probability(
+                    score,
+                    member,
+                    composition_counts,
+                )
+                for member in orbit
+            ],
+            dtype=torch.float64,
+        )
+        return float(torch.logsumexp(member_elbo, dim=0))
+
+    @torch.no_grad()
     def exact_quotient_probability(
         self,
         score: AssignmentScore,
@@ -190,6 +255,21 @@ class RemainingCountAssignmentLaw:
         parent_permutations: torch.Tensor,
     ) -> float:
         """Sum unique group-orbit labelings without operation multiplicity."""
+        orbit = self._validated_assignment_orbit(assignment, parent_permutations)
+        return sum(
+            self.exact_order_marginal_probability(
+                score,
+                member,
+                composition_counts,
+            )
+            for member in orbit
+        )
+
+    @staticmethod
+    def _validated_assignment_orbit(
+        assignment: torch.Tensor,
+        parent_permutations: torch.Tensor,
+    ) -> torch.Tensor:
         sites = assignment.numel()
         if parent_permutations.ndim != 2 or parent_permutations.shape[1] != sites:
             raise ValueError("parent action does not cover the target assignment")
@@ -199,15 +279,7 @@ class RemainingCountAssignmentLaw:
             expected.expand_as(parent_permutations),
         ):
             raise ValueError("parent action contains a non-permutation")
-        orbit = torch.unique(assignment[parent_permutations], dim=0)
-        return sum(
-            self.exact_order_marginal_probability(
-                score,
-                member,
-                composition_counts,
-            )
-            for member in orbit
-        )
+        return torch.unique(assignment[parent_permutations], dim=0)
 
     def _validate_counts(
         self,

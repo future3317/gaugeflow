@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,16 @@ from gaugeflow.vocabulary import validate_type_tokens
 
 PACKED_ALEX_P1_SCHEMA = 1
 PACKED_ALEX_P1_PROTOCOL = "h1a_p1_structure_cache_v1"
+
+
+@dataclass(frozen=True)
+class PackedAlexModelBatch:
+    """Vectorized model-only selection from the memory-mapped structure cache."""
+
+    atom_types: torch.Tensor
+    fractional_coordinates: torch.Tensor
+    lattice: torch.Tensor
+    batch: torch.Tensor
 
 
 class PackedAlexP1Dataset(Dataset[Data]):
@@ -158,6 +169,45 @@ class PackedAlexP1Dataset(Dataset[Data]):
         if self._material_ids is not None:
             data.material_id = self._material_ids[index]
         return data
+
+    def select_model_batch(
+        self,
+        indices: torch.Tensor,
+        *,
+        device: torch.device | str,
+    ) -> PackedAlexModelBatch:
+        """Gather ragged rows without exposing audit metadata to the model."""
+        if (
+            indices.ndim != 1
+            or indices.dtype != torch.long
+            or indices.numel() < 1
+            or int(indices.min()) < 0
+            or int(indices.max()) >= len(self)
+        ):
+            raise ValueError("packed Alex model-batch indices are invalid")
+        indices = indices.to(device="cpu")
+        starts = self.offsets[indices]
+        counts = self.node_counts[indices]
+        selected_offset = torch.cumsum(counts, dim=0) - counts
+        graph = torch.repeat_interleave(torch.arange(indices.numel()), counts)
+        local_node = torch.arange(int(counts.sum())) - torch.repeat_interleave(
+            selected_offset,
+            counts,
+        )
+        source_node = starts[graph] + local_node
+        return PackedAlexModelBatch(
+            atom_types=self.atom_tokens[source_node].to(
+                device=device,
+                dtype=torch.long,
+                non_blocking=True,
+            ),
+            fractional_coordinates=self.fractional_coordinates[source_node].to(
+                device=device,
+                non_blocking=True,
+            ),
+            lattice=self.lattice[indices].to(device=device, non_blocking=True),
+            batch=graph.to(device=device, non_blocking=True),
+        )
 
 
 def collate_packed_alex(records: list[Data]) -> Batch:

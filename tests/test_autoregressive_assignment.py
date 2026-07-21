@@ -52,6 +52,48 @@ def test_order_marginal_law_is_exactly_normalized_and_count_exact() -> None:
         assert torch.equal(torch.bincount(sampled, minlength=CHEMICAL_ELEMENT_COUNT), counts)
 
 
+def test_exact_order_elbo_matches_exhaustive_orders_and_bounds_quotient() -> None:
+    law = RemainingCountAssignmentLaw()
+    counts = _counts(0, 0, 1, 1)
+    target = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    generator = torch.Generator().manual_seed(29)
+    fixed_logits = torch.randn(4, CHEMICAL_ELEMENT_COUNT, generator=generator, dtype=torch.float64)
+
+    def score(partial: torch.Tensor, remaining: torch.Tensor) -> torch.Tensor:
+        del partial, remaining
+        return fixed_logits
+
+    paths = torch.stack(
+        [
+            law.path_log_probability(
+                score,
+                target,
+                torch.tensor(order, dtype=torch.long),
+                counts,
+            )
+            for order in itertools.permutations(range(4))
+        ]
+    )
+    exact_elbo = law.exact_order_elbo_log_probability(score, target, counts)
+    assert abs(exact_elbo - float(paths.mean())) <= 1e-12
+
+    parent = torch.tensor(
+        [
+            [0, 1, 2, 3],
+            [2, 3, 0, 1],
+        ],
+        dtype=torch.long,
+    )
+    quotient_elbo = law.exact_quotient_order_elbo_log_probability(
+        score,
+        target,
+        counts,
+        parent,
+    )
+    quotient_probability = law.exact_quotient_probability(score, target, counts, parent)
+    assert math.exp(quotient_elbo) <= quotient_probability + 1e-12
+
+
 def test_batched_step_law_matches_individual_steps() -> None:
     law = RemainingCountAssignmentLaw()
     generator = torch.Generator().manual_seed(5705)

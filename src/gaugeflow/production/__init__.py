@@ -4,11 +4,17 @@ This package is intentionally separate from the archived continuous-logit ODE
 prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
-from .alex_p1_data import PackedAlexP1Dataset
+from .alex_p1_data import PackedAlexModelBatch, PackedAlexP1Dataset
 from .assignment_data import (
     AssignmentCarrierExample,
     pack_assignment_carriers,
     prepare_assignment_carrier_example,
+)
+from .assignment_pretraining import (
+    MaskedAssignmentCompilation,
+    certified_periodic_pair_distances,
+    compile_masked_assignment_batch,
+    complete_pair_indices,
 )
 from .assignment_scorer import (
     OrbitAwareAssignmentScorer,
@@ -139,6 +145,7 @@ __all__ = [
     "GeometryAwareRemainingCountScorer",
     "AssignmentCarrierBatch",
     "AssignmentCarrierExample",
+    "MaskedAssignmentCompilation",
     "OrderlessAssignmentObjective",
     "orderless_assignment_objective",
     "pack_assignment_carriers",
@@ -155,7 +162,10 @@ __all__ = [
     "CountConstrainedAssignmentLaw",
     "composition_counts_from_tokens",
     "complete_pair_context_features",
+    "complete_pair_indices",
     "complete_pair_rbf",
+    "certified_periodic_pair_distances",
+    "compile_masked_assignment_batch",
     "count_constrained_assignment",
     "count_projected_assignment",
     "occupation_block_composition_feasible",
@@ -189,6 +199,7 @@ __all__ = [
     "ParentDeltaNodeCountLaw",
     "ParentGeometryCarrier",
     "PackedAlexP1Dataset",
+    "PackedAlexModelBatch",
     "PointGroupMetricChart",
     "ProductionTrainer",
     "ProductionTrainingConfig",
