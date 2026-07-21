@@ -1,4 +1,4 @@
-"""Train and evaluate the frozen IID parent-conditioned assignment Gate."""
+"""Fine-tune and evaluate the broad-pretrained parent-conditioned assignment law."""
 
 from __future__ import annotations
 
@@ -134,15 +134,21 @@ def _bound_rows(
     generator = torch.Generator(device=device).manual_seed(seed)
     for group in _chunks(examples, batch_size):
         packed = pack_assignment_carriers(group, device=device)
-        values = torch.stack(
+        samples = torch.stack(
             [
                 orderless_assignment_objective(model, packed, generator=generator)
                 .graph_log_probability.detach()
                 .to(torch.float64)
                 for _ in range(order_samples)
             ]
-        ).mean(dim=0)
-        for example, path_log_probability in zip(group, values.tolist()):
+        )
+        values = samples.mean(dim=0)
+        standard_error = samples.std(dim=0, unbiased=True) / math.sqrt(order_samples)
+        for example, path_log_probability, mc_se in zip(
+            group,
+            values.tolist(),
+            standard_error.tolist(),
+        ):
             nll = -(path_log_probability + math.log(_orbit_size(example)))
             uniform = _uniform_quotient_nll(example)
             rows.append(
@@ -153,10 +159,10 @@ def _bound_rows(
                     "sites": int(example.target_assignment.numel()),
                     "species": int((example.composition_counts > 0).sum()),
                     "orbit_size": _orbit_size(example),
-                    "quotient_lower_bound_nll": nll,
+                    "quotient_order_elbo_nll": nll,
+                    "order_elbo_mc_standard_error": mc_se,
                     "uniform_quotient_nll": uniform,
                     "model_minus_uniform_nll": nll - uniform,
-                    "quotient_probability_lower_bound": math.exp(-nll),
                     "uniform_quotient_probability": math.exp(-uniform),
                 }
             )
@@ -189,12 +195,12 @@ def _bound_summary(
     bootstrap_resamples: int,
     seed: int,
 ) -> dict[str, float | int]:
-    model = torch.tensor([float(row["quotient_lower_bound_nll"]) for row in rows])
+    model = torch.tensor([float(row["quotient_order_elbo_nll"]) for row in rows])
     uniform = torch.tensor([float(row["uniform_quotient_nll"]) for row in rows])
     return {
         "carriers": len(rows),
         "materials": len({str(row["material_id"]) for row in rows}),
-        "mean_quotient_lower_bound_nll": float(model.mean()),
+        "mean_quotient_order_elbo_nll": float(model.mean()),
         "mean_uniform_quotient_nll": float(uniform.mean()),
         "relative_nll_reduction_from_uniform": float(
             (uniform.mean() - model.mean()) / uniform.mean().clamp_min(1e-12)
@@ -204,10 +210,13 @@ def _bound_summary(
             resamples=bootstrap_resamples,
             seed=seed,
         ),
-        "mean_target_probability_lower_bound": sum(
-            float(row["quotient_probability_lower_bound"]) for row in rows
+        "mean_order_elbo_mc_standard_error": sum(
+            float(row["order_elbo_mc_standard_error"]) for row in rows
         )
         / len(rows),
+        "maximum_order_elbo_mc_standard_error": max(
+            float(row["order_elbo_mc_standard_error"]) for row in rows
+        ),
         "mean_uniform_target_probability": sum(
             float(row["uniform_quotient_probability"]) for row in rows
         )
@@ -325,13 +334,18 @@ def _sampling_summary(
 def _exact_subset_rows(
     model: GeometryAwareRemainingCountScorer,
     examples: Sequence[AssignmentCarrierExample],
-    lower_bound_lookup: dict[tuple[str, str], float],
 ) -> list[dict[str, float | int | str]]:
-    cpu_model = copy.deepcopy(model).to("cpu").eval()
+    cpu_model = copy.deepcopy(model).to(device="cpu", dtype=torch.float64).eval()
     law = RemainingCountAssignmentLaw()
     rows: list[dict[str, float | int | str]] = []
     for example in examples:
         packed = pack_assignment_carriers([example], device="cpu")
+        packed = replace(
+            packed,
+            site_features=packed.site_features.to(torch.float64),
+            graph_features=packed.graph_features.to(torch.float64),
+            edge_rbf=packed.edge_rbf.to(torch.float64),
+        )
 
         def score(partial: torch.Tensor, remaining: torch.Tensor) -> torch.Tensor:
             return cpu_model(
@@ -354,8 +368,13 @@ def _exact_subset_rows(
             example.composition_counts,
             example.parent_permutations,
         )
+        order_elbo = law.exact_order_elbo_log_probability(
+            score,
+            example.target_assignment,
+            example.composition_counts,
+        ) + math.log(_orbit_size(example))
+        order_elbo_probability = math.exp(order_elbo)
         uniform = math.exp(-_uniform_quotient_nll(example))
-        lower = lower_bound_lookup[(example.material_id_audit_only, example.embedding_key)]
         rows.append(
             {
                 "material_id": example.material_id_audit_only,
@@ -364,8 +383,8 @@ def _exact_subset_rows(
                 "exact_quotient_probability": probability,
                 "uniform_quotient_probability": uniform,
                 "model_minus_uniform_probability": probability - uniform,
-                "lower_bound_probability": lower,
-                "lower_bound_probability_excess": lower - probability,
+                "exact_order_elbo_probability": order_elbo_probability,
+                "order_elbo_probability_excess": order_elbo_probability - probability,
             }
         )
     return rows
@@ -441,10 +460,11 @@ def main() -> None:
     parser.add_argument("--carrier-root", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--pretrained-checkpoint", type=Path, required=True)
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[1]
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_assignment_iid_gate_v1" or protocol.get(
+    if protocol.get("protocol") != "h1a_assignment_iid_gate_v2" or protocol.get(
         "status_before_run"
     ) != "frozen_not_run":
         raise ValueError("unexpected or unfrozen assignment IID protocol")
@@ -456,6 +476,18 @@ def main() -> None:
     manifest = load_json_object(args.carrier_root / "manifest.json")
     if manifest.get("records_sha256") != protocol["source"]["carrier_records_sha256"]:
         raise ValueError("assignment carrier identity changed")
+    pretraining_result_path = repository / protocol["source"]["pretraining_result"]
+    if _normalized_source_sha256(pretraining_result_path) != protocol["source"][
+        "pretraining_result_normalized_sha256"
+    ]:
+        raise ValueError("broad assignment pretraining result identity changed")
+    pretraining_result = load_json_object(pretraining_result_path)
+    if pretraining_result.get("qualified") is not True or not all(
+        pretraining_result["checks"].values()
+    ):
+        raise ValueError("broad assignment pretraining is not qualified")
+    if sha256_file(args.pretrained_checkpoint) != protocol["source"]["pretrained_checkpoint_sha256"]:
+        raise ValueError("broad assignment checkpoint identity changed")
     implementation_commit = _git_identity(repository)
 
     training = protocol["training"]
@@ -468,6 +500,7 @@ def main() -> None:
     torch.cuda.set_device(device)
     torch.cuda.manual_seed_all(seed)
     torch.set_float32_matmul_precision("highest")
+    torch.backends.cuda.matmul.allow_tf32 = False
 
     model_config = protocol["model"]
     examples = _load_examples(
@@ -487,6 +520,23 @@ def main() -> None:
             "ood_test",
         }
     }
+    role_result = load_json_object(role_path)
+    action_by_carrier = {
+        (str(row["material_id"]), str(row["embedding_key"])): str(row["action_signature"])
+        for row in role_result["carrier_rows"]
+    }
+    if len(action_by_carrier) != len(examples):
+        raise ValueError("assignment action-signature metadata is not one-to-one")
+    fit_action_signatures = {
+        str(row["action_signature"])
+        for row in role_result["carrier_rows"]
+        if str(row["role"]) in {"iid_fit", "iid_fit_rare"}
+    }
+
+    def action_supported(example: AssignmentCarrierExample) -> bool:
+        key = (example.material_id_audit_only, example.embedding_key)
+        return action_by_carrier[key] in fit_action_signatures
+
     fit = by_role["iid_fit"] + by_role["iid_fit_rare"]
     fit_by_material: dict[str, list[AssignmentCarrierExample]] = defaultdict(list)
     for example in fit:
@@ -508,8 +558,25 @@ def main() -> None:
         maximum_sites=int(model_config["maximum_sites"]),
         maximum_cell_index=int(model_config["maximum_cell_index"]),
     ).to(device)
+    pretrained = torch.load(args.pretrained_checkpoint, map_location="cpu", weights_only=False)
+    expected_pretrained = {
+        "schema": 2,
+        "task": "full_alex_masked_assignment_pretraining",
+        "protocol_sha256": pretraining_result["protocol_sha256"],
+        "implementation_commit": pretraining_result["implementation_commit"],
+    }
+    if any(pretrained.get(key) != value for key, value in expected_pretrained.items()):
+        raise ValueError("broad assignment checkpoint provenance changed")
+    model.load_state_dict(pretrained["model"], strict=True)
+    del pretrained
+    trainable_prefixes = tuple(str(value) for value in training["trainable_parameter_prefixes"])
+    for name, parameter in model.named_parameters():
+        parameter.requires_grad_(name.startswith(trainable_prefixes))
+    trainable_parameters = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    if not trainable_parameters:
+        raise ValueError("parent assignment fine-tune has no trainable parameters")
     optimizer = torch.optim.AdamW(
-        model.parameters(),
+        trainable_parameters,
         lr=float(training["learning_rate"]),
         weight_decay=float(training["weight_decay"]),
     )
@@ -524,16 +591,22 @@ def main() -> None:
     for step in range(1, steps + 1):
         selected_materials = python_rng.sample(material_ids, material_batch_size)
         selected = [python_rng.choice(fit_by_material[key]) for key in selected_materials]
-        packed = pack_assignment_carriers(
-            [example for example in selected for _ in range(path_samples)],
-            device=device,
-        )
         model.train()
         optimizer.zero_grad(set_to_none=True)
-        objective = orderless_assignment_objective(model, packed, generator=torch_generator)
-        objective.loss.backward()
+        nll_sum = torch.zeros((), dtype=torch.float64, device=device)
+        microbatch_size = int(training["material_microbatch_size"])
+        for microbatch in _chunks(selected, microbatch_size):
+            packed = pack_assignment_carriers(microbatch, device=device)
+            for _ in range(path_samples):
+                objective = orderless_assignment_objective(
+                    model,
+                    packed,
+                    generator=torch_generator,
+                )
+                nll_sum += objective.graph_nll.detach().to(torch.float64).sum()
+                (objective.graph_nll.sum() / (material_batch_size * path_samples)).backward()
         gradient_norm = torch.nn.utils.clip_grad_norm_(
-            model.parameters(),
+            trainable_parameters,
             float(training["gradient_clip_norm"]),
         )
         finite_gradient_steps += int(bool(torch.isfinite(gradient_norm)))
@@ -542,18 +615,34 @@ def main() -> None:
             history.append(
                 {
                     "step": float(step),
-                    "train_path_nll": float(objective.loss.detach()),
+                    "train_path_nll": float(nll_sum / (material_batch_size * path_samples)),
                     "gradient_norm": float(gradient_norm),
                 }
             )
 
     evaluation = protocol["evaluation"]
+    evidence_groups = {
+        "iid_calibration_supported": [
+            value for value in by_role["iid_calibration"] if action_supported(value)
+        ],
+        "iid_calibration_unseen_action": [
+            value for value in by_role["iid_calibration"] if not action_supported(value)
+        ],
+        "iid_test_supported": [value for value in by_role["iid_test"] if action_supported(value)],
+        "iid_test_unseen_action": [
+            value for value in by_role["iid_test"] if not action_supported(value)
+        ],
+        "ood_validation": by_role["ood_validation"],
+        "ood_test": by_role["ood_test"],
+    }
+    if any(not values for values in evidence_groups.values()):
+        raise ValueError("assignment v2 evidence stratum has no carriers")
     role_rows: dict[str, list[dict[str, Any]]] = {}
     role_summary: dict[str, dict[str, float | int]] = {}
-    for role_index, role in enumerate(("iid_calibration", "iid_test", "ood_validation", "ood_test")):
+    for role_index, (role, examples_in_role) in enumerate(evidence_groups.items()):
         rows = _bound_rows(
             model,
-            by_role[role],
+            examples_in_role,
             order_samples=int(evaluation["order_samples"]),
             batch_size=int(evaluation["carrier_batch_size"]),
             seed=seed + 10_000 + role_index,
@@ -569,45 +658,42 @@ def main() -> None:
     sampling = {
         role: _sampling_summary(
             model,
-            by_role[role],
+            evidence_groups[role],
             draws=int(evaluation["sample_draws_per_carrier"]),
             seed=seed + 30_000 + index * 1_000,
             device=device,
         )
-        for index, role in enumerate(("iid_calibration", "iid_test"))
+        for index, role in enumerate(("iid_calibration_supported", "iid_test_supported"))
     }
     maximum_exact_sites = int(evaluation["exact_subset_maximum_sites"])
     exact_per_split = int(evaluation["exact_subset_carriers_per_iid_split"])
     exact_examples = []
-    for role in ("iid_calibration", "iid_test"):
+    for role in ("iid_calibration_supported", "iid_test_supported"):
         eligible = sorted(
-            (value for value in by_role[role] if value.target_assignment.numel() <= maximum_exact_sites),
+            (
+                value
+                for value in evidence_groups[role]
+                if value.target_assignment.numel() <= maximum_exact_sites
+            ),
             key=lambda value: (value.material_id_audit_only, value.embedding_key),
         )
         if len(eligible) < exact_per_split:
             raise ValueError("exact subset panel has insufficient frozen support")
         exact_examples.extend(eligible[:exact_per_split])
-    lower_lookup = {
-        (str(row["material_id"]), str(row["embedding_key"])): float(
-            row["quotient_probability_lower_bound"]
-        )
-        for role in ("iid_calibration", "iid_test")
-        for row in role_rows[role]
-    }
-    exact_rows = _exact_subset_rows(model, exact_examples, lower_lookup)
+    exact_rows = _exact_subset_rows(model, exact_examples)
     exact_summary = {
         "carriers": len(exact_rows),
         "mean_model_minus_uniform_probability": sum(
             float(row["model_minus_uniform_probability"]) for row in exact_rows
         )
         / len(exact_rows),
-        "maximum_lower_bound_probability_excess": max(
-            float(row["lower_bound_probability_excess"]) for row in exact_rows
+        "maximum_order_elbo_probability_excess": max(
+            float(row["order_elbo_probability_excess"]) for row in exact_rows
         ),
     }
     relabel_residual = _relabel_logit_max_abs(
         model,
-        by_role["iid_test"],
+        evidence_groups["iid_test_supported"],
         count=int(evaluation["relabel_carriers"]),
         seed=seed + 40_000,
         device=device,
@@ -615,35 +701,48 @@ def main() -> None:
 
     finite_gradient_fraction = finite_gradient_steps / steps
     acceptance = protocol["acceptance"]
+    calibration_role = "iid_calibration_supported"
+    test_role = "iid_test_supported"
     checks = {
-        "iid_calibration_nll_reduction": role_summary["iid_calibration"][
+        "iid_calibration_nll_reduction": role_summary[calibration_role][
             "relative_nll_reduction_from_uniform"
         ]
         >= float(acceptance["iid_calibration_relative_nll_reduction_min"]),
-        "iid_test_nll_reduction": role_summary["iid_test"]["relative_nll_reduction_from_uniform"]
+        "iid_test_nll_reduction": role_summary[test_role]["relative_nll_reduction_from_uniform"]
         >= float(acceptance["iid_test_relative_nll_reduction_min"]),
-        "iid_calibration_paired_bootstrap": role_summary["iid_calibration"][
+        "iid_calibration_paired_bootstrap": role_summary[calibration_role][
             "model_minus_uniform_nll_ucb95"
         ]
         <= float(acceptance["iid_calibration_model_minus_uniform_nll_ucb95_max"]),
-        "iid_test_paired_bootstrap": role_summary["iid_test"]["model_minus_uniform_nll_ucb95"]
+        "iid_test_paired_bootstrap": role_summary[test_role]["model_minus_uniform_nll_ucb95"]
         <= float(acceptance["iid_test_model_minus_uniform_nll_ucb95_max"]),
-        "iid_test_retrieval_lift": sampling["iid_test"]["sample_retrieval_lift_over_uniform"]
+        "iid_calibration_mc_precision": role_summary[calibration_role][
+            "maximum_order_elbo_mc_standard_error"
+        ]
+        <= float(acceptance["maximum_order_elbo_mc_standard_error"]),
+        "iid_test_mc_precision": role_summary[test_role][
+            "maximum_order_elbo_mc_standard_error"
+        ]
+        <= float(acceptance["maximum_order_elbo_mc_standard_error"]),
+        "iid_test_retrieval_lift": sampling[test_role]["sample_retrieval_lift_over_uniform"]
         >= float(acceptance["iid_test_sample_retrieval_lift_over_uniform_min"]),
-        "iid_test_site_accuracy": sampling["iid_test"]["sample_orbit_aligned_site_accuracy"]
+        "iid_test_site_accuracy": sampling[test_role]["sample_orbit_aligned_site_accuracy"]
         >= float(acceptance["iid_test_sample_orbit_aligned_site_accuracy_min"]),
         "exact_subset_probability_lift": exact_summary["mean_model_minus_uniform_probability"]
         >= float(acceptance["exact_subset_mean_model_minus_uniform_probability_min"]),
-        "exact_subset_bound_consistency": exact_summary["maximum_lower_bound_probability_excess"]
-        <= float(acceptance["exact_subset_lower_bound_probability_excess_max"]),
+        "exact_subset_bound_consistency": exact_summary[
+            "maximum_order_elbo_probability_excess"
+        ]
+        <= float(acceptance["exact_subset_order_elbo_probability_excess_max"]),
         "relabel_consistency": relabel_residual <= float(acceptance["relabel_logit_max_abs"]),
         "exact_composition": min(
             float(sampling[role]["sample_exact_composition"])
-            for role in ("iid_calibration", "iid_test")
+            for role in (calibration_role, test_role)
         )
         == float(acceptance["sample_exact_composition"]),
         "zero_sampling_failures": sum(
-            int(sampling[role]["sampling_failures"]) for role in ("iid_calibration", "iid_test")
+            int(sampling[role]["sampling_failures"])
+            for role in (calibration_role, test_role)
         )
         == int(acceptance["sampling_failures"]),
         "finite_gradients": finite_gradient_fraction
@@ -654,6 +753,8 @@ def main() -> None:
     args.checkpoint.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
+            "schema": 2,
+            "task": "parent_conditioned_assignment_iid_v2",
             "model_state_dict": model.state_dict(),
             "protocol_sha256": canonical_json_hash(protocol),
             "implementation_commit": implementation_commit,
@@ -673,6 +774,9 @@ def main() -> None:
             "steps": steps,
             "fit_carriers": len(fit),
             "fit_materials": len(material_ids),
+            "trainable_parameters": sum(parameter.numel() for parameter in trainable_parameters),
+            "total_parameters": sum(parameter.numel() for parameter in model.parameters()),
+            "trainable_parameter_prefixes": list(trainable_prefixes),
             "finite_gradient_step_fraction": finite_gradient_fraction,
             "elapsed_seconds": time.perf_counter() - started,
             "peak_cuda_mib": torch.cuda.max_memory_allocated(device) / (1024**2),
@@ -684,6 +788,8 @@ def main() -> None:
         "exact_subset_rows": exact_rows,
         "relabel_logit_max_abs": relabel_residual,
         "carrier_rows": role_rows,
+        "evidence_carriers": {key: len(value) for key, value in evidence_groups.items()},
+        "pretrained_checkpoint_sha256": protocol["source"]["pretrained_checkpoint_sha256"],
         "checkpoint_sha256": sha256_file(args.checkpoint),
         "hardware": {
             "device": torch.cuda.get_device_name(device),
