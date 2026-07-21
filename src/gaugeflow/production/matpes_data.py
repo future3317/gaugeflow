@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from typing import Any, Iterable, Literal, Mapping, Sequence
 
@@ -11,6 +10,7 @@ from pymatgen.core import Element
 
 from gaugeflow.vocabulary import atomic_numbers_to_tokens
 
+from .data_splitting import DataSplit, deterministic_iid_split
 from .physical_pretraining import (
     FunctionalPhysicalNormalizer,
     PhysicalTargets,
@@ -71,31 +71,8 @@ MatPESEnergyTarget = Literal[
     "cohesive_energy_per_atom",
     "formation_energy_per_atom",
 ]
-MatPESSplit = Literal["train", "calibration", "test"]
-
-
-def matpes_iid_split(
-    material_id: str,
-    *,
-    seed: int = 5705,
-    calibration_fraction: float = 0.05,
-    test_fraction: float = 0.05,
-) -> MatPESSplit:
-    """Assign all functionals of one material ID to the same IID split."""
-
-    if not material_id:
-        raise ValueError("MatPES split requires a stable material ID")
-    if calibration_fraction <= 0.0 or test_fraction <= 0.0:
-        raise ValueError("MatPES calibration and test fractions must be positive")
-    if calibration_fraction + test_fraction >= 1.0:
-        raise ValueError("MatPES split fractions leave no training support")
-    digest = hashlib.sha256(f"{seed}:{material_id}".encode()).digest()
-    unit = int.from_bytes(digest[:8], byteorder="big") / float(1 << 64)
-    if unit < test_fraction:
-        return "test"
-    if unit < test_fraction + calibration_fraction:
-        return "calibration"
-    return "train"
+MatPESSplit = DataSplit
+matpes_iid_split = deterministic_iid_split
 
 
 def matpes_stress_kbar_to_kelvin_gpa(stress: Sequence[float]) -> torch.Tensor:

@@ -1,0 +1,36 @@
+{
+  "protocol": "lemat_training_interface_smoke_v1",
+  "scope": "bounded CPU-only data-interface smoke; not a Stage-C training qualification",
+  "raw_dataset": "LeMaterial/LeMat-BulkUnique",
+  "raw_revision": "99c34041e8cc4451bbad647de152c76073c6eb84",
+  "row_groups_per_shard": 1,
+  "parquet_shards": 19,
+  "selected_rows_n_le_20": 17975,
+  "unique_split_groups": 17865,
+  "split_counts": {
+    "train": 16196,
+    "calibration": 896,
+    "test": 883
+  },
+  "excluded_large_cells": 1025,
+  "compatible_selected_rows": 17214,
+  "invalid_index_rows": 0,
+  "physical_label_policy": "compatible_only",
+  "index_sha256": "bc3d512beffadd314e0dbcdf6ec771843b1efef1979509694cc49d5c0547a9b7",
+  "functional_random_access_checked": [
+    "pbe",
+    "pbesol",
+    "scan"
+  ],
+  "checks": {
+    "row_basis_cartesian_to_fractional": "passed",
+    "total_energy_to_per_atom": "passed",
+    "full_stress_kbar_to_tensile_kelvin_gpa": "passed",
+    "incomplete_force_is_masked_without_dropping_structure": "passed",
+    "cross_incompatible_physical_labels_are_masked": "passed",
+    "fingerprint_grouped_split": "passed",
+    "alex_wrapper_id_normalization": "passed",
+    "ids_absent_from_model_batch": "inherited from the shared physical collator"
+  },
+  "qualified": false
+}
