@@ -4,7 +4,7 @@
   "source": {
     "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
     "iid_role_result": "reports/h1a_assignment_iid_calibration_split_v1/result.json",
-    "iid_role_result_sha256": "d327c3adff2913c3887ffa184254fa733e253b6d1bf17a9b492075da9d362f0e"
+    "iid_role_result_normalized_sha256": "2b756a257b547e710aed377b1a5c660d0a526b72cdf0a4666b89d303d2a9a3f6"
   },
   "model": {
     "maximum_sites": 20,

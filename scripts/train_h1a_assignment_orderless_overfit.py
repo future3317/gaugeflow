@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import hashlib
 import json
 import math
 import random
@@ -27,6 +28,11 @@ from gaugeflow.production.autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
     RemainingCountAssignmentLaw,
 )
+
+
+def _normalized_source_sha256(path: Path) -> str:
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _git_identity(repository: Path) -> str:
@@ -268,7 +274,7 @@ def main() -> None:
     ):
         raise ValueError("unexpected or unfrozen orderless-assignment overfit protocol")
     role_path = repository / protocol["source"]["iid_role_result"]
-    if sha256_file(role_path) != protocol["source"]["iid_role_result_sha256"]:
+    if _normalized_source_sha256(role_path) != protocol["source"]["iid_role_result_normalized_sha256"]:
         raise ValueError("assignment IID role result identity changed")
     carrier_manifest = load_json_object(args.carrier_root / "manifest.json")
     if carrier_manifest.get("records_sha256") != protocol["source"]["carrier_records_sha256"]:
