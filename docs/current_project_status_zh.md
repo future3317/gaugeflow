@@ -2,9 +2,15 @@
 
 ## 一句话结论
 
-GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。真实数据 H1a 已运行但局部坐标生成失败；此后 `p(C|N)`、geometry-complete assignment carrier 与 orderless exact-count Q0 已分别通过。learned assignment、`p(N)`、lattice L1 和 on-policy joint generation 仍未资格化，因此当前不能声称已生成满足目标压电张量的晶体。
+GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。历史真实数据 free H1a 的局部 packing 失败仍然保留；此后 `p(C|N)`、supported-IID exact-count assignment、显式 `p(N)`、lattice L1、clean/generated side-state coordinate exposure 已分别通过。34M/58M/98M 等 exposure 筛选选择 34.28M 作为最小充分 backbone。完整 joint A1 尚未训练，因此当前仍不能声称已生成满足目标压电张量的晶体。
 
-本项目现停在 GaugeFlow-base 预训练前的 A0 生成接口闭包。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
+本项目已完成 GaugeFlow-base 的 bounded supported-IID A0 接口闭包，下一步是使用选定 34.28M backbone 的 tensor-free A1 联合预训练。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
+
+### 最新容量资格结果
+
+三档模型均从头训练，seed 5705、effective batch 64、Alex train 恰好一遍（540,164 graphs），只改变容量。34M/58M/98M 的 validation ratio 分别为 `0.269575/0.292842/0.274138`，\(t=0.6\) explained fraction 为 `0.729079/0.757194/0.771143`，clean-side conditional-rollout normalized NN-W1 为 `0.148713/0.149680/0.131120`，全部零 failure 且 valid-distance fraction 为 1.0。该 rollout 从 coordinate prior 开始，但固定真实 atom types、lattice 与 node count，不能称为自由联合生成。98M 在中噪声和 NN-W1 上最好，但吞吐仅 `69.88 graphs/s`，相对 34M 的收益未越过预注册 margin；因此正式选择 34.28M（`238.26 graphs/s`）。
+
+![GaugeFlow-base capacity screen](../reports/gaugeflow_base_capacity_screen_v1/capacity_screen.png)
 
 ## 已经完成了什么
 
@@ -343,10 +349,13 @@ stabilizer `2.98e-7`、exact-count sampling `1.0`、BF16 output cosine `0.999974
 RTX 4090 no-grad 64-graph forward 为 `5.07 ms / 99.05 MiB`。第一次错误保留 FP32/
 BF16 autograd graphs 得到的 `720.06 MiB` 单独保留，冻结的 `512 MiB` 标准未修改。
 
-Q0 只授权一个从头训练、单 seed、oracle-composition IID assignment Gate。future
-probability/relabel audit 会将冻结 FP32 logits 转为 FP64 后再做 exact DP，从数值上解决
-历史 `1.1444e-5` reduction-order residual，但不会改写旧 Q1。learned assignment 仍
-未通过，generated-C、`p(N)`、L1/M1 和 tensor 路线仍被阻止。
+Q0 随后授权了一个从头训练、单 seed、oracle-composition IID assignment Gate，该
+supported-IID successor 已通过：calibration/test 的 reveal-order Monte Carlo ELBO
+相对 legal uniform 改善 `0.70939/0.85290`，orbit-aligned accuracy 为
+`0.93864/0.94080`，exact composition 为 `1.0`，零 failure。这里的主 NLL 是对
+target-independent reveal order 的 Monte Carlo ELBO，不是所有 \(N\le20\) carrier
+上精确求和的 assignment marginal；exact subset-DP 证据只覆盖冻结的小 \(N\) 子集。
+旧 formula/prototype-disjoint Q1 和 IID-test unseen-action 分层失败均未被改写。
 
 ## 下一阶段预训练路线
 

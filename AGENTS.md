@@ -323,10 +323,12 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   generated composition, `p(N)`, L1/M1, free joint H1a, tensor/oracle work,
   relaxation, DFT or DFPT.
 - The supported-IID exact-count assignment Gate has now passed. Calibration/test
-  quotient-NLL reductions are `0.70939/0.85290`, orbit-aligned accuracies are
+  reveal-order Monte Carlo ELBO reductions are `0.70939/0.85290`, orbit-aligned accuracies are
   `0.93864/0.94080`, exact composition is `1.0`, and failures are zero. This
   qualifies only oracle-composition assignment on supported IID carriers;
-  unseen-action and formula/prototype-disjoint panels remain OOD stress failures.
+  it is not an exact marginal likelihood over every `N<=20` carrier. Exact
+  subset-DP evidence is limited to the frozen small-N audit subset. Unseen-action
+  and formula/prototype-disjoint panels remain OOD stress failures.
 - The explicit train-only empirical node-count law has passed its IID Gate:
   test NLL `2.41760` versus uniform `2.99573`, JSD `1.00e-4`, integer W1
   `0.02438`, and zero invalid samples/failures. Formula/prototype-disjoint
@@ -358,15 +360,23 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   used to fabricate them. Do not choose a hard chain, start free joint
   training, or enter later Gates before these prerequisites are satisfied.
 
-Work is now at GaugeFlow-base generated-side coordinate closure. Exact-count
-supported-IID assignment, explicit `p(N)`, and the clean-composition P1 lattice
-law have passed their separate Gates. The next permitted learned operation is a
-separately frozen comparison of coordinate generation under clean versus
-generated assignment/lattice side states. Joint A1 pretraining and the
-30M/60M/100M capacity screen remain blocked until that exposure Gate passes.
-H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue completed
-protocols, revive failed reciprocal/topology branches, or initialize joint
-training from a failed coordinate checkpoint.
+GaugeFlow-base A0 interface closure is complete on its bounded supported-IID
+domain. Exact-count assignment, explicit `p(N)`, lattice L1 and the four-arm
+generated-side coordinate exposure Gate have passed. The equal-exposure
+capacity screen then compared 34.28M/57.68M/97.58M parameters for exactly
+540,164 graph presentations at effective batch 64. All three candidates were
+eligible; the frozen minimum-sufficient rule selected 34.28M. Its validation
+ratio is `0.269575`, t=.6 explained fraction `0.729079`, and clean-side
+conditional-rollout NN-W1 `0.148713`, with valid-distance fraction `1.0` and
+sampling failures `0` at `238.26 graphs/s`. This rollout fixes ground-truth
+atom types, lattice and node count; it is not free joint generation. The 98M
+candidate improved conditional-rollout NN-W1 to `0.131120` and t=.6
+explained fraction to `0.771143`, but remained inside the frozen quality
+margins while reducing throughput to `69.88 graphs/s`; it is not the production
+default. The next permitted learned operation is a separately frozen,
+tensor-free GaugeFlow-base A1 joint pretraining run using the selected 34M
+backbone. H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue
+completed protocols or revive failed reciprocal/topology branches.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.

@@ -6,8 +6,9 @@ diffusion，晶格使用
 log-volume / trace-free log-metric 表示，三阶极性张量条件使用 Stratified
 Cartesian Gauge Atlas。独立 site-token reverse 已被否决；现在采用已资格化的
 stoichiometry-first `p(C|N)`，并以 remaining-count orderless law 作为 exact-count
-assignment 后继。该后继只通过了 Q0 数学/软件资格，尚未通过 learned assignment
-Gate。项目没有旧 continuous-logit flow、harmonic conditioner 或 FlowMM runtime
+assignment 后继。该后继已经通过 supported-IID learned Gate；显式 `p(N)`、lattice
+L1、generated-side coordinate exposure 也已闭合。等 exposure 容量筛选从
+34M/58M/98M 中选择 34.28M 作为最小充分 GaugeFlow-base。项目没有旧 continuous-logit flow、harmonic conditioner 或 FlowMM runtime
 fallback。
 
 ## 当前正式状态
@@ -19,16 +20,19 @@ fallback。
 | 数据与群论分解 H0 | 已通过：结构 split、声子/PES 接口、finite-affine/OPD catalogue、真实 occupational occurrence |
 | 真实数据 H1a | 已运行并失败：粗粒度 composition/lattice 合格，局部坐标与最近邻分布不合格 |
 | 无序组成 `p(C|N)` | absolute-likelihood Gate 已通过：exact count、零 invalid/failure |
-| Site assignment | 旧 unary oracle-C Q1 失败；geometry-complete carrier、表示审计与 orderless Q0 已通过；learned IID successor 尚未运行 |
-| `p(N)` / lattice L1 / on-policy M1 | 尚未资格化 |
+| Site assignment | 旧 unary oracle-C Q1 失败；当前 exact-count orderless law 在 supported-IID Gate 通过，OOD unseen-action 仍是 stress failure |
+| `p(N)` / lattice L1 | 已通过；L1 shape W1 `0.49417` 接近冻结上限，保留为风险项 |
+| Generated-side coordinates | clean/generated assignment/lattice 四臂 closure 已通过，joint 增量 NN-W1 `+0.03525` |
+| GaugeFlow-base 容量 | 34M/58M/98M 均 eligible；按冻结规则选择 34.28M，validation ratio `0.269575`、clean-side conditional-rollout NN-W1 `0.148713` |
+| on-policy joint M1 / A1 | 尚未训练和资格化 |
 | 完整 parent blueprint 与 H2--H6 | 尚未开始 |
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
-项目当前停在 GaugeFlow-base 的 A0 生成接口闭包。P1 cache 与条件坐标基座已经
-资格化，局部算子、reciprocal、topology carrier 和 sampler 搜索已经收口；这些负
-结果不改变历史 free H1a 失败。当前只允许完成 learned count-constrained assignment、
-显式 `p(N)`、lattice L1 和 generated-side-state coordinate closure，然后才能启动
-真正的 tensor-free A1 联合预训练。tensor 条件与 RL 均在更后阶段。
+GaugeFlow-base 的 bounded supported-IID A0 生成接口已经闭合。P1 cache、条件坐标、
+exact-count assignment、显式 `p(N)`、lattice L1、generated-side exposure 和容量选择
+均已完成；局部算子、reciprocal、topology carrier 和 sampler 搜索也已收口。这些结果
+不改写历史 free H1a 失败。当前下一项且唯一允许的大规模实验是使用选定 34.28M
+backbone 的 tensor-free A1 联合预训练；tensor 条件与 RL 均在更后阶段。
 
 ## 当前方法
 
@@ -572,8 +576,11 @@ error `2.98e-7`、exact-count sampling `1.0`、BF16 cosine `0.999974`。RTX 4090
 明确 no-grad 64-graph forward 为 `5.07 ms / 99.05 MiB`；第一次错误保留 autograd
 graph 得到的 `720.06 MiB` 仍作为失败尝试保留，阈值没有修改。
 
-Q0 只允许一个从头训练、单 seed、oracle-composition IID assignment Gate；原始
-formula/prototype-disjoint panels 继续只作 OOD stress。它没有资格化 learned
-assignment，也没有放行 generated-C、`p(N)`、L1/M1 或 tensor 路线。后续预训练
-阶段、数据混合和同预算基线见
+Q0 随后允许的从头训练、单 seed、oracle-composition IID assignment Gate 已通过：
+calibration/test reveal-order Monte Carlo ELBO 相对 legal uniform 改善
+`0.70939/0.85290`，orbit-aligned accuracy 为 `0.93864/0.94080`，exact composition
+为 `1.0`，零 failure。该主 NLL 不是所有 \(N\le20\) carrier 上精确求出的 assignment
+marginal；exact subset-DP 只在冻结的小 \(N\) 子集审计。原始 formula/prototype-
+disjoint 与 unseen-action panels 继续是 OOD stress failures，不能由 IID pass 覆盖。
+后续预训练阶段、数据混合和同预算基线见
 [GaugeFlow 预训练路线 A0--F](docs/gaugeflow_pretraining_roadmap_zh.md)。
