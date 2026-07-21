@@ -171,6 +171,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--stop-after-step",
+        type=int,
+        help="Operationally stop at a declared checkpoint for exact-resume qualification.",
+    )
     return parser.parse_args()
 
 
@@ -204,6 +209,7 @@ def main() -> None:
     log_every = int(training_spec["log_every"])
     num_workers = int(training_spec["num_workers"])
     checkpoint_steps = {int(value) for value in training_spec["checkpoint_steps"]}
+    execution_stop = steps if args.stop_after_step is None else int(args.stop_after_step)
     if (
         steps < 1
         or batch_size < 1
@@ -213,6 +219,8 @@ def main() -> None:
         or 0 not in checkpoint_steps
         or steps not in checkpoint_steps
         or any(value < 0 or value > steps for value in checkpoint_steps)
+        or not 1 <= execution_stop <= steps
+        or (execution_stop != steps and execution_stop not in checkpoint_steps)
     ):
         raise ValueError("production protocol has invalid training counts")
     if gradient_accumulation_steps > 1 and (
@@ -457,7 +465,7 @@ def main() -> None:
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
     clipped_steps = torch.zeros((), dtype=torch.long, device=device)
-    while trainer.step < steps:
+    while trainer.step < execution_stop:
         if gradient_accumulation_steps > 1:
             host_microbatches: list[object] = []
             for _ in range(gradient_accumulation_steps):
@@ -553,7 +561,7 @@ def main() -> None:
         clipped_steps = clipped_steps + (gradient_norm > training_config.gradient_clip_norm)
         throughput_graphs += graph_count
         graphs_seen_this_invocation += graph_count
-        if trainer.step % log_every == 0 or trainer.step in checkpoint_steps or trainer.step in {1, steps}:
+        if trainer.step % log_every == 0 or trainer.step in checkpoint_steps or trainer.step in {1, execution_stop}:
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             elapsed = time.perf_counter() - throughput_start

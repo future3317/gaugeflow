@@ -1,0 +1,66 @@
+{
+  "protocol": "gaugeflow_base_a1_joint_execution_smoke_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "Three-step from-scratch A1 execution smoke with exact interrupted-resume equivalence; its weights are never used to initialize A1.",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "a1_product_space_integration_v2",
+    "qualification_result_sha256": "bb900ea2d54711292b029bc13aa514adfa93252cee6f2b9fac470181618ace08",
+    "additional_qualification_results": {
+      "gaugeflow_base_capacity_screen_v1": "d1d8faefd51920a650e97ac81f2bdff2ba2fe17ced6e7982f03f88a0b7460033",
+      "h1a_e1_absolute_likelihood_v1": "1f6ad69ee6e2c6873780a70ada4335dac182698949c1c1fd1aafd2d37dad5189"
+    },
+    "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
+    "trainer_sha256": "7f79810021a80a317113de3c918af598dafeefd6f02581630ff9260f5b4a9636",
+    "tensor_condition_enabled": false
+  },
+  "model": {
+    "hidden_dim": 384,
+    "vector_dim": 64,
+    "layers": 8,
+    "radial_dim": 24,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 128,
+    "angular_channels": 16,
+    "edge_refresh_rank": 32,
+    "modality_time_conditioning": "separate",
+    "parameter_count": 34284207
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 3,
+    "batch_size": 64,
+    "gradient_accumulation_steps": 1,
+    "log_every": 1,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "fp32",
+    "objective": "joint",
+    "coordinate_clean_side_information": false,
+    "modality_time_mode": "shared",
+    "categorical_path": "orderless_reveal",
+    "composition_conditioning": true,
+    "composition_loss_weight": 0.0,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1, 3],
+    "exposure_mode": "prefix_screen",
+    "graph_presentations": 192,
+    "data_passes": 0.0003554476048015047,
+    "from_scratch_required": true
+  },
+  "acceptance": {
+    "finite_losses_and_gradients": true,
+    "assignment_loss_positive": true,
+    "checkpoint_exact_resume": true,
+    "peak_cuda_memory_mib_max": 23500,
+    "zero_failures": true
+  },
+  "boundary": "A pass authorizes the separately frozen full A1 run only; smoke checkpoints are never initialization or generation evidence."
+}
