@@ -869,6 +869,27 @@ class TensorFreeReverseSampler:
                     scalar_to = times[index + 1]
                     time_from = scalar_from.expand(graphs)
                     time_to = scalar_to.expand(graphs)
+                    # This is a first-order product-space split: continuous
+                    # drift is evaluated on the complete state at ``t_from``;
+                    # discrete reveals then use the exact count kernel.  Do
+                    # not feed a newly revealed A state into an old-time
+                    # continuous drift, which would define neither component
+                    # reverse transition.
+                    prediction = self.denoiser(
+                        tokens,
+                        coordinates,
+                        log_volume,
+                        log_shape,
+                        blueprint.batch,
+                        time_from,
+                        condition,
+                        condition_present,
+                        blueprint.shape_projector,
+                        blueprint.fractional_to_cartesian,
+                        element_time=time_from,
+                        lattice_time=time_from,
+                        composition_counts=composition_counts,
+                    )
                     # Reveal according to the same time-to-prefix convention
                     # used by the product-field objective.  A fixed uniform
                     # auxiliary order is sampled once; every reveal is legal
@@ -877,25 +898,8 @@ class TensorFreeReverseSampler:
                     target_reveal = torch.floor(
                         (1.0 - scalar_to) * blueprint.node_counts.to(dtype)
                     ).long().clamp_max(blueprint.node_counts)
+                    categorical_prediction = prediction
                     while bool((reveal_count < target_reveal).any()):
-                        element_time = (
-                            1.0 - reveal_count.to(dtype) / blueprint.node_counts.to(dtype)
-                        ).clamp(max=self.maximum_time)
-                        categorical_prediction = self.denoiser(
-                            tokens,
-                            coordinates,
-                            log_volume,
-                            log_shape,
-                            blueprint.batch,
-                            time_from,
-                            condition,
-                            condition_present,
-                            blueprint.shape_projector,
-                            blueprint.fractional_to_cartesian,
-                            element_time=element_time,
-                            lattice_time=time_from,
-                            composition_counts=composition_counts,
-                        )
                         active = reveal_count < target_reveal
                         next_site = torch.nonzero(
                             reveal_rank == reveal_count[blueprint.batch], as_tuple=False
@@ -917,27 +921,26 @@ class TensorFreeReverseSampler:
                         tokens[active_site] = selected
                         remaining_counts[active, selected] -= 1
                         reveal_count[active] += 1
-
-                    # Re-evaluate after the discrete transition so continuous
-                    # drifts condition on the actual current partial occupation.
-                    element_time = (
-                        1.0 - reveal_count.to(dtype) / blueprint.node_counts.to(dtype)
-                    ).clamp(max=self.maximum_time)
-                    prediction = self.denoiser(
-                        tokens,
-                        coordinates,
-                        log_volume,
-                        log_shape,
-                        blueprint.batch,
-                        time_from,
-                        condition,
-                        condition_present,
-                        blueprint.shape_projector,
-                        blueprint.fractional_to_cartesian,
-                        element_time=element_time,
-                        lattice_time=time_from,
-                        composition_counts=composition_counts,
-                    )
+                        # Rare coarse grids can cross more than one reveal
+                        # threshold.  Re-evaluate only the additional
+                        # categorical substep at its destination clock; the
+                        # continuous drift remains the original t_from field.
+                        if bool((reveal_count < target_reveal).any()):
+                            categorical_prediction = self.denoiser(
+                                tokens,
+                                coordinates,
+                                log_volume,
+                                log_shape,
+                                blueprint.batch,
+                                time_from,
+                                condition,
+                                condition_present,
+                                blueprint.shape_projector,
+                                blueprint.fractional_to_cartesian,
+                                element_time=time_to,
+                                lattice_time=time_from,
+                                composition_counts=composition_counts,
+                            )
 
                     variance_from = self.coordinate_schedule.variance(time_from)
                     variance_to = self.coordinate_schedule.variance(time_to)
