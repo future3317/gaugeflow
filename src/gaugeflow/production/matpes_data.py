@@ -290,6 +290,88 @@ def fit_functional_physical_normalizer(
             stress_count[index] += 1.0
             stress_trace_sum[index] += stress[:3].sum()
             stress_norm_square_sum[index] += stress.square().sum()
+    return _normalizer_from_sufficient_statistics(
+        energy_count,
+        energy_sum,
+        energy_square_sum,
+        force_component_count,
+        force_square_sum,
+        stress_count,
+        stress_trace_sum,
+        stress_norm_square_sum,
+        minimum_scale=minimum_scale,
+    )
+
+
+def fit_functional_physical_normalizer_from_batches(
+    batches: Iterable[MatPESPhysicalBatch],
+    *,
+    functional_vocabulary: Mapping[str, int],
+    minimum_scale: float = 1.0e-6,
+) -> FunctionalPhysicalNormalizer:
+    """Fit the same moments with vectorized graph/node segment reductions."""
+
+    functionals = len(functional_vocabulary)
+    if functionals < 1 or set(functional_vocabulary.values()) != set(range(functionals)):
+        raise ValueError("functional vocabulary indices must be contiguous from zero")
+    if minimum_scale <= 0.0:
+        raise ValueError("minimum physical scale must be positive")
+    statistics = [torch.zeros(functionals, dtype=torch.float64) for _ in range(8)]
+    for packed in batches:
+        targets = packed.targets
+        functional_index = packed.functional_index
+        if functional_index.ndim != 1 or functional_index.dtype != torch.long:
+            raise ValueError("batched physical statistics require graph functional indices")
+        energy_index = functional_index[targets.energy_mask]
+        energy = targets.energy_per_atom[targets.energy_mask].double()
+        statistics[0] += torch.bincount(energy_index, minlength=functionals)
+        statistics[1] += torch.bincount(energy_index, weights=energy, minlength=functionals)
+        statistics[2] += torch.bincount(
+            energy_index,
+            weights=energy.square(),
+            minlength=functionals,
+        )
+
+        force_index = functional_index[packed.batch][targets.force_mask]
+        force_square = targets.forces[targets.force_mask].double().square().sum(dim=-1)
+        statistics[3] += 3.0 * torch.bincount(force_index, minlength=functionals)
+        statistics[4] += torch.bincount(
+            force_index,
+            weights=force_square,
+            minlength=functionals,
+        )
+
+        stress_index = functional_index[targets.stress_mask]
+        stress = targets.stress_kelvin[targets.stress_mask].double()
+        statistics[5] += torch.bincount(stress_index, minlength=functionals)
+        statistics[6] += torch.bincount(
+            stress_index,
+            weights=stress[:, :3].sum(dim=-1),
+            minlength=functionals,
+        )
+        statistics[7] += torch.bincount(
+            stress_index,
+            weights=stress.square().sum(dim=-1),
+            minlength=functionals,
+        )
+    return _normalizer_from_sufficient_statistics(
+        *statistics,
+        minimum_scale=minimum_scale,
+    )
+
+
+def _normalizer_from_sufficient_statistics(
+    energy_count: torch.Tensor,
+    energy_sum: torch.Tensor,
+    energy_square_sum: torch.Tensor,
+    force_component_count: torch.Tensor,
+    force_square_sum: torch.Tensor,
+    stress_count: torch.Tensor,
+    stress_trace_sum: torch.Tensor,
+    stress_norm_square_sum: torch.Tensor,
+    *,
+    minimum_scale: float,
+) -> FunctionalPhysicalNormalizer:
     if bool((energy_count == 0).any()) or bool((force_component_count == 0).any()) or bool(
         (stress_count == 0).any()
     ):

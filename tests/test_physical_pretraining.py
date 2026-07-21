@@ -9,6 +9,7 @@ from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.matpes_data import (
     collate_matpes_records,
     fit_functional_physical_normalizer,
+    fit_functional_physical_normalizer_from_batches,
     matpes_iid_split,
     matpes_stress_kbar_to_kelvin_gpa,
     parse_matpes_row,
@@ -338,6 +339,21 @@ def test_matpes_train_statistics_are_functional_and_streaming() -> None:
     ]
     vocabulary = {"PBE": 0, "r2SCAN": 1}
     normalizer = fit_functional_physical_normalizer(records, functional_vocabulary=vocabulary)
+    batched_normalizer = fit_functional_physical_normalizer_from_batches(
+        [
+            collate_matpes_records(records[:2], functional_vocabulary=vocabulary, teacher_dim=2),
+            collate_matpes_records(records[2:], functional_vocabulary=vocabulary, teacher_dim=2),
+        ],
+        functional_vocabulary=vocabulary,
+    )
+    for field in (
+        "energy_location",
+        "energy_scale",
+        "force_scale",
+        "stress_isotropic_location",
+        "stress_scale",
+    ):
+        assert torch.allclose(getattr(normalizer, field), getattr(batched_normalizer, field))
     assert torch.allclose(normalizer.energy_location, torch.tensor([-3.0, -9.0]))
     assert torch.allclose(normalizer.energy_scale, torch.ones(2))
     packed = collate_matpes_records(records, functional_vocabulary=vocabulary, teacher_dim=2)

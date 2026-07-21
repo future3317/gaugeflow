@@ -76,6 +76,7 @@ def main() -> None:
         map_location=device,
     )
     a1_ema.copy_to(backbone)
+    del a1_ema
     normalizer, vocabulary = load_functional_physical_normalizer(arguments.normalizer)
     dataset = IndexedMatPESDataset(arguments.index, "train", verify_hashes=True, require_qualified=True)
     records = [dataset[index] for index in range(arguments.graphs)]
