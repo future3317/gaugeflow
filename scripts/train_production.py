@@ -187,6 +187,8 @@ def main() -> None:
         raise ValueError("seed is not preregistered by the production protocol")
     steps = int(training_spec["steps"])
     batch_size = int(training_spec["batch_size"])
+    gradient_accumulation_steps = int(training_spec.get("gradient_accumulation_steps", 1))
+    effective_batch_size = batch_size * gradient_accumulation_steps
     objective = str(training_spec["objective"])
     if objective == "coordinate" and "coordinate_clean_side_information" not in training_spec:
         raise ValueError("coordinate training must explicitly declare its observed-side-information contract")
@@ -200,6 +202,7 @@ def main() -> None:
     if (
         steps < 1
         or batch_size < 1
+        or gradient_accumulation_steps < 1
         or log_every < 1
         or num_workers < 0
         or 0 not in checkpoint_steps
@@ -207,6 +210,14 @@ def main() -> None:
         or any(value < 0 or value > steps for value in checkpoint_steps)
     ):
         raise ValueError("production protocol has invalid training counts")
+    if gradient_accumulation_steps > 1 and (
+        objective != "coordinate"
+        or training_spec.get("coordinate_clean_side_information") is not True
+        or args.resume is not None
+    ):
+        raise ValueError(
+            "gradient accumulation is qualified only for from-scratch clean-side coordinate training"
+        )
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but torch.cuda.is_available() is false")
@@ -240,7 +251,7 @@ def main() -> None:
             training_spec,
             dataset_size=len(dataset),
             steps=steps,
-            batch_size=batch_size,
+            batch_size=effective_batch_size,
         )
     if bool(training_spec.get("from_scratch_required", False)) and args.resume is not None:
         raise ValueError("this frozen protocol requires a from-scratch run")
@@ -371,6 +382,9 @@ def main() -> None:
         "coordinate_chart": model.coordinate_chart,
         "blueprint": "P1_empirical_node_count",
         "training_stage": training_config.objective,
+        "physical_batch_size": batch_size,
+        "gradient_accumulation_steps": gradient_accumulation_steps,
+        "effective_batch_size": effective_batch_size,
     }
     if args.resume is None:
         save_production_checkpoint(
@@ -392,32 +406,103 @@ def main() -> None:
         torch.cuda.reset_peak_memory_stats(device)
     clipped_steps = torch.zeros((), dtype=torch.long, device=device)
     while trainer.step < steps:
-        try:
-            batch_data = next(data_iterator)
-        except StopIteration:
-            data_iterator = iter(loader)
-            batch_data = next(data_iterator)
-        batch_data = batch_data.to(device, non_blocking=True)
-        graph_count = int(batch_data.num_graphs)
-        counts = torch.bincount(batch_data.batch, minlength=graph_count)
-        blueprint = ParentBlueprintBatch.from_node_counts(counts, dtype=batch_data.frac_coords.dtype, device=device)
-        if objective == "lattice":
-            output, gradient_norm = trainer.train_lattice_step(
-                batch_data.atom_types,
-                batch_data.lattice,
-                batch_data.batch,
-                blueprint,
-                generator=device_generator,
-            )
+        if gradient_accumulation_steps > 1:
+            host_microbatches: list[object] = []
+            for _ in range(gradient_accumulation_steps):
+                try:
+                    host_microbatches.append(next(data_iterator))
+                except StopIteration:
+                    data_iterator = iter(loader)
+                    break
+            if not host_microbatches:
+                host_microbatches.append(next(data_iterator))
+            microbatch_graphs = [int(value.num_graphs) for value in host_microbatches]
+            optimizer_graphs = sum(microbatch_graphs)
+            trainer.begin_optimization_step()
+            logged_losses = {
+                "loss": 0.0,
+                "volume_loss": 0.0,
+                "shape_loss": 0.0,
+                "element_loss": 0.0,
+                "composition_loss": 0.0,
+                "coordinate_loss": 0.0,
+                "masked_fraction": 0.0,
+            }
+            output = None
+            for host, graph_count in zip(host_microbatches, microbatch_graphs, strict=True):
+                batch_data = host.to(device, non_blocking=True)
+                counts = torch.bincount(batch_data.batch, minlength=graph_count)
+                blueprint = ParentBlueprintBatch.from_node_counts(
+                    counts,
+                    dtype=batch_data.frac_coords.dtype,
+                    device=device,
+                )
+                weight = graph_count / optimizer_graphs
+                output = trainer.accumulate_hybrid_step(
+                    batch_data.atom_types,
+                    batch_data.frac_coords,
+                    batch_data.lattice,
+                    batch_data.batch,
+                    blueprint,
+                    loss_weight=weight,
+                    generator=device_generator,
+                )
+                logged_losses["loss"] += weight * float(trainer.optimization_loss(output).detach().cpu())
+                for name in (
+                    "volume_loss",
+                    "shape_loss",
+                    "element_loss",
+                    "composition_loss",
+                    "coordinate_loss",
+                    "masked_fraction",
+                ):
+                    logged_losses[name] += weight * float(getattr(output, name).detach().cpu())
+            assert output is not None
+            gradient_norm = trainer.finish_optimization_step()
+            graph_count = optimizer_graphs
         else:
-            output, gradient_norm = trainer.train_step(
-                batch_data.atom_types,
-                batch_data.frac_coords,
-                batch_data.lattice,
-                batch_data.batch,
-                blueprint,
-                generator=device_generator,
+            try:
+                batch_data = next(data_iterator)
+            except StopIteration:
+                data_iterator = iter(loader)
+                batch_data = next(data_iterator)
+            batch_data = batch_data.to(device, non_blocking=True)
+            graph_count = int(batch_data.num_graphs)
+            counts = torch.bincount(batch_data.batch, minlength=graph_count)
+            blueprint = ParentBlueprintBatch.from_node_counts(
+                counts, dtype=batch_data.frac_coords.dtype, device=device
             )
+            if objective == "lattice":
+                output, gradient_norm = trainer.train_lattice_step(
+                    batch_data.atom_types,
+                    batch_data.lattice,
+                    batch_data.batch,
+                    blueprint,
+                    generator=device_generator,
+                )
+            else:
+                output, gradient_norm = trainer.train_step(
+                    batch_data.atom_types,
+                    batch_data.frac_coords,
+                    batch_data.lattice,
+                    batch_data.batch,
+                    blueprint,
+                    generator=device_generator,
+                )
+            logged_losses = {
+                "loss": float(trainer.optimization_loss(output).detach().cpu()),
+                "volume_loss": float(output.volume_loss.detach().cpu()),
+                "shape_loss": float(output.shape_loss.detach().cpu()),
+            }
+            if objective != "lattice":
+                logged_losses.update(
+                    {
+                        "element_loss": float(output.element_loss.detach().cpu()),
+                        "composition_loss": float(output.composition_loss.detach().cpu()),
+                        "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
+                        "masked_fraction": float(output.masked_fraction.detach().cpu()),
+                    }
+                )
         clipped_steps = clipped_steps + (gradient_norm > training_config.gradient_clip_norm)
         throughput_graphs += graph_count
         graphs_seen_this_invocation += graph_count
@@ -427,9 +512,9 @@ def main() -> None:
             elapsed = time.perf_counter() - throughput_start
             record: dict[str, object] = {
                 "step": trainer.step,
-                "loss": float(trainer.optimization_loss(output).detach().cpu()),
-                "volume_loss": float(output.volume_loss.detach().cpu()),
-                "shape_loss": float(output.shape_loss.detach().cpu()),
+                "loss": logged_losses["loss"],
+                "volume_loss": logged_losses["volume_loss"],
+                "shape_loss": logged_losses["shape_loss"],
                 "gradient_norm": float(gradient_norm.cpu()),
                 "post_clip_gradient_norm": min(float(gradient_norm.cpu()), training_config.gradient_clip_norm),
                 "clip_fraction": float(clipped_steps.cpu()) / trainer.step,
@@ -444,10 +529,10 @@ def main() -> None:
             if objective != "lattice":
                 record.update(
                     {
-                        "element_loss": float(output.element_loss.detach().cpu()),
-                        "composition_loss": float(output.composition_loss.detach().cpu()),
-                        "coordinate_loss": float(output.coordinate_loss.detach().cpu()),
-                        "masked_fraction": float(output.masked_fraction.detach().cpu()),
+                        "element_loss": logged_losses["element_loss"],
+                        "composition_loss": logged_losses["composition_loss"],
+                        "coordinate_loss": logged_losses["coordinate_loss"],
+                        "masked_fraction": logged_losses["masked_fraction"],
                     }
                 )
             if objective != "lattice" and output.noisy.modality_regime is not None:

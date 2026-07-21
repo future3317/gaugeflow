@@ -1,0 +1,82 @@
+{
+  "protocol": "gaugeflow_base_capacity_execution_smoke_v1",
+  "status_before_run": "frozen_not_run",
+  "source": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "generated_side_result_canonical_sha256": "97fd65cc4d4b386f448e001609d10ee5fa71bc6f78eb551de38a06ecbaa9647a"
+  },
+  "shared_training": {
+    "seed": 5705,
+    "effective_batch_size": 64,
+    "warmup_optimizer_steps": 1,
+    "measured_optimizer_steps": 2,
+    "precision": "bf16",
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999
+  },
+  "candidates": {
+    "small_34m": {
+      "hidden_dim": 384,
+      "vector_dim": 64,
+      "layers": 8,
+      "radial_dim": 24,
+      "radial_cutoff_angstrom": 8.0,
+      "edge_dim": 128,
+      "angular_channels": 16,
+      "edge_refresh_rank": 32,
+      "modality_time_conditioning": "separate",
+      "parameter_count": 34284207,
+      "physical_batch_size": 64,
+      "gradient_accumulation_steps": 1,
+      "graphs_per_second_min": 40.0
+    },
+    "base_58m": {
+      "hidden_dim": 448,
+      "vector_dim": 96,
+      "layers": 10,
+      "radial_dim": 24,
+      "radial_cutoff_angstrom": 8.0,
+      "edge_dim": 192,
+      "angular_channels": 24,
+      "edge_refresh_rank": 48,
+      "modality_time_conditioning": "separate",
+      "parameter_count": 57682095,
+      "physical_batch_size": 32,
+      "gradient_accumulation_steps": 2,
+      "graphs_per_second_min": 25.0
+    },
+    "large_98m": {
+      "hidden_dim": 544,
+      "vector_dim": 112,
+      "layers": 12,
+      "radial_dim": 24,
+      "radial_cutoff_angstrom": 8.0,
+      "edge_dim": 224,
+      "angular_channels": 28,
+      "edge_refresh_rank": 56,
+      "modality_time_conditioning": "separate",
+      "parameter_count": 97580719,
+      "physical_batch_size": 16,
+      "gradient_accumulation_steps": 4,
+      "graphs_per_second_min": 15.0
+    }
+  },
+  "acceptance": {
+    "peak_cuda_memory_mib_max": 22000.0,
+    "finite_loss": true,
+    "finite_gradient": true,
+    "exact_effective_batch": 64,
+    "zero_failures": true
+  },
+  "decision_rule": {
+    "pass": "permit the candidate to enter the equal-exposure one-pass capacity screen with its frozen microbatch geometry",
+    "fail": "exclude only the failing capacity candidate; do not alter its mathematical architecture or increase the memory ceiling",
+    "boundary": "This is an execution qualification, not evidence that a capacity is scientifically better."
+  }
+}

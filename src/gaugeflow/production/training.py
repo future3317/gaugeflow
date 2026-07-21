@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeAlias
 
 import torch
 from torch import nn
@@ -15,7 +15,7 @@ from .hybrid_diffusion import (
     TensorFreeHybridDiffusion,
 )
 
-TrainingLossOutput = HybridLossOutput | LatticeLossOutput
+TrainingLossOutput: TypeAlias = HybridLossOutput | LatticeLossOutput
 
 
 @dataclass(frozen=True)
@@ -152,8 +152,42 @@ class ProductionTrainer:
     ) -> tuple[HybridLossOutput, torch.Tensor]:
         if self.config.objective == "lattice":
             raise ValueError("lattice objective must use train_lattice_step without coordinates")
+        self.begin_optimization_step()
+        output = self.accumulate_hybrid_step(
+            clean_elements,
+            clean_fractional_coordinates,
+            clean_lattice,
+            batch,
+            blueprint,
+            generator=generator,
+        )
+        gradient_norm = self.finish_optimization_step()
+        return output, gradient_norm
+
+    def begin_optimization_step(self) -> None:
+        """Clear gradients before one optimizer step or microbatch group."""
+
         self.diffusion.train()
         self.optimizer.zero_grad(set_to_none=True)
+
+    def accumulate_hybrid_step(
+        self,
+        clean_elements: torch.Tensor,
+        clean_fractional_coordinates: torch.Tensor,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        blueprint: ParentBlueprintBatch,
+        *,
+        loss_weight: float = 1.0,
+        generator: torch.Generator | None = None,
+    ) -> HybridLossOutput:
+        """Backpropagate one graph-weighted hybrid microbatch without stepping."""
+
+        if self.config.objective == "lattice":
+            raise ValueError("lattice objective must use train_lattice_step without coordinates")
+        if not 0.0 < loss_weight <= 1.0:
+            raise ValueError("microbatch loss weight must lie in (0,1]")
+        self.diffusion.train()
         use_bf16 = self.config.precision == "bf16" and clean_lattice.device.type == "cuda"
         with torch.autocast(
             device_type=clean_lattice.device.type,
@@ -198,8 +232,24 @@ class ProductionTrainer:
                 clean_side_information=self.config.coordinate_clean_side_information,
                 **modality_arguments,
             )
-        gradient_norm = self._optimize(output)
-        return output, gradient_norm
+        optimization_loss = self.optimization_loss(output) * loss_weight
+        if not torch.isfinite(optimization_loss):
+            raise FloatingPointError("selected training loss is non-finite")
+        optimization_loss.backward()
+        return output
+
+    def finish_optimization_step(self) -> torch.Tensor:
+        """Clip accumulated gradients, update parameters and advance EMA once."""
+
+        gradient_norm = torch.nn.utils.clip_grad_norm_(
+            self.diffusion.denoiser.parameters(), self.config.gradient_clip_norm
+        )
+        if not torch.isfinite(gradient_norm):
+            raise FloatingPointError("hybrid training gradient is non-finite")
+        self.optimizer.step()
+        self.ema.update(self.diffusion.denoiser)
+        self.step = self.step + 1
+        return gradient_norm.detach()
 
     def train_lattice_step(
         self,
@@ -245,18 +295,9 @@ class ProductionTrainer:
         if not torch.isfinite(optimization_loss):
             raise FloatingPointError("selected training loss is non-finite")
         optimization_loss.backward()
-        gradient_norm = torch.nn.utils.clip_grad_norm_(
-            self.diffusion.denoiser.parameters(), self.config.gradient_clip_norm
-        )
-        if not torch.isfinite(gradient_norm):
-            raise FloatingPointError("hybrid training gradient is non-finite")
-        self.optimizer.step()
-        self.ema.update(self.diffusion.denoiser)
-        self.step = self.step + 1
-        # Keep the scalar on-device.  Production logging materializes it only
-        # at the existing synchronized log boundary; converting it here would
-        # serialize every CUDA training step.
-        return gradient_norm.detach()
+        # Keep the scalar on-device. Production logging materializes it only
+        # at the existing synchronized log boundary.
+        return self.finish_optimization_step()
 
     def optimization_loss(self, output: TrainingLossOutput) -> torch.Tensor:
         """Select the sole preregistered objective without mixing inactive heads."""

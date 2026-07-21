@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 import torch
@@ -724,6 +725,60 @@ def test_coordinate_reverse_sampler_holds_side_states_and_replays_common_noise()
     assert bool(
         ((outputs[0].fractional_coordinates >= 0.0) & (outputs[0].fractional_coordinates < 1.0)).all()
     )
+
+
+def test_graph_weighted_accumulation_matches_one_full_batch_update() -> None:
+    elements, coordinates, lattice, blueprint = _small_clean_batch()
+    reference_model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    accumulated_model = copy.deepcopy(reference_model)
+    config = ProductionTrainingConfig(
+        precision="fp32",
+        objective="coordinate",
+        coordinate_clean_side_information=True,
+        ema_decay=0.9,
+    )
+    reference = ProductionTrainer(
+        TensorFreeHybridDiffusion(reference_model, _standardizer()),
+        config,
+    )
+    accumulated = ProductionTrainer(
+        TensorFreeHybridDiffusion(accumulated_model, _standardizer()),
+        config,
+    )
+    reference.train_step(
+        elements,
+        coordinates,
+        lattice,
+        blueprint.batch,
+        blueprint,
+        generator=torch.Generator().manual_seed(126),
+    )
+    accumulated.begin_optimization_step()
+    for _ in range(2):
+        accumulated.accumulate_hybrid_step(
+            elements,
+            coordinates,
+            lattice,
+            blueprint.batch,
+            blueprint,
+            loss_weight=0.5,
+            generator=torch.Generator().manual_seed(126),
+        )
+    accumulated.finish_optimization_step()
+
+    for reference_value, accumulated_value in zip(
+        reference_model.parameters(),
+        accumulated_model.parameters(),
+        strict=True,
+    ):
+        torch.testing.assert_close(reference_value, accumulated_value, atol=1e-7, rtol=1e-6)
 
 
 def test_uniform_element_training_is_self_correcting_and_uses_composition_loss() -> None:
