@@ -1,0 +1,32 @@
+{
+  "boundary": "This numerical qualification cannot pass assignment likelihood, p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "checks": {
+    "exact_repeat": true,
+    "finite_gradients": true,
+    "fixed_path_relabel": true,
+    "peak_memory": true,
+    "raw_logit_relabel": true,
+    "step_latency": true
+  },
+  "decision": "authorize_freezing_a_successor_assignment_protocol_only",
+  "hardware": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4090",
+    "torch": "2.5.1+cu124"
+  },
+  "implementation_commit": "1bdea8206a08d8d0575c8a24d843c4a79f5708b5",
+  "numerics": {
+    "exact_repeat_max_abs": 0.0,
+    "fixed_path_relabel_max_abs": 3.814697265625e-06,
+    "raw_logit_relabel_max_abs": 8.940696716308594e-06
+  },
+  "performance": {
+    "finite_gradient_fraction": 1.0,
+    "graphs_per_step": 128,
+    "mean_train_step_ms": 36.34801395237446,
+    "peak_cuda_mib": 1523.02783203125
+  },
+  "protocol": "h1a_assignment_deterministic_reduction_v1",
+  "protocol_sha256": "6f4123de1fb009ae19816bffffaccf312cf2b5ad86b66ed99e2f703530108f42",
+  "qualified": true
+}
