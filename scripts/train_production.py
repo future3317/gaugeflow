@@ -153,7 +153,7 @@ def _validate_data_exposure(
     steps_per_pass = math.ceil(dataset_size / batch_size)
     expected_presentations = complete_passes * dataset_size
     if steps != complete_passes * steps_per_pass or graph_presentations != expected_presentations:
-        raise ValueError("coordinate training counts do not match the declared complete data passes")
+        raise ValueError("training counts do not match the declared complete data passes")
 
 
 def parse_args() -> argparse.Namespace:

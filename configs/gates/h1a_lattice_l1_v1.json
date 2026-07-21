@@ -53,7 +53,7 @@
   },
   "training": {
     "seeds": [5705],
-    "steps": 2110,
+    "steps": 2112,
     "batch_size": 512,
     "log_every": 25,
     "num_workers": 4,
@@ -72,7 +72,7 @@
     "coordinate_sigma_max": 0.5,
     "minimum_time": 0.001,
     "maximum_time": 0.999,
-    "checkpoint_steps": [0, 1055, 2110],
+    "checkpoint_steps": [0, 1056, 2112],
     "graph_presentations": 1080328,
     "data_passes": 2.0,
     "from_scratch_required": true
