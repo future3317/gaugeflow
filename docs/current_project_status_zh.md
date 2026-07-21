@@ -406,5 +406,12 @@ functional 信息仅进入 Cartesian physical readout。MatPES physical loss 与
 由同一个 optimizer owner 累加。34.28M A1-EMA 的两图 CUDA smoke 得到 physical loss
 `1.00253 -> 0.52080`、replay loss `5.61466 -> 3.97025`，全部 finite，逐参数 exact-resume
 误差为零，峰值 CUDA allocation 为 `1.56 GB`。这只是软件 smoke，不是 Stage-B 效果
-资格。下一步是冻结 teacher feature 来源、replay 比例、exposure 与 validation Gate，再运行
-正式双 GPU 物理表征预训练；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。
+资格。当前 Stage-B-v1 方法、loss 比例、单遍 exposure 和 validation Gate 已冻结；正式
+runner 使用同一全局 permutation 的无 padding rank shards，使 674,709 条 MatPES train rows
+恰好各出现一次，并为 Alex replay 使用独立可恢复的循环流。checkpoint 保存两个 rank 的
+MatPES/Alex cursor、CPU/CUDA RNG 和显式 noise generator。PBE-only feature loss 按全局
+有标签 graph 数归一化，避免某个 rank 恰好只有 r2SCAN 时产生偏差。正式 evaluator 分别
+报告 PBE/r2SCAN 的 normalized E/F/Kelvin-stress、force cosine，PBE node-feature cosine，
+以及完全复用 A1-v1.1 口径的 512-reference/512-sample generation retention。完整 PBE
+teacher cache、CUDA runner resume smoke 与正式单遍训练仍未运行，因此尚无 Stage-B 物理
+效果结论；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。

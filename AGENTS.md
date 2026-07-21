@@ -430,8 +430,18 @@ The two-RTX-4090 execution smoke uses rank-sharded MatPES/Alex batches,
 globally weighted/summed gradients, one rank-0 AdamW/EMA owner and parameter
 broadcast. It passes exact model replication and interrupted-resume equality
 for model, optimizer, EMA, per-rank generator state and metrics. This remains
-software evidence only. Full PBE feature-cache construction and the formal
-one-pass Stage-B run are still pending; LeMat full training remains later.
+software evidence only. The production runner now emits one shared global
+permutation as no-padding rank shards: all 674,709 MatPES train rows are seen
+exactly once, while Alex replay has its own deterministic wrapped stream.
+Checkpoint state contains both per-rank cursors plus CPU, CUDA and explicit
+noise-generator states. Masked physical heads use globally reduced
+label-bearing graph counts, so the PBE-only feature loss remains unbiased when
+a rank contains r2SCAN-only graphs. The bound evaluator reports normalized
+energy/force/Kelvin-stress and force cosine separately for PBE/r2SCAN, PBE
+node-feature cosine, and the unchanged A1-v1.1 free-generation retention
+panel. Full PBE feature-cache construction, the CUDA runner resume smoke and
+the formal one-pass Stage-B run are still pending; no physical effect has yet
+been qualified and LeMat full training remains later.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
