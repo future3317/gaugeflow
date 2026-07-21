@@ -121,7 +121,7 @@ def _time_embedding_gradient_norms(model: torch.nn.Module) -> dict[str, float]:
     return result
 
 
-def _validate_coordinate_exposure(
+def _validate_data_exposure(
     training_spec: dict[str, object], *, dataset_size: int, steps: int, batch_size: int
 ) -> None:
     """Validate either complete passes or one preregistered prefix screen."""
@@ -132,9 +132,9 @@ def _validate_coordinate_exposure(
         or not isinstance(passes_value, (int, float))
         or not math.isfinite(float(passes_value))
     ):
-        raise ValueError("coordinate data_passes must be a finite number")
+        raise ValueError("data_passes must be a finite number")
     if isinstance(presentations_value, bool) or not isinstance(presentations_value, int):
-        raise ValueError("coordinate graph_presentations must be an integer")
+        raise ValueError("graph_presentations must be an integer")
     passes = float(passes_value)
     graph_presentations = int(presentations_value)
     exposure_mode = str(training_spec.get("exposure_mode", "complete_passes"))
@@ -220,9 +220,23 @@ def main() -> None:
     qualification_result = Path("reports") / qualification_name / "result.json"
     if sha256_file(qualification_result) != str(prerequisites["qualification_result_sha256"]):
         raise ValueError("production protocol mechanism qualification mismatch")
+    additional_results = prerequisites.get("additional_qualification_results", {})
+    if not isinstance(additional_results, dict) or not all(
+        isinstance(name, str) and isinstance(digest, str) for name, digest in additional_results.items()
+    ):
+        raise ValueError("additional qualification results must map report names to hashes")
+    for report_name, expected_digest in additional_results.items():
+        report_result = Path("reports") / report_name / "result.json"
+        if sha256_file(report_result) != expected_digest:
+            raise ValueError(f"additional qualification mismatch: {report_name}")
+    expected_standardization_hash = prerequisites.get("lattice_standardization_sha256")
+    if expected_standardization_hash is not None and sha256_file(args.lattice_standardization) != str(
+        expected_standardization_hash
+    ):
+        raise ValueError("lattice-standardization artifact hash mismatch")
     dataset = PackedAlexP1Dataset(args.cache_root, "train")
-    if objective == "coordinate":
-        _validate_coordinate_exposure(
+    if objective in {"coordinate", "lattice"}:
+        _validate_data_exposure(
             training_spec,
             dataset_size=len(dataset),
             steps=steps,

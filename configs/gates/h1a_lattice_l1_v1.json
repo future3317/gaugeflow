@@ -1,0 +1,116 @@
+{
+  "protocol": "h1a_lattice_l1_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-seed qualification of p(L|C,N,P1) with clean unordered composition and no coordinate input",
+  "code_commit": "43361368635bdd1ff276e5e087ec742a3ee068e2",
+  "prerequisites": {
+    "cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "qualified_mechanism": "h1a_assignment_iid_gate_v3",
+    "qualification_result_sha256": "93556a9b48887a8a5fbb3cbcd52e6aadd6689d82ea6837a22f5b6ec7a314f5aa",
+    "additional_qualification_results": {
+      "h1a_node_count_gate_v1": "f8ee00072bd8077a2b98936856a14183a6f961e5e82eb3d998c3b4f0c4eb23a2"
+    },
+    "lattice_standardization_sha256": "c792ccfeabfe0202264f0be7131471b24baae606661b60dc19c8da98be5d1905",
+    "tensor_condition_enabled": false
+  },
+  "mechanism": {
+    "factorization": "p(L|C,N,P1)",
+    "state": "standardized log-volume residual plus five-dimensional whitened trace-free log shape",
+    "probability_path": "cosine VP with x0 prediction",
+    "conditioning": [
+      "clean unordered element multiset",
+      "node count",
+      "current noisy lattice latent",
+      "lattice diffusion time"
+    ],
+    "forbidden_inputs": [
+      "fractional coordinates",
+      "radius graph, degree or periodic image",
+      "target lattice metadata beyond the denoising endpoint",
+      "material ID, formula, prototype or target space group",
+      "tensor condition"
+    ],
+    "only_change": "use the coordinate-free lattice context and dedicated lattice-only training/reverse interfaces from commit 4336136",
+    "forbidden_rescue": [
+      "additional steps or seeds",
+      "capacity or loss-weight changes",
+      "coordinate-derived lattice context",
+      "parent crystal-family oracle",
+      "threshold changes after the run"
+    ]
+  },
+  "model": {
+    "hidden_dim": 192,
+    "vector_dim": 32,
+    "layers": 4,
+    "radial_dim": 16,
+    "radial_cutoff_angstrom": 8.0,
+    "edge_dim": 64,
+    "angular_channels": 8,
+    "edge_refresh_rank": 16,
+    "independent_modality_times": true,
+    "parameter_count": 5232057
+  },
+  "training": {
+    "seeds": [5705],
+    "steps": 2110,
+    "batch_size": 512,
+    "log_every": 25,
+    "num_workers": 4,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16",
+    "geometry_precision": "not_used",
+    "objective": "lattice",
+    "coordinate_clean_side_information": false,
+    "modality_time_mode": "lattice_only",
+    "categorical_path": "absorbing_mask",
+    "composition_loss_weight": 0.0,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "checkpoint_steps": [0, 1055, 2110],
+    "graph_presentations": 1080328,
+    "data_passes": 2.0,
+    "from_scratch_required": true
+  },
+  "evaluation": {
+    "split": "validation",
+    "graphs": 4096,
+    "panel_seed": 8751,
+    "teacher_noise_seed": 8752,
+    "sampling_seed": 8753,
+    "teacher_times": [0.1, 0.3, 0.5, 0.7, 0.9],
+    "sampling_steps": 100,
+    "sampling_batch_size": 512,
+    "continuous_mode": "reverse_sde",
+    "time_grid": "uniform_log_alpha",
+    "wasserstein_quantile_points": 1001,
+    "reference_envelope_quantiles": [0.001, 0.999]
+  },
+  "acceptance": {
+    "teacher_volume_mse_ratio_max": 0.75,
+    "teacher_shape_mse_ratio_max": 0.85,
+    "teacher_t05_volume_mse_ratio_max": 0.6,
+    "teacher_t05_shape_mse_ratio_max": 0.7,
+    "normalized_volume_per_atom_w1_max": 0.5,
+    "normalized_density_w1_max": 0.5,
+    "mean_normalized_shape_latent_w1_max": 0.5,
+    "reference_envelope_fraction_min": 0.99,
+    "finite_positive_lattice_fraction": 1.0,
+    "sampling_failures": 0,
+    "deterministic_replay_max_abs": 0.0,
+    "training_graphs_per_second_min": 500.0,
+    "peak_cuda_memory_mib_max": 2500.0,
+    "target_coordinate_forward_calls": 0,
+    "tensor_candidates": 0
+  },
+  "decision_rule": {
+    "pass": "qualify only p(L|C,N,P1) and permit a separately frozen generated-side coordinate exposure Gate",
+    "fail": "stop before generated-side coordinates and attribute failure to teacher-forced lattice fitting or free-running lattice distribution without changing this run",
+    "boundary": "L1 does not qualify parent crystal-family projection, generated composition, joint M1, tensor conditioning, relaxation, DFT or DFPT"
+  }
+}

@@ -21,7 +21,7 @@ from scripts.train_production import (
     _GRADIENT_GROUPS,
     _clipped_module_gradient_norms,
     _gradient_group,
-    _validate_coordinate_exposure,
+    _validate_data_exposure,
 )
 
 
@@ -59,13 +59,13 @@ def _standardizer() -> P1LatticeStandardizer:
 
 
 def test_coordinate_exposure_contract_accepts_complete_passes_and_explicit_prefix() -> None:
-    _validate_coordinate_exposure(
+    _validate_data_exposure(
         {"data_passes": 2.0, "graph_presentations": 1_080_328},
         dataset_size=540_164,
         steps=16_882,
         batch_size=64,
     )
-    _validate_coordinate_exposure(
+    _validate_data_exposure(
         {
             "exposure_mode": "prefix_screen",
             "data_passes": 135_104 / 540_164,
@@ -93,7 +93,7 @@ def test_coordinate_exposure_contract_accepts_complete_passes_and_explicit_prefi
         },
     ):
         try:
-            _validate_coordinate_exposure(invalid, dataset_size=540_164, steps=16_882, batch_size=64)
+            _validate_data_exposure(invalid, dataset_size=540_164, steps=16_882, batch_size=64)
         except ValueError:
             pass
         else:
