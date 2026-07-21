@@ -381,7 +381,12 @@ class StoichiometryFirstCompositionModel(nn.Module):
         for atoms in range(1, maximum_atoms + 1):
             valid = catalogue.node_count == atoms
             normalization = torch.logsumexp(partition_log_prior[valid].double(), dim=0)
-            if not torch.allclose(normalization, torch.zeros_like(normalization), atol=1e-10):
+            # The qualified checkpoint is stored in FP32 even though the
+            # empirical prior is fitted in FP64.  Keep a strict FP64 contract
+            # while allowing the unavoidable FP32 serialization rounding when
+            # reconstructing the frozen runtime model.
+            tolerance = 1.0e-10 if partition_log_prior.dtype == torch.float64 else 2.0e-6
+            if not torch.allclose(normalization, torch.zeros_like(normalization), atol=tolerance):
                 raise ValueError("partition_log_prior is not normalized for every node count")
 
         self.context_dim = context_dim

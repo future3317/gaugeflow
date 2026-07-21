@@ -145,17 +145,17 @@ def test_tensor_free_loss_is_finite_and_bypasses_cartesian_candidates():
 
 def _small_composition_model() -> StoichiometryFirstCompositionModel:
     catalogue = IntegerPartitionCatalogue.build(maximum_atoms=20, maximum_species=7)
-    log_prior = torch.full((catalogue.size,), -torch.inf, dtype=torch.float32)
+    log_prior = torch.full((catalogue.size,), -torch.inf, dtype=torch.float64)
     for count in range(1, 21):
         support = catalogue.node_count == count
-        log_prior[support] = -torch.log(support.sum().to(torch.float32))
+        log_prior[support] = -torch.log(support.sum().to(torch.float64))
     return StoichiometryFirstCompositionModel(
         context_dim=1,
         hidden_dim=8,
         partition_log_prior=log_prior,
         maximum_atoms=20,
         maximum_species=7,
-    )
+    ).float()
 
 
 def test_orderless_product_path_conditions_on_exact_composition_and_has_finite_gradients():
