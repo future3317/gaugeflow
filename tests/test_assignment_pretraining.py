@@ -7,8 +7,8 @@ import torch
 from gaugeflow.geometry import closest_image_displacements_numpy
 from gaugeflow.production.assignment_data import prepare_assignment_carrier_example
 from gaugeflow.production.assignment_pretraining import (
-    certified_periodic_pair_distances,
     compile_masked_assignment_batch,
+    exact_periodic_pair_distances,
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
@@ -59,7 +59,8 @@ def test_masked_compiler_matches_identity_parent_reference() -> None:
         batch,
         torch.cat(token_parts),
     )
-    assert compiled.maximum_image_shell == 1
+    assert compiled.maximum_candidate_count <= 27
+    assert not bool(compiled.refined_edge_mask.any())
     node_offset = 0
     edge_offset = 0
     for graph, (fractional, tokens) in enumerate(zip(fractional_parts, token_parts)):
@@ -105,27 +106,45 @@ def test_masked_compiler_matches_identity_parent_reference() -> None:
         edge_offset += edges
 
 
-def test_certified_cvp_expands_and_fails_closed() -> None:
+def test_dual_bound_cvp_matches_exact_solver_beyond_a_fixed_image_cube() -> None:
     fractional = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.49, 0.0]], dtype=torch.float64)
     lattice = torch.tensor(
         [[[1.0, 0.0, 0.0], [5.0, 0.1, 0.0], [0.0, 0.0, 1.0]]],
         dtype=torch.float64,
     )
     batch = torch.zeros(2, dtype=torch.long)
-    with pytest.raises(RuntimeError, match="certificate exceeded"):
-        certified_periodic_pair_distances(
-            fractional,
-            lattice,
-            batch,
-            maximum_shell=4,
-        )
-    source, target, _, _, _, distance, shell = certified_periodic_pair_distances(
+    with pytest.raises(RuntimeError, match="registered candidate cap"):
+        exact_periodic_pair_distances(fractional, lattice, batch)
+    source, target, _, _, _, distance, candidate_count, refined = exact_periodic_pair_distances(
         fractional,
         lattice,
         batch,
-        maximum_shell=32,
+        maximum_refinement_candidates=20_000,
     )
     delta = (fractional[target] - fractional[source]).numpy()
     exact, _ = closest_image_displacements_numpy(delta, lattice[0].numpy())
     assert np.allclose(distance.numpy(), np.linalg.norm(exact, axis=1), atol=1e-12, rtol=1e-12)
-    assert int(shell.max()) > 4
+    assert bool(refined.all())
+    assert int(candidate_count.max()) > 27
+
+
+def test_dual_bound_refines_elongated_cells_without_rejecting_valid_data() -> None:
+    fractional = torch.tensor(
+        [[0.0, 0.0, 0.0], [0.49, 0.49, 0.49], [0.2, 0.8, 0.1]],
+        dtype=torch.float32,
+    )
+    lattice = torch.tensor(
+        [[[3.55, 0.0, 0.0], [-1.775, 3.074, 0.0], [0.0, 0.0, 40.1]]],
+        dtype=torch.float32,
+    )
+    batch = torch.zeros(3, dtype=torch.long)
+    source, target, _, _, _, distance, candidate_count, refined = exact_periodic_pair_distances(
+        fractional,
+        lattice,
+        batch,
+    )
+    delta = (fractional[target] - fractional[source]).to(torch.float64).numpy()
+    exact, _ = closest_image_displacements_numpy(delta, lattice[0].to(torch.float64).numpy())
+    assert np.allclose(distance.numpy(), np.linalg.norm(exact, axis=1), atol=2e-5, rtol=2e-5)
+    assert bool(refined.any())
+    assert int(candidate_count.max()) <= 4096

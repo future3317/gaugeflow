@@ -15,11 +15,12 @@ from .state_projection import sorted_segment_sum
 
 @dataclass(frozen=True)
 class MaskedAssignmentCompilation:
-    """One packed exact-count assignment batch and its CVP certificate."""
+    """One packed exact-count assignment batch and exact CVP metadata."""
 
     carrier: AssignmentCarrierBatch
-    maximum_image_shell: int
-    shell_by_edge: torch.Tensor
+    maximum_candidate_count: int
+    candidate_count_by_edge: torch.Tensor
+    refined_edge_mask: torch.Tensor
 
 
 def complete_pair_indices(
@@ -51,12 +52,13 @@ def complete_pair_indices(
 
 
 @torch.no_grad()
-def certified_periodic_pair_distances(
+def exact_periodic_pair_distances(
     fractional_coordinates: torch.Tensor,
     lattice: torch.Tensor,
     batch: torch.Tensor,
     *,
-    maximum_shell: int = 4,
+    maximum_refinement_candidates: int = 4096,
+    refinement_pair_chunk_size: int = 4096,
 ) -> tuple[
     torch.Tensor,
     torch.Tensor,
@@ -65,18 +67,21 @@ def certified_periodic_pair_distances(
     torch.Tensor,
     torch.Tensor,
     torch.Tensor,
+    torch.Tensor,
 ]:
-    r"""Solve packed three-dimensional CVPs by certified finite enumeration.
+    r"""Solve packed three-dimensional CVPs by a dual-lattice bound.
 
-    Coordinates are first moved into ``[-1/2,1/2)^3``.  After searching the
-    integer cube of radius ``m``, every unseen image has fractional norm at
-    least ``m+1/2``.  Therefore
+    A 27-image search first supplies a finite upper bound ``b``.  If an image
+    with fractional displacement ``y`` can improve that bound, then for every
+    fractional coordinate ``j``
 
-    ``best <= sigma_min(L) * (m + 1/2)``
+    ``|y_j| = |(y L) dot (L^{-1})[:, j]| <= b ||(L^{-1})[:, j]||``.
 
-    certifies that the current image is globally closest.  Uncertified pairs
-    alone expand to the next shell; exhausting the registered bound fails
-    closed.
+    This gives a finite integer box containing every possible minimizer.  Pairs
+    whose box is already contained in ``[-1,1]^3`` are certified immediately;
+    the remaining boxes are grouped by shape and evaluated vectorially.  The
+    registered candidate cap is a fail-closed memory bound, not a geometric
+    approximation or a fallback.
     """
     if (
         fractional_coordinates.ndim != 2
@@ -85,9 +90,10 @@ def certified_periodic_pair_distances(
         or lattice.shape[1:] != (3, 3)
         or batch.shape != fractional_coordinates.shape[:1]
         or batch.dtype != torch.long
-        or maximum_shell < 1
+        or maximum_refinement_candidates < 27
+        or refinement_pair_chunk_size < 1
     ):
-        raise ValueError("certified periodic-distance inputs are invalid")
+        raise ValueError("exact periodic-distance inputs are invalid")
     graphs = lattice.shape[0]
     if graphs < 1 or batch.numel() < 1 or int(batch.min()) != 0 or int(batch.max()) != graphs - 1:
         raise ValueError("periodic-distance batch must cover every graph")
@@ -103,36 +109,90 @@ def certified_periodic_pair_distances(
     source, target, edge_graph, source_local, target_local = complete_pair_indices(node_counts)
     if source.numel() == 0:
         empty_distance = lattice.new_empty(0)
-        empty_shell = torch.empty(0, dtype=torch.long, device=lattice.device)
-        return source, target, edge_graph, source_local, target_local, empty_distance, empty_shell
+        empty_long = torch.empty(0, dtype=torch.long, device=lattice.device)
+        empty_bool = torch.empty(0, dtype=torch.bool, device=lattice.device)
+        return (
+            source,
+            target,
+            edge_graph,
+            source_local,
+            target_local,
+            empty_distance,
+            empty_long,
+            empty_bool,
+        )
 
     wrapped = fractional_coordinates[target] - fractional_coordinates[source]
     wrapped = wrapped - torch.floor(wrapped + 0.5)
-    singular_minimum = torch.linalg.svdvals(lattice)[:, -1]
-    lattice_scale = torch.linalg.matrix_norm(lattice, ord=2, dim=(-2, -1)).clamp_min(1.0)
-    tolerance = 64.0 * torch.finfo(lattice.dtype).eps * lattice_scale
-    distance = lattice.new_full((source.numel(),), torch.inf)
-    shell_by_edge = torch.zeros(source.numel(), dtype=torch.long, device=lattice.device)
-    unresolved = torch.arange(source.numel(), device=lattice.device)
-    for shell in range(1, maximum_shell + 1):
-        axis = torch.arange(-shell, shell + 1, device=lattice.device, dtype=lattice.dtype)
-        shifts = torch.cartesian_prod(axis, axis, axis)
-        candidate = wrapped[unresolved, None, :] - shifts[None, :, :]
-        cartesian = torch.einsum("eci,eij->ecj", candidate, lattice[edge_graph[unresolved]])
-        best = torch.linalg.vector_norm(cartesian, dim=-1).min(dim=1).values
-        distance[unresolved] = best
-        lower_bound = singular_minimum[edge_graph[unresolved]] * (shell + 0.5)
-        certified = best + tolerance[edge_graph[unresolved]] <= lower_bound
-        shell_by_edge[unresolved[certified]] = shell
-        unresolved = unresolved[~certified]
-        if unresolved.numel() == 0:
-            break
-    if unresolved.numel():
+    initial_axis = torch.arange(-1, 2, device=lattice.device, dtype=lattice.dtype)
+    initial_shift = torch.cartesian_prod(initial_axis, initial_axis, initial_axis)
+    initial_candidate = wrapped[:, None, :] - initial_shift[None, :, :]
+    initial_cartesian = torch.einsum(
+        "eci,eij->ecj",
+        initial_candidate,
+        lattice[edge_graph],
+    )
+    distance = torch.linalg.vector_norm(initial_cartesian, dim=-1).min(dim=1).values
+
+    # Bounds are constructed in float64 even when feature distances are FP32.
+    # The explicit FP32 roundoff allowance can only enlarge the search box.
+    lattice64 = lattice.to(torch.float64)
+    wrapped64 = wrapped.to(torch.float64)
+    reciprocal_column_norm = torch.linalg.vector_norm(
+        torch.linalg.inv(lattice64),
+        dim=1,
+    )
+    lattice_scale = torch.linalg.matrix_norm(lattice64, ord=2, dim=(-2, -1)).clamp_min(1.0)
+    input_epsilon = torch.finfo(lattice.dtype).eps
+    distance_upper = distance.to(torch.float64) + 1024.0 * input_epsilon * lattice_scale[edge_graph]
+    coordinate_radius = (
+        distance_upper[:, None] * reciprocal_column_norm[edge_graph] * (1.0 + 1.0e-12)
+        + 1.0e-10
+    )
+    lower = torch.ceil(wrapped64 - coordinate_radius).to(torch.long)
+    upper = torch.floor(wrapped64 + coordinate_radius).to(torch.long)
+    span = upper - lower + 1
+    if bool((span < 1).any()):
+        raise RuntimeError("dual-lattice CVP bound produced an empty integer box")
+    candidate_count = span.prod(dim=1)
+    if bool((candidate_count > maximum_refinement_candidates).any()):
+        maximum = int(candidate_count.max())
         raise RuntimeError(
-            f"periodic CVP certificate exceeded image shell {maximum_shell} "
-            f"for {unresolved.numel()} pairs"
+            "dual-lattice CVP refinement exceeds the registered candidate cap "
+            f"({maximum} > {maximum_refinement_candidates})"
         )
-    return source, target, edge_graph, source_local, target_local, distance, shell_by_edge
+    refined = ((lower < -1) | (upper > 1)).any(dim=1)
+    refined_index = torch.nonzero(refined, as_tuple=False).flatten()
+    if refined_index.numel():
+        refined_span = span[refined_index]
+        unique_span, span_group = torch.unique(refined_span, dim=0, return_inverse=True)
+        for group, shape in enumerate(unique_span):
+            group_index = refined_index[span_group == group]
+            axes = [
+                torch.arange(int(width), device=lattice.device)
+                for width in shape.detach().cpu().tolist()
+            ]
+            relative_shift = torch.cartesian_prod(*axes)
+            for start in range(0, group_index.numel(), refinement_pair_chunk_size):
+                selected = group_index[start : start + refinement_pair_chunk_size]
+                integer_shift = lower[selected, None, :] + relative_shift[None, :, :]
+                candidate = wrapped[selected, None, :] - integer_shift.to(wrapped.dtype)
+                cartesian = torch.einsum(
+                    "eci,eij->ecj",
+                    candidate,
+                    lattice[edge_graph[selected]],
+                )
+                distance[selected] = torch.linalg.vector_norm(cartesian, dim=-1).min(dim=1).values
+    return (
+        source,
+        target,
+        edge_graph,
+        source_local,
+        target_local,
+        distance,
+        candidate_count,
+        refined,
+    )
 
 
 def _identity_site_features(
@@ -244,7 +304,7 @@ def compile_masked_assignment_batch(
     *,
     maximum_sites: int = 20,
     radial_channels: int = 16,
-    maximum_image_shell: int = 4,
+    maximum_refinement_candidates: int = 4096,
 ) -> MaskedAssignmentCompilation:
     """Compile a full-Alex batch without parent or target metadata inputs."""
     if atom_tokens.shape != batch.shape or atom_tokens.dtype != torch.long:
@@ -262,12 +322,13 @@ def compile_masked_assignment_batch(
         source_local,
         target_local,
         distance,
-        shell_by_edge,
-    ) = certified_periodic_pair_distances(
+        candidate_count,
+        refined_edge_mask,
+    ) = exact_periodic_pair_distances(
         fractional_coordinates,
         lattice,
         batch,
-        maximum_shell=maximum_image_shell,
+        maximum_refinement_candidates=maximum_refinement_candidates,
     )
     volume = torch.linalg.det(lattice)
     normalized_distance = distance / volume[edge_graph].pow(1.0 / 3.0)
@@ -325,6 +386,7 @@ def compile_masked_assignment_batch(
     carrier.validate(vocabulary_size=CHEMICAL_ELEMENT_COUNT)
     return MaskedAssignmentCompilation(
         carrier=carrier,
-        maximum_image_shell=int(shell_by_edge.max()) if shell_by_edge.numel() else 0,
-        shell_by_edge=shell_by_edge,
+        maximum_candidate_count=int(candidate_count.max()) if candidate_count.numel() else 0,
+        candidate_count_by_edge=candidate_count,
+        refined_edge_mask=refined_edge_mask,
     )

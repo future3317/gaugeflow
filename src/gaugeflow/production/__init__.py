@@ -12,9 +12,9 @@ from .assignment_data import (
 )
 from .assignment_pretraining import (
     MaskedAssignmentCompilation,
-    certified_periodic_pair_distances,
     compile_masked_assignment_batch,
     complete_pair_indices,
+    exact_periodic_pair_distances,
 )
 from .assignment_scorer import (
     OrbitAwareAssignmentScorer,
@@ -164,8 +164,8 @@ __all__ = [
     "complete_pair_context_features",
     "complete_pair_indices",
     "complete_pair_rbf",
-    "certified_periodic_pair_distances",
     "compile_masked_assignment_batch",
+    "exact_periodic_pair_distances",
     "count_constrained_assignment",
     "count_projected_assignment",
     "occupation_block_composition_feasible",

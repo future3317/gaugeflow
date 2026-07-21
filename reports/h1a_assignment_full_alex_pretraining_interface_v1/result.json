@@ -1,0 +1,34 @@
+{
+  "boundary": "This failed interface Gate did not train or qualify parent-conditioned assignment and cannot authorize p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "decision": "stop_before_pretraining_and_replace_the_overconservative_cvp_certificate",
+  "diagnosis": {
+    "classification": "certificate_false_rejection_not_data_corruption",
+    "dual_bound_max_axis_span": 19,
+    "dual_bound_max_candidates_per_pair": 450,
+    "dual_bound_p95_axis_span": 13,
+    "dual_bound_p95_candidates_per_pair": 242,
+    "exact_search_shell_histogram": {
+      "0": 338,
+      "1": 580
+    },
+    "exact_search_shell_maximum": 1,
+    "failed_graphs": 918,
+    "maximum_cell_condition_number": 22.289619813597405,
+    "median_cell_condition_number": 10.832400144258164,
+    "unresolved_pairs": 28632
+  },
+  "failure": {
+    "message": "periodic CVP certificate exceeded image shell 4 for 60 pairs",
+    "stage": "exact_cvp_panel_after_full_source_scan"
+  },
+  "hardware": {
+    "device": "NVIDIA GeForce RTX 4090",
+    "torch": "2.5.1+cu124",
+    "cuda": "12.4"
+  },
+  "implementation_commit": "a3494c17ddfbdcbc20fa6e9dbd1a4b8a233c345d",
+  "protocol": "h1a_assignment_full_alex_pretraining_interface_v1",
+  "qualified": false,
+  "scientific_interpretation": "All 918 false-rejected graphs have an exact closest image inside the initial 27-image cube. The isotropic sigma_min(L) lower bound is too loose for elongated valid cells; the P1 data are not removed and the frozen shell limit is not changed.",
+  "source_graphs": 540164
+}
