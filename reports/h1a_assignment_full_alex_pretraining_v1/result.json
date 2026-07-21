@@ -1,0 +1,54 @@
+{
+  "boundary": "This is one exact, non-Gold Alex-MP-20 masked-occupation representation-pretraining pass. It does not qualify parent-conditioned assignment, p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "checkpoint": {
+    "path": "checkpoint.pt",
+    "selection": "final_exact_pass_without_calibration_peeking",
+    "sha256": "0d17cfc8f091f5624fd46d6b03d84cdfe01fcbcda98a59d8d711d5b0d64f5d47"
+  },
+  "checks": {
+    "checkpoint": true,
+    "exact_graph_coverage": true,
+    "finite_gradient_updates": true,
+    "loss_descent": true,
+    "peak_memory": true,
+    "throughput": true
+  },
+  "data": {
+    "allowed_index_sha256": "a6cc844abb12fbc91e2342ac7f248565c8d9ea152a7cbca4bcd4da0f54133335",
+    "excluded_gold_train_rows": 181,
+    "permutation_sha256": "77a0185d7a65d66fdf917a37eaee389e514c6a791c133e5c11b374edcd04fa05"
+  },
+  "decision": "freeze_the_broad_assignment_checkpoint_and_run_parent_conditioned_assignment_v2",
+  "hardware": {
+    "cuda": "12.4",
+    "devices": [
+      "NVIDIA GeForce RTX 4090",
+      "NVIDIA GeForce RTX 4090"
+    ],
+    "dtype": "float32",
+    "physical_cuda_devices": [
+      1,
+      3
+    ],
+    "torch": "2.5.1+cu124",
+    "world_size": 2
+  },
+  "implementation_commit": "16cb1a6f7a5e70c2eea87d2eacfc4b96c8948310",
+  "protocol": "h1a_assignment_full_alex_pretraining_v1",
+  "protocol_sha256": "c42e3686a2d1f8cddb41b8c1986c433ccb3b077c1c07a60d813c994c1d78705a",
+  "qualified": true,
+  "training": {
+    "elapsed_seconds": 878.4982378940331,
+    "final_order_elbo_nll": 1.5060074660706753,
+    "final_to_initial_nll": 0.16114070370514313,
+    "finite_gradient_updates": 4219,
+    "global_graphs_per_second": 614.6660023979857,
+    "graph_path_exposures": 1079966,
+    "initial_order_elbo_nll": 9.34591590729542,
+    "path_samples_per_graph": 2,
+    "peak_cuda_mib_per_rank": 4641.66650390625,
+    "processed_graphs": 539983,
+    "unique_graphs": 539983,
+    "updates": 4219
+  }
+}
