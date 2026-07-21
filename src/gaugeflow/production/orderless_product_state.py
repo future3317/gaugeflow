@@ -32,12 +32,13 @@ class OrderlessPartialOccupation:
     reveal_count: torch.Tensor
     next_site: torch.Tensor
     next_token: torch.Tensor
+    mask_token: int
 
     @property
     def graphs(self) -> int:
         return int(self.composition_counts.shape[0])
 
-    def validate(self, *, vocabulary_size: int = CHEMICAL_ELEMENT_COUNT, mask_token: int = 118) -> None:
+    def validate(self, *, vocabulary_size: int = CHEMICAL_ELEMENT_COUNT) -> None:
         nodes = self.batch.numel()
         graphs = self.graphs
         if graphs < 1 or self.composition_counts.shape != (graphs, vocabulary_size):
@@ -56,7 +57,9 @@ class OrderlessPartialOccupation:
             raise ValueError("packed batch must be nonempty, contiguous and sorted")
         if self.partial_tokens.shape != (nodes,) or self.partial_tokens.dtype != torch.long:
             raise ValueError("partial tokens must align with packed nodes")
-        valid_token = (self.partial_tokens == mask_token) | (
+        if self.mask_token < vocabulary_size:
+            raise ValueError("mask token must lie outside the element vocabulary")
+        valid_token = (self.partial_tokens == self.mask_token) | (
             (self.partial_tokens >= 0) & (self.partial_tokens < vocabulary_size)
         )
         if not bool(valid_token.all()):
@@ -88,7 +91,7 @@ class OrderlessPartialOccupation:
             raise ValueError("next token lies outside the element vocabulary")
         if not bool((self.remaining_counts.gather(1, self.next_token[:, None]).squeeze(1) > 0).all()):
             raise ValueError("next target is absent from the remaining composition")
-        revealed = self.partial_tokens != mask_token
+        revealed = self.partial_tokens != self.mask_token
         observed = torch.bincount(
             self.batch[revealed] * vocabulary_size + self.partial_tokens[revealed],
             minlength=graphs * vocabulary_size,
@@ -171,8 +174,9 @@ def partial_occupation_from_reveal_rank(
         reveal_count=reveal_count,
         next_site=next_site,
         next_token=assignment[next_site],
+        mask_token=mask_token,
     )
-    state.validate(vocabulary_size=vocabulary_size, mask_token=mask_token)
+    state.validate(vocabulary_size=vocabulary_size)
     return state
 
 
