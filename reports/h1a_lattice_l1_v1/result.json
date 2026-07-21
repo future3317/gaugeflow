@@ -1,0 +1,164 @@
+{
+  "boundary": "L1 does not qualify parent crystal-family projection, generated composition, joint M1, tensor conditioning, relaxation, DFT or DFPT",
+  "checks": {
+    "density_distribution": true,
+    "deterministic_replay": true,
+    "finite_positive": true,
+    "no_coordinate_forward": true,
+    "no_tensor_atlas": true,
+    "reference_envelope": true,
+    "sampling_failures": true,
+    "shape_distribution": true,
+    "teacher_shape": true,
+    "teacher_t05_shape": true,
+    "teacher_t05_volume": true,
+    "teacher_volume": true,
+    "training_memory": true,
+    "training_throughput": true,
+    "volume_distribution": true
+  },
+  "code_commit": "43361368635bdd1ff276e5e087ec742a3ee068e2",
+  "decision": "qualify only p(L|C,N,P1) and permit a separately frozen generated-side coordinate exposure Gate",
+  "deterministic_replay_max_abs": 0.0,
+  "execution": {
+    "evaluation_peak_cuda_memory_mib": 37.62060546875,
+    "median_graphs_per_second": 11929.8017578125,
+    "peak_cuda_memory_mib": 80.70654296875
+  },
+  "protocol": "h1a_lattice_l1_v1",
+  "qualified": true,
+  "sampling": {
+    "finite_positive_lattice_fraction": 1.0,
+    "full_geometry_forward_calls": 0,
+    "generated_quantiles": {
+      "angles_degree": [
+        64.26599785614013,
+        71.94613006591797,
+        89.28164672851562,
+        103.16706283569336,
+        107.61881154632565
+      ],
+      "condition_number": [
+        1.1610540837049483,
+        1.2347767651081085,
+        1.5876067280769348,
+        2.359214651584626,
+        2.8405115091800788
+      ],
+      "density_g_cm3": [
+        1.186836420893669,
+        2.1562843680381776,
+        6.0360143184661865,
+        13.520094919204718,
+        16.669240159988483
+      ],
+      "lengths_angstrom": [
+        2.935795072555542,
+        3.2631417679786683,
+        5.836469650268555,
+        10.601689062118528,
+        12.058556282997117
+      ],
+      "volume_per_atom": [
+        9.929313621520997,
+        11.62812852859497,
+        22.250786781311035,
+        47.74364452362061,
+        67.34491981506388
+      ]
+    },
+    "graphs": 4096,
+    "graphs_per_second": 283.43273611572806,
+    "mean_normalized_shape_latent_w1": 0.494168800265784,
+    "normalized_density_w1": 0.02201324770456294,
+    "normalized_shape_latent_w1": [
+      0.6494772100596194,
+      0.29901261375341687,
+      0.5529888234907866,
+      0.3473908411648872,
+      0.62197451286021
+    ],
+    "normalized_volume_per_atom_w1": 0.09057081611267391,
+    "reference_envelope_fraction": 0.99853515625,
+    "reference_envelope_fractions": {
+      "condition_number": 1.0,
+      "density_g_cm3": 0.99853515625,
+      "volume_per_atom": 1.0
+    },
+    "reference_quantiles": {
+      "angles_degree": [
+        60.000003814697266,
+        60.000003814697266,
+        90.0,
+        120.00000762939453,
+        120.00000762939453
+      ],
+      "condition_number": [
+        1.0,
+        1.0202016472816466,
+        1.973518967628479,
+        4.617582821846012,
+        6.80399039268494
+      ],
+      "density_g_cm3": [
+        1.1204178619384766,
+        2.1661296606063845,
+        6.106786251068115,
+        13.915859031677263,
+        16.733692770004296
+      ],
+      "lengths_angstrom": [
+        2.6771576404571533,
+        3.047276020050049,
+        6.2171571254730225,
+        14.459885578155514,
+        18.03514571571347
+      ],
+      "volume_per_atom": [
+        8.073734850883485,
+        10.084145069122314,
+        22.858283042907715,
+        53.48389282226568,
+        83.31798152923587
+      ]
+    },
+    "sampling_failures": 0,
+    "tensor_atlas_calls": 0
+  },
+  "teacher_forced": {
+    "aggregate_shape_mse_ratio": 0.6071072644972483,
+    "aggregate_volume_mse_ratio": 0.058232720273391846,
+    "by_time": {
+      "0.1": {
+        "shape_mse": 0.38502590358257294,
+        "shape_mse_ratio": 0.29920624082683506,
+        "volume_mse": 0.06187387462705374,
+        "volume_mse_ratio": 0.056756075887853905
+      },
+      "0.3": {
+        "shape_mse": 0.5151445925235748,
+        "shape_mse_ratio": 0.40032235643645403,
+        "volume_mse": 0.061987513676285744,
+        "volume_mse_ratio": 0.0568603154645882
+      },
+      "0.5": {
+        "shape_mse": 0.7507248282432556,
+        "shape_mse_ratio": 0.5833933552625594,
+        "volume_mse": 0.06315031414851546,
+        "volume_mse_ratio": 0.05792693675252426
+      },
+      "0.7": {
+        "shape_mse": 1.026627743244171,
+        "shape_mse_ratio": 0.7977993816167982,
+        "volume_mse": 0.0646407506428659,
+        "volume_mse_ratio": 0.0592940941721825
+      },
+      "0.9": {
+        "shape_mse": 1.2286792635917663,
+        "shape_mse_ratio": 0.9548149883435947,
+        "volume_mse": 0.06576590053737164,
+        "volume_mse_ratio": 0.06032617908981035
+      }
+    }
+  }
+}

@@ -303,6 +303,22 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   panels remain untouched OOD stress panels. It still does not authorize
   generated composition, `p(N)`, L1/M1, free joint H1a, tensor/oracle work,
   relaxation, DFT or DFPT.
+- The supported-IID exact-count assignment Gate has now passed. Calibration/test
+  quotient-NLL reductions are `0.70939/0.85290`, orbit-aligned accuracies are
+  `0.93864/0.94080`, exact composition is `1.0`, and failures are zero. This
+  qualifies only oracle-composition assignment on supported IID carriers;
+  unseen-action and formula/prototype-disjoint panels remain OOD stress failures.
+- The explicit train-only empirical node-count law has passed its IID Gate:
+  test NLL `2.41760` versus uniform `2.99573`, JSD `1.00e-4`, integer W1
+  `0.02438`, and zero invalid samples/failures. Formula/prototype-disjoint
+  node-count results remain separate OOD evidence.
+- The coordinate-free P1 lattice Gate has passed on 4,096 validation structures.
+  Aggregate teacher volume/shape MSE ratios are `0.05823/0.60711`; free-running
+  volume/density/shape normalized W1 values are `0.09057/0.02201/0.49417`;
+  all 4,096 lattices are finite with positive volume and failures are zero.
+  Lattice training and reverse sampling do not accept coordinates, build edges,
+  or call the tensor atlas. This qualifies only `p(L|C,N,P1)` with clean
+  composition; shape W1 is close to its frozen `0.50` bound.
 - Future successor probability/relabel metrics must cast frozen FP32 model
   scores to FP64 before exact DP evaluation. This resolves the archived
   `1.1444e-5` reduction-order residual without weakening its frozen threshold;
@@ -323,15 +339,15 @@ versioned data/oracle artifacts but must not import PiezoJet modules.
   used to fabricate them. Do not choose a hard chain, start free joint
   training, or enter later Gates before these prerequisites are satisfied.
 
-Work is now at GaugeFlow-base A0 interface closure. The next permitted learned
-operation is one separately frozen, from-scratch, single-seed IID oracle-C
-orderless assignment Gate; the original formula/prototype panels remain OOD
-stress only. Learned assignment must precede `p(B,N)`, L1, generated-side-state
-coordinates, and joint A1 pretraining. H1b and H2--H6 remain prohibited. Do not
-add seeds or steps to rescue completed protocols, revive either failed
-reciprocal-score residual, or initialize joint training from a failed
-coordinate checkpoint. A new mechanism requires a separately frozen causal or
-operator qualification first.
+Work is now at GaugeFlow-base generated-side coordinate closure. Exact-count
+supported-IID assignment, explicit `p(N)`, and the clean-composition P1 lattice
+law have passed their separate Gates. The next permitted learned operation is a
+separately frozen comparison of coordinate generation under clean versus
+generated assignment/lattice side states. Joint A1 pretraining and the
+30M/60M/100M capacity screen remain blocked until that exposure Gate passes.
+H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue completed
+protocols, revive failed reciprocal/topology branches, or initialize joint
+training from a failed coordinate checkpoint.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.
