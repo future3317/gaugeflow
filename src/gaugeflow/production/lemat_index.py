@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
-from gaugeflow.file_utils import load_json_object, sha256_file
+from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
 
 from .lemat_data import (
     LeMatPhysicalLabelPolicy,
@@ -163,6 +163,7 @@ def build_lemat_index(
     test_fraction: float = 0.05,
     physical_label_policy: LeMatPhysicalLabelPolicy = "compatible_only",
     excluded_material_ids: set[str] | None = None,
+    excluded_material_ids_artifact_sha256: str | None = None,
     max_row_groups_per_source: int | None = None,
 ) -> dict[str, Any]:
     """Build a source-balanced-ready row-group index without copying 5.4M records."""
@@ -175,6 +176,11 @@ def build_lemat_index(
         raise FileExistsError(f"refusing to overwrite LeMat index {output}")
     output.mkdir(parents=True, exist_ok=True)
     excluded = {normalize_external_material_id(value) for value in (excluded_material_ids or set())}
+    exclusion_artifact_bound = not excluded or (
+        isinstance(excluded_material_ids_artifact_sha256, str)
+        and len(excluded_material_ids_artifact_sha256) == 64
+        and all(character in "0123456789abcdef" for character in excluded_material_ids_artifact_sha256)
+    )
     values: dict[str, list[int]] = {
         "source_index": [],
         "row_group": [],
@@ -253,7 +259,12 @@ def build_lemat_index(
         for name, code in SPLIT_TO_INDEX.items()
     }
     bounded = max_row_groups_per_source is not None
-    qualified = not bounded and invalid_rows == 0 and all(split_counts.values())
+    qualified = (
+        not bounded
+        and invalid_rows == 0
+        and all(split_counts.values())
+        and exclusion_artifact_bound
+    )
     manifest = {
         "schema": LEMAT_INDEX_SCHEMA,
         "qualified": qualified,
@@ -271,6 +282,10 @@ def build_lemat_index(
         "compatible_selected_rows": compatible_rows,
         "excluded_large_cells": excluded_large,
         "excluded_external_overlap": excluded_overlap,
+        "excluded_material_ids_count": len(excluded),
+        "excluded_material_ids_content_sha256": canonical_json_hash(sorted(excluded)),
+        "excluded_material_ids_artifact_sha256": excluded_material_ids_artifact_sha256,
+        "exclusion_artifact_bound": exclusion_artifact_bound,
         "invalid_index_rows": invalid_rows,
         "bounded_smoke": bounded,
     }

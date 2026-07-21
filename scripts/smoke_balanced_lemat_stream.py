@@ -33,6 +33,22 @@ def main() -> None:
         "train",
         require_qualified=not args.allow_bounded_index,
     )
+    random_access_checked: list[str] = []
+    for functional, name in enumerate(dataset.functional_names):
+        row = int(torch.nonzero(dataset.functional_group_index == functional)[0])
+        record = dataset[row]
+        if record.functional != name or not all(
+            bool(torch.isfinite(value).all())
+            for value in (
+                record.fractional_coordinates,
+                record.lattice,
+                record.energy_per_atom_ev,
+                record.forces_ev_per_angstrom,
+                record.stress_kelvin_gpa,
+            )
+        ):
+            raise AssertionError(f"LeMat {name} random-access record is invalid")
+        random_access_checked.append(name)
     weights = [1.0] * len(dataset.functional_names)
     streams = [
         BalancedRankShardedStream(
@@ -88,6 +104,7 @@ def main() -> None:
             name: int((dataset.functional_group_index == index).sum())
             for index, name in enumerate(dataset.functional_names)
         },
+        "functional_random_access_checked": random_access_checked,
         "batches": args.batches,
         "global_batch_size": args.global_batch_size,
         "world_size": args.world_size,

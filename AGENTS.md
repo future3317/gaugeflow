@@ -452,6 +452,19 @@ rank shards contained 32,000 examples each and resumed exactly.  This is only
 data-stream software evidence; it neither authorizes full LeMat continuation
 nor changes the frozen Stage-B implementation hashes.
 
+The LeMat build now uses a hash-bound audit-only exclusion generated from the
+qualified packed Alex validation/test indices.  Each split has 67,520 rows;
+their normalized union has 135,040 unique IDs and is absent from model
+batches.  The full LeMat index must bind the exclusion-list SHA-256 rather
+than relying on a dataset-name claim of benchmark isolation.
+
+The resulting full qualified LeMat `N<=20` index contains 5,068,754 rows and
+4,878,239 split groups.  Train/calibration/test counts are
+4,563,032/252,475/253,247 with zero invalid rows; 129,152 eligible records
+overlapped the 135,040-ID Alex benchmark exclusion and were removed.  The
+train functional counts are 4,222,763 PBE, 9,014 PBEsol and 331,255 SCAN, so
+raw row-frequency sampling is not an acceptable Stage-C default.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`

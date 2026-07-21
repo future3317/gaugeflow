@@ -1,0 +1,26 @@
+{
+  "compatible_selected_rows": 4712916,
+  "excluded_external_overlap": 129152,
+  "excluded_large_cells": 240530,
+  "excluded_material_ids_artifact_sha256": "2baf633949a24d5905ce227121583e0154e12114434bd60542a9bc8a250b833e",
+  "excluded_material_ids_content_sha256": "24fa4485a8eaca89424cc2d8e762e4401d11ca7fc2cd10198f8f915767efcc3a",
+  "excluded_material_ids_count": 135040,
+  "exclusion_artifact_bound": true,
+  "functional_train_rows": {
+    "pbe": 4222763,
+    "pbesol": 9014,
+    "scan": 331255
+  },
+  "index_sha256": "6ab73b2b21b937f756b1811318b620b32c96152493d10d3a674d8a94a4680fc1",
+  "invalid_index_rows": 0,
+  "maximum_atoms": 20,
+  "qualified": true,
+  "schema": 1,
+  "selected_rows": 5068754,
+  "split_counts": {
+    "calibration": 252475,
+    "test": 253247,
+    "train": 4563032
+  },
+  "unique_split_groups": 4878239
+}

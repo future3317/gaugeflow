@@ -224,6 +224,11 @@ collision、异常密度与短键项使用按元素对和密度校准的平滑 g
 该实现位于独立模块，不改动 Stage-B 冻结哈希。它只证明数据混合与恢复接口成立，不能
 作为 LeMat 表征学习或生成效果证据。
 
+Alex benchmark overlap 也已形成独立的 audit-only exclusion artifact：资格化的 val/test
+各 67,520 条，规范化 ID 的并集为 135,040，两个 split 之间没有 ID 重复。ID 只在构建
+LeMat index 时用于排除，绝不进入训练 batch。完整 LeMat index 必须绑定该列表的
+SHA-256，不能仅凭数据集名称声称 benchmark 已隔离。
+
 大数据阶段优先采用 packed graphs、按 node/edge 数动态 batching、向量化 segment
 reduction、BF16 scalar path + FP32 geometry path、预取与 shard-local shuffle。任何加速
 都必须保持 exact count、群作用和 periodic reference test。

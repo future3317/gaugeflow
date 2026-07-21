@@ -1,0 +1,26 @@
+{
+  "alex_cache_manifest": "/home/workspace/lrh/DATA/T2C-Flow/processed/gaugeflow_h1a_v1/p1_structure_cache_v1/manifest.json",
+  "alex_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+  "material_ids_file": "material_ids.json",
+  "material_ids_sha256": "2baf633949a24d5905ce227121583e0154e12114434bd60542a9bc8a250b833e",
+  "qualified": true,
+  "schema": 1,
+  "scope": "Alex-MP validation/test IDs excluded from LeMat continued pretraining",
+  "sources": [
+    {
+      "index_file": "/home/workspace/lrh/DATA/T2C-Flow/processed/gaugeflow_h1a_v1/p1_structure_cache_v1/val_index.parquet",
+      "index_sha256": "d1a1235d5fc92fd48e5b612920c350cb6ec6244f1fcf4302c79af0b72c3e33bf",
+      "rows": 67520,
+      "split": "val",
+      "unique_normalized_ids": 67520
+    },
+    {
+      "index_file": "/home/workspace/lrh/DATA/T2C-Flow/processed/gaugeflow_h1a_v1/p1_structure_cache_v1/test_index.parquet",
+      "index_sha256": "60ac53cc22279dbb01430562999a1c4c660350fd2a3acc63f7276a2ad1044ec8",
+      "rows": 67520,
+      "split": "test",
+      "unique_normalized_ids": 67520
+    }
+  ],
+  "unique_normalized_ids": 135040
+}

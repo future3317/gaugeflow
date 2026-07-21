@@ -61,10 +61,14 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
         {"pbe": [parquet]},
         root,
         excluded_material_ids={"alex<agm-overlap>"},
+        excluded_material_ids_artifact_sha256="a" * 64,
         max_row_groups_per_source=10,
     )
     assert manifest["bounded_smoke"] and not manifest["qualified"]
     assert manifest["excluded_external_overlap"] == 1
+    assert manifest["excluded_material_ids_count"] == 1
+    assert manifest["excluded_material_ids_artifact_sha256"] == "a" * 64
+    assert manifest["exclusion_artifact_bound"]
     assert sum(manifest["split_counts"].values()) == 199
     dataset = IndexedLeMatDataset(root, "train", require_qualified=False)
     assert dataset[0].functional == "pbe"
