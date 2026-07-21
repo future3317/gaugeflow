@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Literal, Mapping, Sequence
+from typing import Any, Iterable, Literal, Mapping, Sequence
 
 import torch
 from pymatgen.core import Element
 
 from gaugeflow.vocabulary import atomic_numbers_to_tokens
 
-from .physical_pretraining import PhysicalTargets, symmetric_cartesian_to_kelvin
+from .physical_pretraining import (
+    FunctionalPhysicalNormalizer,
+    PhysicalTargets,
+    symmetric_cartesian_to_kelvin,
+)
 
 
 @dataclass(frozen=True)
@@ -216,10 +220,9 @@ def collate_matpes_records(
         raise ValueError("cannot collate an empty MatPES batch")
     if teacher_dim < 1:
         raise ValueError("teacher feature dimension must be positive")
-    if not functional_vocabulary or min(functional_vocabulary.values()) < 0:
-        raise ValueError("functional vocabulary must contain nonnegative indices")
-    if len(set(functional_vocabulary.values())) != len(functional_vocabulary):
-        raise ValueError("functional vocabulary indices must be unique")
+    expected_indices = set(range(len(functional_vocabulary)))
+    if not functional_vocabulary or set(functional_vocabulary.values()) != expected_indices:
+        raise ValueError("functional vocabulary indices must be contiguous from zero")
     counts = torch.tensor([record.element_tokens.numel() for record in records], dtype=torch.long)
     functional: list[int] = []
     for record in records:
@@ -245,4 +248,67 @@ def collate_matpes_records(
             stress_mask=torch.tensor([record.stress_present for record in records]),
             teacher_mask=torch.zeros(graph_count, dtype=torch.bool),
         ),
+    )
+
+
+def fit_functional_physical_normalizer(
+    records: Iterable[MatPESPhysicalRecord],
+    *,
+    functional_vocabulary: Mapping[str, int],
+    minimum_scale: float = 1.0e-6,
+) -> FunctionalPhysicalNormalizer:
+    """Fit train-only streaming moments with covariance-preserving parameterization."""
+
+    functionals = len(functional_vocabulary)
+    if functionals < 1 or set(functional_vocabulary.values()) != set(range(functionals)):
+        raise ValueError("functional vocabulary indices must be contiguous from zero")
+    if minimum_scale <= 0.0:
+        raise ValueError("minimum physical scale must be positive")
+    energy_count = torch.zeros(functionals, dtype=torch.float64)
+    energy_sum = torch.zeros_like(energy_count)
+    energy_square_sum = torch.zeros_like(energy_count)
+    force_component_count = torch.zeros_like(energy_count)
+    force_square_sum = torch.zeros_like(energy_count)
+    stress_count = torch.zeros_like(energy_count)
+    stress_trace_sum = torch.zeros_like(energy_count)
+    stress_norm_square_sum = torch.zeros_like(energy_count)
+    for record in records:
+        if record.functional not in functional_vocabulary:
+            raise ValueError(f"unregistered MatPES functional {record.functional!r}")
+        index = functional_vocabulary[record.functional]
+        if record.energy_present:
+            energy = record.energy_per_atom_ev.double()
+            energy_count[index] += 1.0
+            energy_sum[index] += energy
+            energy_square_sum[index] += energy.square()
+        if record.forces_present:
+            forces = record.forces_ev_per_angstrom.double()
+            force_component_count[index] += forces.numel()
+            force_square_sum[index] += forces.square().sum()
+        if record.stress_present:
+            stress = record.stress_kelvin_gpa.double()
+            stress_count[index] += 1.0
+            stress_trace_sum[index] += stress[:3].sum()
+            stress_norm_square_sum[index] += stress.square().sum()
+    if bool((energy_count == 0).any()) or bool((force_component_count == 0).any()) or bool(
+        (stress_count == 0).any()
+    ):
+        raise ValueError("each functional requires energy, force and stress support")
+    energy_location = energy_sum / energy_count
+    energy_variance = energy_square_sum / energy_count - energy_location.square()
+    force_variance = force_square_sum / force_component_count
+    stress_location = stress_trace_sum / (3.0 * stress_count)
+    stress_residual_square = (
+        stress_norm_square_sum
+        - 2.0 * stress_location * stress_trace_sum
+        + 3.0 * stress_count * stress_location.square()
+    )
+    stress_variance = stress_residual_square / (6.0 * stress_count)
+    clamp = minimum_scale**2
+    return FunctionalPhysicalNormalizer(
+        energy_location=energy_location.float(),
+        energy_scale=energy_variance.clamp_min(clamp).sqrt().float(),
+        force_scale=force_variance.clamp_min(clamp).sqrt().float(),
+        stress_isotropic_location=stress_location.float(),
+        stress_scale=stress_variance.clamp_min(clamp).sqrt().float(),
     )

@@ -1,7 +1,10 @@
+from dataclasses import replace
+
 import torch
 
 from gaugeflow.production.matpes_data import (
     collate_matpes_records,
+    fit_functional_physical_normalizer,
     matpes_iid_split,
     matpes_stress_kbar_to_kelvin_gpa,
     parse_matpes_row,
@@ -195,3 +198,39 @@ def test_matpes_collation_packs_graphs_and_masks_without_ids() -> None:
     assert packed.targets.force_mask.tolist() == [True, True]
     assert packed.targets.stress_mask.tolist() == [False, False]
     assert packed.targets.teacher_features.shape == (2, 4)
+
+
+def test_matpes_train_statistics_are_functional_and_streaming() -> None:
+    row = {
+        "matpes_id": "base",
+        "functional": "PBE",
+        "nsites": 1,
+        "structure": {
+            "lattice": {"matrix": [[3.0, 0.0, 0.0], [0.0, 3.0, 0.0], [0.0, 0.0, 3.0]]},
+            "sites": [{"species": [{"element": "Si", "occu": 1.0}], "abc": [0.0, 0.0, 0.0]}],
+        },
+        "energy": -4.0,
+        "forces": [[1.0, 0.0, 0.0]],
+        "stress": [10.0, 10.0, 10.0, 0.0, 0.0, 0.0],
+    }
+    base = parse_matpes_row(row)
+    records = [
+        base,
+        replace(
+            base,
+            material_id="pbe-2",
+            energy_per_atom_ev=torch.tensor(-2.0),
+            forces_ev_per_angstrom=torch.tensor([[2.0, 0.0, 0.0]]),
+        ),
+        replace(base, material_id="r2-1", functional="r2SCAN", energy_per_atom_ev=torch.tensor(-10.0)),
+        replace(base, material_id="r2-2", functional="r2SCAN", energy_per_atom_ev=torch.tensor(-8.0)),
+    ]
+    vocabulary = {"PBE": 0, "r2SCAN": 1}
+    normalizer = fit_functional_physical_normalizer(records, functional_vocabulary=vocabulary)
+    assert torch.allclose(normalizer.energy_location, torch.tensor([-3.0, -9.0]))
+    assert torch.allclose(normalizer.energy_scale, torch.ones(2))
+    packed = collate_matpes_records(records, functional_vocabulary=vocabulary, teacher_dim=2)
+    normalized = normalizer.normalize(packed.targets, packed.functional_index, packed.batch)
+    assert torch.allclose(normalized.energy_per_atom, torch.tensor([-1.0, 1.0, -1.0, 1.0]))
+    assert bool(torch.isfinite(normalized.forces).all())
+    assert bool(torch.isfinite(normalized.stress_kelvin).all())
