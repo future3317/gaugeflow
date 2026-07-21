@@ -1,0 +1,1322 @@
+{
+  "boundary": "This precision closure cannot qualify unseen-action or formula/prototype-disjoint assignment, generated composition, p(N), lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT.",
+  "candidate_evidence_unchanged": {
+    "exact_subset": {
+      "carriers": 6,
+      "maximum_order_elbo_probability_excess": -0.00028051596421052594,
+      "mean_model_minus_uniform_probability": 0.9214887802876026
+    },
+    "relabel_logit_max_abs": 1.049041748046875e-05,
+    "sampling": {
+      "iid_calibration_supported": {
+        "sample_exact_composition": 1.0,
+        "sample_orbit_aligned_site_accuracy": 0.938642680644989,
+        "sample_retrieval": 0.6499999761581421,
+        "sample_retrieval_lift_over_uniform": 0.6456153469291962,
+        "sampling_failures": 0,
+        "uniform_expected_retrieval": 0.004384629228945902
+      },
+      "iid_test_supported": {
+        "sample_exact_composition": 1.0,
+        "sample_orbit_aligned_site_accuracy": 0.9407998323440552,
+        "sample_retrieval": 0.6526785492897034,
+        "sample_retrieval_lift_over_uniform": 0.6474095663192608,
+        "sampling_failures": 0,
+        "uniform_expected_retrieval": 0.0052689829704425
+      }
+    },
+    "stress_likelihood": {
+      "iid_calibration_unseen_action": {
+        "carriers": 7,
+        "materials": 5,
+        "maximum_order_elbo_mc_standard_error": 0.10102538304203088,
+        "mean_order_elbo_mc_standard_error": 0.04337022908902307,
+        "mean_quotient_order_elbo_nll": 0.922231137752533,
+        "mean_uniform_quotient_nll": 2.2817018032073975,
+        "mean_uniform_target_probability": 0.20952380952380953,
+        "model_minus_uniform_nll_ucb95": 0.11889035491696989,
+        "relative_nll_reduction_from_uniform": 0.5958143472671509
+      },
+      "iid_test_unseen_action": {
+        "carriers": 17,
+        "materials": 5,
+        "maximum_order_elbo_mc_standard_error": 0.34762605460659857,
+        "mean_order_elbo_mc_standard_error": 0.15049692968765876,
+        "mean_quotient_order_elbo_nll": 4.095300674438477,
+        "mean_uniform_quotient_nll": 2.7152838706970215,
+        "mean_uniform_target_probability": 0.1170168067226891,
+        "model_minus_uniform_nll_ucb95": 2.1686561180308517,
+        "relative_nll_reduction_from_uniform": -0.5082403421401978
+      },
+      "ood_test": {
+        "carriers": 53,
+        "materials": 16,
+        "maximum_order_elbo_mc_standard_error": 0.42163335477277447,
+        "mean_order_elbo_mc_standard_error": 0.22546809930334727,
+        "mean_quotient_order_elbo_nll": 11.292607307434082,
+        "mean_uniform_quotient_nll": 10.09805965423584,
+        "mean_uniform_target_probability": 0.0748439433257471,
+        "model_minus_uniform_nll_ucb95": 1.2756498277831725,
+        "relative_nll_reduction_from_uniform": -0.11829476803541183
+      },
+      "ood_validation": {
+        "carriers": 43,
+        "materials": 27,
+        "maximum_order_elbo_mc_standard_error": 0.31867044599918337,
+        "mean_order_elbo_mc_standard_error": 0.09698738746326858,
+        "mean_quotient_order_elbo_nll": 2.818173408508301,
+        "mean_uniform_quotient_nll": 6.160407543182373,
+        "mean_uniform_target_probability": 0.1210287688194665,
+        "model_minus_uniform_nll_ucb95": -2.0335087319136056,
+        "relative_nll_reduction_from_uniform": 0.542534589767456
+      }
+    },
+    "training": {
+      "elapsed_seconds": 494.9456755319843,
+      "finite_gradient_step_fraction": 1.0,
+      "fit_carriers": 264,
+      "fit_materials": 135,
+      "history": [
+        {
+          "gradient_norm": 14.92984390258789,
+          "step": 1.0,
+          "train_path_nll": 2.6614544231561013
+        },
+        {
+          "gradient_norm": 5.350913047790527,
+          "step": 10.0,
+          "train_path_nll": 1.679621014103759
+        },
+        {
+          "gradient_norm": 4.639518737792969,
+          "step": 20.0,
+          "train_path_nll": 3.7470548251876608
+        },
+        {
+          "gradient_norm": 4.5277509689331055,
+          "step": 30.0,
+          "train_path_nll": 2.0509831267409027
+        },
+        {
+          "gradient_norm": 1.9108102321624756,
+          "step": 40.0,
+          "train_path_nll": 1.9419077128404751
+        },
+        {
+          "gradient_norm": 2.49651837348938,
+          "step": 50.0,
+          "train_path_nll": 1.4424245737027377
+        },
+        {
+          "gradient_norm": 2.369692325592041,
+          "step": 60.0,
+          "train_path_nll": 1.9977525830618106
+        },
+        {
+          "gradient_norm": 3.632685661315918,
+          "step": 70.0,
+          "train_path_nll": 1.5797315302188508
+        },
+        {
+          "gradient_norm": 2.411256790161133,
+          "step": 80.0,
+          "train_path_nll": 2.5464927087305114
+        },
+        {
+          "gradient_norm": 2.0895705223083496,
+          "step": 90.0,
+          "train_path_nll": 1.9439035286195576
+        },
+        {
+          "gradient_norm": 1.5494272708892822,
+          "step": 100.0,
+          "train_path_nll": 1.6098088520229794
+        },
+        {
+          "gradient_norm": 1.7164103984832764,
+          "step": 110.0,
+          "train_path_nll": 1.4414747304981574
+        },
+        {
+          "gradient_norm": 2.143695116043091,
+          "step": 120.0,
+          "train_path_nll": 1.6116414692951366
+        },
+        {
+          "gradient_norm": 1.0332913398742676,
+          "step": 130.0,
+          "train_path_nll": 1.2243616826599464
+        },
+        {
+          "gradient_norm": 2.093194007873535,
+          "step": 140.0,
+          "train_path_nll": 1.679192665964365
+        },
+        {
+          "gradient_norm": 1.118446946144104,
+          "step": 150.0,
+          "train_path_nll": 1.9822568497038446
+        },
+        {
+          "gradient_norm": 1.9934972524642944,
+          "step": 160.0,
+          "train_path_nll": 1.2232158386614174
+        },
+        {
+          "gradient_norm": 1.2727407217025757,
+          "step": 170.0,
+          "train_path_nll": 1.4588018911890686
+        },
+        {
+          "gradient_norm": 2.3955132961273193,
+          "step": 180.0,
+          "train_path_nll": 1.8766872769920155
+        },
+        {
+          "gradient_norm": 1.9911463260650635,
+          "step": 190.0,
+          "train_path_nll": 1.4935659737093374
+        },
+        {
+          "gradient_norm": 1.8736493587493896,
+          "step": 200.0,
+          "train_path_nll": 2.077730003860779
+        },
+        {
+          "gradient_norm": 0.7642658352851868,
+          "step": 210.0,
+          "train_path_nll": 0.9350557769066654
+        },
+        {
+          "gradient_norm": 0.9765673279762268,
+          "step": 220.0,
+          "train_path_nll": 1.093398952507414
+        },
+        {
+          "gradient_norm": 1.798218011856079,
+          "step": 230.0,
+          "train_path_nll": 1.43643708107993
+        },
+        {
+          "gradient_norm": 1.5586897134780884,
+          "step": 240.0,
+          "train_path_nll": 1.557594368350692
+        },
+        {
+          "gradient_norm": 1.6143887042999268,
+          "step": 250.0,
+          "train_path_nll": 1.0634629094274715
+        },
+        {
+          "gradient_norm": 1.0140206813812256,
+          "step": 260.0,
+          "train_path_nll": 1.295435555104632
+        },
+        {
+          "gradient_norm": 2.4862217903137207,
+          "step": 270.0,
+          "train_path_nll": 1.022392519051209
+        },
+        {
+          "gradient_norm": 7.970890522003174,
+          "step": 280.0,
+          "train_path_nll": 1.3090285494108684
+        },
+        {
+          "gradient_norm": 1.3328638076782227,
+          "step": 290.0,
+          "train_path_nll": 1.2627172354841605
+        },
+        {
+          "gradient_norm": 1.388655185699463,
+          "step": 300.0,
+          "train_path_nll": 1.4254800930502824
+        },
+        {
+          "gradient_norm": 1.3632785081863403,
+          "step": 310.0,
+          "train_path_nll": 1.2964840637287125
+        },
+        {
+          "gradient_norm": 1.4952675104141235,
+          "step": 320.0,
+          "train_path_nll": 1.0619471240788698
+        },
+        {
+          "gradient_norm": 6.496711254119873,
+          "step": 330.0,
+          "train_path_nll": 2.161179055343382
+        },
+        {
+          "gradient_norm": 0.7866108417510986,
+          "step": 340.0,
+          "train_path_nll": 1.113934222375974
+        },
+        {
+          "gradient_norm": 1.9795105457305908,
+          "step": 350.0,
+          "train_path_nll": 1.2103072442114353
+        },
+        {
+          "gradient_norm": 2.9223883152008057,
+          "step": 360.0,
+          "train_path_nll": 1.2121315131662413
+        },
+        {
+          "gradient_norm": 1.3709139823913574,
+          "step": 370.0,
+          "train_path_nll": 1.1938505916041322
+        },
+        {
+          "gradient_norm": 1.0072598457336426,
+          "step": 380.0,
+          "train_path_nll": 1.3165649995789863
+        },
+        {
+          "gradient_norm": 2.2015931606292725,
+          "step": 390.0,
+          "train_path_nll": 1.2852864347514696
+        },
+        {
+          "gradient_norm": 1.8078324794769287,
+          "step": 400.0,
+          "train_path_nll": 1.0418161546695046
+        },
+        {
+          "gradient_norm": 2.6206207275390625,
+          "step": 410.0,
+          "train_path_nll": 1.199168375285808
+        },
+        {
+          "gradient_norm": 2.465792179107666,
+          "step": 420.0,
+          "train_path_nll": 1.0610688640736043
+        },
+        {
+          "gradient_norm": 1.3695780038833618,
+          "step": 430.0,
+          "train_path_nll": 1.6049807432573289
+        },
+        {
+          "gradient_norm": 2.4206769466400146,
+          "step": 440.0,
+          "train_path_nll": 1.7952557691605762
+        },
+        {
+          "gradient_norm": 3.1700003147125244,
+          "step": 450.0,
+          "train_path_nll": 1.172516087302938
+        },
+        {
+          "gradient_norm": 1.4265952110290527,
+          "step": 460.0,
+          "train_path_nll": 0.9274804576998577
+        },
+        {
+          "gradient_norm": 2.0389928817749023,
+          "step": 470.0,
+          "train_path_nll": 1.1527942756656557
+        },
+        {
+          "gradient_norm": 1.253476619720459,
+          "step": 480.0,
+          "train_path_nll": 1.0466996175237
+        },
+        {
+          "gradient_norm": 0.8507567048072815,
+          "step": 490.0,
+          "train_path_nll": 0.8190617953659967
+        },
+        {
+          "gradient_norm": 3.7124552726745605,
+          "step": 500.0,
+          "train_path_nll": 1.4062022907892242
+        }
+      ],
+      "peak_cuda_mib": 868.8046875,
+      "steps": 500,
+      "total_parameters": 3885568,
+      "trainable_parameter_prefixes": [
+        "site_encoder.",
+        "graph_encoder.",
+        "space_group_embedding.",
+        "cell_embedding.",
+        "blocks.2.",
+        "query.",
+        "key."
+      ],
+      "trainable_parameters": 1502976
+    }
+  },
+  "checks": {
+    "exact_composition": true,
+    "exact_subset_bound_consistency": true,
+    "exact_subset_probability_lift": true,
+    "finite_gradients": true,
+    "iid_calibration_mc_precision": true,
+    "iid_calibration_nll_reduction": true,
+    "iid_calibration_paired_bootstrap": true,
+    "iid_test_mc_precision": true,
+    "iid_test_nll_reduction": true,
+    "iid_test_paired_bootstrap": true,
+    "iid_test_retrieval_lift": true,
+    "iid_test_site_accuracy": true,
+    "relabel_consistency": true,
+    "zero_sampling_failures": true
+  },
+  "decision": "qualify the unchanged supported-IID oracle-composition assignment checkpoint and authorize a separately frozen p(N) Gate",
+  "evaluation": {
+    "candidate_checkpoint_sha256": "c7aab55047ca47ec36255371b6e1ea8758dddb0e7342f2883948e7a85478383c",
+    "order_samples": 1024,
+    "seed": 37051,
+    "supported_carrier_rows": {
+      "iid_calibration_supported": [
+        {
+          "embedding_key": "e813effcba864bb061dea26066aa9f15b1586b5d76f9183339a2d1db24070181",
+          "material_id": "alex<agm003768522>",
+          "model_minus_uniform_nll": -2.7710199913663724,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.026698993250719224,
+          "quotient_order_elbo_nll": 0.5611845188088315,
+          "role": "iid_calibration",
+          "sites": 8,
+          "species": 3,
+          "uniform_quotient_nll": 3.332204510175204,
+          "uniform_quotient_probability": 0.03571428571428572
+        },
+        {
+          "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+          "material_id": "alex<agm004623560>",
+          "model_minus_uniform_nll": -7.516543184156949,
+          "orbit_size": 3,
+          "order_elbo_mc_standard_error": 0.06624768796280547,
+          "quotient_order_elbo_nll": 2.3079011610387257,
+          "role": "iid_calibration",
+          "sites": 12,
+          "species": 4,
+          "uniform_quotient_nll": 9.824444345195674,
+          "uniform_quotient_probability": 5.411255411255415e-05
+        },
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003567176>",
+          "model_minus_uniform_nll": -12.91102928537643,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.016108831501013186,
+          "quotient_order_elbo_nll": 0.41445777645111737,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003567176>",
+          "model_minus_uniform_nll": -12.908804389506116,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.016114901320242264,
+          "quotient_order_elbo_nll": 0.4166826723214304,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "alex<agm002344464>",
+          "model_minus_uniform_nll": -7.093479026956887,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.019088806723866467,
+          "quotient_order_elbo_nll": 0.04538797298863717,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "alex<agm002344464>",
+          "model_minus_uniform_nll": -7.09462853102403,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.018474418705775108,
+          "quotient_order_elbo_nll": 0.044238468921493745,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "mp-1112160",
+          "model_minus_uniform_nll": -7.080550007584209,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.01928104056942264,
+          "quotient_order_elbo_nll": 0.0583169923613146,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "mp-1112160",
+          "model_minus_uniform_nll": -7.102467203749514,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.018845540984294303,
+          "quotient_order_elbo_nll": 0.03639979619600997,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "alex<agm002205334>",
+          "model_minus_uniform_nll": -6.102819605807129,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.04342333454541236,
+          "quotient_order_elbo_nll": 1.0360473941383948,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "alex<agm002205334>",
+          "model_minus_uniform_nll": -6.1246541303010265,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.044421113998337904,
+          "quotient_order_elbo_nll": 1.0142128696444974,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "8dbfa48ec9af5b0d6cd7cf7d9c1326dfa648b5837cbe4a2b9700e0c5d8636dd7",
+          "material_id": "alex<agm004523423>",
+          "model_minus_uniform_nll": -7.7615397705059035,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.02900904128621659,
+          "quotient_order_elbo_nll": 0.9867651418737201,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 8.748304912379623,
+          "uniform_quotient_probability": 0.0001587301587301588
+        },
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003568265>",
+          "model_minus_uniform_nll": -5.785031840470623,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.10500778632630078,
+          "quotient_order_elbo_nll": 7.540455221356924,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003568265>",
+          "model_minus_uniform_nll": -5.6792172803869505,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.10342453621336159,
+          "quotient_order_elbo_nll": 7.646269781440596,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004705339>",
+          "model_minus_uniform_nll": -15.796202938849637,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.033912734496708875,
+          "quotient_order_elbo_nll": 0.19609136554607098,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004705339>",
+          "model_minus_uniform_nll": -15.718659852491873,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.03592036354856614,
+          "quotient_order_elbo_nll": 0.27363445190383495,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003567467>",
+          "model_minus_uniform_nll": -13.203720855035357,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.012116285285057987,
+          "quotient_order_elbo_nll": 0.12176620679218975,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003567467>",
+          "model_minus_uniform_nll": -13.194497684515085,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.012677278674164641,
+          "quotient_order_elbo_nll": 0.13098937731246185,
+          "role": "iid_calibration",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004706672>",
+          "model_minus_uniform_nll": -15.936252115882416,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.03255751818772839,
+          "quotient_order_elbo_nll": 0.05604218851329201,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004706672>",
+          "model_minus_uniform_nll": -15.86864777719038,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.03421030708156772,
+          "quotient_order_elbo_nll": 0.12364652720532754,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+          "material_id": "alex<agm003646272>",
+          "model_minus_uniform_nll": -6.243037881797566,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.003096173896712382,
+          "quotient_order_elbo_nll": 0.20268193758801278,
+          "role": "iid_calibration",
+          "sites": 10,
+          "species": 3,
+          "uniform_quotient_nll": 6.4457198193855785,
+          "uniform_quotient_probability": 0.001587301587301587
+        },
+        {
+          "embedding_key": "f433643ea538d88d45b5808b561e90b4d14337e7f09d08a535677e8382b93dad",
+          "material_id": "alex<agm004753901>",
+          "model_minus_uniform_nll": -4.459825343565923,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.012331740560259563,
+          "quotient_order_elbo_nll": 0.03998432676434238,
+          "role": "iid_calibration",
+          "sites": 6,
+          "species": 4,
+          "uniform_quotient_nll": 4.499809670330265,
+          "uniform_quotient_probability": 0.011111111111111112
+        },
+        {
+          "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+          "material_id": "alex<agm004630648>",
+          "model_minus_uniform_nll": -6.0056754372317345,
+          "orbit_size": 3,
+          "order_elbo_mc_standard_error": 0.08233806072413205,
+          "quotient_order_elbo_nll": 3.81876890796394,
+          "role": "iid_calibration",
+          "sites": 12,
+          "species": 4,
+          "uniform_quotient_nll": 9.824444345195674,
+          "uniform_quotient_probability": 5.411255411255415e-05
+        },
+        {
+          "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+          "material_id": "alex<agm003434207>",
+          "model_minus_uniform_nll": -3.1722378277451173,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.004747790946101791,
+          "quotient_order_elbo_nll": 0.22895955391703826,
+          "role": "iid_calibration",
+          "sites": 6,
+          "species": 3,
+          "uniform_quotient_nll": 3.4011973816621555,
+          "uniform_quotient_probability": 0.03333333333333333
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004703201>",
+          "model_minus_uniform_nll": -15.651606619058475,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.037960069782237135,
+          "quotient_order_elbo_nll": 0.34068768533723337,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004703201>",
+          "model_minus_uniform_nll": -15.6555739139063,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.03924946351503038,
+          "quotient_order_elbo_nll": 0.33672039048940783,
+          "role": "iid_calibration",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "0902aae47f6b437533b3dcce470baf1ae945c096bc67032dacaa68c2840e76da",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -0.026775947618597584,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.2914393063479903,
+          "quotient_order_elbo_nll": 13.684373595020933,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "158eaf5ceec364b3e647c6bd4f6ccfcd3d3d2c9f4afd507cf1e0707457b87fb2",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -13.614028730829313,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.031199593409291262,
+          "quotient_order_elbo_nll": 0.09712081181021781,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "4f18d811cf46d124d28cf0640d6818063ddd511c42b50dda7ec8eb68ecc451c9",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -6.0601934212821735,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.14059765203869098,
+          "quotient_order_elbo_nll": 7.650956121357357,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "5519537d4f123a281813cd60aa6025fda08eb340ed98bd4d7d319f31da4781a9",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -0.10160412216588988,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.29124018631835413,
+          "quotient_order_elbo_nll": 13.60954542047364,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "576c2f27e184ebb18ea5748903b935151747928a6cd1f9d1d90ec1e5e21296d5",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": 0.19857193731207268,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.28654499001737205,
+          "quotient_order_elbo_nll": 13.909721479951603,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "6b87faa1ffdc91b502ed53321f206ab16d74caab79facf8fe457644267243738",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -6.077340805400462,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.13964069091389508,
+          "quotient_order_elbo_nll": 7.633808737239068,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "94decc774fec95e0980822dd785a09a2ce8133f70672d486cd40e158458156d7",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": 0.33454641365881876,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.29792709075859947,
+          "quotient_order_elbo_nll": 14.04569595629835,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "caa5460dc50a2cdeaaa4f384d8ac79929a804f75ba231c022d117a4e90382df2",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -6.389198035197632,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.13669888719093462,
+          "quotient_order_elbo_nll": 7.321951507441899,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "eb3a8bcf7d843ee31435085e36d8b8b7380e11f0798b09876b04c388c822b7ac",
+          "material_id": "alex<agm004725099>",
+          "model_minus_uniform_nll": -6.064002887425312,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.1402500706438895,
+          "quotient_order_elbo_nll": 7.647146655214218,
+          "role": "iid_calibration",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+          "material_id": "alex<agm002208138>",
+          "model_minus_uniform_nll": -2.6812880595924304,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.016849716331212607,
+          "quotient_order_elbo_nll": 0.026762141509779735,
+          "role": "iid_calibration",
+          "sites": 6,
+          "species": 3,
+          "uniform_quotient_nll": 2.70805020110221,
+          "uniform_quotient_probability": 0.06666666666666667
+        }
+      ],
+      "iid_test_supported": [
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003565512>",
+          "model_minus_uniform_nll": -11.977138977064754,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.024534061508018037,
+          "quotient_order_elbo_nll": 1.348348084762792,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003565512>",
+          "model_minus_uniform_nll": -12.007464722646404,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.02376463731137143,
+          "quotient_order_elbo_nll": 1.3180223391811428,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8dbfa48ec9af5b0d6cd7cf7d9c1326dfa648b5837cbe4a2b9700e0c5d8636dd7",
+          "material_id": "alex<agm004518837>",
+          "model_minus_uniform_nll": -8.584081667661946,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.020441024710048904,
+          "quotient_order_elbo_nll": 0.16422324471767713,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 8.748304912379623,
+          "uniform_quotient_probability": 0.0001587301587301588
+        },
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003567603>",
+          "model_minus_uniform_nll": -12.455781729633458,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.027288894962843,
+          "quotient_order_elbo_nll": 0.869705332194089,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003567603>",
+          "model_minus_uniform_nll": -12.526533285188492,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.02673427982173643,
+          "quotient_order_elbo_nll": 0.7989537766390545,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+          "material_id": "alex<agm003641248>",
+          "model_minus_uniform_nll": -3.2500575433391283,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.06287591289346021,
+          "quotient_order_elbo_nll": 3.19566227604645,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 3,
+          "uniform_quotient_nll": 6.4457198193855785,
+          "uniform_quotient_probability": 0.001587301587301587
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004704936>",
+          "model_minus_uniform_nll": -15.90548937227013,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.032209733587088916,
+          "quotient_order_elbo_nll": 0.08680493212557772,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004704936>",
+          "model_minus_uniform_nll": -15.909359119933105,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.031563264859944117,
+          "quotient_order_elbo_nll": 0.08293518446260273,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+          "material_id": "alex<agm001181615>",
+          "model_minus_uniform_nll": -2.7107430797867216,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.015802717146666114,
+          "quotient_order_elbo_nll": -0.0026928786845114017,
+          "role": "iid_test",
+          "sites": 6,
+          "species": 3,
+          "uniform_quotient_nll": 2.70805020110221,
+          "uniform_quotient_probability": 0.06666666666666667
+        },
+        {
+          "embedding_key": "0902aae47f6b437533b3dcce470baf1ae945c096bc67032dacaa68c2840e76da",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.470334416393024,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.11089157497007444,
+          "quotient_order_elbo_nll": 5.240815126246506,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "158eaf5ceec364b3e647c6bd4f6ccfcd3d3d2c9f4afd507cf1e0707457b87fb2",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -12.688193360277518,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.043765900723661,
+          "quotient_order_elbo_nll": 1.0229561823620126,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "4f18d811cf46d124d28cf0640d6818063ddd511c42b50dda7ec8eb68ecc451c9",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.565993467774542,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.06980440146554774,
+          "quotient_order_elbo_nll": 5.145156074864989,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "5519537d4f123a281813cd60aa6025fda08eb340ed98bd4d7d319f31da4781a9",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.299592257149351,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.11484764912086205,
+          "quotient_order_elbo_nll": 5.411557285490179,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "576c2f27e184ebb18ea5748903b935151747928a6cd1f9d1d90ec1e5e21296d5",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.219218984674962,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.1167777305704071,
+          "quotient_order_elbo_nll": 5.491930557964569,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "6b87faa1ffdc91b502ed53321f206ab16d74caab79facf8fe457644267243738",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.671014723913112,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.07147668198361497,
+          "quotient_order_elbo_nll": 5.040134818726418,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "94decc774fec95e0980822dd785a09a2ce8133f70672d486cd40e158458156d7",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.376216172029098,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.11758466744879155,
+          "quotient_order_elbo_nll": 5.3349333706104325,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "caa5460dc50a2cdeaaa4f384d8ac79929a804f75ba231c022d117a4e90382df2",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.663758214409762,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.06928422779986446,
+          "quotient_order_elbo_nll": 5.047391328229768,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "eb3a8bcf7d843ee31435085e36d8b8b7380e11f0798b09876b04c388c822b7ac",
+          "material_id": "alex<agm004733827>",
+          "model_minus_uniform_nll": -8.558958726199643,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.07125876442702442,
+          "quotient_order_elbo_nll": 5.152190816439887,
+          "role": "iid_test",
+          "sites": 16,
+          "species": 4,
+          "uniform_quotient_nll": 13.71114954263953,
+          "uniform_quotient_probability": 1.110001110001111e-06
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004705500>",
+          "model_minus_uniform_nll": -15.894120492367255,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.03371430673702247,
+          "quotient_order_elbo_nll": 0.09817381202845277,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004705500>",
+          "model_minus_uniform_nll": -15.890933780434898,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.032668858644006336,
+          "quotient_order_elbo_nll": 0.10136052396081063,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "alex<agm002230475>",
+          "model_minus_uniform_nll": -7.130759655181722,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.019746006040096815,
+          "quotient_order_elbo_nll": 0.008107344763802371,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "alex<agm002230475>",
+          "model_minus_uniform_nll": -7.096433715753195,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.020997172394019204,
+          "quotient_order_elbo_nll": 0.04243328419232928,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "mp-1110703",
+          "model_minus_uniform_nll": -7.11187178305798,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.01926580435042983,
+          "quotient_order_elbo_nll": 0.026995216887543916,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "mp-1110703",
+          "model_minus_uniform_nll": -7.0719515452113075,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.020298041495915027,
+          "quotient_order_elbo_nll": 0.06691545473421645,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1",
+          "material_id": "alex<agm001187464>",
+          "model_minus_uniform_nll": -2.704828950077013,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.01643266254112418,
+          "quotient_order_elbo_nll": 0.0032212510251971027,
+          "role": "iid_test",
+          "sites": 6,
+          "species": 3,
+          "uniform_quotient_nll": 2.70805020110221,
+          "uniform_quotient_probability": 0.06666666666666667
+        },
+        {
+          "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+          "material_id": "alex<agm004651781>",
+          "model_minus_uniform_nll": -9.115895477615599,
+          "orbit_size": 3,
+          "order_elbo_mc_standard_error": 0.03604324209654465,
+          "quotient_order_elbo_nll": 0.7085488675800751,
+          "role": "iid_test",
+          "sites": 12,
+          "species": 4,
+          "uniform_quotient_nll": 9.824444345195674,
+          "uniform_quotient_probability": 5.411255411255415e-05
+        },
+        {
+          "embedding_key": "1e2324f5a89326cd85abde4352b39bdf5846df9d36fbebf40d53ee240d37c4ff",
+          "material_id": "alex<agm004705937>",
+          "model_minus_uniform_nll": -15.752039829093155,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.037750186564902234,
+          "quotient_order_elbo_nll": 0.24025447530255328,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "355106b8fab9ada0b120b75d4d60c231fc363fe8ab069b5ccff4d99ef7da8556",
+          "material_id": "alex<agm004705937>",
+          "model_minus_uniform_nll": -15.733648954518321,
+          "orbit_size": 4,
+          "order_elbo_mc_standard_error": 0.038605412848271445,
+          "quotient_order_elbo_nll": 0.2586453498773873,
+          "role": "iid_test",
+          "sites": 20,
+          "species": 4,
+          "uniform_quotient_nll": 15.992294304395708,
+          "uniform_quotient_probability": 1.1340568616110408e-07
+        },
+        {
+          "embedding_key": "53d32de0e13d61f1bc60135fd0a7c22f6983fb14cd3d8a86f7cd46e545bbcc66",
+          "material_id": "alex<agm003568325>",
+          "model_minus_uniform_nll": -13.304506944525059,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.011889329511873459,
+          "quotient_order_elbo_nll": 0.02098011730248761,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "8a126889cdbb4b47c76f0e54132e6988c2ac5dc5b3e208a3d0c1e6b35bf2534a",
+          "material_id": "alex<agm003568325>",
+          "model_minus_uniform_nll": -13.300264577413913,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.011883322243469684,
+          "quotient_order_elbo_nll": 0.02522248441363406,
+          "role": "iid_test",
+          "sites": 18,
+          "species": 3,
+          "uniform_quotient_nll": 13.325487061827546,
+          "uniform_quotient_probability": 1.6323545735310444e-06
+        },
+        {
+          "embedding_key": "f433643ea538d88d45b5808b561e90b4d14337e7f09d08a535677e8382b93dad",
+          "material_id": "alex<agm002386175>",
+          "model_minus_uniform_nll": -4.0762130370392935,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.018307213062928703,
+          "quotient_order_elbo_nll": 0.42359663329097164,
+          "role": "iid_test",
+          "sites": 6,
+          "species": 4,
+          "uniform_quotient_nll": 4.499809670330265,
+          "uniform_quotient_probability": 0.011111111111111112
+        },
+        {
+          "embedding_key": "dcb73609fb7a91faee9a9fe2d1996d7d0b07ea3541bff62bf51b7b9b55d4d33d",
+          "material_id": "alex<agm004656075>",
+          "model_minus_uniform_nll": -5.474174036132358,
+          "orbit_size": 3,
+          "order_elbo_mc_standard_error": 0.09050498966326445,
+          "quotient_order_elbo_nll": 4.350270309063316,
+          "role": "iid_test",
+          "sites": 12,
+          "species": 4,
+          "uniform_quotient_nll": 9.824444345195674,
+          "uniform_quotient_probability": 5.411255411255415e-05
+        },
+        {
+          "embedding_key": "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+          "material_id": "alex<agm002384806>",
+          "model_minus_uniform_nll": -3.1215659970299714,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 9.606583056772577e-05,
+          "quotient_order_elbo_nll": 0.2796313846321842,
+          "role": "iid_test",
+          "sites": 6,
+          "species": 3,
+          "uniform_quotient_nll": 3.4011973816621555,
+          "uniform_quotient_probability": 0.03333333333333333
+        },
+        {
+          "embedding_key": "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+          "material_id": "alex<agm004470427>",
+          "model_minus_uniform_nll": -7.144608040766146,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.01801515152321986,
+          "quotient_order_elbo_nll": -0.005741040820621879,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        },
+        {
+          "embedding_key": "858d07c66ee1b326ddf04b0b32dcf94ae700adecf56f09ffd7534f7911250fe1",
+          "material_id": "alex<agm004470427>",
+          "model_minus_uniform_nll": -7.122072852424283,
+          "orbit_size": 2,
+          "order_elbo_mc_standard_error": 0.018473522011219837,
+          "quotient_order_elbo_nll": 0.016794147521240643,
+          "role": "iid_test",
+          "sites": 10,
+          "species": 4,
+          "uniform_quotient_nll": 7.138866999945524,
+          "uniform_quotient_probability": 0.0007936507936507935
+        }
+      ]
+    },
+    "supported_likelihood": {
+      "iid_calibration_supported": {
+        "carriers": 35,
+        "materials": 18,
+        "maximum_order_elbo_mc_standard_error": 0.29792709075859947,
+        "mean_order_elbo_mc_standard_error": 0.07541862868732184,
+        "mean_quotient_order_elbo_nll": 3.2458677291870117,
+        "mean_uniform_quotient_nll": 11.169267654418945,
+        "mean_uniform_target_probability": 0.004384629228945902,
+        "model_minus_uniform_nll_ucb95": -6.356464309085472,
+        "relative_nll_reduction_from_uniform": 0.7093929648399353
+      },
+      "iid_test_supported": {
+        "carriers": 35,
+        "materials": 18,
+        "maximum_order_elbo_mc_standard_error": 0.11758466744879155,
+        "mean_order_elbo_mc_standard_error": 0.042731354653425736,
+        "mean_quotient_order_elbo_nll": 1.640412449836731,
+        "mean_uniform_quotient_nll": 11.151435852050781,
+        "mean_uniform_target_probability": 0.0052689829704425,
+        "model_minus_uniform_nll_ucb95": -6.847819236302318,
+        "relative_nll_reduction_from_uniform": 0.8528967499732971
+      }
+    }
+  },
+  "hardware": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4090",
+    "torch": "2.5.1+cu124"
+  },
+  "implementation_commit": "6aec0d9aac6085b25d9a7571ad8414e05efd0f67",
+  "protocol": "h1a_assignment_iid_precision_closure_v1",
+  "protocol_sha256": "0c9fa6c7b10b2c85d4234c6b2265e2506b518964ef00260adfa6500fdde5d68b",
+  "qualified": true
+}
