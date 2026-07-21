@@ -112,6 +112,59 @@ def sample_uniform_reveal_ranks(
     return rank
 
 
+def sample_parent_orbit_representatives(
+    target_assignment: torch.Tensor,
+    batch: torch.Tensor,
+    parent_permutations: tuple[torch.Tensor, ...],
+    *,
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Uniformly sample one unique quotient representative per carrier.
+
+    Operation multiplicity is removed before sampling.  This is label-side
+    training marginalization: target species never enter a model feature, and
+    the independently sampled reveal order remains target-independent.
+    """
+    if (
+        target_assignment.shape != batch.shape
+        or target_assignment.dtype != torch.long
+        or batch.dtype != torch.long
+        or batch.ndim != 1
+        or batch.numel() < 1
+    ):
+        raise ValueError("target assignment and packed batch must be aligned int64 vectors")
+    graphs = len(parent_permutations)
+    if (
+        graphs < 1
+        or int(batch.min()) != 0
+        or int(batch.max()) != graphs - 1
+        or not bool((batch[1:] >= batch[:-1]).all())
+    ):
+        raise ValueError("parent actions do not align with the packed assignment batch")
+    output = target_assignment.clone()
+    for graph, permutations in enumerate(parent_permutations):
+        selected = torch.nonzero(batch == graph, as_tuple=False).flatten()
+        nodes = selected.numel()
+        if permutations.ndim != 2 or permutations.shape[1] != nodes or permutations.dtype != torch.long:
+            raise ValueError("parent action does not cover its packed assignment")
+        expected = torch.arange(nodes, device=permutations.device)
+        if not torch.equal(
+            torch.sort(permutations, dim=1).values,
+            expected.expand_as(permutations),
+        ):
+            raise ValueError("parent action contains a non-permutation")
+        local_target = target_assignment[selected]
+        orbit = torch.unique(local_target[permutations.to(target_assignment.device)], dim=0)
+        index = torch.randint(
+            orbit.shape[0],
+            (1,),
+            device=target_assignment.device,
+            generator=generator,
+        )[0]
+        output[selected] = orbit[index]
+    return output
+
+
 def orderless_assignment_objective(
     scorer: GeometryAwareRemainingCountScorer,
     carrier: AssignmentCarrierBatch,

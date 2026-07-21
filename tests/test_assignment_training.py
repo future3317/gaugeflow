@@ -7,6 +7,7 @@ import torch
 from gaugeflow.production.assignment_training import (
     AssignmentCarrierBatch,
     orderless_assignment_objective,
+    sample_parent_orbit_representatives,
     sample_uniform_reveal_ranks,
 )
 from gaugeflow.production.autoregressive_assignment import (
@@ -187,3 +188,108 @@ def test_reveal_order_sampling_is_target_independent_and_graphwise_permuted() ->
     for graph in range(3):
         selected = first[batch == graph]
         assert torch.equal(torch.sort(selected).values, torch.arange(selected.numel()))
+
+
+def _two_graph_orbit_inputs() -> tuple[torch.Tensor, torch.Tensor, tuple[torch.Tensor, ...]]:
+    target = torch.tensor([2, 5, 2, 5, 3, 7, 7], dtype=torch.long)
+    batch = torch.tensor([0, 0, 0, 0, 1, 1, 1], dtype=torch.long)
+    actions = (
+        torch.tensor(
+            [
+                [0, 1, 2, 3],
+                [1, 0, 3, 2],
+                [2, 3, 0, 1],
+                [3, 2, 1, 0],
+            ],
+            dtype=torch.long,
+        ),
+        torch.tensor(
+            [
+                [0, 1, 2],
+                [0, 2, 1],
+            ],
+            dtype=torch.long,
+        ),
+    )
+    return target, batch, actions
+
+
+def test_parent_orbit_sampling_preserves_counts_and_uses_only_unique_orbit() -> None:
+    target, batch, actions = _two_graph_orbit_inputs()
+    for seed in range(32):
+        sampled = sample_parent_orbit_representatives(
+            target,
+            batch,
+            actions,
+            generator=torch.Generator().manual_seed(seed),
+        )
+        for graph, action in enumerate(actions):
+            selected = batch == graph
+            local_target = target[selected]
+            orbit = torch.unique(local_target[action], dim=0)
+            assert torch.any(torch.all(sampled[selected] == orbit, dim=1))
+            assert torch.equal(
+                torch.sort(sampled[selected]).values,
+                torch.sort(local_target).values,
+            )
+
+
+def test_parent_orbit_sampling_ignores_duplicate_operations_and_enumeration_order() -> None:
+    target, batch, actions = _two_graph_orbit_inputs()
+    expanded = (
+        torch.cat((actions[0][[2, 0, 3, 1]], actions[0][[1, 1, 3]]), dim=0),
+        torch.cat((actions[1].flip(0), actions[1][[0, 0]]), dim=0),
+    )
+    for seed in range(32):
+        reference = sample_parent_orbit_representatives(
+            target,
+            batch,
+            actions,
+            generator=torch.Generator().manual_seed(seed),
+        )
+        changed = sample_parent_orbit_representatives(
+            target,
+            batch,
+            expanded,
+            generator=torch.Generator().manual_seed(seed),
+        )
+        assert torch.equal(changed, reference)
+
+
+def test_parent_orbit_sampling_is_node_relabel_equivariant() -> None:
+    target = torch.tensor([2, 5, 2, 5], dtype=torch.long)
+    batch = torch.zeros(4, dtype=torch.long)
+    action = _two_graph_orbit_inputs()[2][0]
+    relabel = torch.tensor([2, 0, 3, 1], dtype=torch.long)
+    inverse = torch.argsort(relabel)
+    relabeled_action = inverse[action[:, relabel]]
+    original_orbit = torch.unique(target[action], dim=0)
+    relabeled_orbit = torch.unique(target[relabel][relabeled_action], dim=0)
+    assert torch.equal(relabeled_orbit, torch.unique(original_orbit[:, relabel], dim=0))
+
+    for seed in range(32):
+        reference = sample_parent_orbit_representatives(
+            target,
+            batch,
+            (action,),
+            generator=torch.Generator().manual_seed(seed),
+        )
+        changed = sample_parent_orbit_representatives(
+            target[relabel],
+            batch,
+            (relabeled_action,),
+            generator=torch.Generator().manual_seed(seed),
+        )
+        assert torch.equal(changed, reference[relabel])
+
+
+def test_orbit_representative_and_reveal_order_use_independent_random_draws() -> None:
+    target, batch, actions = _two_graph_orbit_inputs()
+    alternative = target.clone()
+    alternative[:4] = torch.tensor([11, 13, 11, 13])
+    ranks = []
+    for label in (target, alternative):
+        generator = torch.Generator().manual_seed(2718)
+        sample_parent_orbit_representatives(label, batch, actions, generator=generator)
+        ranks.append(sample_uniform_reveal_ranks(batch, generator=generator))
+    assert torch.equal(ranks[0], ranks[1])

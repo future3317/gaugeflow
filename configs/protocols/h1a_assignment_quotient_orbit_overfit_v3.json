@@ -1,5 +1,5 @@
 {
-  "protocol": "h1a_assignment_pair_context_overfit_v2",
+  "protocol": "h1a_assignment_quotient_orbit_overfit_v3",
   "status_before_run": "frozen_not_run",
   "source": {
     "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
@@ -12,6 +12,7 @@
     "radial_channels": 16,
     "pair_context": "symmetric_two_point_rbf_gram",
     "pair_context_feature_dim": 152,
+    "target_quotient_training": "uniform_unique_parent_orbit_representative",
     "hidden_dim": 96,
     "message_blocks": 3
   },
@@ -40,8 +41,8 @@
     "finite_gradient_step_fraction": 1.0
   },
   "decision_rule": {
-    "pass": "authorize_single_seed_iid_pair_context_assignment_gate",
-    "fail": "stop_and_diagnose_pair_context_assignment",
+    "pass": "authorize_single_seed_iid_quotient_orbit_assignment_gate",
+    "fail": "stop_and_reject_current_orderless_assignment_family",
     "boundary": "This software overfit screen cannot qualify generated composition, p(N), lattice, joint generation, tensor conditioning, relaxation, DFT, or DFPT."
   }
 }

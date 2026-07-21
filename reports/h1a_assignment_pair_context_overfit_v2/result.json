@@ -1,0 +1,451 @@
+{
+  "boundary": "This software overfit screen cannot qualify generated composition, p(N), lattice, joint generation, tensor conditioning, relaxation, DFT, or DFPT.",
+  "checkpoint_sha256": "309112e566c63944af8d77bd4d48c865919f292ffdee906a4561f795f9290893",
+  "checks": {
+    "exact_composition": true,
+    "finite_gradients": true,
+    "nll_reduction": false,
+    "sample_retrieval": false,
+    "sample_site_accuracy": false,
+    "target_probability": false
+  },
+  "decision": "stop_and_diagnose_pair_context_assignment",
+  "fixed_examples": [
+    "29d9a641e00a898f0ff26660a77c41da62e8dec0f2602a6a6879d6ab955ee799",
+    "adf60fece00f69d07c6f6a61b196bb7ce0b4047ab67cd282178d53f1c4283bc0",
+    "8ec498010922bf12063d65e238d16c1938d5512843a5af241b8bcb4b7598ad16",
+    "1df19247265bddd44d8ea149bd17e3437d404336d08e598de23911df78799d47",
+    "158eaf5ceec364b3e647c6bd4f6ccfcd3d3d2c9f4afd507cf1e0707457b87fb2",
+    "77145f7b1fd368b6ecc8edc26aeec83f56b4cf45c64e4a60b97072071d3f8bed",
+    "c89ff7dbe8b1492979177effcb8c434f97929976629341b747023586c9863952",
+    "d93d8982244345c9852ea0b2ba1e910e5bd572a37cd74ecd9e3ec3dd17eea1a1"
+  ],
+  "hardware": {
+    "cuda": "12.4",
+    "device": "NVIDIA GeForce RTX 4090",
+    "torch": "2.5.1+cu124"
+  },
+  "implementation_commit": "bfc37a2268ef7c924a6e7f628d1a339c19b80b6f",
+  "metrics": {
+    "elapsed_seconds": 64.3157572930213,
+    "finite_gradient_step_fraction": 1.0,
+    "mean_quotient_lower_bound_nll": 1.3239082459367302,
+    "mean_target_quotient_probability_lower_bound": 0.6540171583555809,
+    "mean_uniform_quotient_nll": 3.091348375563637,
+    "peak_cuda_mib": 122.58642578125,
+    "relative_nll_reduction_from_uniform": 0.5717376092575314,
+    "sample_exact_composition": 1.0,
+    "sample_orbit_aligned_site_accuracy": 0.8553873896598816,
+    "sample_retrieval": 0.65234375
+  },
+  "protocol": "h1a_assignment_pair_context_overfit_v2",
+  "protocol_sha256": "7b85cff599dde4b75ef184de8966d0556e28784d86c58d6a9235c7dc026b6f42",
+  "qualified": false,
+  "training_history": [
+    {
+      "gradient_norm": 37.99272537231445,
+      "path_nll": 4.0358734130859375,
+      "step": 1.0
+    },
+    {
+      "gradient_norm": 21.196640014648438,
+      "path_nll": 3.418138265609741,
+      "step": 25.0
+    },
+    {
+      "gradient_norm": 23.06452751159668,
+      "path_nll": 2.5048108100891113,
+      "step": 50.0
+    },
+    {
+      "gradient_norm": 18.15914535522461,
+      "path_nll": 2.713395118713379,
+      "step": 75.0
+    },
+    {
+      "gradient_norm": 10.364084243774414,
+      "path_nll": 2.2305474281311035,
+      "step": 100.0
+    },
+    {
+      "gradient_norm": 11.686370849609375,
+      "path_nll": 2.2704288959503174,
+      "step": 125.0
+    },
+    {
+      "gradient_norm": 14.416139602661133,
+      "path_nll": 2.2941105365753174,
+      "step": 150.0
+    },
+    {
+      "gradient_norm": 7.874002933502197,
+      "path_nll": 2.3031582832336426,
+      "step": 175.0
+    },
+    {
+      "gradient_norm": 9.755616188049316,
+      "path_nll": 2.2953476905822754,
+      "step": 200.0
+    },
+    {
+      "gradient_norm": 8.822798728942871,
+      "path_nll": 2.41953444480896,
+      "step": 225.0
+    },
+    {
+      "gradient_norm": 6.991268634796143,
+      "path_nll": 2.144380807876587,
+      "step": 250.0
+    },
+    {
+      "gradient_norm": 9.513936042785645,
+      "path_nll": 2.5732905864715576,
+      "step": 275.0
+    },
+    {
+      "gradient_norm": 5.456453323364258,
+      "path_nll": 2.3573365211486816,
+      "step": 300.0
+    },
+    {
+      "gradient_norm": 5.199385166168213,
+      "path_nll": 2.0713086128234863,
+      "step": 325.0
+    },
+    {
+      "gradient_norm": 7.7448883056640625,
+      "path_nll": 2.267568588256836,
+      "step": 350.0
+    },
+    {
+      "gradient_norm": 4.36297607421875,
+      "path_nll": 2.1213598251342773,
+      "step": 375.0
+    },
+    {
+      "gradient_norm": 6.525819301605225,
+      "path_nll": 2.220940589904785,
+      "step": 400.0
+    },
+    {
+      "gradient_norm": 3.89935302734375,
+      "path_nll": 2.1812028884887695,
+      "step": 425.0
+    },
+    {
+      "gradient_norm": 4.549940586090088,
+      "path_nll": 2.135218620300293,
+      "step": 450.0
+    },
+    {
+      "gradient_norm": 3.617372512817383,
+      "path_nll": 2.153233289718628,
+      "step": 475.0
+    },
+    {
+      "gradient_norm": 3.1883997917175293,
+      "path_nll": 2.1960787773132324,
+      "step": 500.0
+    },
+    {
+      "gradient_norm": 2.3907322883605957,
+      "path_nll": 2.040027141571045,
+      "step": 525.0
+    },
+    {
+      "gradient_norm": 4.418808460235596,
+      "path_nll": 1.8971556425094604,
+      "step": 550.0
+    },
+    {
+      "gradient_norm": 3.3674802780151367,
+      "path_nll": 2.179535388946533,
+      "step": 575.0
+    },
+    {
+      "gradient_norm": 2.3117799758911133,
+      "path_nll": 2.118290662765503,
+      "step": 600.0
+    },
+    {
+      "gradient_norm": 2.403144598007202,
+      "path_nll": 2.2402281761169434,
+      "step": 625.0
+    },
+    {
+      "gradient_norm": 3.4581069946289062,
+      "path_nll": 2.273299217224121,
+      "step": 650.0
+    },
+    {
+      "gradient_norm": 2.6940808296203613,
+      "path_nll": 2.257154941558838,
+      "step": 675.0
+    },
+    {
+      "gradient_norm": 2.881754159927368,
+      "path_nll": 2.093154191970825,
+      "step": 700.0
+    },
+    {
+      "gradient_norm": 2.901116132736206,
+      "path_nll": 2.0288920402526855,
+      "step": 725.0
+    },
+    {
+      "gradient_norm": 2.0669679641723633,
+      "path_nll": 2.106410026550293,
+      "step": 750.0
+    },
+    {
+      "gradient_norm": 2.377394199371338,
+      "path_nll": 2.0329599380493164,
+      "step": 775.0
+    },
+    {
+      "gradient_norm": 2.270019054412842,
+      "path_nll": 2.0915958881378174,
+      "step": 800.0
+    },
+    {
+      "gradient_norm": 1.6721000671386719,
+      "path_nll": 2.1433448791503906,
+      "step": 825.0
+    },
+    {
+      "gradient_norm": 2.138637065887451,
+      "path_nll": 2.219066619873047,
+      "step": 850.0
+    },
+    {
+      "gradient_norm": 2.0650317668914795,
+      "path_nll": 2.257120132446289,
+      "step": 875.0
+    },
+    {
+      "gradient_norm": 1.7209190130233765,
+      "path_nll": 2.124631881713867,
+      "step": 900.0
+    },
+    {
+      "gradient_norm": 2.340911626815796,
+      "path_nll": 2.163526773452759,
+      "step": 925.0
+    },
+    {
+      "gradient_norm": 2.5800840854644775,
+      "path_nll": 2.254012107849121,
+      "step": 950.0
+    },
+    {
+      "gradient_norm": 1.250733494758606,
+      "path_nll": 2.0812020301818848,
+      "step": 975.0
+    },
+    {
+      "gradient_norm": 1.97951340675354,
+      "path_nll": 2.2496140003204346,
+      "step": 1000.0
+    },
+    {
+      "gradient_norm": 1.7247823476791382,
+      "path_nll": 2.2017621994018555,
+      "step": 1025.0
+    },
+    {
+      "gradient_norm": 1.1710247993469238,
+      "path_nll": 2.0470688343048096,
+      "step": 1050.0
+    },
+    {
+      "gradient_norm": 1.7606596946716309,
+      "path_nll": 2.1534907817840576,
+      "step": 1075.0
+    },
+    {
+      "gradient_norm": 1.5108009576797485,
+      "path_nll": 2.1075439453125,
+      "step": 1100.0
+    },
+    {
+      "gradient_norm": 1.5046344995498657,
+      "path_nll": 2.1428909301757812,
+      "step": 1125.0
+    },
+    {
+      "gradient_norm": 1.911881923675537,
+      "path_nll": 2.2383646965026855,
+      "step": 1150.0
+    },
+    {
+      "gradient_norm": 1.9111075401306152,
+      "path_nll": 2.18597412109375,
+      "step": 1175.0
+    },
+    {
+      "gradient_norm": 1.362304449081421,
+      "path_nll": 2.0557491779327393,
+      "step": 1200.0
+    },
+    {
+      "gradient_norm": 2.0750088691711426,
+      "path_nll": 2.1574034690856934,
+      "step": 1225.0
+    },
+    {
+      "gradient_norm": 1.598253607749939,
+      "path_nll": 2.193847417831421,
+      "step": 1250.0
+    },
+    {
+      "gradient_norm": 1.382830262184143,
+      "path_nll": 2.2124860286712646,
+      "step": 1275.0
+    },
+    {
+      "gradient_norm": 1.5414652824401855,
+      "path_nll": 2.214186429977417,
+      "step": 1300.0
+    },
+    {
+      "gradient_norm": 1.2249855995178223,
+      "path_nll": 2.1194698810577393,
+      "step": 1325.0
+    },
+    {
+      "gradient_norm": 1.4179631471633911,
+      "path_nll": 2.157714366912842,
+      "step": 1350.0
+    },
+    {
+      "gradient_norm": 2.0560951232910156,
+      "path_nll": 2.178166389465332,
+      "step": 1375.0
+    },
+    {
+      "gradient_norm": 0.9670748114585876,
+      "path_nll": 2.065748691558838,
+      "step": 1400.0
+    },
+    {
+      "gradient_norm": 1.9181573390960693,
+      "path_nll": 2.2231082916259766,
+      "step": 1425.0
+    },
+    {
+      "gradient_norm": 1.1895784139633179,
+      "path_nll": 2.1063015460968018,
+      "step": 1450.0
+    },
+    {
+      "gradient_norm": 0.8814087510108948,
+      "path_nll": 2.039341926574707,
+      "step": 1475.0
+    },
+    {
+      "gradient_norm": 1.9597104787826538,
+      "path_nll": 2.311558246612549,
+      "step": 1500.0
+    },
+    {
+      "gradient_norm": 1.13767671585083,
+      "path_nll": 2.0402519702911377,
+      "step": 1525.0
+    },
+    {
+      "gradient_norm": 1.3266457319259644,
+      "path_nll": 2.1283304691314697,
+      "step": 1550.0
+    },
+    {
+      "gradient_norm": 1.9785535335540771,
+      "path_nll": 2.168870449066162,
+      "step": 1575.0
+    },
+    {
+      "gradient_norm": 1.3818187713623047,
+      "path_nll": 2.0812058448791504,
+      "step": 1600.0
+    },
+    {
+      "gradient_norm": 1.722427487373352,
+      "path_nll": 2.2571117877960205,
+      "step": 1625.0
+    },
+    {
+      "gradient_norm": 1.461092472076416,
+      "path_nll": 2.0793380737304688,
+      "step": 1650.0
+    },
+    {
+      "gradient_norm": 1.1633695363998413,
+      "path_nll": 2.037118673324585,
+      "step": 1675.0
+    },
+    {
+      "gradient_norm": 1.5874828100204468,
+      "path_nll": 2.1135730743408203,
+      "step": 1700.0
+    },
+    {
+      "gradient_norm": 1.941756248474121,
+      "path_nll": 2.0474488735198975,
+      "step": 1725.0
+    },
+    {
+      "gradient_norm": 1.6299387216567993,
+      "path_nll": 2.0643534660339355,
+      "step": 1750.0
+    },
+    {
+      "gradient_norm": 1.4424456357955933,
+      "path_nll": 1.9870580434799194,
+      "step": 1775.0
+    },
+    {
+      "gradient_norm": 1.4454180002212524,
+      "path_nll": 2.0945215225219727,
+      "step": 1800.0
+    },
+    {
+      "gradient_norm": 1.2998406887054443,
+      "path_nll": 2.229017734527588,
+      "step": 1825.0
+    },
+    {
+      "gradient_norm": 1.4015536308288574,
+      "path_nll": 2.139230489730835,
+      "step": 1850.0
+    },
+    {
+      "gradient_norm": 1.2108004093170166,
+      "path_nll": 2.0690248012542725,
+      "step": 1875.0
+    },
+    {
+      "gradient_norm": 1.0573186874389648,
+      "path_nll": 2.1187527179718018,
+      "step": 1900.0
+    },
+    {
+      "gradient_norm": 0.9017641544342041,
+      "path_nll": 2.105645179748535,
+      "step": 1925.0
+    },
+    {
+      "gradient_norm": 1.2339404821395874,
+      "path_nll": 2.1797757148742676,
+      "step": 1950.0
+    },
+    {
+      "gradient_norm": 0.9495948553085327,
+      "path_nll": 2.0023837089538574,
+      "step": 1975.0
+    },
+    {
+      "gradient_norm": 1.237754225730896,
+      "path_nll": 2.071549892425537,
+      "step": 2000.0
+    }
+  ]
+}
