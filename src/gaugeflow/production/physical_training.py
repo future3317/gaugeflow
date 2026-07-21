@@ -13,8 +13,10 @@ from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .matpes_data import MatPESPhysicalBatch
 from .physical_pretraining import (
     FunctionalPhysicalNormalizer,
+    PhysicalLossDenominators,
     PhysicalLossOutput,
     PhysicalRepresentationModel,
+    physical_loss_denominators,
     physical_multitask_loss,
 )
 from .training import ExponentialMovingAverage
@@ -95,6 +97,7 @@ class PhysicalTransferTrainer:
         normalizer: FunctionalPhysicalNormalizer,
         *,
         loss_weight: float,
+        denominators: PhysicalLossDenominators | None = None,
     ) -> PhysicalLossOutput:
         if not 0.0 < loss_weight <= 1.0:
             raise ValueError("physical microbatch weight must lie in (0,1]")
@@ -120,6 +123,7 @@ class PhysicalTransferTrainer:
                 force_weight=self.config.force_weight,
                 stress_weight=self.config.stress_weight,
                 feature_weight=self.config.feature_weight,
+                denominators=denominators,
             )
         (loss_weight * output.loss).backward()
         return output
@@ -183,6 +187,24 @@ class PhysicalTransferTrainer:
         if total <= 0.0:
             raise ValueError("distributed optimization received no examples")
         return local_count / total
+
+    @staticmethod
+    def distributed_physical_denominators(
+        batch: MatPESPhysicalBatch,
+    ) -> PhysicalLossDenominators:
+        """All-reduce label-bearing graph counts for unbiased masked task means."""
+
+        if not dist.is_available() or not dist.is_initialized():
+            raise RuntimeError("distributed physical normalization requires a process group")
+        graph_count = batch.lattice.shape[0]
+        local = physical_loss_denominators(batch.targets, batch.batch, graph_count)
+        counts = torch.tensor(
+            [local.energy, local.force, local.stress, local.feature],
+            device=batch.lattice.device,
+            dtype=torch.int64,
+        )
+        dist.all_reduce(counts, op=dist.ReduceOp.SUM)
+        return PhysicalLossDenominators(*(int(value) for value in counts))
 
     def finish_distributed_optimization_step(self, *, owner_rank: int = 0) -> torch.Tensor:
         """Sum globally weighted gradients, update once, then broadcast parameters."""

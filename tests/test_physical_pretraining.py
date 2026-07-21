@@ -17,6 +17,8 @@ from gaugeflow.production.matpes_data import (
 from gaugeflow.production.physical_pretraining import (
     CartesianPhysicalHeads,
     FunctionalPhysicalNormalizer,
+    PhysicalLossDenominators,
+    PhysicalLossOutput,
     PhysicalPredictions,
     PhysicalRepresentationModel,
     PhysicalTargets,
@@ -191,6 +193,42 @@ def test_physical_loss_masks_missing_labels_and_weights_graphs_equally() -> None
     assert torch.allclose(output.force_loss, torch.tensor(2.5))
     assert output.stress_loss == 0.0 and output.feature_loss == 0.0
     assert torch.allclose(output.loss, torch.tensor(6.5))
+
+
+def test_physical_loss_global_denominators_sum_disjoint_rank_contributions() -> None:
+    denominators = PhysicalLossDenominators(energy=2, force=2, stress=2, feature=1)
+
+    def shard(error: float, *, teacher: bool) -> PhysicalLossOutput:
+        batch = torch.zeros(1, dtype=torch.long)
+        prediction = PhysicalPredictions(
+            energy_per_atom=torch.tensor([error]),
+            forces=torch.full((1, 3), error),
+            stress_kelvin=torch.full((1, 6), error),
+            teacher_features=torch.tensor([[1.0, 0.0]]),
+        )
+        target = PhysicalTargets(
+            energy_per_atom=torch.zeros(1),
+            forces=torch.zeros(1, 3),
+            stress_kelvin=torch.zeros(1, 6),
+            teacher_features=torch.tensor([[0.0, 1.0]]),
+            energy_mask=torch.ones(1, dtype=torch.bool),
+            force_mask=torch.ones(1, dtype=torch.bool),
+            stress_mask=torch.ones(1, dtype=torch.bool),
+            teacher_mask=torch.tensor([teacher]),
+        )
+        return physical_multitask_loss(
+            prediction,
+            target,
+            batch,
+            denominators=denominators,
+        )
+
+    first = shard(1.0, teacher=True)
+    second = shard(3.0, teacher=False)
+    assert torch.allclose(first.energy_loss + second.energy_loss, torch.tensor(5.0))
+    assert torch.allclose(first.force_loss + second.force_loss, torch.tensor(5.0))
+    assert torch.allclose(first.stress_loss + second.stress_loss, torch.tensor(5.0))
+    assert torch.allclose(first.feature_loss + second.feature_loss, torch.tensor(1.0))
 
 
 def test_matpes_record_preserves_units_and_missing_label_masks() -> None:

@@ -81,6 +81,20 @@ class PhysicalLossOutput:
 
 
 @dataclass(frozen=True)
+class PhysicalLossDenominators:
+    """Label-bearing graph counts used for exact cross-rank normalization."""
+
+    energy: int
+    force: int
+    stress: int
+    feature: int
+
+    def validate(self) -> None:
+        if min(self.energy, self.force, self.stress, self.feature) < 0:
+            raise ValueError("physical loss denominators must be nonnegative")
+
+
+@dataclass(frozen=True)
 class FunctionalPhysicalNormalizer:
     """Per-functional scalar calibration that preserves Cartesian covariance."""
 
@@ -303,12 +317,43 @@ class PhysicalRepresentationModel(nn.Module):
         )
 
 
-def _masked_mean(value: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+def _masked_mean(
+    value: torch.Tensor,
+    mask: torch.Tensor,
+    denominator: int | None = None,
+) -> torch.Tensor:
     if mask.shape != value.shape[:1] or mask.dtype != torch.bool:
         raise ValueError("physical label mask has the wrong shape or dtype")
+    if denominator is not None:
+        if denominator < 0:
+            raise ValueError("physical loss denominator must be nonnegative")
+        if denominator > 0:
+            return value[mask].sum() / denominator
+        return value.sum() * 0.0
     if bool(mask.any()):
         return value[mask].mean()
     return value.sum() * 0.0
+
+
+def physical_loss_denominators(
+    target: PhysicalTargets,
+    batch: torch.Tensor,
+    graph_count: int,
+) -> PhysicalLossDenominators:
+    """Count graph-equal task support without inspecting target values."""
+
+    if batch.shape != target.force_mask.shape or batch.shape != target.teacher_mask.shape:
+        raise ValueError("physical node masks do not align with the packed batch")
+    force_graphs = torch.bincount(batch[target.force_mask], minlength=graph_count) > 0
+    feature_graphs = torch.bincount(batch[target.teacher_mask], minlength=graph_count) > 0
+    result = PhysicalLossDenominators(
+        energy=int(target.energy_mask.sum()),
+        force=int(force_graphs.sum()),
+        stress=int(target.stress_mask.sum()),
+        feature=int(feature_graphs.sum()),
+    )
+    result.validate()
+    return result
 
 
 def physical_multitask_loss(
@@ -320,6 +365,7 @@ def physical_multitask_loss(
     force_weight: float = 1.0,
     stress_weight: float = 1.0,
     feature_weight: float = 1.0,
+    denominators: PhysicalLossDenominators | None = None,
 ) -> PhysicalLossOutput:
     """Masked graph-equal loss for calibrated E/F/stress/features."""
 
@@ -338,10 +384,13 @@ def physical_multitask_loss(
     weights = (energy_weight, force_weight, stress_weight, feature_weight)
     if any(weight < 0.0 for weight in weights) or sum(weights) <= 0.0:
         raise ValueError("physical loss weights must be nonnegative and nonzero")
+    if denominators is not None:
+        denominators.validate()
 
     energy_loss = _masked_mean(
         (prediction.energy_per_atom - target.energy_per_atom).square(),
         target.energy_mask,
+        denominators.energy if denominators is not None else None,
     )
     node_force_error = (prediction.forces - target.forces).square().mean(dim=-1)
     if target.force_mask.shape != (batch.numel(),) or target.force_mask.dtype != torch.bool:
@@ -357,10 +406,15 @@ def physical_multitask_loss(
     )
     force_graph_mask = force_count > 0
     force_graph_mean = force_sum / force_count.clamp_min(1).to(force_sum)
-    force_loss = _masked_mean(force_graph_mean, force_graph_mask)
+    force_loss = _masked_mean(
+        force_graph_mean,
+        force_graph_mask,
+        denominators.force if denominators is not None else None,
+    )
     stress_loss = _masked_mean(
         (prediction.stress_kelvin - target.stress_kelvin).square().mean(dim=-1),
         target.stress_mask,
+        denominators.stress if denominators is not None else None,
     )
     if prediction.teacher_features.shape[:1] != (batch.numel(),):
         raise ValueError("teacher features must provide one vector per node")
@@ -380,7 +434,11 @@ def physical_multitask_loss(
     feature_count = torch.bincount(batch[target.teacher_mask], minlength=graph_count)
     feature_graph_mask = feature_count > 0
     feature_graph_mean = feature_sum / feature_count.clamp_min(1).to(feature_sum)
-    feature_loss = _masked_mean(feature_graph_mean, feature_graph_mask)
+    feature_loss = _masked_mean(
+        feature_graph_mean,
+        feature_graph_mask,
+        denominators.feature if denominators is not None else None,
+    )
     loss = (
         energy_weight * energy_loss
         + force_weight * force_loss

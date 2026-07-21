@@ -188,10 +188,12 @@ def main() -> None:
 
     def one_step() -> torch.Tensor:
         trainer.begin_optimization_step()
+        denominators = trainer.distributed_physical_denominators(physical_batch)
         physical = trainer.accumulate_physical_step(
             physical_batch,
             normalizer,
-            loss_weight=0.5 * local_fraction,
+            loss_weight=0.5,
+            denominators=denominators,
         )
         replay = trainer.accumulate_alex_replay_step(
             physical_batch.element_tokens,
