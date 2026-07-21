@@ -276,7 +276,7 @@ class _DdpRun:
     def load(self, state: dict[str, Any]) -> None:
         self.module.scorer.load_state_dict(state["model"])
         self.optimizer.load_state_dict(state["optimizer"])
-        self.generator.set_state(state["generator"])
+        self.generator.set_state(state["generator"].cpu())
 
 
 def _cosine(left: torch.Tensor, right: torch.Tensor) -> float:
