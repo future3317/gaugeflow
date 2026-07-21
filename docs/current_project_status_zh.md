@@ -1,16 +1,28 @@
-# GaugeFlow 当前实现、方法演进与实验状态（2026-07-21）
+# GaugeFlow 当前实现、方法演进与实验状态（2026-07-22）
 
 ## 一句话结论
 
-GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。历史真实数据 free H1a 的局部 packing 失败仍然保留；此后 `p(C|N)`、supported-IID exact-count assignment、显式 `p(N)`、lattice L1、clean/generated side-state coordinate exposure 已分别通过。34M/58M/98M 等 exposure 筛选选择 34.28M 作为最小充分 coordinate backbone。完整 joint A1 尚未训练，因此当前仍不能声称已生成满足目标压电张量的晶体。
+GaugeFlow 已经从早期连续 logit/ODE 原型重构为混合离散—连续晶体扩散框架，并完成 Cartesian tensor-orbit conditioner、反向采样软件闭环、H0 数据/群论资格化和 Alex-MP-20 全量 H1a cache。历史 independent-site free H1a 的局部 packing 失败仍然保留；此后 `p(C|N)`、supported-IID exact-count assignment、显式 `p(N)`、lattice L1、clean/generated side-state coordinate exposure 已分别通过。34M/58M/98M 等 exposure 筛选选择 34.28M 作为最小充分 backbone。该 product model 已在 540,164 条 Alex train 结构上完成一次精确遍历，并通过 tensor-free free-generation A1-v1.1；这仍不等于已经生成满足目标压电张量的晶体。
 
-本项目已完成 GaugeFlow-base 的 bounded supported-IID 组件资格化，但尚未完成 product-space runtime 闭合：当前 `joint` trainer 和 reverse sampler 未调用已通过的 `p(C|N)` 与 orderless exact-count assignment。下一步是将两者接入选定的 34.28M tensor-free sampler，并对 composition exactness、assignment equivariance、joint state closure 和 zero-failure 进行独立资格化；之后才可冻结 A1 联合预训练。H1b、H2--H6、真实 tensor、oracle、relaxation、DFT 和 DFPT 均未启动。
+GaugeFlow-base 的 product-space runtime 已闭合：`joint` trainer 和 reverse sampler 调用冻结的 `p(C|N)`、all-MASK 初态与 orderless remaining-count assignment，且不再使用旧 independent-site checkpoint。A1-v1.1 在 512 个公共自由样本上得到 NN-W1 `0.555003`、volume-W1 `0.073341`、最小距离有效率 `1.0`、元素 JSD `0.047493`、对声明 train-only `p(N)` 的 JSD `0.003924`、exact composition `1.0` 和零 mask/failure。该结果只资格化 flexible-carrier、tensor-free GaugeFlow-base；OOD parent action、真实 tensor、oracle、RL、relaxation、DFT 和 DFPT 仍未启动。
+
+旧 A1-v1 结果原样冻结为失败：它把 train-only `p(N)` 的自由样本与 formula/prototype-disjoint validation 的 node-count marginal 比较，得到 checkpoint-invariant JSD `0.363640`。两者均是合法但用途不同的分布；v1.1 不改模型、样本、seed、阈值或几何 reference，只将 node-count 自一致性改为 sample 对其声明 prior，JSD 为 `0.003924`。`0.363640` 继续作为 OOD split displacement diagnostic。
 
 ### 最新容量资格结果
 
 三档模型均从头训练，seed 5705、effective batch 64、Alex train 恰好一遍（540,164 graphs），只改变容量。34M/58M/98M 的 validation ratio 分别为 `0.269575/0.292842/0.274138`，\(t=0.6\) explained fraction 为 `0.729079/0.757194/0.771143`，clean-side conditional-rollout normalized NN-W1 为 `0.148713/0.149680/0.131120`，全部零 failure 且 valid-distance fraction 为 1.0。该 rollout 从 coordinate prior 开始，但固定真实 atom types、lattice 与 node count，不能称为自由联合生成。98M 在中噪声和 NN-W1 上最好，但吞吐仅 `69.88 graphs/s`，相对 34M 的收益未越过预注册 margin；因此正式选择 34.28M（`238.26 graphs/s`）。
 
 ![GaugeFlow-base capacity screen](../reports/gaugeflow_base_capacity_screen_v1/capacity_screen.png)
+
+### GaugeFlow-base A1 自由联合结果
+
+A1 使用 34,284,207 参数、BF16 learned path、FP32 geometry、effective batch 64 和 seed
+5705，从头训练 8,441 steps，恰好呈现 540,164 个 train graphs。final checkpoint SHA-256
+为 `7c8fb7afc3aee6d4723d700b59f2a0523da25e897a46de8e9d2c7e5db824b6da`。
+四个冻结 checkpoints 的 free NN-W1 为 `2.806624/0.563558/0.522771/0.555003`；
+step 4221 的几何指标略优于 final，但协议没有事后挑 checkpoint，正式 runtime 保留 final。
+
+![GaugeFlow-base A1](../reports/gaugeflow_base_a1_joint_evaluation_v1_1/gaugeflow_base_a1.png)
 
 ## 已经完成了什么
 

@@ -147,7 +147,6 @@ class CartesianPhysicalHeads(nn.Module):
             raise ValueError("physical head dimensions must be positive")
         self.scalar_dim = scalar_dim
         self.vector_dim = vector_dim
-        self.teacher_dim = teacher_dim
         self.energy_head = nn.Sequential(
             nn.Linear(scalar_dim, scalar_dim),
             nn.SiLU(),

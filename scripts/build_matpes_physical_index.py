@@ -11,8 +11,8 @@ from gaugeflow.production.matpes_index import build_matpes_index
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pbe", type=Path, required=True)
-    parser.add_argument("--r2scan", type=Path, required=True)
+    parser.add_argument("--pbe", type=Path, nargs="+", required=True)
+    parser.add_argument("--r2scan", type=Path, nargs="+", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--maximum-atoms", type=int, default=20)
     parser.add_argument("--seed", type=int, default=5705)

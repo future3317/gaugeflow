@@ -9,7 +9,8 @@ stoichiometry-first `p(C|N)`，并以 remaining-count orderless law 作为 exact
 assignment 后继。该后继已经通过 supported-IID learned Gate；显式 `p(N)`、lattice
 L1、generated-side coordinate exposure 也已闭合。等 exposure 容量筛选从
 34M/58M/98M 中选择 34.28M 作为最小充分 GaugeFlow-base。项目没有旧 continuous-logit flow、harmonic conditioner 或 FlowMM runtime
-fallback。
+fallback。该 34.28M product model 已在 Alex-MP-20 的 540,164 条 train 结构上完成
+一次精确数据遍历，并通过自由联合 A1-v1.1 Gate。
 
 ## 当前正式状态
 
@@ -24,17 +25,20 @@ fallback。
 | `p(N)` / lattice L1 | 已通过；L1 shape W1 `0.49417` 接近冻结上限，保留为风险项 |
 | Generated-side coordinates | clean/generated assignment/lattice 四臂 closure 已通过，joint 增量 NN-W1 `+0.03525` |
 | GaugeFlow-base 容量 | 34M/58M/98M 均 eligible；按冻结规则选择 34.28M，validation ratio `0.269575`、clean-side conditional-rollout NN-W1 `0.148713` |
-| on-policy joint M1 / A1 | 尚未训练和资格化 |
+| on-policy joint M1 / A1 | 34.28M、seed 5705、一次精确 train pass 已通过 A1-v1.1；final free NN-W1 `0.555003`、volume-W1 `0.073341`、exact composition `1.0`、零 mask/failure |
 | 完整 parent blueprint 与 H2--H6 | 尚未开始 |
 | Tensor-conditioned generation / oracle / relaxation / DFT / DFPT | 尚未开始，当前不能据此提出材料发现 claim |
 
 GaugeFlow-base 的 bounded supported-IID 组件资格已经完成：P1 cache、条件坐标、
 exact-count assignment、显式 `p(N)`、lattice L1、generated-side exposure 和容量选择
 均有各自的通过证据；局部算子、reciprocal、topology carrier 和 sampler 搜索也已收口。
-这些结果不改写历史 free H1a 失败。接口追踪同时发现现有 joint trainer/sampler 仍使用
-逐 site categorical reverse，尚未接入已资格化的 `p(C|N)` 与 orderless exact-count
-assignment。因此 A1 训练尚未获准；下一步是先完成、测试并冻结该 product-space 接口。
-tensor 条件与 RL 均在更后阶段。
+这些结果不改写历史 independent-site free H1a 失败。production joint trainer/sampler
+现在真实调用冻结的 `p(C|N)`、all-MASK 初态和 orderless exact-count assignment，并与
+lattice/coordinate reverse dynamics 交错运行。A1-v1.1 的 512 个自由样本保持 exact
+composition、有限正体积晶格和零失败。旧 A1-v1 因错误地将 train-only `p(N)` 样本与
+formula/prototype-disjoint validation 的 node-count marginal 比较而冻结失败；修正后对声明
+prior 的 JSD 为 `0.003924`，原 `0.363640` 继续作为 split-displacement diagnostic。
+该通过只授权 tensor-free GaugeFlow-base；tensor 条件与 RL 均在更后阶段。
 
 ## 当前方法
 
@@ -105,8 +109,10 @@ H(d,a) = G_parent^B ∩ H_occ(a) ∩ intersection_l H_(l,c_l)
   matcher envelope 和 connected component overlap 均为零。
 - PhononDB：10,034 个 compact Hessian/force-constant records；按需计算
   dynamical matrix，不保存 dense q-grid。
-- MatPES：计划使用本地 manifest 中约 433k PBE 与 386k r2SCAN 成功记录做
-  energy/force/stress 与 feature-distillation 监督；两个 functional 不静默混池。
+- MatPES：当前服务器 2025.2 train artifacts 实际为 `389,870` PBE 与 `347,889`
+  r2SCAN 行；其中 (N\le20) 为 `348,450/326,437`。两者共有 `293,449` 个
+  (N\le20) material IDs，必须跨 functional 联合分组 split。eligible rows 的 cohesive
+  energy、force、stress 全覆盖；formation energy 仅部分覆盖，因此不作静默回退。
 - LeMat：计划先使用 force-labelled trajectory 子集，再在去除 Alex validation/test
   重叠后使用 LeMat-BulkUnique；当前公开卡片为 5,438,436 总记录，其中
   5,005,017 条属于 `unique_pbe`，不能把“5.4M 总库存”写成同质 PBE 训练集。

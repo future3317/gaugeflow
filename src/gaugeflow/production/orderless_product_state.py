@@ -34,13 +34,9 @@ class OrderlessPartialOccupation:
     next_token: torch.Tensor
     mask_token: int
 
-    @property
-    def graphs(self) -> int:
-        return int(self.composition_counts.shape[0])
-
     def validate(self, *, vocabulary_size: int = CHEMICAL_ELEMENT_COUNT) -> None:
         nodes = self.batch.numel()
-        graphs = self.graphs
+        graphs = int(self.composition_counts.shape[0])
         if graphs < 1 or self.composition_counts.shape != (graphs, vocabulary_size):
             raise ValueError("composition counts have an invalid graph/vocabulary shape")
         if self.composition_counts.dtype != torch.long or self.remaining_counts.dtype != torch.long:

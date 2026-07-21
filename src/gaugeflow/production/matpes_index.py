@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, cast
+from typing import Any, Mapping, Sequence, cast
 
 import torch
 from torch.utils.data import Dataset
@@ -142,7 +142,7 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
 
 
 def build_matpes_index(
-    sources: Mapping[str, Path],
+    sources: Mapping[str, Sequence[Path]],
     output: Path,
     *,
     energy_target: MatPESEnergyTarget = "cohesive_energy_per_atom",
@@ -154,7 +154,18 @@ def build_matpes_index(
 ) -> dict[str, Any]:
     """Build an exact byte-offset index; bounded builds are software smokes only."""
 
-    if not sources or len(sources) > 255 or maximum_atoms < 1 or maximum_atoms > 255:
+    flattened_sources = [
+        (functional, Path(path))
+        for functional, paths in sources.items()
+        for path in paths
+    ]
+    if (
+        not flattened_sources
+        or len(flattened_sources) > 255
+        or any(not paths for paths in sources.values())
+        or maximum_atoms < 1
+        or maximum_atoms > 255
+    ):
         raise ValueError("MatPES sources and maximum atom count are invalid")
     if output.exists():
         if not output.is_dir() or any(output.iterdir()):
@@ -168,7 +179,7 @@ def build_matpes_index(
     source_manifest: list[dict[str, Any]] = []
     excluded_large = 0
     invalid: dict[str, str] = {}
-    for source_number, (functional, path) in enumerate(sources.items()):
+    for source_number, (functional, path) in enumerate(flattened_sources):
         rows_seen = 0
         rows_selected = 0
         with path.open("rb") as handle:

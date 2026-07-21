@@ -26,9 +26,9 @@ def _row(index: int, functional: str) -> dict:
     }
 
 
-def _write_jsonl(path: Path, functional: str) -> None:
+def _write_jsonl(path: Path, functional: str, start: int = 0, stop: int = 200) -> None:
     path.write_text(
-        "".join(json.dumps(_row(index, functional)) + "\n" for index in range(200)),
+        "".join(json.dumps(_row(index, functional)) + "\n" for index in range(start, stop)),
         encoding="utf-8",
     )
 
@@ -40,7 +40,7 @@ def test_matpes_index_groups_functionals_and_seeks_records(tmp_path: Path) -> No
     _write_jsonl(r2scan, "r2SCAN")
     root = tmp_path / "index"
     manifest = build_matpes_index(
-        {"PBE": pbe, "r2SCAN": r2scan},
+        {"PBE": [pbe], "r2SCAN": [r2scan]},
         root,
         max_rows_per_source=200,
     )
@@ -66,3 +66,28 @@ def test_matpes_index_groups_functionals_and_seeks_records(tmp_path: Path) -> No
     assert batch.element_tokens.shape == (4,)
     assert batch.functional_index.shape == (4,)
     assert batch.targets.energy_mask.all()
+
+
+def test_matpes_index_accepts_multiple_artifacts_per_functional(tmp_path: Path) -> None:
+    pbe_train = tmp_path / "pbe-train.jsonl"
+    pbe_valid = tmp_path / "pbe-valid.jsonl"
+    r2scan_train = tmp_path / "r2scan-train.jsonl"
+    r2scan_valid = tmp_path / "r2scan-valid.jsonl"
+    _write_jsonl(pbe_train, "PBE", 0, 100)
+    _write_jsonl(pbe_valid, "PBE", 100, 200)
+    _write_jsonl(r2scan_train, "r2SCAN", 0, 100)
+    _write_jsonl(r2scan_valid, "r2SCAN", 100, 200)
+
+    manifest = build_matpes_index(
+        {
+            "PBE": [pbe_train, pbe_valid],
+            "r2SCAN": [r2scan_train, r2scan_valid],
+        },
+        tmp_path / "multi-index",
+        max_rows_per_source=100,
+    )
+
+    assert len(manifest["sources"]) == 4
+    assert manifest["unique_material_ids"] == 200
+    assert sum(manifest["split_counts"].values()) == 400
+    assert {source["functional"] for source in manifest["sources"]} == {"PBE", "r2SCAN"}

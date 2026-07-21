@@ -380,18 +380,41 @@ are rejected as A1. The production-size integration Gate has nonzero
 assignment loss/gradients and exact composition closure. A deterministic
 three-step RTX 4090 execution smoke also passes exact interrupted-resume
 equality with `0` mismatches and `14.87 GiB` peak memory. This authorizes only
-the separately frozen one-pass 34M A1 run, which is in progress and remains
-unqualified until its 512-reference/512-free-sample evaluation completes.
-H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue completed
-protocols or revive failed reciprocal/topology branches.
+the separately frozen one-pass 34M A1 run. That run is now complete and passes
+the corrected v1.1 512-reference/512-free-sample Gate: final NN-W1 is
+`0.555003`, volume-W1 `0.073341`, valid-distance/exact-composition/
+positive-lattice/formula-uniqueness fractions are all `1.0`, element JSD is
+`0.047493`, node-count JSD to the declared train-only prior is `0.003924`, and
+masks/failures are zero. The final checkpoint SHA-256 is
+`7c8fb7afc3aee6d4723d700b59f2a0523da25e897a46de8e9d2c7e5db824b6da`.
+The v1.1 result SHA-256 is
+`68ceb2b7806bcc933b9f080a4ac894e592fcfb1a9e05a78398c8d1e311a39713`.
+The original v1 failure remains frozen: it compared samples from train-only
+`p(N)` with the formula/prototype-disjoint validation count marginal and gave
+checkpoint-invariant JSD `0.363640`. v1.1 changes only that reference object;
+all non-count metrics reproduce bit-for-bit. The displaced validation JSD is
+an OOD diagnostic, not the sampling-law closure metric. This pass qualifies
+only flexible-carrier tensor-free GaugeFlow-base. H1b and H2--H6 remain
+prohibited. Do not add seeds or steps to rescue completed protocols or revive
+failed reciprocal/topology branches.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.
 They reject another deterministic local/global feature branch. The matched
 clean-side-information screen and exact-one-pass qualification identify the
 coordinate task contract as the material repair. The conditional coordinate
-substrate is qualified; the free joint generator is not. No result yet
-authorizes H1b-H6, tensor condition, oracle, relaxation, DFT or DFPT.
+substrate and the bounded tensor-free free joint A1 generator are qualified.
+No result yet authorizes OOD parent generation, H1b-H6, tensor condition,
+oracle, relaxation, DFT or DFPT.
+
+Post-A1 Stage-B software preparation may proceed without training physical
+weights. The server MatPES artifacts contain `389870/347889` PBE/r2SCAN rows
+and `348450/326437` rows at `N<=20`; `293449` eligible material IDs are shared
+across functionals, so splits must group by `matpes_id`. Cohesive energy,
+forces and stress are complete in this domain; formation energy is partial and
+must not be a fallback target. The active preparation uses a byte-offset
+random-access index, explicit cohesive-energy target, vectorized collation and
+functional scalar/Kelvin normalization that preserves Cartesian covariance.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
