@@ -3,7 +3,7 @@
   "status_before_run": "frozen_not_run",
   "source": {
     "capacity_result": "reports/h1a_assignment_full_alex_capacity_screen_v2/result.json",
-    "capacity_result_normalized_sha256": "d71f7754532ebe4f568430bc3c39717d597a99868f8b7371295913f08496d067",
+    "capacity_result_normalized_sha256": "921218b99a3656f00e530b08c7d8fd2e76fbb837142d5d50e95eacb57bf0f09d",
     "iid_role_result": "reports/h1a_assignment_iid_calibration_split_v1/result.json",
     "iid_role_result_normalized_sha256": "2b756a257b547e710aed377b1a5c660d0a526b72cdf0a4666b89d303d2a9a3f6",
     "allowed_index_sha256": "a6cc844abb12fbc91e2342ac7f248565c8d9ea152a7cbca4bcd4da0f54133335"
@@ -51,4 +51,3 @@
   },
   "boundary": "This is a software and execution qualification of the selected assignment pretrainer. It does not qualify parent-conditioned assignment, p(N), lattice, coordinates, joint generation or tensor conditioning."
 }
-
