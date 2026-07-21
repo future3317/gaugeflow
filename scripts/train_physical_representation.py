@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import inspect
 import json
 import os
 import time
@@ -115,6 +116,15 @@ def main() -> None:
     if not all(isinstance(value, dict) for value in (prerequisites, training, data)):
         raise ValueError("Stage-B protocol lacks prerequisites, data, or training")
     assert isinstance(prerequisites, dict) and isinstance(training, dict) and isinstance(data, dict)
+    implementation_paths = {
+        "runner_sha256": Path(__file__),
+        "physical_training_sha256": Path(inspect.getsourcefile(PhysicalTransferTrainer) or ""),
+        "physical_checkpointing_sha256": Path(inspect.getsourcefile(save_physical_checkpoint) or ""),
+        "rank_sharded_data_sha256": Path(inspect.getsourcefile(ExactRankShardedStream) or ""),
+    }
+    for name, path in implementation_paths.items():
+        if not path.is_file() or sha256_file(path) != str(prerequisites[name]):
+            raise ValueError(f"Stage-B implementation hash mismatch: {name}")
 
     dist.init_process_group(backend="nccl")
     rank = dist.get_rank()
