@@ -373,14 +373,17 @@ atom types, lattice and node count; it is not free joint generation. The 98M
 candidate improved conditional-rollout NN-W1 to `0.131120` and t=.6
 explained fraction to `0.771143`, but remained inside the frozen quality
 margins while reducing throughput to `69.88 graphs/s`; it is not the production
-default. A production-interface trace found that the current `joint` trainer
-and reverse sampler still use the legacy independent categorical path: they do
-not invoke the qualified `p(C|N)` law or the orderless exact-count assignment
-law. Therefore the factorized joint runtime is not yet closed and A1 training
-is blocked. The next permitted work is to integrate and test those two
-discrete interfaces in the selected 34M tensor-free product-space sampler,
-then freeze A1. H1b and H2--H6 remain prohibited. Do not add seeds or steps to
-rescue completed protocols or revive failed reciprocal/topology branches.
+default. The production `joint` trainer and reverse sampler now implement the
+qualified stoichiometry-first `p(C|N)` law and the orderless exact-count
+remaining-count assignment path; legacy independent site-token checkpoints
+are rejected as A1. The production-size integration Gate has nonzero
+assignment loss/gradients and exact composition closure. A deterministic
+three-step RTX 4090 execution smoke also passes exact interrupted-resume
+equality with `0` mismatches and `14.87 GiB` peak memory. This authorizes only
+the separately frozen one-pass 34M A1 run, which is in progress and remains
+unqualified until its 512-reference/512-free-sample evaluation completes.
+H1b and H2--H6 remain prohibited. Do not add seeds or steps to rescue completed
+protocols or revive failed reciprocal/topology branches.
 
 The reciprocal, clean-topology, exposure-conditioned, quotient-Tweedie,
 variant-specific carrier and nonlinear pair-conversion audits are complete.
