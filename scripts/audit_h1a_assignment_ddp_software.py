@@ -11,6 +11,7 @@ import math
 import os
 import subprocess
 import time
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -220,6 +221,8 @@ class _DdpRun:
         global_paths = global_indices.numel() * path_samples
         self.optimizer.zero_grad(set_to_none=True)
         local_nll_sum = torch.zeros((), dtype=torch.float64, device=device)
+        backward_calls = math.ceil(global_indices.numel() / microbatch) * path_samples
+        backward_call = 0
         for start in range(0, global_indices.numel(), microbatch):
             global_micro = global_indices[start : start + microbatch]
             if global_micro.numel() < world_size:
@@ -240,13 +243,19 @@ class _DdpRun:
                     generator=self.generator,
                     device=device,
                 )
-                local_nll = self.ddp(carrier, reveal)
-                local_nll_sum += local_nll.detach().to(torch.float64).sum()
-                ddp_global_mean_loss(
-                    local_nll,
-                    global_count=global_paths,
-                    world_size=world_size,
-                ).backward()
+                backward_call += 1
+                synchronization = (
+                    nullcontext() if backward_call == backward_calls else self.ddp.no_sync()
+                )
+                with synchronization:
+                    local_nll = self.ddp(carrier, reveal)
+                    local_nll_sum += local_nll.detach().to(torch.float64).sum()
+                    loss = ddp_global_mean_loss(
+                        local_nll,
+                        global_count=global_paths,
+                        world_size=world_size,
+                    )
+                    loss.backward()
         gradient = _flat_gradients(self.module) if capture_gradient else None
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             self.module.parameters(),

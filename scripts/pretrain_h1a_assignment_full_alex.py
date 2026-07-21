@@ -10,6 +10,7 @@ import math
 import os
 import subprocess
 import time
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -327,6 +328,8 @@ def main() -> None:
         ddp.train()
         optimizer.zero_grad(set_to_none=True)
         nll_sum = torch.zeros((), dtype=torch.float64, device=device)
+        backward_calls = math.ceil(global_graphs / global_microbatch_size) * path_samples
+        backward_call = 0
         for micro_start in range(0, global_graphs, global_microbatch_size):
             micro_global = global_indices[
                 micro_start : micro_start + global_microbatch_size
@@ -351,14 +354,17 @@ def main() -> None:
                     generator=reveal_generator,
                     device=device,
                 )
-                local_nll = ddp(carrier, reveal_rank)
-                nll_sum += local_nll.detach().to(torch.float64).sum()
-                loss = ddp_global_mean_loss(
-                    local_nll,
-                    global_count=global_paths,
-                    world_size=world_size,
-                )
-                loss.backward()
+                backward_call += 1
+                synchronization = nullcontext() if backward_call == backward_calls else ddp.no_sync()
+                with synchronization:
+                    local_nll = ddp(carrier, reveal_rank)
+                    nll_sum += local_nll.detach().to(torch.float64).sum()
+                    loss = ddp_global_mean_loss(
+                        local_nll,
+                        global_count=global_paths,
+                        world_size=world_size,
+                    )
+                    loss.backward()
             local_processed_graphs += selected_indices.numel()
         gradient_norm = torch.nn.utils.clip_grad_norm_(
             ddp.module.parameters(),
