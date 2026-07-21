@@ -1,11 +1,13 @@
 import torch
 
 from gaugeflow.production.matpes_data import (
+    matpes_iid_split,
     matpes_stress_kbar_to_kelvin_gpa,
     parse_matpes_row,
 )
 from gaugeflow.production.physical_pretraining import (
     CartesianPhysicalHeads,
+    FunctionalPhysicalNormalizer,
     PhysicalPredictions,
     PhysicalTargets,
     kelvin_to_symmetric_cartesian,
@@ -89,6 +91,7 @@ def test_matpes_record_preserves_units_and_missing_label_masks() -> None:
             ],
         },
         "energy": -8.0,
+        "cohesive_energy_per_atom": -2.5,
         "forces": None,
         "stress": [10.0, 20.0, 30.0, 4.0, 5.0, 6.0],
     }
@@ -100,3 +103,62 @@ def test_matpes_record_preserves_units_and_missing_label_masks() -> None:
     expected = torch.tensor([-1.0, -2.0, -3.0, -0.4 * 2**0.5, -0.5 * 2**0.5, -0.6 * 2**0.5])
     assert torch.allclose(record.stress_kelvin_gpa, expected)
     assert torch.allclose(record.stress_kelvin_gpa.double(), matpes_stress_kbar_to_kelvin_gpa(row["stress"]))
+    cohesive = parse_matpes_row(row, energy_target="cohesive_energy_per_atom")
+    assert cohesive.energy_per_atom_ev == -2.5
+
+
+def test_matpes_split_groups_functionals_by_material_identity() -> None:
+    material_ids = [f"matpes-{index}" for index in range(1000)]
+    first = [matpes_iid_split(value, seed=5705) for value in material_ids]
+    second = [matpes_iid_split(value, seed=5705) for value in material_ids]
+    assert first == second
+    assert {split: first.count(split) for split in set(first)} == {
+        "train": 884,
+        "calibration": 56,
+        "test": 60,
+    }
+    assert matpes_iid_split("shared-id", seed=5705) == matpes_iid_split(
+        "shared-id", seed=5705
+    )
+
+
+def test_functional_normalization_preserves_force_and_stress_covariance() -> None:
+    rotation = _rotation()
+    stress = torch.tensor([[[2.0, 0.3, -0.2], [0.3, 1.0, 0.4], [-0.2, 0.4, 3.0]]])
+    force = torch.tensor([[1.0, 2.0, -3.0], [-2.0, 0.5, 1.0]])
+    target = PhysicalTargets(
+        energy_per_atom=torch.tensor([-4.0]),
+        forces=force,
+        stress_kelvin=symmetric_cartesian_to_kelvin(stress),
+        teacher_features=torch.zeros(1, 2),
+        energy_mask=torch.ones(1, dtype=torch.bool),
+        force_mask=torch.ones(2, dtype=torch.bool),
+        stress_mask=torch.ones(1, dtype=torch.bool),
+        teacher_mask=torch.zeros(1, dtype=torch.bool),
+    )
+    rotated = PhysicalTargets(
+        energy_per_atom=target.energy_per_atom,
+        forces=force @ rotation.T,
+        stress_kelvin=symmetric_cartesian_to_kelvin(rotation @ stress @ rotation.T),
+        teacher_features=target.teacher_features,
+        energy_mask=target.energy_mask,
+        force_mask=target.force_mask,
+        stress_mask=target.stress_mask,
+        teacher_mask=target.teacher_mask,
+    )
+    normalizer = FunctionalPhysicalNormalizer(
+        energy_location=torch.tensor([-5.0]),
+        energy_scale=torch.tensor([2.0]),
+        force_scale=torch.tensor([4.0]),
+        stress_isotropic_location=torch.tensor([1.5]),
+        stress_scale=torch.tensor([3.0]),
+    )
+    batch = torch.zeros(2, dtype=torch.long)
+    normalized = normalizer.normalize(target, torch.zeros(1, dtype=torch.long), batch)
+    rotated_normalized = normalizer.normalize(rotated, torch.zeros(1, dtype=torch.long), batch)
+    assert torch.allclose(rotated_normalized.forces, normalized.forces @ rotation.T)
+    assert torch.allclose(
+        kelvin_to_symmetric_cartesian(rotated_normalized.stress_kelvin),
+        rotation @ kelvin_to_symmetric_cartesian(normalized.stress_kelvin) @ rotation.T,
+        atol=1e-6,
+    )

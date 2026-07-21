@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence
 
 import torch
 from pymatgen.core import Element
@@ -26,6 +27,38 @@ class MatPESPhysicalRecord:
     energy_present: bool
     forces_present: bool
     stress_present: bool
+
+
+MatPESEnergyTarget = Literal[
+    "total_energy_per_atom",
+    "cohesive_energy_per_atom",
+    "formation_energy_per_atom",
+]
+MatPESSplit = Literal["train", "calibration", "test"]
+
+
+def matpes_iid_split(
+    material_id: str,
+    *,
+    seed: int = 5705,
+    calibration_fraction: float = 0.05,
+    test_fraction: float = 0.05,
+) -> MatPESSplit:
+    """Assign all functionals of one material ID to the same IID split."""
+
+    if not material_id:
+        raise ValueError("MatPES split requires a stable material ID")
+    if calibration_fraction <= 0.0 or test_fraction <= 0.0:
+        raise ValueError("MatPES calibration and test fractions must be positive")
+    if calibration_fraction + test_fraction >= 1.0:
+        raise ValueError("MatPES split fractions leave no training support")
+    digest = hashlib.sha256(f"{seed}:{material_id}".encode()).digest()
+    unit = int.from_bytes(digest[:8], byteorder="big") / float(1 << 64)
+    if unit < test_fraction:
+        return "test"
+    if unit < test_fraction + calibration_fraction:
+        return "calibration"
+    return "train"
 
 
 def matpes_stress_kbar_to_kelvin_gpa(stress: Sequence[float]) -> torch.Tensor:
@@ -54,7 +87,11 @@ def _optional_finite_tensor(value: object, shape: tuple[int, ...]) -> tuple[torc
     return tensor, True
 
 
-def parse_matpes_row(row: Mapping[str, Any]) -> MatPESPhysicalRecord:
+def parse_matpes_row(
+    row: Mapping[str, Any],
+    *,
+    energy_target: MatPESEnergyTarget = "total_energy_per_atom",
+) -> MatPESPhysicalRecord:
     """Parse one ordered, fully occupied MatPES JSONL row without target imputation."""
 
     structure = row.get("structure")
@@ -92,12 +129,19 @@ def parse_matpes_row(row: Mapping[str, Any]) -> MatPESPhysicalRecord:
     if declared_count != node_count:
         raise ValueError("MatPES declared and structural site counts disagree")
 
-    energy_value = row.get("energy")
+    if energy_target == "total_energy_per_atom":
+        energy_value = row.get("energy")
+        energy_divisor = node_count
+    elif energy_target in {"cohesive_energy_per_atom", "formation_energy_per_atom"}:
+        energy_value = row.get(energy_target)
+        energy_divisor = 1
+    else:
+        raise ValueError(f"unsupported MatPES energy target {energy_target!r}")
     if energy_value is None:
         energy = torch.zeros((), dtype=torch.float32)
         energy_present = False
     else:
-        energy = torch.as_tensor(float(energy_value) / node_count, dtype=torch.float32)
+        energy = torch.as_tensor(float(energy_value) / energy_divisor, dtype=torch.float32)
         energy_present = bool(torch.isfinite(energy))
         if not energy_present:
             raise ValueError("MatPES energy is non-finite")

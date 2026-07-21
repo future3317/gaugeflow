@@ -75,6 +75,69 @@ class PhysicalLossOutput:
     feature_loss: torch.Tensor
 
 
+@dataclass(frozen=True)
+class FunctionalPhysicalNormalizer:
+    """Per-functional scalar calibration that preserves Cartesian covariance."""
+
+    energy_location: torch.Tensor
+    energy_scale: torch.Tensor
+    force_scale: torch.Tensor
+    stress_isotropic_location: torch.Tensor
+    stress_scale: torch.Tensor
+
+    def __post_init__(self) -> None:
+        values = (
+            self.energy_location,
+            self.energy_scale,
+            self.force_scale,
+            self.stress_isotropic_location,
+            self.stress_scale,
+        )
+        if any(value.ndim != 1 for value in values):
+            raise ValueError("physical normalization statistics must be one-dimensional")
+        if len({value.numel() for value in values}) != 1 or self.energy_location.numel() < 1:
+            raise ValueError("physical normalization statistics must share a functional axis")
+        if not all(bool(torch.isfinite(value).all()) for value in values):
+            raise ValueError("physical normalization statistics must be finite")
+        if bool((self.energy_scale <= 0.0).any()) or bool((self.force_scale <= 0.0).any()) or bool(
+            (self.stress_scale <= 0.0).any()
+        ):
+            raise ValueError("physical normalization scales must be positive")
+
+    def normalize(
+        self,
+        target: PhysicalTargets,
+        functional_index: torch.Tensor,
+        batch: torch.Tensor,
+    ) -> PhysicalTargets:
+        """Normalize graph/node targets without choosing a Cartesian frame."""
+
+        graphs = target.energy_per_atom.numel()
+        if functional_index.shape != (graphs,) or functional_index.dtype != torch.long:
+            raise ValueError("functional index must contain one integer per graph")
+        if batch.ndim != 1 or batch.dtype != torch.long or target.forces.shape != (batch.numel(), 3):
+            raise ValueError("physical normalization batch is invalid")
+        if int(functional_index.min()) < 0 or int(functional_index.max()) >= self.energy_location.numel():
+            raise ValueError("functional index lies outside normalization statistics")
+        energy_location = self.energy_location.to(target.energy_per_atom)[functional_index]
+        energy_scale = self.energy_scale.to(target.energy_per_atom)[functional_index]
+        force_scale = self.force_scale.to(target.forces)[functional_index][batch]
+        stress_location = self.stress_isotropic_location.to(target.stress_kelvin)[functional_index]
+        stress_scale = self.stress_scale.to(target.stress_kelvin)[functional_index]
+        isotropic = target.stress_kelvin.new_zeros(graphs, 6)
+        isotropic[:, :3] = stress_location.unsqueeze(1)
+        return PhysicalTargets(
+            energy_per_atom=(target.energy_per_atom - energy_location) / energy_scale,
+            forces=target.forces / force_scale.unsqueeze(1),
+            stress_kelvin=(target.stress_kelvin - isotropic) / stress_scale.unsqueeze(1),
+            teacher_features=target.teacher_features,
+            energy_mask=target.energy_mask,
+            force_mask=target.force_mask,
+            stress_mask=target.stress_mask,
+            teacher_mask=target.teacher_mask,
+        )
+
+
 class CartesianPhysicalHeads(nn.Module):
     """Linear-complexity invariant/vector/symmetric-tensor readouts."""
 

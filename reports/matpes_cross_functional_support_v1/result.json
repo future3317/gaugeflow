@@ -1,0 +1,30 @@
+{
+  "schema": "gaugeflow.matpes_cross_functional_support.v1",
+  "scope": "Read-only identifier and N<=20 support scan of the server-resident MatPES 2025.2 JSONL artifacts.",
+  "datasets": {
+    "PBE": {
+      "rows": 389870,
+      "unique_matpes_ids": 389870,
+      "rows_nle20": 348450
+    },
+    "r2SCAN": {
+      "rows": 347889,
+      "unique_matpes_ids": 347889,
+      "rows_nle20": 326437
+    }
+  },
+  "cross_functional": {
+    "shared_matpes_ids": 312654,
+    "shared_matpes_ids_nle20": 293449,
+    "union_matpes_ids": 425105,
+    "union_matpes_ids_nle20": 381438
+  },
+  "data_contract": {
+    "split_unit": "matpes_id across all functionals",
+    "random_row_split_allowed": false,
+    "reason": "The same material identifier occurs under both functionals, so row-wise splitting would leak structural identity across train and evaluation.",
+    "initial_gaugeflow_base_domain": "N<=20",
+    "larger_cells": "Retained in raw data but excluded from the first GaugeFlow-base physical-pretraining cache."
+  },
+  "qualified": true
+}
