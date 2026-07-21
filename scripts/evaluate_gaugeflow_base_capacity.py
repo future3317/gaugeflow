@@ -31,14 +31,18 @@ def select_capacity_candidate(
     if not eligible:
         return None
     best_ratio = min(float(row["validation_coordinate_ratio"]) for row in eligible)
-    best_w1 = min(float(row["full_prior"]["node_nearest_w1_normalized"]) for row in eligible)
+    best_w1 = min(
+        float(row["clean_side_conditional_rollout"]["node_nearest_w1_normalized"])
+        for row in eligible
+    )
     ratio_margin = float(specification["validation_ratio_best_absolute_margin"])
     w1_margin = float(specification["full_prior_w1_best_absolute_margin"])
     sufficient = [
         row
         for row in eligible
         if float(row["validation_coordinate_ratio"]) <= best_ratio + ratio_margin
-        and float(row["full_prior"]["node_nearest_w1_normalized"]) <= best_w1 + w1_margin
+        and float(row["clean_side_conditional_rollout"]["node_nearest_w1_normalized"])
+        <= best_w1 + w1_margin
     ]
     return str(
         min(
@@ -46,14 +50,14 @@ def select_capacity_candidate(
             key=lambda row: (
                 int(row["parameter_count"]),
                 float(row["validation_coordinate_ratio"]),
-                float(row["full_prior"]["node_nearest_w1_normalized"]),
+                float(row["clean_side_conditional_rollout"]["node_nearest_w1_normalized"]),
             ),
         )["candidate"]
     )
 
 
 @torch.no_grad()
-def _full_prior_metrics(
+def _clean_side_conditional_rollout_metrics(
     checkpoint: Path,
     candidate_protocol: dict[str, Any],
     dataset: PackedAlexP1Dataset,
@@ -92,7 +96,7 @@ def _full_prior_metrics(
     for start in range(0, indices.numel(), batch_size):
         selected = indices[start : start + batch_size]
         source = dataset.select_model_batch(selected, device=device)
-        graphs = int(source.num_graphs)
+        graphs = int(source.lattice.shape[0])
         counts = torch.bincount(source.batch, minlength=graphs)
         blueprint = ParentBlueprintBatch.from_node_counts(
             counts,
@@ -144,7 +148,7 @@ def _full_prior_metrics(
     graph_minimum = torch.cat(generated_graph_minima).double()
     reference_iqr = torch.quantile(reference, 0.75) - torch.quantile(reference, 0.25)
     if float(reference_iqr) <= 0.0:
-        raise ValueError("full-prior reference nearest-neighbour IQR must be positive")
+        raise ValueError("conditional-rollout reference nearest-neighbour IQR must be positive")
     probabilities = torch.tensor([0.01, 0.05, 0.5, 0.95, 0.99], dtype=torch.float64)
     return {
         "graphs": int(indices.numel()),
@@ -186,6 +190,10 @@ def main() -> None:
     parser.add_argument("--cache-root", type=Path, required=True)
     parser.add_argument("--runs-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--candidate",
+        help="evaluate one preregistered candidate without making the final capacity selection",
+    )
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
     protocol = load_json_object(args.protocol)
@@ -211,8 +219,17 @@ def main() -> None:
         len(dataset),
         generator=torch.Generator().manual_seed(int(evaluation["full_prior_seed"])),
     )[: int(evaluation["full_prior_graphs"])]
+    registered_candidates = list(protocol["candidates"])
+    if args.candidate is not None:
+        registered_candidates = [
+            candidate
+            for candidate in registered_candidates
+            if str(candidate["name"]) == args.candidate
+        ]
+        if len(registered_candidates) != 1:
+            raise ValueError("requested capacity candidate is not preregistered")
     rows: list[dict[str, Any]] = []
-    for candidate in protocol["candidates"]:
+    for candidate in registered_candidates:
         name = str(candidate["name"])
         candidate_path = Path(candidate["protocol"])
         smoke_path = Path("reports/gaugeflow_base_capacity_execution_smoke_v1") / f"{name}.json"
@@ -269,7 +286,7 @@ def main() -> None:
             device=device,
         )
         del runtime
-        full_prior = _full_prior_metrics(
+        conditional_rollout = _clean_side_conditional_rollout_metrics(
             checkpoint,
             candidate_protocol,
             dataset,
@@ -281,17 +298,26 @@ def main() -> None:
         acceptance = protocol["eligibility"]
         checks = {
             "finite": numeric_tree_is_finite(
-                {"training": records, "validation": validation, "score": score, "full_prior": full_prior}
+                {
+                    "training": records,
+                    "validation": validation,
+                    "score": score,
+                    "conditional_rollout": conditional_rollout,
+                }
             ),
             "validation_coordinate_ratio": ratio
             <= float(acceptance["validation_coordinate_ratio_max"]),
             "t06_score_explained_fraction": float(t06["score_explained_fraction"])
             >= float(acceptance["t06_score_explained_fraction_min"]),
-            "full_prior_node_nearest_w1": float(full_prior["node_nearest_w1_normalized"])
+            "clean_side_conditional_rollout_node_nearest_w1": float(
+                conditional_rollout["node_nearest_w1_normalized"]
+            )
             <= float(acceptance["full_prior_node_nearest_w1_normalized_max"]),
-            "full_prior_valid_distance": float(full_prior["valid_minimum_distance_fraction"])
+            "clean_side_conditional_rollout_valid_distance": float(
+                conditional_rollout["valid_minimum_distance_fraction"]
+            )
             >= float(acceptance["full_prior_valid_minimum_distance_fraction_min"]),
-            "zero_sampling_failures": len(full_prior["sampling_failures"])
+            "zero_sampling_failures": len(conditional_rollout["sampling_failures"])
             == int(acceptance["sampling_failures"]),
         }
         rows.append(
@@ -302,7 +328,7 @@ def main() -> None:
                 "validation_coordinate_ratio": ratio,
                 "validation": validation,
                 "score_calibration": score,
-                "full_prior": full_prior,
+                "clean_side_conditional_rollout": conditional_rollout,
                 "training_throughput_graphs_per_second": float(records[-1]["graphs_per_second"]),
                 "peak_cuda_memory_mib": float(records[-1]["peak_cuda_memory_mib"]),
                 "checks": checks,
@@ -310,24 +336,44 @@ def main() -> None:
             }
         )
         torch.cuda.empty_cache()
-    selected = select_capacity_candidate(rows, protocol["selection"])
+    complete_screen = args.candidate is None
+    selected = (
+        select_capacity_candidate(rows, protocol["selection"])
+        if complete_screen
+        else None
+    )
     result = {
         "protocol": protocol["protocol"],
         "protocol_sha256": canonical_json_hash(protocol),
         "candidates": rows,
+        "complete_screen": complete_screen,
+        "metric_interpretation": {
+            "clean_side_conditional_rollout": (
+                "coordinates start from the coordinate prior, but atom types, lattice and node count "
+                "are ground-truth side information; this is not free joint generation"
+            ),
+            "protocol_legacy_name": (
+                "the preregistered JSON uses full_prior in internal field names; thresholds and "
+                "candidate sets were not changed after execution"
+            ),
+        },
         "selected_candidate": selected,
-        "qualified": selected is not None,
+        "qualified": selected is not None if complete_screen else None,
         "decision": (
-            f"select {selected} as the minimum sufficient GaugeFlow-base capacity"
-            if selected is not None
-            else "no capacity is eligible; stop before joint GaugeFlow-base pretraining"
+            (
+                f"select {selected} as the minimum sufficient GaugeFlow-base capacity"
+                if selected is not None
+                else "no capacity is eligible; stop before joint GaugeFlow-base pretraining"
+            )
+            if complete_screen
+            else "interim candidate evaluation only; wait for every preregistered capacity"
         ),
         "boundary": protocol["boundary"],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, sort_keys=True))
-    raise SystemExit(0 if selected is not None else 2)
+    raise SystemExit(0 if not complete_screen or selected is not None else 2)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ def _row(name: str, parameters: int, ratio: float, w1: float, eligible: bool = T
         "candidate": name,
         "parameter_count": parameters,
         "validation_coordinate_ratio": ratio,
-        "full_prior": {"node_nearest_w1_normalized": w1},
+        "clean_side_conditional_rollout": {"node_nearest_w1_normalized": w1},
         "eligible": eligible,
     }
 
