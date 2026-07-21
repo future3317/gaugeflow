@@ -1,0 +1,45 @@
+{
+  "protocol": "h1a_assignment_orderless_overfit_v1",
+  "status_before_run": "frozen_not_run",
+  "source": {
+    "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
+    "iid_role_result": "reports/h1a_assignment_iid_calibration_split_v1/result.json",
+    "iid_role_result_sha256": "d327c3adff2913c3887ffa184254fa733e253b6d1bf17a9b492075da9d362f0e"
+  },
+  "model": {
+    "maximum_sites": 20,
+    "maximum_cell_index": 4,
+    "radial_channels": 16,
+    "hidden_dim": 96,
+    "message_blocks": 3
+  },
+  "training": {
+    "seed": 5705,
+    "seed_count": 1,
+    "cuda_device": 1,
+    "fixed_materials": 8,
+    "steps": 2000,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "history_interval": 25,
+    "hyperparameter_search": false
+  },
+  "evaluation": {
+    "order_samples": 32,
+    "sample_draws_per_carrier": 128
+  },
+  "acceptance": {
+    "relative_nll_reduction_from_uniform_min": 0.9,
+    "mean_target_quotient_probability_lower_bound_min": 0.8,
+    "sample_retrieval_min": 0.8,
+    "sample_orbit_aligned_site_accuracy_min": 0.95,
+    "sample_exact_composition": 1.0,
+    "finite_gradient_step_fraction": 1.0
+  },
+  "decision_rule": {
+    "pass": "authorize_single_seed_iid_orderless_assignment_gate",
+    "fail": "stop_and_diagnose_assignment_optimization_or_objective",
+    "boundary": "This software overfit screen cannot qualify generated composition, p(N), lattice, joint generation, tensor conditioning, relaxation, DFT, or DFPT."
+  }
+}

@@ -5,11 +5,22 @@ prototype.  Importing it never selects a legacy probability-path fallback.
 """
 
 from .alex_p1_data import PackedAlexP1Dataset
+from .assignment_data import (
+    AssignmentCarrierExample,
+    pack_assignment_carriers,
+    prepare_assignment_carrier_example,
+)
 from .assignment_scorer import (
     OrbitAwareAssignmentScorer,
     faithful_parent_action,
     parent_action_site_features,
     parent_carrier_graph_features,
+)
+from .assignment_training import (
+    AssignmentCarrierBatch,
+    OrderlessAssignmentObjective,
+    orderless_assignment_objective,
+    sample_uniform_reveal_ranks,
 )
 from .autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
@@ -55,6 +66,7 @@ from .composition_assignment import (
     composition_counts_from_tokens,
     count_constrained_assignment,
     count_projected_assignment,
+    occupation_block_composition_feasible,
     rounded_graph_composition,
 )
 from .composition_state import (
@@ -67,10 +79,12 @@ from .composition_state import (
 )
 from .equivariant_denoiser import HybridCrystalDenoiser
 from .generation_law import (
+    CarrierSelectionSample,
     CrystalGenerationState,
     FactorizedGenerationLogProbability,
     LearnedNodeCountLaw,
     ParentDeltaNodeCountLaw,
+    SupportedCarrierSelectionLaw,
 )
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .lattice_volume_shape import (
@@ -122,9 +136,17 @@ __all__ = [
     "AbsorbingMaskDiffusion",
     "OrbitAwareAssignmentScorer",
     "GeometryAwareRemainingCountScorer",
+    "AssignmentCarrierBatch",
+    "AssignmentCarrierExample",
+    "OrderlessAssignmentObjective",
+    "orderless_assignment_objective",
+    "pack_assignment_carriers",
+    "prepare_assignment_carrier_example",
+    "sample_uniform_reveal_ranks",
     "RemainingCountAssignmentLaw",
     "AssignmentLogProbability",
     "AssignmentSample",
+    "CarrierSelectionSample",
     "UniformCategoricalDiffusion",
     "AdaptiveWrappedQuotient",
     "CartesianSTFGeometryQueryEncoder",
@@ -134,6 +156,7 @@ __all__ = [
     "complete_pair_rbf",
     "count_constrained_assignment",
     "count_projected_assignment",
+    "occupation_block_composition_feasible",
     "ContinuousReverseInitialState",
     "ContinuousReverseMode",
     "ChildReconstructor",
@@ -178,6 +201,7 @@ __all__ = [
     "SplitAxis",
     "SplitAxisContract",
     "StoichiometryFirstCompositionModel",
+    "SupportedCarrierSelectionLaw",
     "SelectedMode",
     "StratifiedCartesianGaugeAtlas",
     "StateAdaptiveCartesianCarrierMixer",

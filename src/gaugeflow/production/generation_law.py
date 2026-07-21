@@ -1,9 +1,18 @@
 """Closed probability interfaces for the GaugeFlow crystal state.
 
+The unambiguous parent-conditioned order is ``N -> C -> P -> G -> A -> D``.
+``P`` is a discrete parent blueprint, ``G`` is its species-free reference
+geometry, ``A`` is the count-exact occupation, and ``D`` contains continuous
+strain/mode/residual coordinates.  In the parent stratum the terminal
+``(L,F)`` is the deterministic reconstruction ``T(P,G,A,D)`` and is not sampled
+again.  The explicitly modelled flexible/P1 stratum instead samples ``(L,F)``
+directly after ``A``.  Flexible is a genuine state in ``p(P|N,C)``, not a
+runtime error fallback.
+
 The factorization is an audit interface rather than a claim that production
-must be implemented as five disconnected networks.  A heterogeneous joint
-field may implement the same conditionals, but every sampled state must close
-on the exact shared variables ``(N,C,A,L,F)`` defined here.
+must be implemented as disconnected networks.  A heterogeneous joint field
+may implement the same conditionals, but every sampled child must close on the
+exact shared variables ``(N,C,A,L,F)``.
 """
 
 from __future__ import annotations
@@ -105,6 +114,80 @@ class ParentDeltaNodeCountLaw:
 
 
 @dataclass(frozen=True)
+class CarrierSelectionSample:
+    """One exact draw from support-masked ``p(P | N,C)``."""
+
+    index: torch.Tensor
+    log_probability: torch.Tensor
+
+
+class SupportedCarrierSelectionLaw:
+    """Normalized carrier categorical law with an explicit universal stratum.
+
+    ``feasible[g,p]`` must be computed from target-independent carrier data and
+    the sampled ``(N,C)``.  Candidate ``universal_candidate_index`` represents
+    the flexible/P1 stratum and must be feasible for every graph.  Consequently
+    the support is never empty and sampling needs no rejection or composition
+    resampling.
+    """
+
+    def __init__(self, *, universal_candidate_index: int = 0) -> None:
+        if universal_candidate_index < 0:
+            raise ValueError("universal carrier index must be nonnegative")
+        self.universal_candidate_index = universal_candidate_index
+
+    def log_probabilities(
+        self,
+        logits: torch.Tensor,
+        feasible: torch.Tensor,
+    ) -> torch.Tensor:
+        if logits.ndim != 2 or feasible.shape != logits.shape or feasible.dtype != torch.bool:
+            raise ValueError("carrier logits and feasibility mask must have shape [graphs,candidates]")
+        if logits.shape[1] <= self.universal_candidate_index:
+            raise ValueError("universal carrier index lies outside the candidate axis")
+        if not torch.isfinite(logits).all():
+            raise ValueError("carrier logits must be finite")
+        if not bool(feasible[:, self.universal_candidate_index].all()):
+            raise ValueError("the declared flexible carrier must be universally feasible")
+        masked = logits.masked_fill(~feasible, -torch.inf)
+        return torch.log_softmax(masked, dim=1)
+
+    def log_prob(
+        self,
+        logits: torch.Tensor,
+        feasible: torch.Tensor,
+        index: torch.Tensor,
+    ) -> torch.Tensor:
+        if index.shape != (logits.shape[0],) or index.dtype != torch.long:
+            raise ValueError("carrier choice must be one int64 index per graph")
+        if bool(((index < 0) | (index >= logits.shape[1])).any()):
+            raise ValueError("carrier choice lies outside the candidate axis")
+        return self.log_probabilities(logits, feasible).gather(1, index.unsqueeze(1)).squeeze(1)
+
+    @torch.no_grad()
+    def sample(
+        self,
+        logits: torch.Tensor,
+        feasible: torch.Tensor,
+        *,
+        generator: torch.Generator | None = None,
+    ) -> CarrierSelectionSample:
+        log_probability = self.log_probabilities(logits, feasible)
+        index = torch.multinomial(
+            log_probability.exp(),
+            1,
+            replacement=True,
+            generator=generator,
+        ).squeeze(1)
+        if not bool(feasible.gather(1, index.unsqueeze(1)).all()):
+            raise RuntimeError("support-masked carrier sampler selected an infeasible state")
+        return CarrierSelectionSample(
+            index=index,
+            log_probability=log_probability.gather(1, index.unsqueeze(1)).squeeze(1),
+        )
+
+
+@dataclass(frozen=True)
 class CrystalGenerationState:
     """One packed sample whose five random objects share an exact row grain."""
 
@@ -162,6 +245,7 @@ class FactorizedGenerationLogProbability:
     assignment: torch.Tensor
     lattice: torch.Tensor
     coordinates: torch.Tensor
+    carrier: torch.Tensor | None = None
 
     @property
     def total(self) -> torch.Tensor:
@@ -176,4 +260,9 @@ class FactorizedGenerationLogProbability:
             raise ValueError("all log-probability terms must contain one value per graph")
         if any(not torch.isfinite(value).all() for value in values):
             raise ValueError("qualified log-probability terms must be finite")
-        return sum(values[1:], values[0])
+        total = sum(values[1:], values[0])
+        if self.carrier is not None:
+            if self.carrier.shape != self.node_count.shape or not torch.isfinite(self.carrier).all():
+                raise ValueError("carrier log probability must contain one finite value per graph")
+            total = total + self.carrier
+        return total

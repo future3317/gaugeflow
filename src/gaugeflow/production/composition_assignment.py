@@ -61,6 +61,58 @@ def _occupation_blocks(
     return scores, multiplicity, inverse
 
 
+def occupation_block_composition_feasible(
+    counts: torch.Tensor,
+    block_multiplicity: torch.Tensor,
+    *,
+    maximum_states: int = 100_000,
+) -> bool:
+    """Return whether indivisible occupation blocks can realize ``counts``.
+
+    This is the support predicate needed before sampling a parent carrier.  It
+    uses the same exact mixed-radix state space as the assignment partition
+    function, but propagates Boolean reachability instead of scores.  Calling
+    code can therefore normalize ``p(parent | N,C)`` over legal carriers
+    without sample-and-reject or silently resampling the composition.
+    """
+    if counts.ndim != 1 or counts.dtype != torch.long or bool((counts < 0).any()):
+        raise ValueError("composition counts must be a nonnegative int64 vector")
+    if (
+        block_multiplicity.ndim != 1
+        or block_multiplicity.dtype != torch.long
+        or block_multiplicity.numel() < 1
+        or bool((block_multiplicity < 1).any())
+    ):
+        raise ValueError("occupation-block multiplicities must be positive int64 values")
+    if int(counts.sum()) != int(block_multiplicity.sum()):
+        return False
+    active_counts = counts[counts > 0]
+    if active_counts.numel() < 1:
+        return False
+    digits, strides = _mixed_radix_states(active_counts)
+    state_count = digits.shape[0]
+    if state_count > maximum_states:
+        raise ValueError(
+            f"assignment support requires {state_count} states, above limit {maximum_states}"
+        )
+    reachable = torch.zeros(state_count, dtype=torch.bool, device=counts.device)
+    reachable[0] = True
+    state_index = torch.arange(state_count, dtype=torch.long, device=counts.device)
+    for width in block_multiplicity:
+        source = state_index[reachable]
+        if source.numel() == 0:
+            return False
+        valid = digits.index_select(0, source) + width <= active_counts.unsqueeze(0)
+        successor = source.unsqueeze(1) + width * strides.unsqueeze(0)
+        selected = successor[valid]
+        next_reachable = torch.zeros_like(reachable)
+        if selected.numel():
+            next_reachable[selected] = True
+        reachable = next_reachable
+    target = int((active_counts * strides).sum())
+    return bool(reachable[target])
+
+
 def _backward_assignment_messages(
     block_scores: torch.Tensor,
     multiplicity: torch.Tensor,

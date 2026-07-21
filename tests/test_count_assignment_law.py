@@ -8,6 +8,7 @@ import torch
 from gaugeflow.production.composition_assignment import (
     CountConstrainedAssignmentLaw,
     composition_counts_from_tokens,
+    occupation_block_composition_feasible,
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
@@ -104,6 +105,30 @@ def test_indivisible_occupation_blocks_enforce_legal_multiplicity() -> None:
     assert legal.tokens[2] == legal.tokens[3]
     with pytest.raises(ValueError, match="incompatible"):
         law.sample(scores, batch, _counts({4: 3, 6: 1}), block_index=blocks)
+
+
+def test_occupation_block_support_matches_complete_assignment_enumeration() -> None:
+    block_multiplicity = torch.tensor([2, 2, 1], dtype=torch.long)
+    for first in range(6):
+        counts = torch.tensor([first, 5 - first], dtype=torch.long)
+        expected = any(
+            sum(
+                int(block_multiplicity[index])
+                for index, token in enumerate(labeling)
+                if token == 0
+            )
+            == first
+            for labeling in itertools.product((0, 1), repeat=3)
+        )
+        observed = occupation_block_composition_feasible(counts, block_multiplicity)
+        assert observed is expected
+
+
+def test_occupation_block_support_rejects_mismatched_total_without_sampling() -> None:
+    assert not occupation_block_composition_feasible(
+        torch.tensor([2, 1], dtype=torch.long),
+        torch.tensor([2, 2], dtype=torch.long),
+    )
 
 
 def test_parent_quotient_deduplicates_group_elements_and_cif_rows() -> None:

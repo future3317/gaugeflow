@@ -8,12 +8,13 @@ faithful finite-site action before invariant site signatures are constructed.
 
 from __future__ import annotations
 
-import itertools
 import math
 
+import numpy as np
 import torch
 from torch import nn
 
+from gaugeflow.geometry import closest_image_displacements_numpy
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
 
@@ -131,16 +132,18 @@ def _minimum_periodic_distances(
     sites = fractional.shape[0]
     if sites < 2:
         return lattice.new_empty(0)
-    shifts = torch.tensor(
-        list(itertools.product((-1.0, 0.0, 1.0), repeat=3)),
-        dtype=lattice.dtype,
-        device=lattice.device,
+    # These carrier descriptors are compiled offline and are intentionally
+    # gradient-free.  Exact CVP avoids the fixed 27-image error for skew cells.
+    delta = (
+        fractional[:, None, :] - fractional[None, :, :]
+    ).reshape(-1, 3).detach().to(dtype=torch.float64, device="cpu").numpy()
+    cartesian, _ = closest_image_displacements_numpy(
+        delta,
+        lattice.detach().to(dtype=torch.float64, device="cpu").numpy(),
     )
-    delta = fractional[:, None, :] - fractional[None, :, :]
-    cartesian = (delta[..., None, :] - shifts) @ lattice
-    distance = torch.linalg.vector_norm(cartesian, dim=-1).amin(dim=-1)
-    mask = ~torch.eye(sites, dtype=torch.bool, device=lattice.device)
-    return distance[mask]
+    distance = torch.from_numpy(np.linalg.norm(cartesian, axis=1)).reshape(sites, sites)
+    mask = ~torch.eye(sites, dtype=torch.bool)
+    return distance[mask].to(dtype=lattice.dtype, device=lattice.device)
 
 
 def parent_carrier_graph_features(
@@ -161,19 +164,7 @@ def parent_carrier_graph_features(
         raise ValueError("parent carrier exceeds the qualified site bound")
 
     lattice = parent_lattice.to(torch.float64)
-    singular = torch.sort(torch.linalg.svdvals(lattice)).values
-    log_singular = torch.log(singular.clamp_min(1e-12))
-    centered_log_singular = log_singular - log_singular.mean()
     volume = torch.linalg.det(lattice)
-    row_norm = torch.linalg.vector_norm(lattice, dim=1).clamp_min(1e-12)
-    cosine = torch.stack(
-        (
-            torch.dot(lattice[0], lattice[1]) / (row_norm[0] * row_norm[1]),
-            torch.dot(lattice[0], lattice[2]) / (row_norm[0] * row_norm[2]),
-            torch.dot(lattice[1], lattice[2]) / (row_norm[1] * row_norm[2]),
-        )
-    ).sort().values
-
     distances = _minimum_periodic_distances(
         parent_fractional.to(torch.float64),
         lattice,
@@ -184,8 +175,23 @@ def parent_carrier_graph_features(
         normalized = distances / length_scale
         width = 1.5 / max(radial_channels - 1, 1)
         radial = torch.exp(-0.5 * ((normalized[:, None] - centers) / width) ** 2).mean(dim=0)
+        quantiles = torch.quantile(
+            normalized,
+            torch.tensor([0.25, 0.75], dtype=torch.float64, device=normalized.device),
+        )
+        distance_summary = torch.stack(
+            (
+                normalized.mean(),
+                normalized.std(correction=0),
+                normalized.min(),
+                normalized.max(),
+                quantiles[0],
+                quantiles[1],
+            )
+        )
     else:
         radial = torch.zeros(radial_channels, dtype=torch.float64)
+        distance_summary = torch.zeros(6, dtype=torch.float64)
 
     orbit_sizes: list[int] = []
     unseen = set(range(sites))
@@ -207,7 +213,7 @@ def parent_carrier_graph_features(
         ],
         dtype=torch.float64,
     )
-    return torch.cat((centered_log_singular, cosine, radial, global_values)).to(
+    return torch.cat((distance_summary, radial, global_values)).to(
         dtype=torch.float32,
         device=parent_lattice.device,
     )

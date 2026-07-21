@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import torch
 
 from gaugeflow.production.blueprint import EmpiricalNodeCountPrior
@@ -8,6 +9,7 @@ from gaugeflow.production.generation_law import (
     FactorizedGenerationLogProbability,
     LearnedNodeCountLaw,
     ParentDeltaNodeCountLaw,
+    SupportedCarrierSelectionLaw,
 )
 
 
@@ -50,3 +52,31 @@ def test_generation_state_closes_n_c_a_l_f_exactly() -> None:
         *(torch.tensor([-1.0, -2.0]) for _ in range(5))
     )
     assert torch.equal(logp.total, torch.tensor([-5.0, -10.0]))
+
+
+def test_carrier_selection_is_normalized_on_feasible_support_without_rejection() -> None:
+    law = SupportedCarrierSelectionLaw(universal_candidate_index=0)
+    logits = torch.tensor([[0.0, 2.0, -1.0], [1.0, -2.0, 3.0]], dtype=torch.float64)
+    feasible = torch.tensor([[True, False, True], [True, True, False]])
+    log_probability = law.log_probabilities(logits, feasible)
+    assert torch.allclose(
+        torch.logsumexp(log_probability, dim=1),
+        torch.zeros(2, dtype=torch.float64),
+        atol=1e-12,
+        rtol=0.0,
+    )
+    assert torch.isneginf(log_probability[0, 1])
+    assert torch.isneginf(log_probability[1, 2])
+    generator = torch.Generator().manual_seed(19)
+    for _ in range(32):
+        sample = law.sample(logits, feasible, generator=generator)
+        assert bool(feasible.gather(1, sample.index.unsqueeze(1)).all())
+
+
+def test_carrier_selection_requires_a_universal_flexible_state() -> None:
+    law = SupportedCarrierSelectionLaw(universal_candidate_index=0)
+    with torch.no_grad(), pytest.raises(ValueError, match="universally feasible"):
+        law.log_probabilities(
+            torch.zeros(1, 2),
+            torch.tensor([[False, True]]),
+        )
