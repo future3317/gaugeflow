@@ -7,7 +7,6 @@ from gaugeflow.production.blueprint import EmpiricalNodeCountPrior
 from gaugeflow.production.generation_law import (
     CrystalGenerationState,
     FactorizedGenerationLogProbability,
-    LearnedNodeCountLaw,
     ParentDeltaNodeCountLaw,
     SupportedCarrierSelectionLaw,
 )
@@ -21,14 +20,7 @@ def test_empirical_node_count_prior_has_an_explicit_probability_law() -> None:
     assert torch.isneginf(actual[3])
 
 
-def test_learned_and_parent_conditioned_node_count_laws_are_normalized() -> None:
-    torch.manual_seed(13)
-    learned = LearnedNodeCountLaw(5, context_dim=3).double()
-    context = torch.randn(2, 3, dtype=torch.float64)
-    support = torch.arange(1, 6).repeat_interleave(2)
-    repeated = context.repeat(5, 1)
-    log_probability = learned.log_prob(support, repeated).reshape(5, 2)
-    assert torch.allclose(torch.logsumexp(log_probability, dim=0), torch.zeros(2, dtype=torch.float64))
+def test_parent_conditioned_node_count_delta_law_is_normalized() -> None:
     parent = ParentDeltaNodeCountLaw(torch.tensor([2, 4]))
     sampled, logp = parent.sample()
     assert torch.equal(sampled, torch.tensor([2, 4]))

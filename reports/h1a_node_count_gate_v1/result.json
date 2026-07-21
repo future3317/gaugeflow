@@ -1,0 +1,138 @@
+{
+  "boundary": "This Gate does not qualify a parent-blueprint law, lattice, coordinates, joint generation, tensor conditioning, relaxation, DFT or DFPT. Formula/prototype-disjoint node-count metrics are OOD stress evidence only.",
+  "checks": {
+    "calibration_bootstrap": true,
+    "calibration_js": true,
+    "calibration_nll": true,
+    "calibration_uniform_gain": true,
+    "calibration_wasserstein": true,
+    "full_support": true,
+    "normalized": true,
+    "sampling_js": true,
+    "sampling_reproducible": true,
+    "sampling_wasserstein": true,
+    "support_coverage": true,
+    "test_bootstrap": true,
+    "test_js": true,
+    "test_nll": true,
+    "test_uniform_gain": true,
+    "test_wasserstein": true,
+    "valid_samples": true,
+    "zero_failures": true
+  },
+  "decision": "qualify only the train-only flexible-carrier p(N) source and authorize a separately frozen lattice L1 Gate",
+  "hardware": {
+    "device": "CPU",
+    "torch": "2.5.1+cu124"
+  },
+  "iid_panels": {
+    "calibration": {
+      "integer_wasserstein_from_train_law": 0.024382441316994158,
+      "js_divergence_from_train_law": 0.00010028102508353,
+      "mean_nll": 2.4176005739874924,
+      "model_minus_uniform_nll_ucb95": -0.5701493108195174,
+      "nll_gain_over_uniform": 0.5781316995664985,
+      "structures": 26912,
+      "support_coverage": 1.0,
+      "total_variation_from_train_law": 0.0026286433105106783,
+      "uniform_nll": 2.995732273553991
+    },
+    "test": {
+      "integer_wasserstein_from_train_law": 0.024382441316994158,
+      "js_divergence_from_train_law": 0.00010028102508353,
+      "mean_nll": 2.4176005739874924,
+      "model_minus_uniform_nll_ucb95": -0.5700022294275783,
+      "nll_gain_over_uniform": 0.5781316995664985,
+      "structures": 26912,
+      "support_coverage": 1.0,
+      "total_variation_from_train_law": 0.0026286433105106783,
+      "uniform_nll": 2.995732273553991
+    }
+  },
+  "implementation_commit": "0bd3c8974767d5e9bd4cf12e50318484d60d0f73",
+  "law": {
+    "fit_structures": 486340,
+    "normalization_error": 0.0,
+    "probabilities": [
+      0.00027963975819385615,
+      0.003507834025578813,
+      0.00013776370440432618,
+      0.20443311263724967,
+      0.05627750133651355,
+      0.05333922770078546,
+      0.03213595427067484,
+      0.07827034584858329,
+      0.04012213677674055,
+      0.15264012830530083,
+      0.04241477155899165,
+      0.16238022782415595,
+      0.006228153143891105,
+      0.022163507011555703,
+      0.018367808529012625,
+      0.04601924579512275,
+      0.0006641444257104083,
+      0.02217173171032611,
+      0.004916313690011103,
+      0.05353045194719743
+    ],
+    "support": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "ood_stress_panels": {
+    "test": {
+      "integer_wasserstein_from_train_law": 1.6585596250219505,
+      "js_divergence_from_train_law": 0.26633690895028705,
+      "mean_nll": 3.061387895917477,
+      "model_minus_uniform_nll_ucb95": 0.07523716207132755,
+      "nll_gain_over_uniform": -0.0656556223634861,
+      "structures": 67520,
+      "support_coverage": 1.0,
+      "total_variation_from_train_law": 0.6215539389193331,
+      "uniform_nll": 2.995732273553991
+    },
+    "val": {
+      "integer_wasserstein_from_train_law": 1.3833735917639585,
+      "js_divergence_from_train_law": 0.3470211764467308,
+      "mean_nll": 4.064663658310116,
+      "model_minus_uniform_nll_ucb95": 1.0819834102847885,
+      "nll_gain_over_uniform": -1.0689313847561253,
+      "structures": 67520,
+      "support_coverage": 1.0,
+      "total_variation_from_train_law": 0.7091825046527043,
+      "uniform_nll": 2.995732273553991
+    }
+  },
+  "protocol": "h1a_node_count_gate_v1",
+  "protocol_sha256": "f82c007fac29d1d730c48c431094530b34223ba51863322218ac5fb49dcaa882",
+  "qualified": true,
+  "sampling": {
+    "draws": 200000,
+    "integer_wasserstein_from_law": 0.010993181107867126,
+    "invalid_counts": 0,
+    "js_divergence_from_law": 1.2277479743031682e-05,
+    "maximum_count": 20,
+    "minimum_count": 1,
+    "reproducible": true,
+    "sampling_failures": 0
+  }
+}

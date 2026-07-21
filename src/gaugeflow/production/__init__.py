@@ -93,7 +93,6 @@ from .generation_law import (
     CarrierSelectionSample,
     CrystalGenerationState,
     FactorizedGenerationLogProbability,
-    LearnedNodeCountLaw,
     ParentDeltaNodeCountLaw,
     SupportedCarrierSelectionLaw,
 )
@@ -195,7 +194,6 @@ __all__ = [
     "IntegerPartitionCatalogue",
     "FactorizedGenerationLogProbability",
     "LatticeVolumeShape",
-    "LearnedNodeCountLaw",
     "ModeCatalog",
     "ModeCatalogEntry",
     "ModeDiffusionState",

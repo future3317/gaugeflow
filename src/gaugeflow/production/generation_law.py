@@ -20,69 +20,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
-from torch import nn
 
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
-
-
-class LearnedNodeCountLaw(nn.Module):
-    """Normalized categorical ``p_theta(N | context)`` on ``1..maximum_atoms``."""
-
-    def __init__(self, maximum_atoms: int, context_dim: int = 0) -> None:
-        super().__init__()
-        if maximum_atoms < 1 or context_dim < 0:
-            raise ValueError("node-count support and context dimension must be nonnegative")
-        self.maximum_atoms = maximum_atoms
-        self.context_dim = context_dim
-        if context_dim:
-            self.context_projection: nn.Linear | None = nn.Linear(context_dim, maximum_atoms)
-            self.logits = None
-        else:
-            self.context_projection = None
-            self.logits = nn.Parameter(torch.zeros(maximum_atoms))
-
-    def _log_probability(self, context: torch.Tensor | None, graphs: int) -> torch.Tensor:
-        if self.context_projection is None:
-            if context is not None:
-                raise ValueError("unconditional node-count law does not accept context")
-            assert self.logits is not None
-            logits = self.logits.unsqueeze(0).expand(graphs, -1)
-        else:
-            if context is None or context.shape != (graphs, self.context_dim):
-                raise ValueError("conditional node-count context has the wrong shape")
-            logits = self.context_projection(context)
-        return torch.log_softmax(logits, dim=-1)
-
-    def log_prob(
-        self,
-        node_counts: torch.Tensor,
-        context: torch.Tensor | None = None,
-    ) -> torch.Tensor:
-        if node_counts.ndim != 1 or node_counts.dtype != torch.long:
-            raise ValueError("node counts must be a rank-one int64 vector")
-        if bool(((node_counts < 1) | (node_counts > self.maximum_atoms)).any()):
-            raise ValueError("node count lies outside the learned support")
-        log_probability = self._log_probability(context, node_counts.numel())
-        return log_probability.gather(1, (node_counts - 1).unsqueeze(1)).squeeze(1)
-
-    @torch.no_grad()
-    def sample(
-        self,
-        graphs: int,
-        *,
-        context: torch.Tensor | None = None,
-        generator: torch.Generator | None = None,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        if graphs < 1:
-            raise ValueError("graph count must be positive")
-        log_probability = self._log_probability(context, graphs)
-        index = torch.multinomial(
-            log_probability.float().exp(),
-            1,
-            replacement=True,
-            generator=generator,
-        ).squeeze(1)
-        return index + 1, log_probability.gather(1, index.unsqueeze(1)).squeeze(1)
 
 
 @dataclass(frozen=True)
