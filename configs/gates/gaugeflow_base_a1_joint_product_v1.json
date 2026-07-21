@@ -8,9 +8,13 @@
     "qualification_result_sha256": "bb900ea2d54711292b029bc13aa514adfa93252cee6f2b9fac470181618ace08",
     "additional_qualification_results": {
       "gaugeflow_base_capacity_screen_v1": "d1d8faefd51920a650e97ac81f2bdff2ba2fe17ced6e7982f03f88a0b7460033",
-      "h1a_e1_absolute_likelihood_v1": "1f6ad69ee6e2c6873780a70ada4335dac182698949c1c1fd1aafd2d37dad5189",
+      "h1a_e1_absolute_likelihood_v1": "7812bf380fa019fb655784d0a3ca6194b457fd17da9ed7cc3924da5d91f782d5",
       "h1a_lattice_l1_v1": "8f76a0accbe328354a7d863ac48f3c17b356103213d7a824b816e91c49660529",
       "h1a_generated_side_coordinate_exposure_v1": "852825d8ab34e10a9fc536e6e262ec4ce78e84723dbaa66b5093d07f47ac7013"
+    },
+    "qualification_hash_errata": {
+      "h1a_e1_absolute_likelihood_v1_windows_crlf_sha256": "1f6ad69ee6e2c6873780a70ada4335dac182698949c1c1fd1aafd2d37dad5189",
+      "reason": "The replacement is the unchanged Git blob/Linux LF result used by the CUDA runner; parsed JSON evidence is identical."
     },
     "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4",
     "trainer_sha256": "47cb99ddb88592afca3da08a00e98f045d87aed7d1450bc704d7a2dd21d47a48",
