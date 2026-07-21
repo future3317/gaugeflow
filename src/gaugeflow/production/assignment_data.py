@@ -17,7 +17,7 @@ from .assignment_scorer import (
     parent_carrier_graph_features,
 )
 from .assignment_training import AssignmentCarrierBatch
-from .autoregressive_assignment import complete_pair_rbf
+from .autoregressive_assignment import complete_pair_context_features, complete_pair_rbf
 
 
 @dataclass(frozen=True)
@@ -101,6 +101,16 @@ def prepare_assignment_carrier_example(
 
     edge_source, edge_target, distance = _exact_complete_pair_distances(fractional, lattice)
     normalized_distance = distance / volume.pow(1.0 / 3.0)
+    edge_rbf = complete_pair_rbf(
+        normalized_distance.to(torch.float32),
+        radial_channels=radial_channels,
+    )
+    edge_features = complete_pair_context_features(
+        edge_source,
+        edge_target,
+        edge_rbf,
+        node_count=assignment.numel(),
+    )
     return AssignmentCarrierExample(
         embedding_key=embedding_key,
         material_id_audit_only=material_id_audit_only,
@@ -116,10 +126,7 @@ def prepare_assignment_carrier_example(
         ),
         edge_source=edge_source,
         edge_target=edge_target,
-        edge_rbf=complete_pair_rbf(
-            normalized_distance.to(torch.float32),
-            radial_channels=radial_channels,
-        ),
+        edge_rbf=edge_features,
         composition_counts=counts,
         target_assignment=assignment,
         parent_permutations=permutations,

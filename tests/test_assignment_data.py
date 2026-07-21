@@ -84,6 +84,7 @@ def test_assignment_carrier_packing_preserves_graph_boundaries() -> None:
     packed = pack_assignment_carriers([example, example], device="cpu")
     packed.validate(vocabulary_size=CHEMICAL_ELEMENT_COUNT)
     assert packed.site_features.shape[0] == 8
+    assert packed.edge_rbf.shape[1] == 6 + 6 * 7 // 2
     assert torch.equal(torch.bincount(packed.batch), torch.tensor([4, 4]))
     assert bool((packed.edge_source[:12] < 4).all())
     assert bool((packed.edge_source[12:] >= 4).all())

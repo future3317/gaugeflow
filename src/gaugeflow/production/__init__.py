@@ -25,6 +25,7 @@ from .assignment_training import (
 from .autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
     RemainingCountAssignmentLaw,
+    complete_pair_context_features,
     complete_pair_rbf,
 )
 from .blueprint import (
@@ -153,6 +154,7 @@ __all__ = [
     "CompactCartesianKrylovCarrier",
     "CountConstrainedAssignmentLaw",
     "composition_counts_from_tokens",
+    "complete_pair_context_features",
     "complete_pair_rbf",
     "count_constrained_assignment",
     "count_projected_assignment",

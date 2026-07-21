@@ -9,6 +9,7 @@ import torch
 from gaugeflow.production.autoregressive_assignment import (
     GeometryAwareRemainingCountScorer,
     RemainingCountAssignmentLaw,
+    complete_pair_context_features,
     complete_pair_rbf,
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
@@ -94,6 +95,34 @@ def _complete_edges(distance: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor,
     )
     rbf = complete_pair_rbf(distance[source, target], radial_channels=6)
     return source, target, rbf
+
+
+def test_two_point_context_is_endpoint_symmetric_and_node_relabel_equivariant() -> None:
+    distance = torch.tensor(
+        [
+            [0.0, 0.4, 0.8, 0.6],
+            [0.4, 0.0, 0.7, 0.9],
+            [0.8, 0.7, 0.0, 0.5],
+            [0.6, 0.9, 0.5, 0.0],
+        ]
+    )
+    source, target, rbf = _complete_edges(distance)
+    feature = complete_pair_context_features(source, target, rbf, node_count=4)
+    dense = torch.zeros(4, 4, feature.shape[1])
+    dense[source, target] = feature
+    assert torch.equal(dense, dense.transpose(0, 1))
+
+    order = torch.tensor([2, 0, 3, 1])
+    changed_source, changed_target, changed_rbf = _complete_edges(distance[order][:, order])
+    changed_feature = complete_pair_context_features(
+        changed_source,
+        changed_target,
+        changed_rbf,
+        node_count=4,
+    )
+    changed_dense = torch.zeros_like(dense)
+    changed_dense[changed_source, changed_target] = changed_feature
+    assert torch.allclose(changed_dense, dense[order][:, order], atol=1e-6, rtol=1e-6)
 
 
 def test_geometry_scorer_is_node_permutation_equivariant_with_finite_gradients() -> None:

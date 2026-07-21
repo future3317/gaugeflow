@@ -470,3 +470,60 @@ def complete_pair_rbf(
     )
     width = maximum_normalized_distance / (radial_channels - 1)
     return torch.exp(-0.5 * ((distances[:, None] - centers) / width) ** 2)
+
+
+def complete_pair_context_features(
+    edge_source: torch.Tensor,
+    edge_target: torch.Tensor,
+    edge_rbf: torch.Tensor,
+    *,
+    node_count: int,
+) -> torch.Tensor:
+    """Add a target-free two-point view of every third carrier site.
+
+    For a pair ``(i,j)``, the added feature is the upper triangle of
+
+    ``sum_k sym(rbf(d_ik) outer rbf(d_jk))``.
+
+    It is invariant to endpoint exchange, node relabeling, rigid motion and
+    ``GL(3,Z)`` cell-basis changes.  The cubic contraction is performed once
+    while compiling a carrier with at most 20 sites; model training and
+    sampling still consume one fixed feature per directed pair.
+    """
+    if node_count < 2:
+        raise ValueError("pair context requires at least two carrier sites")
+    if (
+        edge_source.shape != edge_target.shape
+        or edge_source.ndim != 1
+        or edge_rbf.ndim != 2
+        or edge_rbf.shape[0] != edge_source.numel()
+        or edge_rbf.shape[1] < 2
+    ):
+        raise ValueError("complete-pair context inputs have incompatible shapes")
+    if edge_source.numel() != node_count * (node_count - 1):
+        raise ValueError("pair context requires the complete directed non-self graph")
+    if (
+        int(edge_source.min()) < 0
+        or int(edge_target.min()) < 0
+        or int(edge_source.max()) >= node_count
+        or int(edge_target.max()) >= node_count
+        or bool((edge_source == edge_target).any())
+        or not torch.isfinite(edge_rbf).all()
+    ):
+        raise ValueError("complete-pair context contains an invalid edge")
+    encoded = edge_source * node_count + edge_target
+    if torch.unique(encoded).numel() != edge_source.numel():
+        raise ValueError("complete-pair context contains duplicate edges")
+    channels = edge_rbf.shape[1]
+    dense = edge_rbf.new_zeros(node_count, node_count, channels)
+    dense[edge_source, edge_target] = edge_rbf
+    context = torch.einsum("ikr,jks->ijrs", dense, dense)
+    context = 0.5 * (context + context.transpose(-1, -2))
+    upper = torch.triu_indices(channels, channels, device=edge_rbf.device)
+    return torch.cat(
+        (
+            edge_rbf,
+            context[edge_source, edge_target][:, upper[0], upper[1]],
+        ),
+        dim=1,
+    )

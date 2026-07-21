@@ -269,7 +269,7 @@ def main() -> None:
     repository = Path(__file__).resolve().parents[1]
     protocol = load_json_object(args.protocol)
     if (
-        protocol.get("protocol") != "h1a_assignment_orderless_overfit_v1"
+        protocol.get("protocol") != "h1a_assignment_pair_context_overfit_v2"
         or protocol.get("status_before_run") != "frozen_not_run"
     ):
         raise ValueError("unexpected or unfrozen orderless-assignment overfit protocol")
@@ -305,7 +305,7 @@ def main() -> None:
     model = GeometryAwareRemainingCountScorer(
         site_feature_dim=examples[0].site_features.shape[1],
         graph_feature_dim=examples[0].graph_features.shape[0],
-        radial_channels=int(model_config["radial_channels"]),
+        radial_channels=examples[0].edge_rbf.shape[1],
         hidden_dim=int(model_config["hidden_dim"]),
         message_blocks=int(model_config["message_blocks"]),
         maximum_sites=int(model_config["maximum_sites"]),
