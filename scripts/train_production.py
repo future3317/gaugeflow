@@ -319,11 +319,15 @@ def main() -> None:
             composition_loss_weight=float(training_spec.get("composition_loss_weight", 0.0)),
         )
     )
-    uses_explicit_modality_times = training_config.modality_time_mode in {
-        "independent_corner_mixture",
-        "element_only",
-        "lattice_only",
-    }
+    uses_explicit_modality_times = (
+        training_config.modality_time_mode
+        in {
+            "independent_corner_mixture",
+            "element_only",
+            "lattice_only",
+        }
+        or training_config.coordinate_clean_side_information
+    )
     matched_modes = {"matched_single", "side_mean", "separate"}
     if uses_explicit_modality_times != (model.modality_time_conditioning in matched_modes):
         raise ValueError("model and training modality-time contracts do not match")
@@ -331,6 +335,8 @@ def main() -> None:
         raise ValueError("element-only qualification requires the unified separate-clock backbone")
     if training_config.modality_time_mode == "lattice_only" and model.modality_time_conditioning != "separate":
         raise ValueError("lattice-only qualification requires the unified separate-clock backbone")
+    if training_config.coordinate_clean_side_information and model.modality_time_conditioning != "separate":
+        raise ValueError("clean-side coordinate training requires explicit separate modality clocks")
     diffusion = TensorFreeHybridDiffusion(
         model,
         lattice_standardizer,

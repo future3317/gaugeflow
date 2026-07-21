@@ -27,11 +27,17 @@ def _prerequisite_hash_contract(
     prerequisites: dict[str, Any],
     cache_root: Path,
 ) -> dict[Path, str]:
+    if protocol_name == "h1a_coordinate_clean_side_current_v1":
+        return {
+            cache_root / "manifest.json": str(prerequisites["cache_manifest_sha256"]),
+            Path("reports/h1a_lattice_l1_v1/result.json"): str(prerequisites["qualification_result_sha256"]),
+            Path("reports/h1a_coordinate_clean_side_information_one_pass_v1/result.json"): str(
+                prerequisites["source_coordinate_result_sha256"]
+            ),
+        }
     contract = {
         cache_root / "manifest.json": str(prerequisites["cache_manifest_sha256"]),
-        Path("reports/h1a_dynamic_persistent_edge_v1/result.json"): str(
-            prerequisites["qualification_result_sha256"]
-        ),
+        Path("reports/h1a_dynamic_persistent_edge_v1/result.json"): str(prerequisites["qualification_result_sha256"]),
         Path("configs/gates/h1a_dynamic_persistent_edge_coordinate_pretraining_v1.json"): str(
             prerequisites["source_architecture_protocol_sha256"]
         ),
@@ -76,6 +82,7 @@ def main() -> None:
         not in {
             "h1a_coordinate_clean_side_information_v1",
             "h1a_coordinate_clean_side_information_one_pass_v1",
+            "h1a_coordinate_clean_side_current_v1",
         }
         or protocol.get("status_before_run") != "frozen_not_run"
         or not isinstance(training, dict)
@@ -170,9 +177,7 @@ def main() -> None:
     checks = {
         "finite_training": numeric_tree_is_finite(records),
         "coordinate_contract_recorded": bool(
-            read_production_checkpoint_metadata(checkpoint)["training_config"][
-                "coordinate_clean_side_information"
-            ]
+            read_production_checkpoint_metadata(checkpoint)["training_config"]["coordinate_clean_side_information"]
         ),
         "validation_coordinate_ratio": ratio <= float(acceptance["validation_coordinate_ratio_max"]),
         "material_improvement": reference_ratio - ratio
@@ -191,10 +196,8 @@ def main() -> None:
         == int(acceptance["sampling_failures"]),
         "tensor_bypass": validation[str(final_step)]["tensor_candidate_count"]
         == float(acceptance["tensor_candidates"]),
-        "throughput": float(final_log["graphs_per_second"])
-        >= float(acceptance["training_graphs_per_second_min"]),
-        "memory": float(final_log["peak_cuda_memory_mib"])
-        <= float(acceptance["peak_cuda_memory_mib_max"]),
+        "throughput": float(final_log["graphs_per_second"]) >= float(acceptance["training_graphs_per_second_min"]),
+        "memory": float(final_log["peak_cuda_memory_mib"]) <= float(acceptance["peak_cuda_memory_mib_max"]),
     }
     qualified = all(checks.values())
     key = "pass" if qualified else "fail"
