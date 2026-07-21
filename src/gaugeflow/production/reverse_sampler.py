@@ -9,8 +9,8 @@ import torch
 
 from gaugeflow.manifold import wrap01
 
-from .autoregressive_assignment import RemainingCountAssignmentLaw
 from .assignment_training import sample_uniform_reveal_ranks
+from .autoregressive_assignment import RemainingCountAssignmentLaw
 from .blueprint import ParentBlueprintBatch
 from .categorical_mask import AbsorbingMaskDiffusion
 from .categorical_uniform import UniformCategoricalDiffusion
