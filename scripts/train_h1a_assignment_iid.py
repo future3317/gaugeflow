@@ -119,6 +119,34 @@ def _chunks(values: Sequence[AssignmentCarrierExample], size: int) -> list[list[
     return [list(values[start : start + size]) for start in range(0, len(values), size)]
 
 
+def _select_exact_panel(
+    evidence_groups: dict[str, list[AssignmentCarrierExample]],
+    *,
+    maximum_sites: int,
+    carriers_per_split: int,
+) -> list[AssignmentCarrierExample]:
+    """Validate and freeze the exact-DP panel before any optimization work."""
+    if maximum_sites < 1 or carriers_per_split < 1:
+        raise ValueError("exact-DP panel limits must be positive")
+    selected: list[AssignmentCarrierExample] = []
+    for role in ("iid_calibration_supported", "iid_test_supported"):
+        eligible = sorted(
+            (
+                value
+                for value in evidence_groups[role]
+                if value.target_assignment.numel() <= maximum_sites
+            ),
+            key=lambda value: (value.material_id_audit_only, value.embedding_key),
+        )
+        if len(eligible) < carriers_per_split:
+            raise ValueError(
+                f"{role} has {len(eligible)} exact-DP carriers, fewer than the "
+                f"preregistered {carriers_per_split}"
+            )
+        selected.extend(eligible[:carriers_per_split])
+    return selected
+
+
 @torch.no_grad()
 def _bound_rows(
     model: GeometryAwareRemainingCountScorer,
@@ -464,7 +492,7 @@ def main() -> None:
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[1]
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "h1a_assignment_iid_gate_v2" or protocol.get(
+    if protocol.get("protocol") != "h1a_assignment_iid_gate_v3" or protocol.get(
         "status_before_run"
     ) != "frozen_not_run":
         raise ValueError("unexpected or unfrozen assignment IID protocol")
@@ -536,6 +564,29 @@ def main() -> None:
     def action_supported(example: AssignmentCarrierExample) -> bool:
         key = (example.material_id_audit_only, example.embedding_key)
         return action_by_carrier[key] in fit_action_signatures
+
+    evaluation = protocol["evaluation"]
+    evidence_groups = {
+        "iid_calibration_supported": [
+            value for value in by_role["iid_calibration"] if action_supported(value)
+        ],
+        "iid_calibration_unseen_action": [
+            value for value in by_role["iid_calibration"] if not action_supported(value)
+        ],
+        "iid_test_supported": [value for value in by_role["iid_test"] if action_supported(value)],
+        "iid_test_unseen_action": [
+            value for value in by_role["iid_test"] if not action_supported(value)
+        ],
+        "ood_validation": by_role["ood_validation"],
+        "ood_test": by_role["ood_test"],
+    }
+    if any(not values for values in evidence_groups.values()):
+        raise ValueError("assignment v3 evidence stratum has no carriers")
+    exact_examples = _select_exact_panel(
+        evidence_groups,
+        maximum_sites=int(evaluation["exact_subset_maximum_sites"]),
+        carriers_per_split=int(evaluation["exact_subset_carriers_per_iid_split"]),
+    )
 
     fit = by_role["iid_fit"] + by_role["iid_fit_rare"]
     fit_by_material: dict[str, list[AssignmentCarrierExample]] = defaultdict(list)
@@ -620,23 +671,6 @@ def main() -> None:
                 }
             )
 
-    evaluation = protocol["evaluation"]
-    evidence_groups = {
-        "iid_calibration_supported": [
-            value for value in by_role["iid_calibration"] if action_supported(value)
-        ],
-        "iid_calibration_unseen_action": [
-            value for value in by_role["iid_calibration"] if not action_supported(value)
-        ],
-        "iid_test_supported": [value for value in by_role["iid_test"] if action_supported(value)],
-        "iid_test_unseen_action": [
-            value for value in by_role["iid_test"] if not action_supported(value)
-        ],
-        "ood_validation": by_role["ood_validation"],
-        "ood_test": by_role["ood_test"],
-    }
-    if any(not values for values in evidence_groups.values()):
-        raise ValueError("assignment v2 evidence stratum has no carriers")
     role_rows: dict[str, list[dict[str, Any]]] = {}
     role_summary: dict[str, dict[str, float | int]] = {}
     for role_index, (role, examples_in_role) in enumerate(evidence_groups.items()):
@@ -665,21 +699,6 @@ def main() -> None:
         )
         for index, role in enumerate(("iid_calibration_supported", "iid_test_supported"))
     }
-    maximum_exact_sites = int(evaluation["exact_subset_maximum_sites"])
-    exact_per_split = int(evaluation["exact_subset_carriers_per_iid_split"])
-    exact_examples = []
-    for role in ("iid_calibration_supported", "iid_test_supported"):
-        eligible = sorted(
-            (
-                value
-                for value in evidence_groups[role]
-                if value.target_assignment.numel() <= maximum_exact_sites
-            ),
-            key=lambda value: (value.material_id_audit_only, value.embedding_key),
-        )
-        if len(eligible) < exact_per_split:
-            raise ValueError("exact subset panel has insufficient frozen support")
-        exact_examples.extend(eligible[:exact_per_split])
     exact_rows = _exact_subset_rows(model, exact_examples)
     exact_summary = {
         "carriers": len(exact_rows),
@@ -754,7 +773,7 @@ def main() -> None:
     torch.save(
         {
             "schema": 2,
-            "task": "parent_conditioned_assignment_iid_v2",
+            "task": "parent_conditioned_assignment_iid_v3",
             "model_state_dict": model.state_dict(),
             "protocol_sha256": canonical_json_hash(protocol),
             "implementation_commit": implementation_commit,

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
+import pytest
 import torch
 
 from gaugeflow.production.assignment_data import AssignmentCarrierExample
@@ -7,6 +10,7 @@ from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 from scripts.train_h1a_assignment_iid import (
     _material_bootstrap_ucb95,
     _relabel_example,
+    _select_exact_panel,
 )
 
 
@@ -74,3 +78,26 @@ def test_material_bootstrap_weights_materials_not_duplicate_carriers() -> None:
     changed = _material_bootstrap_ucb95(duplicated, resamples=1000, seed=17)
     assert reference == changed
     assert reference < 0.0
+
+
+def test_exact_panel_is_validated_before_training() -> None:
+    calibration = [_example() for _ in range(3)]
+    test = [_example() for _ in range(4)]
+    for index, example in enumerate(calibration):
+        calibration[index] = replace(
+            example,
+            material_id_audit_only=f"calibration-{index}",
+        )
+    for index, example in enumerate(test):
+        test[index] = replace(
+            example,
+            material_id_audit_only=f"test-{index}",
+        )
+    groups = {
+        "iid_calibration_supported": calibration,
+        "iid_test_supported": test,
+    }
+    panel = _select_exact_panel(groups, maximum_sites=4, carriers_per_split=3)
+    assert len(panel) == 6
+    with pytest.raises(ValueError, match="iid_calibration_supported has 3"):
+        _select_exact_panel(groups, maximum_sites=4, carriers_per_split=4)

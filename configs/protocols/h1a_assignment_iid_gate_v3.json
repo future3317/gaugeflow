@@ -1,5 +1,5 @@
 {
-  "protocol": "h1a_assignment_iid_gate_v2",
+  "protocol": "h1a_assignment_iid_gate_v3",
   "status_before_run": "frozen_not_run",
   "source": {
     "carrier_records_sha256": "001c96f0d07e21d805e4a8499b1b1bb978c5228e5e12ded92c617c74ea058fa2",
@@ -49,7 +49,7 @@
     "sample_draws_per_carrier": 64,
     "bootstrap_resamples": 4000,
     "exact_subset_maximum_sites": 6,
-    "exact_subset_carriers_per_iid_split": 4,
+    "exact_subset_carriers_per_iid_split": 3,
     "relabel_carriers": 8
   },
   "acceptance": {
