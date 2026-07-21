@@ -1,0 +1,45 @@
+{
+  "protocol": "a1_product_space_integration_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "No-training integration qualification of the GaugeFlow-base flexible-stratum product-space runtime before any A1 checkpoint is trained.",
+  "mathematical_law": "p(N,C,B,A,L,F)=p(N) p(C|N) p(B|N,C) p_theta(A,L,F|C,N,B)",
+  "runtime": {
+    "stratum": "flexible_P1",
+    "node_count_law": "qualified_empirical_p_N",
+    "composition_law": {
+      "protocol": "h1a_e1_absolute_likelihood_v1",
+      "checkpoint_sha256": "fcd1bcdf77daee232e6555c94c9e11c1fe211509e71194feb25705f1e58b3b59",
+      "context": "constant_unit_token_conditioned_only_on_N"
+    },
+    "categorical_path": "orderless_reveal_exact_remaining_counts",
+    "continuous_path": "reverse_SDE_product_split",
+    "terminal_count_projection": false,
+    "target_only_runtime_fields": false
+  },
+  "model": {
+    "coordinate_backbone": "small_34m",
+    "parameter_count": 34284207,
+    "modality_time_conditioning": "separate",
+    "composition_conditioning": true
+  },
+  "required_checks": [
+    "composition_N_closure",
+    "every_step_remaining_count_closure",
+    "terminal_no_masks_and_zero_failures",
+    "small_N_exact_order_DP_normalization",
+    "node_relabel_equivariance",
+    "parent_action_conjugation_when_parent_carrier_is_present",
+    "finite_continuous_discrete_interleaving",
+    "finite_forward_backward_through_composition_conditioning",
+    "runtime_target_field_exclusion"
+  ],
+  "acceptance": {
+    "composition_count_error": 0,
+    "terminal_remaining_atoms": 0,
+    "terminal_masks": 0,
+    "sampling_failures": 0,
+    "all_values_finite": true,
+    "legacy_independent_site_runtime_allowed": false
+  },
+  "boundary": "A pass authorizes one from-scratch A1 product-space training protocol only. It does not qualify free joint quality, OOD carrier generalization, tensor conditioning, oracle, RL, relaxation, DFT, or DFPT."
+}

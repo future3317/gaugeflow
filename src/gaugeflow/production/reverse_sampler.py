@@ -672,8 +672,6 @@ class TensorFreeReverseSampler:
             spacing=time_grid,
         )
         masked_counts: list[torch.Tensor] = []
-        remaining_atom_counts: list[torch.Tensor] = []
-        composition_closure_errors: list[torch.Tensor] = []
         was_training = self.denoiser.training
         self.denoiser.eval()
         trajectory_error: RuntimeError | ValueError | None = None
@@ -856,6 +854,8 @@ class TensorFreeReverseSampler:
         )
 
         masked_counts: list[torch.Tensor] = []
+        remaining_atom_counts: list[torch.Tensor] = []
+        composition_closure_errors: list[torch.Tensor] = []
         coordinate_steps: list[torch.Tensor] = []
         volume_steps: list[torch.Tensor] = []
         shape_steps: list[torch.Tensor] = []
