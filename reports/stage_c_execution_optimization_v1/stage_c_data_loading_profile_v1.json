@@ -1,0 +1,20 @@
+{
+  "batches": 100,
+  "exact_first_and_last_batch": true,
+  "global_batch": 96,
+  "grouped_digests": [
+    "ed04c1ca18370a216785057a7dc4d49dcf866f974349bb7efa306703ce75b162",
+    "695810606f668b097769a89efb7751d4298cb9c9ca37fadbb2c67e42ebfed6dc"
+  ],
+  "grouped_parallel_seconds": 9.435481398017146,
+  "legacy_digests": [
+    "ed04c1ca18370a216785057a7dc4d49dcf866f974349bb7efa306703ce75b162",
+    "695810606f668b097769a89efb7751d4298cb9c9ca37fadbb2c67e42ebfed6dc"
+  ],
+  "legacy_seconds": 41.03674235008657,
+  "local_batch": 32,
+  "schema": "gaugeflow.stage_c_data_loading_profile.v1",
+  "scope": "bounded host data-plane profile; no training evidence",
+  "speedup": 4.349194346216441,
+  "world_size": 3
+}

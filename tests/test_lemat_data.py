@@ -10,6 +10,7 @@ from gaugeflow.production.lemat_data import (
     lemat_stress_kbar_to_kelvin_gpa,
     normalize_external_material_id,
     parse_lemat_row,
+    parse_lemat_structure_row,
 )
 from gaugeflow.production.lemat_index import IndexedLeMatDataset, build_lemat_index
 
@@ -49,6 +50,12 @@ def test_lemat_parser_converts_geometry_units_and_masks() -> None:
     incomplete = parse_lemat_row(_row(3, forces=[]))
     assert incomplete.energy_present and incomplete.stress_present
     assert not incomplete.forces_present
+    malformed = _row(4)
+    malformed["stress_tensor"] = []
+    structure_only = parse_lemat_structure_row(malformed)
+    assert not structure_only.energy_present
+    assert not structure_only.forces_present
+    assert not structure_only.stress_present
 
 
 def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) -> None:
@@ -102,4 +109,15 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     assert blocks.shape == (len(dataset),)
     assert int(blocks.min()) == 0
     assert int(blocks.max()) + 1 == torch.unique(blocks).numel()
+    selected_indices = torch.tensor([3, 1, 2, 0], dtype=torch.long)
+    selected = dataset.select(selected_indices)
+    reference = [dataset[int(index)] for index in selected_indices]
+    assert [record.material_id for record in selected] == [
+        record.material_id for record in reference
+    ]
+    assert all(
+        torch.equal(record.element_tokens, expected.element_tokens)
+        and torch.equal(record.fractional_coordinates, expected.fractional_coordinates)
+        for record, expected in zip(selected, reference, strict=True)
+    )
     assert normalize_external_material_id("alex<AGM001>") == "agm001"

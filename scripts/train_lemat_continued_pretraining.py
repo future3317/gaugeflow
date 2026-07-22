@@ -22,12 +22,13 @@ from gaugeflow.production.continued_checkpointing import build_continued_pretrai
 from gaugeflow.production.continued_pretraining import (
     ContinuedPretrainingStreams,
     ContinuedPretrainingWeights,
-    accumulate_continued_pretraining_step,
+    StructureReplayBatch,
+    accumulate_stream_parallel_pretraining_step,
     collate_structure_records,
     pack_structure_batch,
 )
 from gaugeflow.production.lemat_index import IndexedLeMatDataset
-from gaugeflow.production.matpes_data import collate_matpes_records
+from gaugeflow.production.matpes_data import MatPESPhysicalBatch, collate_matpes_records
 from gaugeflow.production.matpes_index import IndexedMatPESDataset
 from gaugeflow.production.physical_checkpointing import (
     load_physical_checkpoint,
@@ -104,7 +105,7 @@ def _verify_protocol_implementation(protocol: dict[str, Any]) -> dict[str, str]:
     paths = {
         "runner_sha256": Path(__file__),
         "continued_pretraining_sha256": Path(
-            inspect.getsourcefile(accumulate_continued_pretraining_step) or ""
+            inspect.getsourcefile(accumulate_stream_parallel_pretraining_step) or ""
         ),
         "continued_checkpointing_sha256": Path(
             inspect.getsourcefile(build_continued_pretraining_objects) or ""
@@ -138,8 +139,15 @@ def main() -> None:
     rank = dist.get_rank()
     world_size = dist.get_world_size()
     devices = training.get("devices")
-    if not isinstance(devices, list) or world_size != len(devices):
-        raise ValueError("torchrun world size disagrees with Stage-C protocol")
+    roles = training.get("stream_parallel_roles")
+    expected_roles = ["lemat_structure", "matpes_physical", "alex_structure"]
+    if (
+        not isinstance(devices, list)
+        or world_size != len(devices)
+        or world_size != 3
+        or roles != expected_roles
+    ):
+        raise ValueError("Stage-C requires the frozen three-role process topology")
     local_rank = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(local_rank)
     device = torch.device("cuda", local_rank)
@@ -167,7 +175,7 @@ def main() -> None:
     objects = build_continued_pretraining_objects(
         stage_b_metadata,
         device=device,
-        optimizer_owner=rank == 0,
+        optimizer_owner=True,
     )
     normalizer, vocabulary = load_functional_physical_normalizer(args.normalizer)
     if vocabulary != objects.functional_vocabulary:
@@ -211,30 +219,30 @@ def main() -> None:
             lemat_dataset.functional_group_index,
             source_weights,
             int(training["global_lemat_batch"]),
-            rank=rank,
-            world_size=world_size,
+            rank=0,
+            world_size=1,
             seed=seed + 101,
             block_index=lemat_dataset.sampling_block_index,
         ),
         ExactRankShardedStream(
             len(matpes_dataset),
             int(training["global_matpes_replay_batch"]),
-            rank=rank,
-            world_size=world_size,
+            rank=0,
+            world_size=1,
             seed=seed + 211,
             wrap=True,
         ),
         ExactRankShardedStream(
             len(alex_dataset),
             int(training["global_alex_replay_batch"]),
-            rank=rank,
-            world_size=world_size,
+            rank=0,
+            world_size=1,
             seed=seed + 307,
             wrap=True,
         ),
     )
-    lemat_generator = torch.Generator(device=device).manual_seed(seed + 401 + rank)
-    alex_generator = torch.Generator(device=device).manual_seed(seed + 503 + rank)
+    lemat_generator = torch.Generator(device=device).manual_seed(seed + 401)
+    alex_generator = torch.Generator(device=device).manual_seed(seed + 503)
     metadata = {
         "protocol": protocol["protocol"],
         "protocol_sha256": canonical_json_hash(protocol),
@@ -244,22 +252,16 @@ def main() -> None:
         "seed": seed,
     }
 
-    owner_runtime: list[dict[str, Any]] | None = None
-    if rank == 0:
-        checkpoint = args.stage_b_checkpoint if args.resume is None else args.resume
-        if args.resume is not None and read_physical_checkpoint_metadata(checkpoint) != metadata:
-            raise ValueError("Stage-C resume metadata disagrees with the frozen run")
-        owner_runtime, _ = load_physical_checkpoint(
-            checkpoint,
-            model=objects.model,
-            trainer=objects.trainer,
-            map_location=device,
-        )
-    objects.trainer.broadcast_distributed_state(owner_rank=0)
+    checkpoint = args.stage_b_checkpoint if args.resume is None else args.resume
+    if args.resume is not None and read_physical_checkpoint_metadata(checkpoint) != metadata:
+        raise ValueError("Stage-C resume metadata disagrees with the frozen run")
+    runtime_states, _ = load_physical_checkpoint(
+        checkpoint,
+        model=objects.model,
+        trainer=objects.trainer,
+        map_location=device,
+    )
     if args.resume is not None:
-        payload: list[Any] = [owner_runtime]
-        dist.broadcast_object_list(payload, src=0)
-        runtime_states = payload[0]
         if not isinstance(runtime_states, list) or len(runtime_states) != world_size:
             raise ValueError("Stage-C checkpoint does not contain every rank")
         _restore_runtime(
@@ -309,56 +311,45 @@ def main() -> None:
         save_checkpoint()
     start = time.perf_counter()
     graphs_since_log = 0
+    role = expected_roles[rank]
     while objects.trainer.step < stop:
-        indices = streams.next_indices()
-        lemat = collate_structure_records(
-            [lemat_dataset[int(index)] for index in indices.lemat]
-        ).to(device)
-        matpes = collate_matpes_records(
-            [matpes_dataset[int(index)] for index in indices.matpes],
-            functional_vocabulary=vocabulary,
-            teacher_dim=feature_cache.feature_dim,
-        ).to(device)
-        alex_raw = alex_dataset.select_model_batch(indices.alex, device=device)
-        alex = pack_structure_batch(
-            alex_raw.atom_types,
-            alex_raw.fractional_coordinates,
-            alex_raw.lattice,
-            alex_raw.batch,
-        )
-        physical_denominators = objects.trainer.distributed_physical_denominators(matpes)
-        lemat_fraction = objects.trainer.distributed_local_fraction(
-            indices.lemat.numel(), device=device
-        )
-        alex_fraction = objects.trainer.distributed_local_fraction(
-            indices.alex.numel(), device=device
-        )
-        losses = accumulate_continued_pretraining_step(
+        role_batch: StructureReplayBatch | MatPESPhysicalBatch
+        if role == "lemat_structure":
+            indices = streams.lemat.next_indices()
+            role_batch = collate_structure_records(
+                lemat_dataset.select(indices)
+            ).pin_memory().to(device)
+            role_generator = lemat_generator
+        elif role == "matpes_physical":
+            indices = streams.matpes.next_indices()
+            role_batch = collate_matpes_records(
+                matpes_dataset.select(indices),
+                functional_vocabulary=vocabulary,
+                teacher_dim=feature_cache.feature_dim,
+            ).pin_memory().to(device, non_blocking=True)
+            role_generator = None
+        else:
+            indices = streams.alex.next_indices()
+            alex_raw = alex_dataset.select_model_batch(indices, device=device)
+            role_batch = pack_structure_batch(
+                alex_raw.atom_types,
+                alex_raw.fractional_coordinates,
+                alex_raw.lattice,
+                alex_raw.batch,
+            )
+            role_generator = alex_generator
+        role_loss = accumulate_stream_parallel_pretraining_step(
             objects.trainer,
-            lemat,
-            matpes,
-            alex,
+            role,
+            role_batch,
             normalizer,
             weights,
-            lemat_rank_fraction=lemat_fraction,
-            alex_rank_fraction=alex_fraction,
-            physical_denominators=physical_denominators,
-            lemat_generator=lemat_generator,
-            alex_generator=alex_generator,
+            generator=role_generator,
         )
-        gradient_norm = objects.trainer.finish_distributed_optimization_step(owner_rank=0)
-        metrics = torch.tensor(
-            [
-                float(losses.lemat_structure) * lemat_fraction,
-                float(losses.matpes_physical.loss),
-                float(losses.alex_structure) * alex_fraction,
-                float(indices.lemat.numel()),
-                float(indices.matpes.numel()),
-                float(indices.alex.numel()),
-            ],
-            device=device,
-            dtype=torch.float64,
-        )
+        gradient_norm = objects.trainer.finish_replicated_distributed_optimization_step()
+        metrics = torch.zeros(6, device=device, dtype=torch.float64)
+        metrics[rank] = role_loss
+        metrics[3 + rank] = indices.numel()
         dist.all_reduce(metrics, op=dist.ReduceOp.SUM)
         graphs_since_log += int(metrics[3:].sum())
         if objects.trainer.step == stage_b_step + 1 or objects.trainer.step % 100 == 0 or (

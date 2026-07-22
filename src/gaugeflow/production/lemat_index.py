@@ -19,7 +19,7 @@ from .lemat_data import (
     lemat_iid_split,
     lemat_split_group,
     normalize_external_material_id,
-    parse_lemat_row,
+    parse_lemat_structure_row,
     validate_lemat_physical_label_policy,
 )
 from .matpes_data import MatPESPhysicalRecord
@@ -104,9 +104,7 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
         if cached_row_groups < 1:
             raise ValueError("LeMat row-group cache size must be positive")
         self.cached_row_groups = cached_row_groups
-        self.label_policy = validate_lemat_physical_label_policy(
-            str(manifest["physical_label_policy"])
-        )
+        validate_lemat_physical_label_policy(str(manifest["physical_label_policy"]))
         self.source_paths: list[Path] = []
         source_functionals: list[str] = []
         for source in manifest.get("sources", []):
@@ -181,6 +179,54 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
     def __len__(self) -> int:
         return int(self.indices.shape[0])
 
+    def _read_row_group(self, source: int, group: int) -> Any:
+        key = (source, group)
+        if key not in self._group_cache:
+            parquet = self._files.setdefault(source, pq.ParquetFile(self.source_paths[source]))
+            self._group_cache[key] = parquet.read_row_group(group)
+            if len(self._group_cache) > self.cached_row_groups:
+                self._group_cache.popitem(last=False)
+        table = self._group_cache.pop(key)
+        self._group_cache[key] = table
+        return table
+
+    def select(self, indices: torch.Tensor) -> list[MatPESPhysicalRecord]:
+        """Materialize one batch with one Arrow conversion per row group.
+
+        The balanced sampler deliberately emits block-local indices.  Grouping
+        those indices before converting Arrow rows avoids repeatedly slicing
+        and converting the same cached table while preserving the sampler's
+        exact output order.
+        """
+
+        if (
+            indices.ndim != 1
+            or indices.dtype != torch.long
+            or indices.numel() < 1
+            or int(indices.min()) < 0
+            or int(indices.max()) >= len(self)
+        ):
+            raise ValueError("LeMat batch indices are invalid")
+        global_rows = self.indices[indices.cpu()]
+        grouped: dict[tuple[int, int], list[tuple[int, int]]] = {}
+        for position, row_tensor in enumerate(global_rows):
+            row = int(row_tensor)
+            key = (int(self.source_index[row]), int(self.row_group[row]))
+            grouped.setdefault(key, []).append((position, int(self.row_in_group[row])))
+        records: list[MatPESPhysicalRecord | None] = [None] * indices.numel()
+        for (source, group), positions_and_rows in grouped.items():
+            table = self._read_row_group(source, group)
+            rows = table.take([row for _, row in positions_and_rows]).to_pylist()
+            for (position, _), raw in zip(positions_and_rows, rows, strict=True):
+                record = parse_lemat_structure_row(raw)
+                global_row = int(global_rows[position])
+                if record.element_tokens.numel() != int(self.node_count[global_row]):
+                    raise ValueError("LeMat node count changed after index construction")
+                records[position] = record
+        if any(record is None for record in records):
+            raise AssertionError("LeMat grouped batch materialization was incomplete")
+        return [record for record in records if record is not None]
+
     @property
     def functional_group_index(self) -> torch.Tensor:
         """Return split-local functional groups for balanced sampling."""
@@ -199,16 +245,9 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
         row = int(self.indices[index % len(self)])
         source = int(self.source_index[row])
         group = int(self.row_group[row])
-        key = (source, group)
-        if key not in self._group_cache:
-            parquet = self._files.setdefault(source, pq.ParquetFile(self.source_paths[source]))
-            self._group_cache[key] = parquet.read_row_group(group)
-            if len(self._group_cache) > self.cached_row_groups:
-                self._group_cache.popitem(last=False)
-        table = self._group_cache.pop(key)
-        self._group_cache[key] = table
+        table = self._read_row_group(source, group)
         raw = table.slice(int(self.row_in_group[row]), 1).to_pylist()[0]
-        record = parse_lemat_row(raw, physical_label_policy=self.label_policy)
+        record = parse_lemat_structure_row(raw)
         if record.element_tokens.numel() != int(self.node_count[row]):
             raise ValueError("LeMat node count changed after index construction")
         return record

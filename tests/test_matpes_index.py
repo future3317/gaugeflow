@@ -59,6 +59,17 @@ def test_matpes_index_groups_functionals_and_seeks_records(tmp_path: Path) -> No
     first = train[0]
     assert first.functional in {"PBE", "r2SCAN"}
     assert first.energy_present and first.energy_per_atom_ev < -1.0
+    selected_indices = torch.tensor([5, 1, 4, 0], dtype=torch.long)
+    selected = train.select(selected_indices)
+    reference = [train[int(index)] for index in selected_indices]
+    assert [record.material_id for record in selected] == [
+        record.material_id for record in reference
+    ]
+    assert all(
+        record.functional == expected.functional
+        and torch.equal(record.element_tokens, expected.element_tokens)
+        for record, expected in zip(selected, reference, strict=True)
+    )
     loader = DataLoader(
         train,
         batch_size=4,

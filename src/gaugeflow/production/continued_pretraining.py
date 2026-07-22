@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Literal, Sequence
 
 import torch
 
@@ -27,6 +27,15 @@ class StructureReplayBatch:
     lattice: torch.Tensor
     batch: torch.Tensor
     node_counts: torch.Tensor
+
+    def pin_memory(self) -> StructureReplayBatch:
+        return StructureReplayBatch(
+            element_tokens=self.element_tokens.pin_memory(),
+            fractional_coordinates=self.fractional_coordinates.pin_memory(),
+            lattice=self.lattice.pin_memory(),
+            batch=self.batch.pin_memory(),
+            node_counts=self.node_counts.pin_memory(),
+        )
 
     def to(self, device: torch.device | str) -> StructureReplayBatch:
         return StructureReplayBatch(
@@ -57,6 +66,13 @@ class ContinuedPretrainingLosses:
     lemat_structure: torch.Tensor
     matpes_physical: PhysicalLossOutput
     alex_structure: torch.Tensor
+
+
+ContinuedPretrainingRole = Literal[
+    "lemat_structure",
+    "matpes_physical",
+    "alex_structure",
+]
 
 
 @dataclass(frozen=True)
@@ -254,3 +270,43 @@ def accumulate_continued_pretraining_step(
         matpes_physical=physical,
         alex_structure=alex_loss.detach(),
     )
+
+
+def accumulate_stream_parallel_pretraining_step(
+    trainer: PhysicalTransferTrainer,
+    role: ContinuedPretrainingRole,
+    batch: StructureReplayBatch | MatPESPhysicalBatch,
+    normalizer: FunctionalPhysicalNormalizer,
+    weights: ContinuedPretrainingWeights,
+    *,
+    generator: torch.Generator | None = None,
+) -> torch.Tensor:
+    """Backpropagate one additive Stage-C objective term on its owning rank."""
+
+    weights.validate()
+    if role not in {"lemat_structure", "matpes_physical", "alex_structure"}:
+        raise ValueError("unknown Stage-C stream-parallel role")
+    trainer.begin_optimization_step()
+    if role == "matpes_physical":
+        if not isinstance(batch, MatPESPhysicalBatch):
+            raise TypeError("MatPES role requires a physical batch")
+        return trainer.accumulate_physical_step(
+            batch,
+            normalizer,
+            loss_weight=weights.matpes_physical,
+        ).loss.detach()
+    if not isinstance(batch, StructureReplayBatch):
+        raise TypeError("structure role requires a structure replay batch")
+    loss = structure_replay_loss(
+        trainer.diffusion,
+        batch,
+        generator=generator,
+        precision=trainer.config.precision,
+    )
+    weight = (
+        weights.lemat_structure
+        if role == "lemat_structure"
+        else weights.alex_structure
+    )
+    (weight * loss).backward()
+    return loss.detach()

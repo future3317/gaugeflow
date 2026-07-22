@@ -1,0 +1,34 @@
+{
+  "critical_path_seconds_per_step": 1.3060912544606254,
+  "exact_parameter_replication": true,
+  "final_global_losses": {
+    "alex": 1.4252986907958984,
+    "gradient_norm": 1.884145975112915,
+    "lemat": 2.1639530658721924,
+    "matpes": 0.5417568981647491
+  },
+  "global_batch_per_stream": 64,
+  "graphs_per_second": 147.0035109294794,
+  "mean_compute_seconds_by_rank": [
+    1.1952616900089197,
+    1.1901363915239926
+  ],
+  "mean_data_seconds_by_rank": [
+    0.11045272948103957,
+    0.11595486293663271
+  ],
+  "model_digests": [
+    "33e2e3ee314e90ed9425f492598fad1eafb430c6cb5fc20c96580fe412649d15",
+    "33e2e3ee314e90ed9425f492598fad1eafb430c6cb5fc20c96580fe412649d15"
+  ],
+  "peak_cuda_memory_mib_by_rank": [
+    7765.60400390625,
+    8108.07958984375
+  ],
+  "schema": "gaugeflow.stage_c_training_execution_profile.v1",
+  "scope": "bounded real-data execution profile; no training qualification",
+  "steps": 4,
+  "strategy": "optimized",
+  "warmup_steps": 1,
+  "world_size": 2
+}

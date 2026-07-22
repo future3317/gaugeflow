@@ -602,3 +602,19 @@ $PY scripts/audit_code_redundancy.py
 
 Atlas/runtime changes additionally require a no-write CUDA smoke for candidate
 counts, finite outputs, reference equivalence, latency, and peak memory.
+
+## Stage-C execution baseline
+
+Stage-B-v1.1 is qualified by the archived MatPES physical and 512-sample A1
+retention evaluation.  Stage-C uses three fixed additive roles in rank order:
+LeMat geometry-only structure replay, MatPES physical transfer, and Alex
+generative replay.  Their gradients are summed once before identical local
+AdamW/EMA updates.  Do not restore the former one-owner optimizer, per-parameter
+all-reduce, full-model broadcast, or ordinary three-rank data-parallel path.
+
+LeMat replay must not parse or expose energy, force, or stress fields; MatPES is
+the sole Stage-C physical-label stream.  Keep row-group/source-local batch
+materialization, pinned asynchronous transfer, bounded gradient buckets, and
+the frozen role order.  Any execution change must retain exact batch content,
+the additive joint gradient, rank-to-rank parameter identity, and interrupted
+checkpoint equivalence before a long continuation is authorized.

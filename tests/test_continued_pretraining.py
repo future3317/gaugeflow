@@ -7,6 +7,7 @@ from gaugeflow.production.continued_pretraining import (
     ContinuedPretrainingStreams,
     ContinuedPretrainingWeights,
     accumulate_continued_pretraining_step,
+    accumulate_stream_parallel_pretraining_step,
     collate_structure_records,
     pack_structure_batch,
     structure_replay_loss,
@@ -155,6 +156,85 @@ def test_three_stream_objective_accumulates_all_losses_before_one_update() -> No
     assert torch.isfinite(losses.alex_structure)
     assert gradients and all(bool(torch.isfinite(gradient).all()) for gradient in gradients)
     assert float(trainer.finish_optimization_step()) > 0.0
+
+
+def test_stream_parallel_roles_sum_to_the_joint_objective_gradient() -> None:
+    records = [_record("stream-parallel", "pbe", 3)]
+    physical = collate_matpes_records(
+        records,
+        functional_vocabulary={"pbe": 0, "pbesol": 1, "scan": 2},
+        teacher_dim=3,
+    )
+    structure = collate_structure_records(records)
+    normalizer = FunctionalPhysicalNormalizer(
+        energy_location=torch.zeros(3),
+        energy_scale=torch.ones(3),
+        force_scale=torch.ones(3),
+        stress_isotropic_location=torch.zeros(3),
+        stress_scale=torch.ones(3),
+    )
+    weights = ContinuedPretrainingWeights(0.4, 0.3, 0.3)
+
+    def make_trainer() -> PhysicalTransferTrainer:
+        diffusion = _diffusion()
+        model = PhysicalRepresentationModel(
+            diffusion.denoiser,
+            teacher_dim=3,
+            functional_count=3,
+        )
+        return PhysicalTransferTrainer(
+            model,
+            diffusion,
+            PhysicalTransferTrainingConfig(precision="fp32"),
+        )
+
+    joint = make_trainer()
+    initial = {
+        name: value.detach().clone() for name, value in joint.model.state_dict().items()
+    }
+    accumulate_continued_pretraining_step(
+        joint,
+        structure,
+        physical,
+        structure,
+        normalizer,
+        weights,
+        lemat_rank_fraction=1.0,
+        alex_rank_fraction=1.0,
+        lemat_generator=torch.Generator().manual_seed(19),
+        alex_generator=torch.Generator().manual_seed(23),
+    )
+    expected = {
+        name: parameter.grad.detach().clone()
+        for name, parameter in joint.model.named_parameters()
+        if parameter.grad is not None
+    }
+    observed = {name: torch.zeros_like(value) for name, value in expected.items()}
+    roles = (
+        ("lemat_structure", structure, 19),
+        ("matpes_physical", physical, None),
+        ("alex_structure", structure, 23),
+    )
+    for role, batch, seed in roles:
+        trainer = make_trainer()
+        trainer.model.load_state_dict(initial, strict=True)
+        generator = torch.Generator().manual_seed(seed) if seed is not None else None
+        accumulate_stream_parallel_pretraining_step(
+            trainer,
+            role,
+            batch,
+            normalizer,
+            weights,
+            generator=generator,
+        )
+        for name, parameter in trainer.model.named_parameters():
+            if parameter.grad is not None:
+                observed[name] += parameter.grad
+    assert set(observed) == set(expected)
+    assert all(
+        torch.allclose(observed[name], expected[name], atol=1.0e-6, rtol=1.0e-6)
+        for name in expected
+    )
 
 
 def _streams() -> ContinuedPretrainingStreams:

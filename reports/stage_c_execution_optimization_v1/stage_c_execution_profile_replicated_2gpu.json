@@ -1,0 +1,33 @@
+{
+  "critical_path_seconds_per_step": 0.05734446375572588,
+  "exact_parameter_replication": true,
+  "gradient_norms": [
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855,
+    0.017666880041360855
+  ],
+  "model_digests": [
+    "9c97f5bdc5b30ae3779a3da7e03d2e35a4263fcb7b95a30bd591f619e56ff2ca",
+    "9c97f5bdc5b30ae3779a3da7e03d2e35a4263fcb7b95a30bd591f619e56ff2ca"
+  ],
+  "parameters": 34679857,
+  "peak_cuda_memory_mib_by_rank": [
+    698.44580078125,
+    698.44580078125
+  ],
+  "schema": "gaugeflow.stage_c_distributed_execution_profile.v1",
+  "scope": "bounded synthetic-gradient execution profile; no training evidence",
+  "seconds_per_step_by_rank": [
+    0.05731612986710388,
+    0.05734446375572588
+  ],
+  "steps": 8,
+  "strategy": "replicated_bucket",
+  "warmup_steps": 2,
+  "world_size": 2
+}

@@ -157,12 +157,7 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
     def __len__(self) -> int:
         return self.indices.numel()
 
-    def __getitem__(self, index: int) -> MatPESPhysicalRecord:
-        if not -len(self) <= index < len(self):
-            raise IndexError(index)
-        if index < 0:
-            index += len(self)
-        row = int(self.indices[index])
+    def _read_global_row(self, row: int) -> MatPESPhysicalRecord:
         source = int(self.source_index[row])
         if source not in self._handles:
             self._handles[source] = self.source_paths[source].open("rb")
@@ -185,6 +180,38 @@ class IndexedMatPESDataset(Dataset[MatPESPhysicalRecord]):
                 ),
             )
         return record
+
+    def select(self, indices: torch.Tensor) -> list[MatPESPhysicalRecord]:
+        """Read a batch source-locally while returning the requested order."""
+
+        if (
+            indices.ndim != 1
+            or indices.dtype != torch.long
+            or indices.numel() < 1
+            or int(indices.min()) < 0
+            or int(indices.max()) >= len(self)
+        ):
+            raise ValueError("MatPES batch indices are invalid")
+        global_rows = self.indices[indices.cpu()]
+        order = sorted(
+            range(indices.numel()),
+            key=lambda position: (
+                int(self.source_index[int(global_rows[position])]),
+                int(self.byte_offset[int(global_rows[position])]),
+            ),
+        )
+        records: list[MatPESPhysicalRecord | None] = [None] * indices.numel()
+        for position in order:
+            records[position] = self._read_global_row(int(global_rows[position]))
+        return [record for record in records if record is not None]
+
+    def __getitem__(self, index: int) -> MatPESPhysicalRecord:
+        if not -len(self) <= index < len(self):
+            raise IndexError(index)
+        if index < 0:
+            index += len(self)
+        row = int(self.indices[index])
+        return self._read_global_row(row)
 
 
 def build_matpes_index(

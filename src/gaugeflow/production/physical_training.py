@@ -246,6 +246,64 @@ class PhysicalTransferTrainer:
         self.model.zero_grad(set_to_none=True)
         return step_and_norm[1].to(dtype=torch.float32)
 
+    def finish_replicated_distributed_optimization_step(
+        self,
+        *,
+        bucket_bytes: int = 25 * 1024 * 1024,
+    ) -> torch.Tensor:
+        """Reduce bucketed gradients and update identical optimizer replicas.
+
+        Every rank starts from the same model, optimizer and EMA state.  A
+        bounded flat buffer replaces thousands of scalar collectives, and
+        every rank applies the same reduced gradient locally.  This removes
+        the former full-parameter broadcast without changing the global loss.
+        """
+
+        if not dist.is_available() or not dist.is_initialized():
+            raise RuntimeError("replicated physical transfer requires a process group")
+        if dist.get_world_size() < 2 or self.optimizer is None or self.ema is None:
+            raise RuntimeError("every distributed rank must own optimizer and EMA state")
+        if bucket_bytes < 1024:
+            raise ValueError("distributed gradient bucket is too small")
+        parameters = tuple(self.model.parameters())
+        buckets: list[list[torch.nn.Parameter]] = []
+        current: list[torch.nn.Parameter] = []
+        current_bytes = 0
+        current_key: tuple[torch.device, torch.dtype] | None = None
+        for parameter in parameters:
+            if parameter.grad is None:
+                parameter.grad = torch.zeros_like(parameter)
+            key = (parameter.grad.device, parameter.grad.dtype)
+            size = parameter.grad.numel() * parameter.grad.element_size()
+            if current and (key != current_key or current_bytes + size > bucket_bytes):
+                buckets.append(current)
+                current = []
+                current_bytes = 0
+            current.append(parameter)
+            current_bytes += size
+            current_key = key
+        if current:
+            buckets.append(current)
+        for bucket in buckets:
+            flat = torch.cat([parameter.grad.reshape(-1) for parameter in bucket])
+            dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+            offset = 0
+            for parameter in bucket:
+                count = parameter.numel()
+                parameter.grad = flat[offset : offset + count].view_as(parameter)
+                offset += count
+        gradient_norm = torch.nn.utils.clip_grad_norm_(
+            parameters,
+            self.config.gradient_clip_norm,
+        )
+        if not torch.isfinite(gradient_norm):
+            raise FloatingPointError("replicated physical transfer gradient is non-finite")
+        self.optimizer.step()
+        self.ema.update(self.model)
+        self._step += 1
+        self.model.zero_grad(set_to_none=True)
+        return gradient_norm.detach()
+
     def _broadcast_model(self, owner_rank: int) -> None:
         for parameter in self.model.parameters():
             dist.broadcast(parameter.data, src=owner_rank)

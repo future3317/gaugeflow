@@ -45,23 +45,50 @@ class MatPESPhysicalBatch:
     functional_index: torch.Tensor
     targets: PhysicalTargets
 
-    def to(self, device: torch.device | str) -> MatPESPhysicalBatch:
+    def pin_memory(self) -> MatPESPhysicalBatch:
         target = self.targets
         return MatPESPhysicalBatch(
-            element_tokens=self.element_tokens.to(device),
-            fractional_coordinates=self.fractional_coordinates.to(device),
-            lattice=self.lattice.to(device),
-            batch=self.batch.to(device),
-            functional_index=self.functional_index.to(device),
+            element_tokens=self.element_tokens.pin_memory(),
+            fractional_coordinates=self.fractional_coordinates.pin_memory(),
+            lattice=self.lattice.pin_memory(),
+            batch=self.batch.pin_memory(),
+            functional_index=self.functional_index.pin_memory(),
             targets=PhysicalTargets(
-                energy_per_atom=target.energy_per_atom.to(device),
-                forces=target.forces.to(device),
-                stress_kelvin=target.stress_kelvin.to(device),
-                teacher_features=target.teacher_features.to(device),
-                energy_mask=target.energy_mask.to(device),
-                force_mask=target.force_mask.to(device),
-                stress_mask=target.stress_mask.to(device),
-                teacher_mask=target.teacher_mask.to(device),
+                energy_per_atom=target.energy_per_atom.pin_memory(),
+                forces=target.forces.pin_memory(),
+                stress_kelvin=target.stress_kelvin.pin_memory(),
+                teacher_features=target.teacher_features.pin_memory(),
+                energy_mask=target.energy_mask.pin_memory(),
+                force_mask=target.force_mask.pin_memory(),
+                stress_mask=target.stress_mask.pin_memory(),
+                teacher_mask=target.teacher_mask.pin_memory(),
+            ),
+        )
+
+    def to(
+        self,
+        device: torch.device | str,
+        *,
+        non_blocking: bool = False,
+    ) -> MatPESPhysicalBatch:
+        target = self.targets
+        return MatPESPhysicalBatch(
+            element_tokens=self.element_tokens.to(device, non_blocking=non_blocking),
+            fractional_coordinates=self.fractional_coordinates.to(
+                device, non_blocking=non_blocking
+            ),
+            lattice=self.lattice.to(device, non_blocking=non_blocking),
+            batch=self.batch.to(device, non_blocking=non_blocking),
+            functional_index=self.functional_index.to(device, non_blocking=non_blocking),
+            targets=PhysicalTargets(
+                energy_per_atom=target.energy_per_atom.to(device, non_blocking=non_blocking),
+                forces=target.forces.to(device, non_blocking=non_blocking),
+                stress_kelvin=target.stress_kelvin.to(device, non_blocking=non_blocking),
+                teacher_features=target.teacher_features.to(device, non_blocking=non_blocking),
+                energy_mask=target.energy_mask.to(device, non_blocking=non_blocking),
+                force_mask=target.force_mask.to(device, non_blocking=non_blocking),
+                stress_mask=target.stress_mask.to(device, non_blocking=non_blocking),
+                teacher_mask=target.teacher_mask.to(device, non_blocking=non_blocking),
             ),
         )
 

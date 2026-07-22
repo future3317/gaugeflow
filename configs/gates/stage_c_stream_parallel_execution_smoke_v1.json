@@ -1,0 +1,46 @@
+{
+  "protocol": "stage_c_lemat_continued_pretraining_v1",
+  "status_before_run": "frozen_method_not_run",
+  "scope": "Bounded four-step exact-resume and numerical execution smoke for the three-role Stage-C schedule; not learning or Stage-C qualification evidence.",
+  "prerequisites": {
+    "stage_b_checkpoint_sha256": "4eb176c0649ab347182ce1815a894f288cb83fa8f13a5be814549c98f49e4435",
+    "lemat_index_manifest_sha256": "1d8b443ec019fb3d88d25fdbdad78f1d869adc22fdd841c8b985d10315035f83",
+    "lemat_index_sha256": "78ae796ec6bbb6b880ad16a004c81268a6e13aa62e2506ec76a9fa636f5be2e5",
+    "matpes_index_manifest_sha256": "fa2caa5af104a966dc5954b480d5d8cf6cca7a19e0221d46176633563b2f44a2",
+    "matpes_index_sha256": "181518816f9ad56ad916411fa9a8cb0b89ef0a70f363bc61cc5bc836a87ff0dd",
+    "matpes_normalizer_sha256": "fe3158deaaca084b31a001ab9d2c22a7456bcfa7a59cc03d3bef95e565a9ae18",
+    "teacher_cache_manifest_sha256": "16eac65ee44cf42c1c86ef9c1dfe4a7d1005af4234fd094d1a8ca621990f8d91",
+    "alex_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "runner_sha256": "e51a298f4b04d918cc479e039141b1e3666ff177d031dbd2c31220badcfb2be1",
+    "continued_pretraining_sha256": "6005ac32b0eeaf237ac2456d02817d35f47084b91d0e5d630deb949568c6e1e9",
+    "continued_checkpointing_sha256": "53563fd62e9e7db6db43d84540c820cfc1ff9b9605d6d968cbe3ecb34bf91ac5"
+  },
+  "data": {
+    "lemat_index": "v3 qualified geometry-only replay interface",
+    "matpes_index": "v2 qualified physical replay interface",
+    "alex_cache": "qualified A1 train cache"
+  },
+  "training": {
+    "seed": 5705,
+    "devices": [1, 2, 5],
+    "stream_parallel_roles": [
+      "lemat_structure",
+      "matpes_physical",
+      "alex_structure"
+    ],
+    "stage_b_completed_step": 10523,
+    "optimizer_steps": 4,
+    "checkpoint_relative_steps": [0, 2, 4],
+    "global_lemat_batch": 64,
+    "global_matpes_replay_batch": 64,
+    "global_alex_replay_batch": 64,
+    "lemat_functional_weights": {
+      "pbe": 1.0,
+      "pbesol": 1.0,
+      "scan": 1.0
+    },
+    "lemat_structure_weight": 0.4,
+    "matpes_physical_weight": 0.3,
+    "alex_structure_weight": 0.3
+  }
+}

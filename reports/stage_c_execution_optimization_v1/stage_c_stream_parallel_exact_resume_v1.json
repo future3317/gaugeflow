@@ -1,0 +1,10 @@
+{
+  "exact": true,
+  "left": "/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_stream_parallel_smoke_v2_reference/checkpoint_step_00010527.pt",
+  "mismatch_count": 0,
+  "mismatches": [],
+  "right": "/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_stream_parallel_smoke_v2_resume/checkpoint_step_00010527.pt",
+  "scalar_leaves": 696,
+  "schema": "gaugeflow.physical_checkpoint_exact_resume_comparison.v1",
+  "tensor_leaves": 2245
+}
