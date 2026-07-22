@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 
+import torch
 from torch.utils.data import DataLoader
 
 from gaugeflow.production.matpes_index import (
     IndexedMatPESDataset,
     MatPESBatchCollator,
     build_matpes_index,
+    lattice_quality_failures,
 )
 
 
@@ -91,3 +93,48 @@ def test_matpes_index_accepts_multiple_artifacts_per_functional(tmp_path: Path) 
     assert manifest["unique_material_ids"] == 200
     assert sum(manifest["split_counts"].values()) == 400
     assert {source["functional"] for source in manifest["sources"]} == {"PBE", "r2SCAN"}
+
+
+def test_matpes_index_excludes_degenerate_lattices_at_the_data_boundary(
+    tmp_path: Path,
+) -> None:
+    rows = [_row(index, "PBE") for index in range(4)]
+    rows[1]["structure"]["lattice"]["matrix"] = [
+        [3.0, 0.0, 0.0],
+        [0.0, 3.0, 0.0],
+        [0.0, 0.0, 0.4],
+    ]
+    rows[2]["structure"]["lattice"]["matrix"] = [
+        [3.0, 0.0, 0.0],
+        [0.0, 301.0, 0.0],
+        [0.0, 0.0, 3.0],
+    ]
+    rows[3]["structure"]["lattice"]["matrix"] = [
+        [3.0, 0.0, 0.0],
+        [0.0, 100.0, 0.0],
+        [0.0, 0.0, 0.1],
+    ]
+    source = tmp_path / "degenerate.jsonl"
+    source.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8"
+    )
+    manifest = build_matpes_index(
+        {"PBE": [source]},
+        tmp_path / "degenerate-index",
+        max_rows_per_source=4,
+    )
+    assert sum(manifest["split_counts"].values()) == 1
+    assert manifest["excluded_degenerate_lattice_rows"] == 3
+    assert manifest["excluded_degenerate_lattice_unique_ids"] == 3
+    exclusions = manifest["degenerate_lattice_exclusions"]
+    assert exclusions["shared-1"] == ["minimum_lattice_width"]
+    assert exclusions["shared-2"] == ["lattice_metric_condition"]
+    assert exclusions["shared-3"] == [
+        "lattice_metric_condition",
+        "minimum_lattice_width",
+    ]
+    assert lattice_quality_failures(
+        torch.diag(torch.tensor([3.0, 3.0, 3.0])),
+        minimum_width_angstrom=0.5,
+        maximum_metric_condition=1.0e4,
+    ) == ()

@@ -1,0 +1,42 @@
+{
+  "audit": "stage_b_matpes_lattice_domain_audit_v1",
+  "decision": "rebuild_index_normalizer_and_teacher_cache_before_stage_b_successor",
+  "formal_v1_launch": {
+    "checkpoint_updates_completed": 1,
+    "failure": "explicit geometry lattice disagrees with lattice state",
+    "learned_checkpoint_retained": false,
+    "protocol_file_sha256": "74a453bdae70b7803a8f5861d78db18b60260538ed2f877a4d0d10f89625058f",
+    "trigger_dataset_index": 278527,
+    "trigger_lattice_metric_condition": 107983.203125,
+    "trigger_minimum_lattice_width_angstrom": 0.19678471982479095
+  },
+  "full_index_rows": 749866,
+  "quality_contract": {
+    "maximum_lattice_metric_condition": 10000.0,
+    "minimum_lattice_width_angstrom": 0.5
+  },
+  "excluded": {
+    "both": 283,
+    "condition_only": 274,
+    "minimum_width_only": 823,
+    "total_union": 1380,
+    "by_functional": {
+      "PBE": 898,
+      "r2SCAN": 482
+    },
+    "by_split": {
+      "calibration": 64,
+      "test": 74,
+      "train": 1242
+    }
+  },
+  "fp32_round_trip_diagnostic": {
+    "failures_all": 199,
+    "failures_inside_retained_physical_domain": 127,
+    "maximum_relative_metric_error_all": 0.00018309266306459904,
+    "maximum_relative_metric_error_inside_retained_physical_domain": 0.00007728397031314671,
+    "threshold": 0.00002
+  },
+  "immutable_raw_sources_modified": false,
+  "finite": true
+}

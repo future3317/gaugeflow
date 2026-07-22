@@ -580,24 +580,18 @@ class HybridCrystalDenoiser(nn.Module):
             projected_shape = project_lattice_state(log_shape, shape_projector)
             if not torch.allclose(log_shape, projected_shape, atol=2e-6, rtol=2e-6):
                 raise ValueError("denoiser lattice shape is outside the blueprint subspace")
-            chart_lattice = LatticeVolumeShape(log_volume, log_shape).lattice(fractional_to_cartesian)
             if geometry_lattice is None:
-                lattice = chart_lattice
+                lattice = LatticeVolumeShape(log_volume, log_shape).lattice(
+                    fractional_to_cartesian
+                )
             else:
                 if geometry_lattice.shape != (graphs, 3, 3):
                     raise ValueError("explicit geometry lattice must have shape [graphs,3,3]")
+                # The only explicit-geometry caller is forward_physical_features,
+                # which derives log_volume/log_shape from this same clean lattice.
+                # Re-decoding an ill-conditioned FP32 SPD chart is neither an
+                # independent consistency check nor a stable way to build edges.
                 lattice = geometry_lattice.float()
-                metric_error = torch.linalg.matrix_norm(
-                    lattice @ lattice.transpose(-1, -2)
-                    - chart_lattice @ chart_lattice.transpose(-1, -2),
-                    dim=(-2, -1),
-                )
-                metric_scale = torch.linalg.matrix_norm(
-                    chart_lattice @ chart_lattice.transpose(-1, -2),
-                    dim=(-2, -1),
-                )
-                if bool((metric_error > 2.0e-5 * metric_scale.clamp_min(1.0)).any()):
-                    raise ValueError("explicit geometry lattice disagrees with lattice state")
             edges = periodic_radius_multigraph(frac_coords, lattice, batch, cutoff=self.radial.cutoff)
             radial = self.radial(edges.distance)
             edge_envelope = self.radial.envelope(edges.distance)

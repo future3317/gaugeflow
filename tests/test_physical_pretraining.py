@@ -161,6 +161,32 @@ def test_clean_physical_backbone_keeps_geometry_fp32_under_cuda_bf16() -> None:
     assert torch.isfinite(features.node_vectors).all()
 
 
+def test_clean_physical_backbone_uses_source_lattice_without_spd_round_trip() -> None:
+    torch.manual_seed(18)
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        radial_cutoff=2.0,
+        edge_dim=8,
+        angular_channels=2,
+        edge_refresh_rank=4,
+    ).eval()
+    elements = torch.tensor([13])
+    coordinates = torch.zeros(1, 3)
+    lattice = torch.diag(torch.tensor([3.0, 40.0, 0.5])).unsqueeze(0)
+    with torch.no_grad():
+        features = model.forward_physical_features(
+            elements,
+            coordinates,
+            lattice,
+            torch.zeros(1, dtype=torch.long),
+        )
+    assert torch.isfinite(features.node_scalar).all()
+    assert torch.isfinite(features.node_vectors).all()
+
+
 def test_kelvin_round_trip_is_orthonormal() -> None:
     raw = torch.tensor(
         [[[2.0, -0.3, 0.7], [-0.3, 1.0, 0.2], [0.7, 0.2, -1.0]]]

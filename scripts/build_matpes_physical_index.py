@@ -19,6 +19,8 @@ def main() -> None:
     parser.add_argument("--calibration-fraction", type=float, default=0.05)
     parser.add_argument("--test-fraction", type=float, default=0.05)
     parser.add_argument("--max-rows-per-source", type=int)
+    parser.add_argument("--minimum-lattice-width-angstrom", type=float, default=0.5)
+    parser.add_argument("--maximum-lattice-metric-condition", type=float, default=1.0e4)
     arguments = parser.parse_args()
     manifest = build_matpes_index(
         {"PBE": arguments.pbe, "r2SCAN": arguments.r2scan},
@@ -29,6 +31,8 @@ def main() -> None:
         calibration_fraction=arguments.calibration_fraction,
         test_fraction=arguments.test_fraction,
         max_rows_per_source=arguments.max_rows_per_source,
+        minimum_lattice_width_angstrom=arguments.minimum_lattice_width_angstrom,
+        maximum_lattice_metric_condition=arguments.maximum_lattice_metric_condition,
     )
     print(json.dumps(manifest, indent=2, sort_keys=True))
 

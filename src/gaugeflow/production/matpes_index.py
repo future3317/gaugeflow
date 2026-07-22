@@ -22,8 +22,32 @@ from .matpes_data import (
 )
 from .teacher_feature_cache import MatPESTeacherFeatureCache
 
-MATPES_INDEX_SCHEMA = 1
+MATPES_INDEX_SCHEMA = 2
 SPLIT_TO_INDEX = {"train": 0, "calibration": 1, "test": 2}
+DEFAULT_MINIMUM_LATTICE_WIDTH_ANGSTROM = 0.5
+DEFAULT_MAXIMUM_LATTICE_METRIC_CONDITION = 1.0e4
+
+
+def lattice_quality_failures(
+    lattice: torch.Tensor,
+    *,
+    minimum_width_angstrom: float,
+    maximum_metric_condition: float,
+) -> tuple[str, ...]:
+    """Return target-independent bulk-domain failures from the lattice metric."""
+
+    if minimum_width_angstrom <= 0.0 or maximum_metric_condition <= 1.0:
+        raise ValueError("MatPES lattice quality bounds are invalid")
+    metric = lattice.double() @ lattice.double().transpose(-1, -2)
+    eigenvalues = torch.linalg.eigvalsh(metric)
+    minimum_width = eigenvalues[0].clamp_min(0.0).sqrt()
+    condition = eigenvalues[-1] / eigenvalues[0].clamp_min(torch.finfo(torch.float64).tiny)
+    failures: list[str] = []
+    if float(minimum_width) < minimum_width_angstrom:
+        failures.append("minimum_lattice_width")
+    if float(condition) > maximum_metric_condition:
+        failures.append("lattice_metric_condition")
+    return tuple(failures)
 
 
 @dataclass(frozen=True)
@@ -173,6 +197,8 @@ def build_matpes_index(
     calibration_fraction: float = 0.05,
     test_fraction: float = 0.05,
     max_rows_per_source: int | None = None,
+    minimum_lattice_width_angstrom: float = DEFAULT_MINIMUM_LATTICE_WIDTH_ANGSTROM,
+    maximum_lattice_metric_condition: float = DEFAULT_MAXIMUM_LATTICE_METRIC_CONDITION,
 ) -> dict[str, Any]:
     """Build an exact byte-offset index; bounded builds are software smokes only."""
 
@@ -187,6 +213,8 @@ def build_matpes_index(
         or any(not paths for paths in sources.values())
         or maximum_atoms < 1
         or maximum_atoms > 255
+        or minimum_lattice_width_angstrom <= 0.0
+        or maximum_lattice_metric_condition <= 1.0
     ):
         raise ValueError("MatPES sources and maximum atom count are invalid")
     if output.exists():
@@ -200,6 +228,8 @@ def build_matpes_index(
     split_by_material: dict[str, int] = {}
     source_manifest: list[dict[str, Any]] = []
     excluded_large = 0
+    degenerate_lattice_exclusions: dict[str, set[str]] = {}
+    excluded_degenerate_lattice_rows = 0
     invalid: dict[str, str] = {}
     for source_number, (functional, path) in enumerate(flattened_sources):
         rows_seen = 0
@@ -226,6 +256,17 @@ def build_matpes_index(
                     if not (record.energy_present and record.forces_present and record.stress_present):
                         raise ValueError("selected physical target is incomplete")
                     material_id = record.material_id
+                    lattice_failures = lattice_quality_failures(
+                        record.lattice,
+                        minimum_width_angstrom=minimum_lattice_width_angstrom,
+                        maximum_metric_condition=maximum_lattice_metric_condition,
+                    )
+                    if lattice_failures:
+                        excluded_degenerate_lattice_rows += 1
+                        degenerate_lattice_exclusions.setdefault(material_id, set()).update(
+                            lattice_failures
+                        )
+                        continue
                     split = SPLIT_TO_INDEX[
                         matpes_iid_split(
                             material_id,
@@ -288,6 +329,13 @@ def build_matpes_index(
         "split_counts": split_counts,
         "unique_material_ids": len(split_by_material),
         "excluded_large_cells": excluded_large,
+        "minimum_lattice_width_angstrom": minimum_lattice_width_angstrom,
+        "maximum_lattice_metric_condition": maximum_lattice_metric_condition,
+        "excluded_degenerate_lattice_rows": excluded_degenerate_lattice_rows,
+        "excluded_degenerate_lattice_unique_ids": len(degenerate_lattice_exclusions),
+        "degenerate_lattice_exclusions": {
+            key: sorted(value) for key, value in sorted(degenerate_lattice_exclusions.items())
+        },
         "invalid_rows": invalid,
         "bounded_smoke": max_rows_per_source is not None,
     }

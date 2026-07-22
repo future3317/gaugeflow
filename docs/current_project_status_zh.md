@@ -416,6 +416,15 @@ MatPES/Alex cursor、CPU/CUDA RNG 和显式 noise generator。PBE-only feature l
 teacher cache、CUDA runner resume smoke 与正式单遍训练仍未运行，因此尚无 Stage-B 物理
 效果结论；任何 tensor、RL、relaxation、DFT 或 DFPT 仍不得提前启动。
 
+第一次正式 Stage-B-v1 启动在完成 1 个 update 后、写入任何 learned checkpoint 前
+fail closed。完整 MatPES index 审计发现 1,380/749,866 条记录超出 ordered-bulk
+数值域：最小晶胞宽度小于 0.5 Angstrom、metric condition 大于 1e4，或两者同时发生；
+触发行的 condition 为约 1.08e5，薄方向仅 0.197 Angstrom。原始 JSONL 不改写，后继
+index 在数据边界显式排除这些行。同时修正 clean physical encoder 中没有信息增益的
+FP32 SPD 往返：周期构图直接使用 source lattice，derived chart 只作为 lattice context；
+生成 lattice 路径不变。Stage-B-v1 不得 resume，必须重建 index、train-only normalizer
+和 aligned TensorNet cache 后再冻结 successor protocol。
+
 Stage-C 的 LeMat 数据流已做 bounded 软件准备：训练 split 可以直接提供 functional group，
 独立的 source-balanced rank stream 在不 padding 的情况下让各 functional 分别按自身
 permutation 无放回遍历并独立 wrap。16,196-row 小测的 PBE/PBEsol/SCAN 采样比例为
