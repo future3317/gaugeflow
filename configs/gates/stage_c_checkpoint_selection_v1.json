@@ -1,0 +1,52 @@
+{
+  "protocol": "stage_c_checkpoint_selection_v1",
+  "declaration_time": "after the 40k diagnostic and before the 50k checkpoint",
+  "scope": "Operational Stage-C checkpoint selection; this is not a new learning Gate or an inferential claim.",
+  "candidates": {
+    "stage_c_relative_steps": [20000, 30000, 40000, 50000],
+    "ema_only": true,
+    "same_training_trajectory": true
+  },
+  "lemat_calibration_panel": {
+    "split": "calibration",
+    "graphs_per_functional": 500,
+    "functionals": ["pbe", "pbesol", "scan"],
+    "selection_seed": 5721,
+    "noise_seed": 5722,
+    "batch_size": 64,
+    "precision": "checkpoint_declared_training_precision",
+    "selection_inputs": ["split-local row position", "functional group"],
+    "target_dependent_selection": false,
+    "support_note": "500 is the complete PBEsol calibration support; PBE and SCAN are deterministically matched to it.",
+    "paired_rows_and_noise_across_checkpoints": true
+  },
+  "other_panels": {
+    "matpes": "complete held-out MatPES calibration split",
+    "generation": "unchanged A1-v1.1 512-reference/512-free-sample panel"
+  },
+  "eligibility": {
+    "sampling_failures": 0,
+    "terminal_masks": 0,
+    "exact_composition_fraction": 1.0,
+    "finite_positive_lattice_fraction": 1.0,
+    "minimum_distance_fraction_at_0_5_angstrom": 1.0,
+    "all_metrics_finite": true
+  },
+  "selection": {
+    "objectives_minimize": [
+      "physical_calibration.aggregate.equal_head_composite_loss",
+      "lemat_structure_calibration.macro_mean_product_space_loss",
+      "generation_retention.normalized_nearest_neighbor_wasserstein",
+      "generation_retention.normalized_volume_wasserstein"
+    ],
+    "normalization": "candidate-panel min-max regret per objective; a constant objective contributes zero",
+    "rule": "discard ineligible and Pareto-dominated candidates, then minimize maximum normalized regret; break ties by mean normalized regret and then earlier Stage-C step",
+    "teacher_feature_cosine": "reported physical-transfer diagnostic, not a fifth correlated selection objective"
+  },
+  "boundaries": [
+    "Selection starts at the v2 migration boundary; the v1 10k checkpoint remains an archived two-panel diagnostic, not a v2 operational candidate.",
+    "The selected checkpoint remains tensor-free GaugeFlow-base.",
+    "Selection does not authorize tensor conditioning, RL, relaxation, DFT, or DFPT.",
+    "The 10k-40k physical/A1 diagnostics remain valid two-panel evidence but are not relabelled as complete three-panel evaluations."
+  ]
+}

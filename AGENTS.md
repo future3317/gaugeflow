@@ -499,6 +499,12 @@ The same fixed diagnostic at 30k/40k gives physical composite
 failures remain zero. This is a physical-transfer versus local-geometry
 retention trade-off, not sampler collapse; the final checkpoint is selected
 from the declared Pareto panel rather than by optimizer step alone.
+The archived 10k--40k evaluator covered complete MatPES calibration and A1
+retention but omitted the planned LeMat held-out structure panel. Its existing
+numbers remain valid two-panel diagnostics. The separately declared final
+selection adds a paired functional-balanced LeMat-v4 panel (500 graphs per
+functional, exhausting the rare PBEsol calibration support) and applies one
+transparent Pareto-minimax operational rule across v2 20k--50k checkpoints.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

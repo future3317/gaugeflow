@@ -91,11 +91,25 @@ diagnostic is the final Stage-C 50k checkpoint (global step 60,523).
 
 ## Evaluation contract
 
-Declared checkpoints are evaluated on all three panels:
+The archived 10k--40k mid-training evaluator covered the complete MatPES
+calibration split and unchanged A1-v1.1 512-reference/512-free-sample retention
+panel. Those two panels remain valid, but the script had not implemented the
+LeMat held-out structure panel declared by the Stage-C plan. They are therefore
+not relabelled as complete three-panel evaluations.
 
-1. LeMat held-out geometry denoising;
-2. MatPES held-out normalized energy, force, Kelvin stress, force cosine, and
-   PBE node-feature cosine by functional;
+The final selection protocol `stage_c_checkpoint_selection_v1` closes that
+interface before the 50k result. Every v2 candidate is evaluated on:
+
+1. a fixed functional-balanced LeMat-v4 calibration panel: all 500 PBEsol
+   calibration rows plus 500 target-independent matched PBE and SCAN rows,
+   with paired rows and noise across checkpoints;
+2. complete MatPES calibration: normalized energy, force, Kelvin stress, force
+   cosine, and PBE node-feature cosine by functional;
 3. the unchanged A1-v1.1 512-reference/512-free-sample retention panel,
    including validity, exact composition, positive lattice, and periodic
    distance checks.
+
+Candidate selection first enforces hard closure, removes Pareto-dominated
+checkpoints, and then minimizes maximum min--max-normalized regret over physical
+composite, LeMat structure loss, NN-W1 and volume-W1. This is an operational
+checkpoint choice declared after the 40k diagnostic, not a new learning Gate.
