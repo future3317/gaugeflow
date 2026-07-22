@@ -407,8 +407,7 @@ substrate and the bounded tensor-free free joint A1 generator are qualified.
 No result yet authorizes OOD parent generation, H1b-H6, tensor condition,
 oracle, relaxation, DFT or DFPT.
 
-Post-A1 Stage-B software preparation may proceed without training physical
-weights. The six immutable MatPES PBE/r2SCAN artifacts contain `433189/386544`
+Stage-B-v1.1 physical-representation pretraining is complete. The six immutable MatPES PBE/r2SCAN artifacts contain `433189/386544`
 rows and `387129/362737` rows at `N<=20`. The qualified byte-offset index has
 `749866` functional rows, `387697` unique IDs, zero invalid rows and an
 ID-grouped `674709/37054/38103` train/calibration/test split. Cohesive energy,
@@ -420,7 +419,10 @@ covariance. Physical and Alex replay losses have one optimizer owner; the
 clean physical path shares the production message encoder but skips all
 generation terminal heads.
 
-The Stage-B method is now frozen but formal physical training has not run.
+The Stage-B-v1.1 run reduces composite physical calibration loss from
+`19.6127` to `0.5929` and reaches PBE teacher-feature cosine `0.8996`.
+On the unchanged A1 512-sample retention panel it preserves exact composition
+and zero sampling failures, with NN-W1 `0.5444` and volume-W1 `0.0722`.
 The qualified TensorNet feature contract is per atom (`N x 128`), not per
 graph; production therefore uses a type-matched node projection and a
 graph-equal mean of per-node cosine distances. A real 256-row cache smoke
@@ -439,9 +441,10 @@ label-bearing graph counts, so the PBE-only feature loss remains unbiased when
 a rank contains r2SCAN-only graphs. The bound evaluator reports normalized
 energy/force/Kelvin-stress and force cosine separately for PBE/r2SCAN, PBE
 node-feature cosine, and the unchanged A1-v1.1 free-generation retention
-panel. Full PBE feature-cache construction, the CUDA runner resume smoke and
-the formal one-pass Stage-B run are still pending; no physical effect has yet
-been qualified and LeMat full training remains later.
+panel. The physical cache, CUDA runner resume smoke, and formal Stage-B-v1.1
+run are complete. These results qualify physical-representation transfer and
+A1 retention only; tensor conditioning, relaxation, DFT, and DFPT remain
+blocked.
 
 Stage-C preparation is isolated from the hash-bound Stage-B runtime.  The
 LeMat dataset now exposes split-local functional groups to a deterministic
@@ -478,8 +481,11 @@ product-space denoising loss, while MatPES contributes the globally masked
 physical loss.  Each local structure mean is weighted by its exact rank graph
 fraction before gradient summation; physical heads retain their global
 label-bearing denominators.  LeMat, MatPES and Alex cursors restore together
-or fail closed.  The executable runner and CUDA resume smoke still wait for an
-actual qualified Stage-B checkpoint.
+or fail closed. The executable runner and CUDA resume smoke are complete.
+The formal `stage_c_lemat_continued_pretraining_v1` run was launched on
+2026-07-22 from the Stage-B-v1.1 checkpoint for 50,000 optimizer steps. It has
+no reported learning result until its declared checkpoints and held-out
+evaluations are complete.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
