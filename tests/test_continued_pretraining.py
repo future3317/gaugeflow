@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import torch
 
+from gaugeflow.production.balanced_rank_sharded_data import BalancedRankShardedStream
 from gaugeflow.production.continued_pretraining import (
+    ContinuedPretrainingStreams,
     ContinuedPretrainingWeights,
     accumulate_continued_pretraining_step,
     collate_structure_records,
@@ -21,6 +23,7 @@ from gaugeflow.production.physical_training import (
     PhysicalTransferTrainer,
     PhysicalTransferTrainingConfig,
 )
+from gaugeflow.production.rank_sharded_data import ExactRankShardedStream
 
 
 def _record(material_id: str, functional: str, nodes: int) -> MatPESPhysicalRecord:
@@ -151,3 +154,43 @@ def test_three_stream_objective_accumulates_all_losses_before_one_update() -> No
     assert torch.isfinite(losses.alex_structure)
     assert gradients and all(bool(torch.isfinite(gradient).all()) for gradient in gradients)
     assert float(trainer.finish_optimization_step()) > 0.0
+
+
+def _streams() -> ContinuedPretrainingStreams:
+    common = {"rank": 0, "world_size": 2, "seed": 31}
+    return ContinuedPretrainingStreams(
+        BalancedRankShardedStream(
+            torch.tensor([0] * 7 + [1] * 5 + [2] * 3, dtype=torch.uint8),
+            (1.0, 1.0, 1.0),
+            6,
+            **common,
+        ),
+        ExactRankShardedStream(
+            dataset_size=11,
+            global_batch_size=6,
+            wrap=True,
+            **common,
+        ),
+        ExactRankShardedStream(
+            dataset_size=13,
+            global_batch_size=6,
+            wrap=True,
+            **common,
+        ),
+    )
+
+
+def test_three_stream_checkpoint_resumes_every_data_cursor_exactly() -> None:
+    streams = _streams()
+    for _ in range(5):
+        streams.next_indices()
+    state = streams.state_dict()
+    reference = [streams.next_indices() for _ in range(4)]
+    resumed = _streams()
+    resumed.load_state_dict(state)
+    repeated = [resumed.next_indices() for _ in range(4)]
+    for expected, observed in zip(reference, repeated, strict=True):
+        assert torch.equal(expected.lemat, observed.lemat)
+        assert torch.equal(expected.matpes, observed.matpes)
+        assert torch.equal(expected.alex, observed.alex)
+    assert resumed.state_dict() == streams.state_dict()

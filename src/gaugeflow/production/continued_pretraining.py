@@ -7,6 +7,7 @@ from typing import Sequence
 
 import torch
 
+from .balanced_rank_sharded_data import BalancedRankShardedStream
 from .blueprint import ParentBlueprintBatch
 from .hybrid_diffusion import TensorFreeHybridDiffusion
 from .matpes_data import MatPESPhysicalBatch, MatPESPhysicalRecord
@@ -16,6 +17,7 @@ from .physical_pretraining import (
     PhysicalLossOutput,
 )
 from .physical_training import PhysicalTransferTrainer
+from .rank_sharded_data import ExactRankShardedStream
 
 
 @dataclass(frozen=True)
@@ -55,6 +57,62 @@ class ContinuedPretrainingLosses:
     lemat_structure: torch.Tensor
     matpes_physical: PhysicalLossOutput
     alex_structure: torch.Tensor
+
+
+@dataclass(frozen=True)
+class ContinuedPretrainingIndices:
+    lemat: torch.Tensor
+    matpes: torch.Tensor
+    alex: torch.Tensor
+
+
+class ContinuedPretrainingStreams:
+    """One atomic checkpoint boundary for the three independent data laws."""
+
+    def __init__(
+        self,
+        lemat: BalancedRankShardedStream,
+        matpes: ExactRankShardedStream,
+        alex: ExactRankShardedStream,
+    ) -> None:
+        if not matpes.wrap or not alex.wrap:
+            raise ValueError("continued-pretraining replay streams must wrap")
+        if not (lemat.rank == matpes.rank == alex.rank) or not (
+            lemat.world_size == matpes.world_size == alex.world_size
+        ):
+            raise ValueError("continued-pretraining stream rank topology disagrees")
+        self.lemat = lemat
+        self.matpes = matpes
+        self.alex = alex
+
+    def next_indices(self) -> ContinuedPretrainingIndices:
+        return ContinuedPretrainingIndices(
+            lemat=self.lemat.next_indices(),
+            matpes=self.matpes.next_indices(),
+            alex=self.alex.next_indices(),
+        )
+
+    def state_dict(self) -> dict[str, object]:
+        return {
+            "schema": 1,
+            "lemat": self.lemat.state_dict(),
+            "matpes": self.matpes.state_dict(),
+            "alex": self.alex.state_dict(),
+        }
+
+    def load_state_dict(self, state: dict[str, object]) -> None:
+        if state.get("schema") != 1 or set(state) != {"schema", "lemat", "matpes", "alex"}:
+            raise ValueError("continued-pretraining stream checkpoint is incomplete")
+        values = (state["lemat"], state["matpes"], state["alex"])
+        if not all(isinstance(value, dict) for value in values):
+            raise ValueError("continued-pretraining stream checkpoint payload is invalid")
+        lemat_state, matpes_state, alex_state = values
+        assert isinstance(lemat_state, dict)
+        assert isinstance(matpes_state, dict)
+        assert isinstance(alex_state, dict)
+        self.lemat.load_state_dict(lemat_state)
+        self.matpes.load_state_dict(matpes_state)
+        self.alex.load_state_dict(alex_state)
 
 
 def pack_structure_batch(
