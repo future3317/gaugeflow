@@ -7,6 +7,7 @@ import inspect
 import json
 import os
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +39,21 @@ from gaugeflow.production.physical_checkpointing import (
 from gaugeflow.production.physical_pretraining import load_functional_physical_normalizer
 from gaugeflow.production.rank_sharded_data import ExactRankShardedStream
 from gaugeflow.production.teacher_feature_cache import MatPESTeacherFeatureCache
+
+
+@dataclass(frozen=True)
+class _PreparedRoleBatch:
+    """One role-local batch whose pinned transfer has been enqueued.
+
+    This object deliberately never crosses a checkpoint boundary.  The stream
+    cursor is therefore always saved before a future batch is selected, which
+    makes an interrupted run restart from the same next indices as an
+    uninterrupted run.
+    """
+
+    indices: torch.Tensor
+    batch: StructureReplayBatch | MatPESPhysicalBatch
+    ready: torch.cuda.Event
 
 
 def parse_args() -> argparse.Namespace:
@@ -119,6 +135,68 @@ def _verify_protocol_implementation(protocol: dict[str, Any]) -> dict[str, str]:
         if observed[name] != str(prerequisites.get(name)):
             raise ValueError(f"Stage-C implementation hash mismatch: {name}")
     return observed
+
+
+def _prepare_role_batch(
+    *,
+    role: str,
+    streams: ContinuedPretrainingStreams,
+    lemat_dataset: IndexedLeMatDataset,
+    matpes_dataset: IndexedMatPESDataset,
+    alex_dataset: PackedAlexP1Dataset,
+    vocabulary: dict[str, int],
+    teacher_dim: int,
+    device: torch.device,
+    transfer_stream: torch.cuda.Stream,
+) -> _PreparedRoleBatch:
+    """Build and asynchronously transfer exactly one fixed-role batch.
+
+    Selection and CPU collation run while the preceding CUDA work remains
+    queued.  The transfer is then issued on a dedicated stream; consumers
+    explicitly wait on its event before using the tensors.  No random state or
+    model operation is performed here.
+    """
+
+    if role == "lemat_structure":
+        indices = streams.lemat.next_indices()
+        host_batch = collate_structure_records(lemat_dataset.select(indices)).pin_memory()
+        with torch.cuda.stream(transfer_stream):
+            batch: StructureReplayBatch | MatPESPhysicalBatch = host_batch.to(device)
+    elif role == "matpes_physical":
+        indices = streams.matpes.next_indices()
+        host_batch = collate_matpes_records(
+            matpes_dataset.select(indices),
+            functional_vocabulary=vocabulary,
+            teacher_dim=teacher_dim,
+        ).pin_memory()
+        with torch.cuda.stream(transfer_stream):
+            batch = host_batch.to(device, non_blocking=True)
+    elif role == "alex_structure":
+        indices = streams.alex.next_indices()
+        with torch.cuda.stream(transfer_stream):
+            alex_raw = alex_dataset.select_model_batch(indices, device=device)
+            batch = pack_structure_batch(
+                alex_raw.atom_types,
+                alex_raw.fractional_coordinates,
+                alex_raw.lattice,
+                alex_raw.batch,
+            )
+    else:
+        raise ValueError(f"unknown Stage-C stream-parallel role: {role}")
+    ready = torch.cuda.Event()
+    ready.record(transfer_stream)
+    return _PreparedRoleBatch(indices=indices, batch=batch, ready=ready)
+
+
+def _consume_prepared_role_batch(
+    prepared: _PreparedRoleBatch,
+    *,
+    device: torch.device,
+) -> tuple[torch.Tensor, StructureReplayBatch | MatPESPhysicalBatch]:
+    """Make one prefetched transfer visible to the default compute stream."""
+
+    torch.cuda.current_stream(device).wait_event(prepared.ready)
+    return prepared.indices, prepared.batch
 
 
 def main() -> None:
@@ -312,32 +390,27 @@ def main() -> None:
     start = time.perf_counter()
     graphs_since_log = 0
     role = expected_roles[rank]
+    transfer_stream = torch.cuda.Stream(device=device)
+    prepared = _prepare_role_batch(
+        role=role,
+        streams=streams,
+        lemat_dataset=lemat_dataset,
+        matpes_dataset=matpes_dataset,
+        alex_dataset=alex_dataset,
+        vocabulary=vocabulary,
+        teacher_dim=feature_cache.feature_dim,
+        device=device,
+        transfer_stream=transfer_stream,
+    )
     while objects.trainer.step < stop:
-        role_batch: StructureReplayBatch | MatPESPhysicalBatch
-        if role == "lemat_structure":
-            indices = streams.lemat.next_indices()
-            role_batch = collate_structure_records(
-                lemat_dataset.select(indices)
-            ).pin_memory().to(device)
-            role_generator = lemat_generator
-        elif role == "matpes_physical":
-            indices = streams.matpes.next_indices()
-            role_batch = collate_matpes_records(
-                matpes_dataset.select(indices),
-                functional_vocabulary=vocabulary,
-                teacher_dim=feature_cache.feature_dim,
-            ).pin_memory().to(device, non_blocking=True)
-            role_generator = None
-        else:
-            indices = streams.alex.next_indices()
-            alex_raw = alex_dataset.select_model_batch(indices, device=device)
-            role_batch = pack_structure_batch(
-                alex_raw.atom_types,
-                alex_raw.fractional_coordinates,
-                alex_raw.lattice,
-                alex_raw.batch,
-            )
-            role_generator = alex_generator
+        indices, role_batch = _consume_prepared_role_batch(prepared, device=device)
+        role_generator = (
+            lemat_generator
+            if role == "lemat_structure"
+            else alex_generator
+            if role == "alex_structure"
+            else None
+        )
         role_loss = accumulate_stream_parallel_pretraining_step(
             objects.trainer,
             role,
@@ -346,6 +419,23 @@ def main() -> None:
             weights,
             generator=role_generator,
         )
+        next_step = objects.trainer.step + 1
+        # A saved checkpoint must describe the next unselected batch.  We only
+        # look ahead when the following update is neither a checkpoint nor the
+        # requested terminal step, so the normal path overlaps input work with
+        # this update's gradient reduction without weakening exact resume.
+        if next_step < stop and next_step not in checkpoint_steps:
+            prepared = _prepare_role_batch(
+                role=role,
+                streams=streams,
+                lemat_dataset=lemat_dataset,
+                matpes_dataset=matpes_dataset,
+                alex_dataset=alex_dataset,
+                vocabulary=vocabulary,
+                teacher_dim=feature_cache.feature_dim,
+                device=device,
+                transfer_stream=transfer_stream,
+            )
         gradient_norm = objects.trainer.finish_replicated_distributed_optimization_step()
         metrics = torch.zeros(6, device=device, dtype=torch.float64)
         metrics[rank] = role_loss
@@ -375,6 +465,18 @@ def main() -> None:
             graphs_since_log = 0
         if objects.trainer.step in checkpoint_steps:
             save_checkpoint()
+            if objects.trainer.step < stop:
+                prepared = _prepare_role_batch(
+                    role=role,
+                    streams=streams,
+                    lemat_dataset=lemat_dataset,
+                    matpes_dataset=matpes_dataset,
+                    alex_dataset=alex_dataset,
+                    vocabulary=vocabulary,
+                    teacher_dim=feature_cache.feature_dim,
+                    device=device,
+                    transfer_stream=transfer_stream,
+                )
     dist.barrier(device_ids=[local_rank])
     dist.destroy_process_group()
 
