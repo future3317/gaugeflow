@@ -16,9 +16,9 @@ from evaluate_physical_representation import (
 
 from gaugeflow.file_utils import load_json_object, sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
-from gaugeflow.production.continued_checkpointing import build_continued_pretraining_objects
 from gaugeflow.production.checkpointing import load_production_checkpoint
 from gaugeflow.production.composition_runtime import load_qualified_composition_model
+from gaugeflow.production.continued_checkpointing import build_continued_pretraining_objects
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.matpes_index import IndexedMatPESDataset
 from gaugeflow.production.physical_checkpointing import (
