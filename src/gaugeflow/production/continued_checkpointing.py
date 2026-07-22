@@ -40,7 +40,7 @@ def build_continued_pretraining_objects(
 ) -> ContinuedPretrainingObjects:
     """Build the exact model/optimizer schema declared by a Stage-B checkpoint."""
 
-    if metadata.get("protocol") != "stage_b_physical_representation_v1":
+    if metadata.get("protocol") != "stage_b_physical_representation_v1_1":
         raise ValueError("continued pretraining requires a Stage-B checkpoint")
     model_config = _mapping(metadata, "model_config")
     a1_training = _mapping(metadata, "a1_training_config")

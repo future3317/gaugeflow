@@ -106,7 +106,7 @@ def _all_reduce_metrics(values: torch.Tensor) -> torch.Tensor:
 def main() -> None:
     args = parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "stage_b_physical_representation_v1" or protocol.get(
+    if protocol.get("protocol") != "stage_b_physical_representation_v1_1" or protocol.get(
         "status_before_run"
     ) != "frozen_method_not_run":
         raise ValueError("unexpected or unfrozen Stage-B protocol")
@@ -121,6 +121,9 @@ def main() -> None:
         "physical_training_sha256": Path(inspect.getsourcefile(PhysicalTransferTrainer) or ""),
         "physical_checkpointing_sha256": Path(inspect.getsourcefile(save_physical_checkpoint) or ""),
         "rank_sharded_data_sha256": Path(inspect.getsourcefile(ExactRankShardedStream) or ""),
+        "equivariant_denoiser_sha256": Path(
+            inspect.getsourcefile(HybridCrystalDenoiser) or ""
+        ),
     }
     for name, path in implementation_paths.items():
         if not path.is_file() or sha256_file(path) != str(prerequisites[name]):

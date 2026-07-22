@@ -1,0 +1,101 @@
+{
+  "protocol": "stage_b_physical_representation_v1_1",
+  "status_before_run": "frozen_method_not_run",
+  "scope": "One-seed, one-exact-data-cleaned-MatPES-pass physical-representation transfer from the qualified 34.28M GaugeFlow-base A1 EMA checkpoint, with simultaneous Alex-MP generative replay. This succeeds the pre-learning v1 lattice-domain failure and is not tensor conditioning, online energy guidance, relaxation, DFT or DFPT.",
+  "prerequisites": {
+    "a1_checkpoint_sha256": "7c8fb7afc3aee6d4723d700b59f2a0523da25e897a46de8e9d2c7e5db824b6da",
+    "matpes_index_manifest_sha256": "fa2caa5af104a966dc5954b480d5d8cf6cca7a19e0221d46176633563b2f44a2",
+    "matpes_index_sha256": "181518816f9ad56ad916411fa9a8cb0b89ef0a70f363bc61cc5bc836a87ff0dd",
+    "matpes_normalizer_sha256": "fe3158deaaca084b31a001ab9d2c22a7456bcfa7a59cc03d3bef95e565a9ae18",
+    "teacher_protocol": "h0_c_matpes_teacher_qualification_v2",
+    "primary_teacher": "TensorNet-PES-MatPES-PBE-2025.2",
+    "teacher_feature_contract": "type-matched per-atom 128-dimensional feature_dict['readout']; PBE rows only; offline stop-gradient targets",
+    "data_domain_commit": "df5cc523027de862aee0872b4de7ed056d080a2b",
+    "runner_sha256": "8c7a5687dae65fff4a1b6f9558a129fe2aee3be46b582579bc122a9180dd8d4a",
+    "physical_training_sha256": "a5c53119d7ae657faa18264c6a38b56e82094a2942124049c7ac647290888762",
+    "physical_checkpointing_sha256": "82fcb46e2efb9469701836386e3a3ffbfb9aaa77d56b5b3ad13bfdb283aebe34",
+    "rank_sharded_data_sha256": "d09a79e1f6020fe435d16239b9b8bb4375ba1535fa17e48028e8ef7a8cd20549",
+    "equivariant_denoiser_sha256": "ce275954f0fb33cc51424bc75a7a4a992b36961ac955b80a9e93f994dd082b5a",
+    "matpes_index_builder_sha256": "be6474901363a94bfed2844a4b88eeb51f6e7b1d88d5148ec798b46f5ad26405",
+    "evaluator_sha256": "fc38ff24bff036cffa0037cbba79739191548f94b503bc073a895e43eb8a5ae0",
+    "physical_evaluation_sha256": "dd2d1a20593989ec417ba81fa6db3da3d2d496821df6149ca0c22cc4b37eaddf",
+    "teacher_cache_builder_sha256": "de436f307a21450771298eccd9f3ddf1a04a104bdc201d82c1fddb5333f952f8",
+    "teacher_feature_cache_sha256": "8b02a1baa64d157c485ea1ee86f4c0241f634336f15411f4a30f1f9258a46242"
+  },
+  "data": {
+    "matpes_train_functional_rows": 673467,
+    "matpes_calibration_functional_rows": 36990,
+    "matpes_test_functional_rows": 38029,
+    "train_rows_by_functional": {"PBE": 347512, "r2SCAN": 325955},
+    "calibration_rows_by_functional": {"PBE": 19101, "r2SCAN": 17889},
+    "test_rows_by_functional": {"PBE": 19618, "r2SCAN": 18411},
+    "maximum_atoms": 20,
+    "minimum_lattice_width_angstrom": 0.5,
+    "maximum_lattice_metric_condition": 10000.0,
+    "excluded_degenerate_lattice_rows": 1380,
+    "energy_target": "cohesive_energy_per_atom",
+    "functional_vocabulary": {"PBE": 0, "r2SCAN": 1},
+    "teacher_feature_scope": ["PBE"],
+    "split_grouping": "matpes_id across all six artifacts and both functionals",
+    "model_input_exclusions": ["matpes_id", "source split", "raw artifact", "prototype", "target teacher identity"]
+  },
+  "training": {
+    "seed": 5705,
+    "devices": [1, 2],
+    "distributed_semantics": "rank-sharded data, globally weighted and summed gradients, one rank-0 optimizer/EMA owner, train-parameter broadcast after every update; EMA is checkpointed and evaluated only on rank 0",
+    "matpes_passes": 1.0,
+    "matpes_rows_without_replacement": 673467,
+    "matpes_graphs_per_rank": 32,
+    "alex_replay_graphs_per_rank": 32,
+    "global_matpes_batch_except_tail": 64,
+    "global_alex_replay_batch": 64,
+    "optimizer_steps": 10523,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "precision": "bf16 learned matmuls with FP32 geometry and reductions",
+    "physical_loss_weight": 0.5,
+    "alex_replay_loss_weight": 0.5,
+    "energy_weight": 1.0,
+    "force_weight": 1.0,
+    "stress_weight": 1.0,
+    "feature_weight": 1.0,
+    "feature_loss": "graph-equal mean of type-matched per-atom cosine distance",
+    "checkpoint_steps": [0, 2631, 5262, 7892, 10523],
+    "exact_resume_requires": ["model", "rank-0 optimizer", "EMA", "global step", "per-rank MatPES cursor", "per-rank Alex cursor", "CPU RNG", "per-rank CUDA RNG"]
+  },
+  "evaluation": {
+    "physical_panel": "fixed data-cleaned MatPES calibration split, separately reported for PBE and r2SCAN",
+    "physical_metrics": ["normalized energy RMSE", "normalized force RMSE", "force cosine", "normalized Kelvin-stress RMSE", "PBE per-atom teacher-feature cosine"],
+    "generation_panel": "the unchanged A1-v1.1 512-reference/512-sample protocol",
+    "generation_metrics": ["nearest-neighbour W1", "volume W1", "minimum-distance validity", "exact composition", "positive lattice", "element JSD", "node-count JSD", "sampling failures"],
+    "diagnostics_not_hard_gates": ["short-bond improvement magnitude", "per-element-pair force error", "density-stratified stress error", "teacher disagreement stratification"]
+  },
+  "acceptance": {
+    "core_safety": {
+      "finite_training_and_sampling": true,
+      "sampling_failures": 0,
+      "exact_composition_fraction": 1.0,
+      "positive_lattice_fraction": 1.0,
+      "minimum_distance_fraction_at_0_5_angstrom_min": 0.98
+    },
+    "physical_learning": {
+      "calibration_composite_loss_relative_to_step0_max": 0.8,
+      "each_supervised_head_relative_to_step0_max": 0.95,
+      "pbe_teacher_feature_cosine_min": 0.5
+    },
+    "a1_retention": {
+      "normalized_nearest_neighbor_wasserstein_max": 0.65,
+      "normalized_volume_wasserstein_max": 0.15,
+      "element_marginal_jsd_max": 0.10,
+      "node_count_jsd_max": 0.01
+    }
+  },
+  "decision_rule": {
+    "pass": "qualify Stage-B-v1.1 physical representation transfer while retaining the bounded GaugeFlow-base generation law",
+    "physical_pass_generation_regression": "retain the Stage-B checkpoint only as a physical encoder candidate and diagnose replay/optimization before any Stage-C continuation",
+    "generation_pass_physical_fail": "retain A1 as production and do not scale to LeMat; diagnose target normalization, feature extraction and head optimization",
+    "boundary": "LeMat code and bounded smokes may be prepared in parallel, but no full LeMat continuation, tensor adapter, RL, relaxation, DFT or DFPT is authorized by this protocol. Short-bond improvement is reported rather than manufactured by threshold tuning."
+  }
+}

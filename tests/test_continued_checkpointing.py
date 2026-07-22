@@ -22,7 +22,7 @@ from gaugeflow.production.physical_training import (
 
 def _metadata(model_config: dict[str, object], standardizer: P1LatticeStandardizer) -> dict:
     return {
-        "protocol": "stage_b_physical_representation_v1",
+        "protocol": "stage_b_physical_representation_v1_1",
         "model_config": model_config,
         "a1_training_config": {
             "coordinate_sigma_min": 0.01,

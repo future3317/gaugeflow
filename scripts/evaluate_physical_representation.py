@@ -213,7 +213,7 @@ def main() -> None:
     args = parse_args()
     protocol = load_json_object(args.protocol)
     a1_protocol = load_json_object(args.a1_evaluation_protocol)
-    if protocol.get("protocol") != "stage_b_physical_representation_v1":
+    if protocol.get("protocol") != "stage_b_physical_representation_v1_1":
         raise ValueError("unexpected Stage-B protocol")
     device = torch.device(args.device)
     if device.type != "cuda" or not torch.cuda.is_available():

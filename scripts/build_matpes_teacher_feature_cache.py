@@ -196,7 +196,7 @@ def _iter_completed_rows(
 def main() -> None:
     arguments = parse_args()
     protocol = load_json_object(arguments.protocol)
-    if protocol.get("protocol") != "stage_b_physical_representation_v1":
+    if protocol.get("protocol") != "stage_b_physical_representation_v1_1":
         raise ValueError("teacher cache received an unexpected Stage-B protocol")
     prerequisites = protocol.get("prerequisites")
     if not isinstance(prerequisites, dict):
