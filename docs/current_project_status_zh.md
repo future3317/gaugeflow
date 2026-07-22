@@ -434,3 +434,10 @@ benchmark IDs 中有 129,152 个命中合格 LeMat rows 并被排除；exclusion
 `N<=20` 范围内 129,152 条排除全部仍是直接 ID 命中，新增跨 ID 命中为 0，最终 index
 tensor 与 v1 逐字节相同。这关闭了数据提供方原生 fingerprint envelope；更宽的独立
 StructureMatcher 可作为压力审计，但当前没有需要进一步裁决的 fingerprint collision。
+
+Stage-C 三流训练核心也已实现，但尚未启动训练。LeMat 与 Alex 都先转为不含 ID、functional
+和物理 target 的 dataset-neutral structure batch，并使用同一 GaugeFlow-base product-space
+denoising objective；MatPES 独立保留 masked physical objective。双卡梯度求和前，两个结构
+loss 分别乘本 rank 的真实 graph fraction，而 physical loss 继续使用全局有标签 graph
+denominator。LeMat/MatPES/Alex 三个 cursor 作为一个原子 checkpoint 状态恢复，缺少任一项
+即失败。正式 runner 与 CUDA resume smoke 仍需等待真实 Stage-B checkpoint。

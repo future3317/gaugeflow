@@ -472,6 +472,15 @@ cross-ID fingerprint matches; the selected index tensor is byte-identical to
 v1.  This closes the provider-native fingerprint envelope without claiming
 that it is a complete invariant of every periodic representation.
 
+The Stage-C core now has one dataset-neutral structure batch/objective and one
+atomic three-stream cursor.  LeMat and Alex contribute the unchanged
+product-space denoising loss, while MatPES contributes the globally masked
+physical loss.  Each local structure mean is weighted by its exact rank graph
+fraction before gradient summation; physical heads retain their global
+label-bearing denominators.  LeMat, MatPES and Alex cursors restore together
+or fail closed.  The executable runner and CUDA resume smoke still wait for an
+actual qualified Stage-B checkpoint.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`
