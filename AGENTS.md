@@ -465,6 +465,13 @@ overlapped the 135,040-ID Alex benchmark exclusion and were removed.  The
 train functional counts are 4,222,763 PBE, 9,014 PBEsol and 331,255 SCAN, so
 raw row-frequency sampling is not an acceptable Stage-C default.
 
+A second-pass native-fingerprint expansion collected 129,302 LeMat
+`entalpic_fingerprint` values associated with Alex benchmark IDs.  All 129,152
+eligible exclusions remained direct ID matches and zero additional rows were
+cross-ID fingerprint matches; the selected index tensor is byte-identical to
+v1.  This closes the provider-native fingerprint envelope without claiming
+that it is a complete invariant of every periodic representation.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`

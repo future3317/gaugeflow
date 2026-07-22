@@ -1,0 +1,16 @@
+{
+  "excluded_benchmark_fingerprints": 129302,
+  "excluded_cross_id_fingerprint_rows": 0,
+  "excluded_direct_id_rows": 129152,
+  "excluded_external_overlap": 129152,
+  "excluded_material_ids_artifact_sha256": "2baf633949a24d5905ce227121583e0154e12114434bd60542a9bc8a250b833e",
+  "index_sha256": "6ab73b2b21b937f756b1811318b620b32c96152493d10d3a674d8a94a4680fc1",
+  "invalid_index_rows": 0,
+  "qualified": true,
+  "schema": 1,
+  "split_counts": {
+    "calibration": 252475,
+    "test": 253247,
+    "train": 4563032
+  }
+}

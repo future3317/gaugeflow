@@ -54,6 +54,7 @@ def test_lemat_parser_converts_geometry_units_and_masks() -> None:
 def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) -> None:
     rows = [_row(index) for index in range(200)]
     rows[0]["immutable_id"] = "agm-overlap"
+    rows[1]["entalpic_fingerprint"] = rows[0]["entalpic_fingerprint"]
     parquet = tmp_path / "pbe.parquet"
     pq.write_table(pa.Table.from_pylist(rows), parquet, row_group_size=20)
     root = tmp_path / "index"
@@ -65,11 +66,14 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
         max_row_groups_per_source=10,
     )
     assert manifest["bounded_smoke"] and not manifest["qualified"]
-    assert manifest["excluded_external_overlap"] == 1
+    assert manifest["excluded_external_overlap"] == 2
+    assert manifest["excluded_direct_id_rows"] == 1
+    assert manifest["excluded_cross_id_fingerprint_rows"] == 1
+    assert manifest["excluded_benchmark_fingerprints"] == 1
     assert manifest["excluded_material_ids_count"] == 1
     assert manifest["excluded_material_ids_artifact_sha256"] == "a" * 64
     assert manifest["exclusion_artifact_bound"]
-    assert sum(manifest["split_counts"].values()) == 199
+    assert sum(manifest["split_counts"].values()) == 198
     dataset = IndexedLeMatDataset(root, "train", require_qualified=False)
     assert dataset[0].functional == "pbe"
     assert dataset[0].element_tokens.numel() == 2

@@ -428,3 +428,9 @@ benchmark IDs 中有 129,152 个命中合格 LeMat rows 并被排除；exclusion
 内容哈希与最终 index 哈希均已归档。完整 train split 的 PBE/PBEsol/SCAN 为
 4,222,763/9,014/331,255，因此正式训练必须使用已经通过双-rank恢复检查的均衡流，不能按
 原始行频率静默混合。
+
+随后增加了跨 ID 的 LeMat-native fingerprint 扩展排除：先收集所有 Alex benchmark ID
+对应的 129,302 个 `entalpic_fingerprint`，再排除共享 fingerprint 的其他 ID。合格
+`N<=20` 范围内 129,152 条排除全部仍是直接 ID 命中，新增跨 ID 命中为 0，最终 index
+tensor 与 v1 逐字节相同。这关闭了数据提供方原生 fingerprint envelope；更宽的独立
+StructureMatcher 可作为压力审计，但当前没有需要进一步裁决的 fingerprint collision。

@@ -229,6 +229,12 @@ Alex benchmark overlap 也已形成独立的 audit-only exclusion artifact：资
 LeMat index 时用于排除，绝不进入训练 batch。完整 LeMat index 必须绑定该列表的
 SHA-256，不能仅凭数据集名称声称 benchmark 已隔离。
 
+完整构建得到 5,068,754 条 `N<=20` rows，train/calibration/test 为
+4,563,032/252,475/253,247，零坏行。进一步以 Alex ID 命中的 129,302 个 LeMat-native
+`entalpic_fingerprint` 扩展排除时，新增跨 ID 命中为 0，index tensor 与 ID-only 版本
+哈希相同。因此当前 provider-native fingerprint envelope 已闭合；它不被夸大成周期结构
+的数学完备不变量，独立 StructureMatcher 仍可作为压力面板。
+
 大数据阶段优先采用 packed graphs、按 node/edge 数动态 batching、向量化 segment
 reduction、BF16 scalar path + FP32 geometry path、预取与 shard-local shuffle。任何加速
 都必须保持 exact count、群作用和 periodic reference test。

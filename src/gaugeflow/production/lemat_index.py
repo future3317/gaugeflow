@@ -189,7 +189,26 @@ def build_lemat_index(
         "split_index": [],
     }
     manifests: list[dict[str, Any]] = []
-    excluded_large = excluded_overlap = invalid_rows = 0
+    excluded_fingerprints: set[str] = set()
+    if excluded:
+        for _, path in flattened:
+            parquet = pq.ParquetFile(path)
+            groups = parquet.num_row_groups
+            if max_row_groups_per_source is not None:
+                groups = min(groups, max_row_groups_per_source)
+            for group in range(groups):
+                rows = parquet.read_row_group(group, columns=_INDEX_COLUMNS).to_pylist()
+                for row in rows:
+                    material_id = row.get("immutable_id")
+                    if isinstance(material_id, str) and (
+                        normalize_external_material_id(material_id) in excluded
+                    ):
+                        try:
+                            excluded_fingerprints.add(lemat_split_group(row))
+                        except ValueError:
+                            pass
+    excluded_large = excluded_overlap = excluded_direct_id = excluded_fingerprint = 0
+    invalid_rows = 0
     compatible_rows = 0
     split_by_group: dict[str, int] = {}
     for source_number, (declared_functional, path) in enumerate(flattened):
@@ -211,10 +230,15 @@ def build_lemat_index(
                     if node_count > maximum_atoms:
                         excluded_large += 1
                         continue
-                    if normalize_external_material_id(str(row["immutable_id"])) in excluded:
-                        excluded_overlap += 1
-                        continue
+                    normalized_id = normalize_external_material_id(str(row["immutable_id"]))
                     key = lemat_split_group(row)
+                    direct_overlap = normalized_id in excluded
+                    fingerprint_overlap = key in excluded_fingerprints
+                    if direct_overlap or fingerprint_overlap:
+                        excluded_overlap += 1
+                        excluded_direct_id += int(direct_overlap)
+                        excluded_fingerprint += int(fingerprint_overlap and not direct_overlap)
+                        continue
                     split = SPLIT_TO_INDEX[
                         lemat_iid_split(
                             key,
@@ -282,6 +306,9 @@ def build_lemat_index(
         "compatible_selected_rows": compatible_rows,
         "excluded_large_cells": excluded_large,
         "excluded_external_overlap": excluded_overlap,
+        "excluded_direct_id_rows": excluded_direct_id,
+        "excluded_cross_id_fingerprint_rows": excluded_fingerprint,
+        "excluded_benchmark_fingerprints": len(excluded_fingerprints),
         "excluded_material_ids_count": len(excluded),
         "excluded_material_ids_content_sha256": canonical_json_hash(sorted(excluded)),
         "excluded_material_ids_artifact_sha256": excluded_material_ids_artifact_sha256,
