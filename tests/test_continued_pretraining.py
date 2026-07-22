@@ -3,13 +3,24 @@ from __future__ import annotations
 import torch
 
 from gaugeflow.production.continued_pretraining import (
+    ContinuedPretrainingWeights,
+    accumulate_continued_pretraining_step,
     collate_structure_records,
+    pack_structure_batch,
     structure_replay_loss,
 )
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from gaugeflow.production.matpes_data import MatPESPhysicalRecord
+from gaugeflow.production.matpes_data import MatPESPhysicalRecord, collate_matpes_records
+from gaugeflow.production.physical_pretraining import (
+    FunctionalPhysicalNormalizer,
+    PhysicalRepresentationModel,
+)
+from gaugeflow.production.physical_training import (
+    PhysicalTransferTrainer,
+    PhysicalTransferTrainingConfig,
+)
 
 
 def _record(material_id: str, functional: str, nodes: int) -> MatPESPhysicalRecord:
@@ -70,6 +81,15 @@ def test_structure_collator_removes_dataset_metadata_and_targets() -> None:
     assert not hasattr(packed, "material_id")
     assert not hasattr(packed, "functional")
     assert not hasattr(packed, "energy_per_atom_ev")
+    assert torch.equal(
+        pack_structure_batch(
+            packed.element_tokens,
+            packed.fractional_coordinates,
+            packed.lattice,
+            packed.batch,
+        ).node_counts,
+        packed.node_counts,
+    )
 
 
 def test_structure_replay_loss_is_finite_and_backpropagates() -> None:
@@ -86,3 +106,48 @@ def test_structure_replay_loss_is_finite_and_backpropagates() -> None:
     assert torch.isfinite(loss)
     assert any(gradient is not None and bool((gradient != 0.0).any()) for gradient in gradients)
     assert all(gradient is None or bool(torch.isfinite(gradient).all()) for gradient in gradients)
+
+
+def test_three_stream_objective_accumulates_all_losses_before_one_update() -> None:
+    diffusion = _diffusion()
+    model = PhysicalRepresentationModel(
+        diffusion.denoiser,
+        teacher_dim=3,
+        functional_count=3,
+    )
+    trainer = PhysicalTransferTrainer(
+        model,
+        diffusion,
+        PhysicalTransferTrainingConfig(precision="fp32"),
+    )
+    records = [_record("physical-audit", "pbe", 3)]
+    physical = collate_matpes_records(
+        records,
+        functional_vocabulary={"pbe": 0, "pbesol": 1, "scan": 2},
+        teacher_dim=3,
+    )
+    normalizer = FunctionalPhysicalNormalizer(
+        energy_location=torch.zeros(3),
+        energy_scale=torch.ones(3),
+        force_scale=torch.ones(3),
+        stress_isotropic_location=torch.zeros(3),
+        stress_scale=torch.ones(3),
+    )
+    structure = collate_structure_records(records)
+    losses = accumulate_continued_pretraining_step(
+        trainer,
+        structure,
+        physical,
+        structure,
+        normalizer,
+        ContinuedPretrainingWeights(0.4, 0.3, 0.3),
+        lemat_rank_fraction=1.0,
+        alex_rank_fraction=1.0,
+        generator=torch.Generator().manual_seed(19),
+    )
+    gradients = [parameter.grad for parameter in model.parameters() if parameter.grad is not None]
+    assert torch.isfinite(losses.lemat_structure)
+    assert torch.isfinite(losses.matpes_physical.loss)
+    assert torch.isfinite(losses.alex_structure)
+    assert gradients and all(bool(torch.isfinite(gradient).all()) for gradient in gradients)
+    assert float(trainer.finish_optimization_step()) > 0.0
