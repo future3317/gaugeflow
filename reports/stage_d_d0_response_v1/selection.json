@@ -1,0 +1,38 @@
+{
+  "boundary": "This single-seed D0 mechanism screen selects an auxiliary loss only; it is not a Stage-D predictive qualification.",
+  "checks": {
+    "full_piezoelectric": true,
+    "other_task_macro": true,
+    "probe_error": false
+  },
+  "inputs": {
+    "baseline_sha256": "97a80c4263b48d90b1e886fcc1a10d82e9f2366a2f59f424440bcff4547c99ae",
+    "probe_sha256": "3b526bf2bc957e8b401c56986f29939c7e609eddec5af4c65bd3b53ffe70e237",
+    "protocol_sha256": "8d3bc8eb4a132f26e1b7e4dd7abbb9fdfdd523b5f6b743bf93806c95361413bb"
+  },
+  "metrics": {
+    "baseline_other_task_macro": 0.4952259311386988,
+    "full_piezoelectric_loss_relative_degradation": 0.0011627892851432033,
+    "other_task_macro_relative_degradation": -0.0001423832608402365,
+    "probe_error_relative_improvement": -0.0004226499018150504,
+    "probe_other_task_macro": 0.4951554192557706
+  },
+  "paired_provenance": {
+    "cache_sha256": "e270e0a0573990343bbfa14d398e39168304756ccbd169de5b653602a0f116c2",
+    "normalizer_sha256": "14eab6d371ca3f3ef3f6737b5014a8b0ee33d51496e20b6d28910610a2bb94e5",
+    "protocol_sha256": "8d3bc8eb4a132f26e1b7e4dd7abbb9fdfdd523b5f6b743bf93806c95361413bb",
+    "seed": 5731,
+    "source_checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9",
+    "source_checkpoint_step": 40523,
+    "steps": 2000
+  },
+  "qualified": false,
+  "schema": "gaugeflow.stage_d_d0_response_selection.v1",
+  "selected_arm": "baseline",
+  "status": "complete",
+  "thresholds": {
+    "full_piezoelectric_loss_relative_degradation_maximum": 0.02,
+    "other_task_macro_relative_degradation_maximum": 0.02,
+    "probe_error_relative_improvement_minimum": 0.05
+  }
+}

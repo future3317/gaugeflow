@@ -1,0 +1,95 @@
+{
+  "boundary": [
+    "Selection starts at the v2 migration boundary; the v1 10k checkpoint remains an archived two-panel diagnostic, not a v2 operational candidate.",
+    "The selected checkpoint remains tensor-free GaugeFlow-base.",
+    "Selection does not authorize tensor conditioning, RL, relaxation, DFT, or DFPT.",
+    "The 10k-40k physical/A1 diagnostics remain valid two-panel evidence but are not relabelled as complete three-panel evaluations."
+  ],
+  "candidate_evidence": {
+    "20000": {
+      "checkpoint_sha256": "4af706435bedcb78713e09042bf68ec62ae30914e1ed0e637820901994859b6f",
+      "eligible": true,
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/evaluations/stage_c_complete_step_00030523/result.json",
+      "sha256": "7064c15b5b366e05fab5cbe1ee8144985f9a471c38c7d2350d57141580bde8f9"
+    },
+    "30000": {
+      "checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9",
+      "eligible": true,
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/evaluations/stage_c_complete_step_00040523/result.json",
+      "sha256": "33ff24250de5b6dd477ad8301e0b0029a06b689dada57ea94ec60e67baf48d84"
+    },
+    "40000": {
+      "checkpoint_sha256": "cf132a7fc9d7508c3ead7c196d22b292cf7556b83c2b59fc47332adad12ff65f",
+      "eligible": true,
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/evaluations/stage_c_complete_step_00050523_v2/result.json",
+      "sha256": "3bc60b1577360425abbeac842bf2567955a59fdf7e694ad1b7d5b5afdbe458fc"
+    },
+    "50000": {
+      "checkpoint_sha256": "ab884d80a3b46e384c6169f0af6b99bc15d9b34c915267e141f6962655fe6986",
+      "eligible": true,
+      "path": "/home/workspace/lrh/DATA/T2C-Flow/evaluations/stage_c_complete_step_00060523/result.json",
+      "sha256": "66373fd2de5563a100eece4fbc14c43dcbd6c7c7122a9ede42d4b8c013a6293f"
+    }
+  },
+  "ineligible_stage_c_steps": [],
+  "objectives": {
+    "20000": {
+      "generation_retention.normalized_nearest_neighbor_wasserstein": 0.5628174133800493,
+      "generation_retention.normalized_volume_wasserstein": 0.06763386743558111,
+      "lemat_structure_calibration.macro_mean_product_space_loss": 1.571413906777976,
+      "physical_calibration.aggregate.equal_head_composite_loss": 0.3253502853434001
+    },
+    "30000": {
+      "generation_retention.normalized_nearest_neighbor_wasserstein": 0.5656132812475194,
+      "generation_retention.normalized_volume_wasserstein": 0.06801915564015526,
+      "lemat_structure_calibration.macro_mean_product_space_loss": 1.5316800995916127,
+      "physical_calibration.aggregate.equal_head_composite_loss": 0.29083456235228505
+    },
+    "40000": {
+      "generation_retention.normalized_nearest_neighbor_wasserstein": 0.5784557706738475,
+      "generation_retention.normalized_volume_wasserstein": 0.07112234301666938,
+      "lemat_structure_calibration.macro_mean_product_space_loss": 1.5038742298028278,
+      "physical_calibration.aggregate.equal_head_composite_loss": 0.26518040470241916
+    },
+    "50000": {
+      "generation_retention.normalized_nearest_neighbor_wasserstein": 0.5723372682243698,
+      "generation_retention.normalized_volume_wasserstein": 0.06755214823758891,
+      "lemat_structure_calibration.macro_mean_product_space_loss": 1.4863481241823948,
+      "physical_calibration.aggregate.equal_head_composite_loss": 0.25045951101735353
+    }
+  },
+  "protocol": "configs/gates/stage_c_checkpoint_selection_v1.json",
+  "protocol_sha256": "1d0aec5148c4b904a98fa04d526e4fd449098eb3bd302878d64cb196daec373d",
+  "schema": "gaugeflow.stage_c_checkpoint_selection.v1",
+  "selection": {
+    "maximum_regret": 0.5391191598467598,
+    "mean_regret": 0.3454035163394687,
+    "normalized_regrets": {
+      "20000": {
+        "generation_retention.normalized_nearest_neighbor_wasserstein": 0.0,
+        "generation_retention.normalized_volume_wasserstein": 0.022889282811972358,
+        "lemat_structure_calibration.macro_mean_product_space_loss": 1.0,
+        "physical_calibration.aggregate.equal_head_composite_loss": 1.0
+      },
+      "30000": {
+        "generation_retention.normalized_nearest_neighbor_wasserstein": 0.17878270811595331,
+        "generation_retention.normalized_volume_wasserstein": 0.13080726163815312,
+        "lemat_structure_calibration.macro_mean_product_space_loss": 0.5329049357570087,
+        "physical_calibration.aggregate.equal_head_composite_loss": 0.5391191598467598
+      },
+      "50000": {
+        "generation_retention.normalized_nearest_neighbor_wasserstein": 0.6087503096054646,
+        "generation_retention.normalized_volume_wasserstein": 0.0,
+        "lemat_structure_calibration.macro_mean_product_space_loss": 0.0,
+        "physical_calibration.aggregate.equal_head_composite_loss": 0.0
+      }
+    },
+    "pareto_stage_c_steps": [
+      20000,
+      30000,
+      50000
+    ],
+    "selected_stage_c_step": 30000
+  },
+  "status": "operational_checkpoint_selected"
+}

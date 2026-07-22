@@ -1,6 +1,6 @@
 # Stage-C continued-pretraining status
 
-Updated: 2026-07-22. This is the active status record for post-A1 structural
+Updated: 2026-07-23. This is the completed status record for post-A1 structural
 scale-up; historical mechanism screens remain in `research_iteration_history.md`.
 
 ## Purpose
@@ -37,7 +37,7 @@ This qualifies physical-representation transfer and bounded A1 retention. It
 does not imply tensor conditioning, stability, relaxation retention, or
 materials-discovery capability.
 
-## Active run
+## Completed run
 
 - Protocol: `configs/gates/stage_c_lemat_continued_pretraining_v2.json`
 - Seed: `5705`
@@ -68,26 +68,21 @@ without changing model, optimizer, EMA, MatPES/Alex cursors or objective RNG
 states; only the LeMat stream was deterministically re-based on the clean
 support. A three-GPU one-step resume smoke passed before v2 continued.
 
-## Mid-training evidence
+## Complete trajectory and selection
 
-| Metric | Stage-B | Stage-C 10k | Stage-C 20k | Stage-C 30k | Stage-C 40k |
-|---|---:|---:|---:|---:|---:|
-| Physical composite | `0.5929` | `0.3871` | `0.3254` | `0.2908` | `0.2652` |
-| Energy RMSE | `0.1143` | `0.0955` | `0.0859` | `0.0801` | `0.0757` |
-| Force RMSE | `0.3882` | `0.3318` | `0.3053` | `0.2898` | `0.2748` |
-| Stress RMSE | `0.5733` | `0.4301` | `0.3888` | `0.3643` | `0.3469` |
-| Teacher cosine | `0.8996` | `0.9171` | `0.9264` | `0.9323` | `0.9364` |
-| NN-W1 | `0.5444` | `0.5533` | `0.5628` | `0.5656` | `0.5785` |
-| Volume-W1 | `0.0722` | `0.0624` | `0.0676` | `0.0680` | `0.0711` |
+| Metric | Stage-B | Stage-C 10k | Stage-C 20k | Stage-C 30k | Stage-C 40k | Stage-C 50k |
+|---|---:|---:|---:|---:|---:|---:|
+| Physical composite | `0.5929` | `0.3871` | `0.3254` | `0.2908` | `0.2652` | `0.2505` |
+| Teacher cosine | `0.8996` | `0.9171` | `0.9264` | `0.9323` | `0.9364` | `0.9394` |
+| LeMat macro loss | -- | -- | `1.5714` | `1.5317` | `1.5039` | `1.4863` |
+| NN-W1 | `0.5444` | `0.5533` | `0.5628` | `0.5656` | `0.5785` | `0.5723` |
+| Volume-W1 | `0.0722` | `0.0624` | `0.0676` | `0.0680` | `0.0711` | `0.0676` |
 
-Physical representation improves monotonically. Generative validity remains
-perfect with zero failures, while the monotone NN-W1 increase is tracked as a
-physical-transfer versus generative-retention trade-off. At 30k, all 512
-samples still have exact composition, finite positive lattices, valid minimum
-distance and zero failures; this remains true at 40k. The larger 30k-to-40k
-NN-W1 increase (`+0.0128`) makes the trade-off material: selection will use the
-physical/retention Pareto frontier, not the last optimizer step. The next full
-diagnostic is the final Stage-C 50k checkpoint (global step 60,523).
+Physical representation and LeMat denoising improve through 50k. Generative
+hard validity remains perfect with zero failures. NN-W1 does not improve
+monotonically: it worsens through 40k and partially recovers at 50k. This is a
+physical-transfer versus local-geometry-retention trade-off rather than
+sampler collapse.
 
 ## Evaluation contract
 
@@ -109,7 +104,15 @@ interface before the 50k result. Every v2 candidate is evaluated on:
    including validity, exact composition, positive lattice, and periodic
    distance checks.
 
-Candidate selection first enforces hard closure, removes Pareto-dominated
+Candidate selection first enforced hard closure, removed Pareto-dominated
 checkpoints, and then minimizes maximum min--max-normalized regret over physical
 composite, LeMat structure loss, NN-W1 and volume-W1. This is an operational
 checkpoint choice declared after the 40k diagnostic, not a new learning Gate.
+
+All four candidates are eligible and 40k is Pareto dominated. The frontier is
+20k/30k/50k. Their maximum normalized regrets are `1.0 / 0.539119 / 0.608750`,
+so the declared rule selects **Stage-C 30k** (global step 40,523; checkpoint
+SHA-256 `8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9`).
+The 50k checkpoint remains the completed trajectory endpoint and supplies the
+best LeMat/physical/volume objectives, but it is not the operational base.
+Complete evidence is archived in `reports/stage_c_checkpoint_selection_v1/`.

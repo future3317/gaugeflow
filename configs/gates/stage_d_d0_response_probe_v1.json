@@ -1,0 +1,31 @@
+{
+  "protocol": "stage_d_d0_response_probe_v1",
+  "seed": 5731,
+  "steps": 2000,
+  "batch_size": 32,
+  "precision": "bf16",
+  "backbone_learning_rate": 1e-5,
+  "head_learning_rate": 3e-4,
+  "weight_decay": 1e-4,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "warmup_steps": 100,
+  "checkpoint_every": 250,
+  "log_every": 25,
+  "augmentation": ["proper_rotation", "origin_shift", "atom_permutation"],
+  "arms": {
+    "baseline": {"piezoelectric_probe_weight": 0.0},
+    "probe": {"piezoelectric_probe_weight": 0.1}
+  },
+  "selection": {
+    "probe_error_relative_improvement_minimum": 0.05,
+    "full_piezoelectric_loss_relative_degradation_maximum": 0.02,
+    "other_task_macro_relative_degradation_maximum": 0.02
+  },
+  "boundaries": [
+    "Single seed and paired train order/augmentation; this is a short D0 mechanism screen.",
+    "The response-field probe supplements but never replaces full Cartesian tensor supervision.",
+    "Stage D remains an independent evaluator and does not consume tensor-conditioned generator outputs.",
+    "No result here authorizes Stage E, Stage F, relaxation, DFT, or DFPT."
+  ]
+}

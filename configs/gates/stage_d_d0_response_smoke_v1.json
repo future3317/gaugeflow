@@ -1,0 +1,26 @@
+{
+  "protocol": "stage_d_d0_response_probe_v1",
+  "seed": 5731,
+  "steps": 3,
+  "batch_size": 8,
+  "precision": "bf16",
+  "backbone_learning_rate": 1e-5,
+  "head_learning_rate": 3e-4,
+  "weight_decay": 1e-4,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "warmup_steps": 1,
+  "checkpoint_every": 1,
+  "log_every": 1,
+  "augmentation": ["proper_rotation", "origin_shift", "atom_permutation"],
+  "arms": {
+    "baseline": {"piezoelectric_probe_weight": 0.0},
+    "probe": {"piezoelectric_probe_weight": 0.1}
+  },
+  "selection": {
+    "probe_error_relative_improvement_minimum": 0.05,
+    "full_piezoelectric_loss_relative_degradation_maximum": 0.02,
+    "other_task_macro_relative_degradation_maximum": 0.02
+  },
+  "boundaries": ["Three-step CUDA execution smoke only; no predictive claim."]
+}

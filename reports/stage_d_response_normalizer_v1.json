@@ -1,0 +1,40 @@
+{
+  "cache_manifest_sha256": "46e6002b3028b1bd44bb3543c3c1a234aad195fd2701d6324488e0078e3177a7",
+  "cache_sha256": "4f780dba78b422e7b6f3e0db338cf769c968b9865f7096f5d5add0227f737e1c",
+  "convention": "train-only O(3)-invariant robust per-object scale; rank-two median isotropic identity location; invertible radial-asinh magnitude chart; Gamma median/MAD; masks preserve physical zero",
+  "fields": {
+    "born_isotropic_location": [
+      -0.6091455221176147
+    ],
+    "born_scale": [
+      0.9885981678962708
+    ],
+    "dielectric_isotropic_location": [
+      12.748693466186523
+    ],
+    "dielectric_scale": [
+      3.81066632270813
+    ],
+    "elastic_scale": [
+      23.508852005004883
+    ],
+    "gamma_log_location": [
+      0.1073666363954544
+    ],
+    "gamma_log_scale": [
+      0.1526748538017273
+    ],
+    "internal_strain_scale": [
+      4.041877269744873
+    ],
+    "piezoelectric_scale": [
+      0.07594136893749237
+    ]
+  },
+  "fit_atoms": 34457,
+  "fit_graphs": 3173,
+  "fit_split": "train",
+  "qualified": true,
+  "schema": "gaugeflow.stage_d_response_normalizer.v1",
+  "source_count": 1
+}

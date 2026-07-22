@@ -1,0 +1,36 @@
+{
+  "protocol": "stage_d_response_training_v1",
+  "seed": 5731,
+  "steps": 8000,
+  "batch_size": 32,
+  "precision": "bf16",
+  "backbone_learning_rate": 1e-5,
+  "head_learning_rate": 3e-4,
+  "weight_decay": 1e-4,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "warmup_steps": 200,
+  "checkpoint_every": 500,
+  "validation_every": 500,
+  "early_stopping_patience": 6,
+  "minimum_validation_improvement": 0.002,
+  "log_every": 25,
+  "augmentation": ["proper_rotation", "origin_shift", "atom_permutation"],
+  "arms": {
+    "baseline": {"piezoelectric_probe_weight": 0.0}
+  },
+  "selection": {
+    "primary": "minimum EMA validation macro loss",
+    "test_usage": "exactly once after best-step selection",
+    "maximum_updates": 8000,
+    "validation_interval": 500,
+    "early_stopping_patience_evaluations": 6,
+    "minimum_absolute_improvement": 0.002
+  },
+  "boundaries": [
+    "The D0 response probe was rejected and is not tuned in formal training.",
+    "Stage D is a clean-structure response predictor and never consumes generator rollouts.",
+    "The test split is evaluated once after validation-only checkpoint selection.",
+    "This training does not authorize Stage E/F, tensor-conditioned generation, relaxation, DFT, or DFPT."
+  ]
+}

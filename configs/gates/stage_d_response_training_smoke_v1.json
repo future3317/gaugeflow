@@ -1,0 +1,23 @@
+{
+  "protocol": "stage_d_response_training_v1",
+  "seed": 5731,
+  "steps": 3,
+  "batch_size": 8,
+  "precision": "bf16",
+  "backbone_learning_rate": 1e-5,
+  "head_learning_rate": 3e-4,
+  "weight_decay": 1e-4,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "warmup_steps": 1,
+  "checkpoint_every": 1,
+  "validation_every": 1,
+  "early_stopping_patience": 4,
+  "minimum_validation_improvement": 0.0,
+  "log_every": 1,
+  "augmentation": ["proper_rotation", "origin_shift", "atom_permutation"],
+  "arms": {
+    "baseline": {"piezoelectric_probe_weight": 0.0}
+  },
+  "boundaries": ["Three-step CUDA execution smoke only; no predictive claim."]
+}

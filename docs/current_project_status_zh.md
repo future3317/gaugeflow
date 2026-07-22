@@ -1,4 +1,4 @@
-# GaugeFlow 当前实现、方法演进与实验状态（2026-07-22）
+# GaugeFlow 当前实现、方法演进与实验状态（2026-07-23）
 
 ## 一句话结论
 
@@ -13,6 +13,50 @@ GaugeFlow-base 的 product-space runtime 已闭合：`joint` trainer 和 reverse
 三档模型均从头训练，seed 5705、effective batch 64、Alex train 恰好一遍（540,164 graphs），只改变容量。34M/58M/98M 的 validation ratio 分别为 `0.269575/0.292842/0.274138`，\(t=0.6\) explained fraction 为 `0.729079/0.757194/0.771143`，clean-side conditional-rollout normalized NN-W1 为 `0.148713/0.149680/0.131120`，全部零 failure 且 valid-distance fraction 为 1.0。该 rollout 从 coordinate prior 开始，但固定真实 atom types、lattice 与 node count，不能称为自由联合生成。98M 在中噪声和 NN-W1 上最好，但吞吐仅 `69.88 graphs/s`，相对 34M 的收益未越过预注册 margin；因此正式选择 34.28M（`238.26 graphs/s`）。
 
 ![GaugeFlow-base capacity screen](../reports/gaugeflow_base_capacity_screen_v1/capacity_screen.png)
+
+### Stage-B / Stage-C 预训练结果
+
+Stage-B-v1.1 已完成一遍 MatPES 物理表征迁移：physical composite 从
+`19.6127` 降至 `0.5929`，PBE teacher-feature cosine 达到 `0.8996`；同时
+A1 保持面板为 NN/volume W1 `0.5444/0.0722`、exact composition `1.0`、零
+sampling failure。
+
+Stage-C-v2 随后完成全部 50,000 次 LeMat/MatPES/Alex 三流 continued-pretraining。
+20k/30k/40k/50k 的 LeMat macro loss 为
+`1.5714/1.5317/1.5039/1.4863`，physical composite 为
+`0.3254/0.2908/0.2652/0.2505`，NN-W1 为
+`0.5628/0.5656/0.5785/0.5723`。所有候选均保持 exact composition、正体积、
+有效周期距离和零 failure。按 50k 结果产生前已经登记的四目标 Pareto-minimax
+规则，40k 被支配，20k/30k/50k 的最大归一化 regret 分别为
+`1.0/0.539119/0.608750`，因此正式选择 **Stage-C 30k**（global step 40,523，
+checkpoint SHA-256
+`8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9`）。
+50k 是完整训练轨迹终点并取得最好的 LeMat/physical/volume 指标，但不是综合折中
+最优的 operational base。该选择仍只属于 tensor-free GaugeFlow-base。
+
+### Stage-D 独立响应模型准备与 D0
+
+正式 D 数据边界现含 3,946 structures / 43,015 atoms，formula/prototype-disjoint
+split 为 `3,173/398/375` 且 reduced-composition overlap 为零。标签覆盖为：
+piezoelectric `3,946`，dielectric/Born/Gamma `3,943`，JARVIS elastic `2,893`，
+strict internal strain `1,266`。弹性源按审计合格的 GPa engineering-Voigt → Kelvin →
+Cartesian (C_{ijkl}) 唯一路径合并，原 cache 的全部非弹性 tensor 逐字节不变。最终 cache
+SHA-256 为 `4f780dba78b422e7b6f3e0db338cf769c968b9865f7096f5d5add0227f737e1c`。
+
+介电响应的 train RMS 中位数/p99/最大值为 `7.61/1107/112401`，普通 RMS 会让典型样本
+被极少数软模记录压缩数百倍。当前采用 train-only isotropic location、robust scale 与
+可逆 radial-asinh tensor chart，不删除物理上可能有效的重尾。elastic-enabled 3-step CUDA
+smoke 的 dielectric/elastic/total validation loss 为 `1.07464/0.71929/0.85943`，峰值显存
+`3.35 GiB`，全部 finite。
+
+FlowMimic 启发的 D0 response-field auxiliary 已按同 seed、同样本/增强顺序运行 2,000
+paired updates。baseline/probe 的 response-field loss 为 `0.35080761/0.35095587`，probe
+相对改善为 `-0.0423%`，未达到 5% 门槛；full tensor 仅恶化 `0.1163%`，其他任务 macro
+改善 `0.0142%`。因此问题不是 retention，而是该辅助项在完整 Cartesian tensor loss 上
+没有新增收益。正式 D 保留更简洁的 baseline，不再调 probe 权重。该结果只做机制选择，
+尚不是 D predictor 的测试集资格化，也不授权 E/F。
+
+![Stage-D D0](../reports/stage_d_d0_response_v1/stage_d_d0_response.png)
 
 ### GaugeFlow-base A1 自由联合结果
 
@@ -444,12 +488,13 @@ benchmark IDs 中有 129,152 个命中合格 LeMat rows 并被排除；exclusion
 tensor 与 v1 逐字节相同。这关闭了数据提供方原生 fingerprint envelope；更宽的独立
 StructureMatcher 可作为压力审计，但当前没有需要进一步裁决的 fingerprint collision。
 
-Stage-C 三流训练核心也已实现，但尚未启动训练。LeMat 与 Alex 都先转为不含 ID、functional
-和物理 target 的 dataset-neutral structure batch，并使用同一 GaugeFlow-base product-space
-denoising objective；MatPES 独立保留 masked physical objective。双卡梯度求和前，两个结构
-loss 分别乘本 rank 的真实 graph fraction，而 physical loss 继续使用全局有标签 graph
-denominator。LeMat/MatPES/Alex 三个 cursor 作为一个原子 checkpoint 状态恢复，缺少任一项
-即失败。正式 runner 与 CUDA resume smoke 仍需等待真实 Stage-B checkpoint。
+Stage-C 三流训练核心已经完成正式运行。LeMat 与 Alex 均转为不含 ID、functional 和物理
+target 的 dataset-neutral structure batch，并使用同一 GaugeFlow-base product-space
+denoising objective；MatPES 独立保留 masked physical objective。三张 GPU 分别拥有
+LeMat/MatPES/Alex 角色，梯度求和前两个结构 loss 分别乘本 rank 的真实 graph fraction，
+physical loss 继续使用全局有标签 graph denominator。三个 cursor、模型、optimizer、EMA
+和随机状态作为一个原子 checkpoint 恢复。CUDA resume smoke、50k 正式运行、完整三面板
+评估和 Pareto-minimax checkpoint 选型均已完成。
 
 完整索引的 CPU data-plane smoke 已进一步验证 block-local functional-balanced stream：
 在 1,000 个 global batch（每批 64）中，PBE/PBEsol/SCAN 的最大均衡误差为 0.00366146；

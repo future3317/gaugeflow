@@ -1,0 +1,30 @@
+{
+  "atoms": 380,
+  "augmentation_ms": 7.742480840533972,
+  "batch_size": 32,
+  "boundary": "Qualifies one-cost exact-object augmentation and the invariant D0 objective; it is not response predictive performance or an E/F authorization.",
+  "cache": "/home/workspace/lrh/DATA/T2C-Flow/processed/stage_d_jarvis_multitask_v1",
+  "cache_sha256": "e270e0a0573990343bbfa14d398e39168304756ccbd169de5b653602a0f116c2",
+  "checkpoint": "/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_lemat_continued_pretraining_v2/checkpoint_step_00040523.pt",
+  "checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9",
+  "checkpoint_step": 40523,
+  "gamma_relative_residual": 0.08039537817239761,
+  "gradient_cosine": 0.9994033238671566,
+  "gradient_parameters_compared": 29548670,
+  "loss_original": 2061.4111328125,
+  "loss_relative_residual": 2.30945788140993e-05,
+  "loss_transformed": 2061.363525390625,
+  "probe_weight": 0.1,
+  "schema": "gaugeflow.stage_d_equivalent_views.v1",
+  "seed": 5731,
+  "status": "failed",
+  "target_norm_relative_residual": 4.922909967017325e-07,
+  "thresholds": {
+    "gamma_relative_residual": 0.002,
+    "gradient_cosine_minimum": 0.995,
+    "loss_relative_residual": 0.002,
+    "target_norm_relative_residual": 5e-05,
+    "volume_relative_residual": 5e-05
+  },
+  "volume_relative_residual": 6.058156714061624e-07
+}

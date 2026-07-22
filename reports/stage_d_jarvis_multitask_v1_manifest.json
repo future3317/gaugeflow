@@ -1,0 +1,51 @@
+{
+  "audit_rows_sha256": "94d55cd00c0678943b396bd8cb14eea417a0895db7e1a801408053a300320d78",
+  "cache_sha256": "4f780dba78b422e7b6f3e0db338cf769c968b9865f7096f5d5add0227f737e1c",
+  "conventions": {
+    "born_effective_charge": "PiezoJet Z[j,i], coordinate/force row and polarization/field column",
+    "dielectric": "symmetric static epsilon = electronic epsilon + ionic epsilon_ion",
+    "elastic": "JARVIS elastic_total_kbar converted exactly once to GPa; full Cartesian point-group Reynolds target; engineering Voigt [xx,yy,zz,yz,xz,xy] -> orthonormal Kelvin -> C_ijkl",
+    "gamma": "sorted VASP dynamical-matrix eigenvalues; sign plus log1p absolute magnitude",
+    "internal_strain": "PiezoJet Lambda=dF/deta; no additional sign change; supervision only from schema-2 strict space-group/acoustic-null completion; pre-completion observed-block antisymmetry retained in audit_rows",
+    "missingness": "explicit masks; physical zero remains labelled",
+    "piezoelectric": "canonical engineering Voigt [xx,yy,zz,yz,xz,xy] -> Cartesian ijk=ikj -> full-O(3) crystal-point-group Reynolds projection"
+  },
+  "created_utc": "2026-07-22T18:58:34.284486+00:00",
+  "dfpt_manifest_sha256": "a3349f420dd3262e36a9d71cb33a95627f2080eb42d6d92e872b5665070a50a1",
+  "elastic_audit_sha256": "0fbf595cbd51f9b20aff08534182b8ea81c6a17ebd950d46b46a0e15f81bdc82",
+  "elastic_targets_sha256": "d83e723a3a66cce845f2159524a562063e8b598c031bc7ed4cb046205ddc543a",
+  "excluded_count": 1052,
+  "exclusions_sha256": "56f6045cb0c8619c984c7f84ce655ef025426c360524c666261678fde520cb99",
+  "label_counts": {
+    "born_graphs": 3943,
+    "dielectric": 3943,
+    "elastic": 2893,
+    "gamma_graphs": 3943,
+    "internal_strain_components": 407295,
+    "internal_strain_graphs": 1266,
+    "internal_strain_source_symmetric_within_rounding": 584,
+    "piezoelectric": 3946
+  },
+  "maximum_atoms": 20,
+  "qualified": true,
+  "reduced_composition_overlap": {
+    "train_test": 0,
+    "train_val": 0,
+    "val_test": 0
+  },
+  "schema": "gaugeflow.stage_d_jarvis_multitask.v1",
+  "selected_split_counts": {
+    "test": 375,
+    "train": 3173,
+    "val": 398
+  },
+  "source_counts": {
+    "jarvis_dfpt": 4995,
+    "jarvis_elastic": 3291,
+    "strict_internal_strain": 1638,
+    "tensororbit": 4998
+  },
+  "strain_completion_manifest_sha256": "cf82fe6879880502fe711d487f41e050165f1ac80fdc5eb24c65f56f2722cc40",
+  "tensororbit_manifest_sha256": "d52b306801ae3153da2e3a3018f4dfebafceab10111e6dcdff76fece2b15064e",
+  "tensororbit_split_sha256": "db5223dd7a57097648c956c710a7794bc1f09228f12a4ab4ce1b64b1a21c24fd"
+}

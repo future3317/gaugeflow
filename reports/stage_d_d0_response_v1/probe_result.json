@@ -1,0 +1,25 @@
+{
+  "arm": "probe",
+  "cache_sha256": "e270e0a0573990343bbfa14d398e39168304756ccbd169de5b653602a0f116c2",
+  "elapsed_seconds": 1066.993374302052,
+  "normalizer_sha256": "14eab6d371ca3f3ef3f6737b5014a8b0ee33d51496e20b6d28910610a2bb94e5",
+  "peak_cuda_memory_mib": 12636.51708984375,
+  "probe_weight": 0.1,
+  "protocol_sha256": "8d3bc8eb4a132f26e1b7e4dd7abbb9fdfdd523b5f6b743bf93806c95361413bb",
+  "schema": "gaugeflow.stage_d_d0_response_arm.v1",
+  "seed": 5731,
+  "source_checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9",
+  "source_checkpoint_step": 40523,
+  "status": "complete",
+  "steps": 2000,
+  "validation": {
+    "born_loss": 0.14952927805371022,
+    "dielectric_loss": 0.7562378941468857,
+    "elastic_loss": 0.0,
+    "gamma_loss": 0.7242626832358202,
+    "internal_strain_loss": 0.3505918215866664,
+    "loss": 0.4908591880271183,
+    "piezoelectric_loss": 0.29819624522822585,
+    "piezoelectric_probe_loss": 0.35095587492588176
+  }
+}

@@ -505,6 +505,33 @@ numbers remain valid two-panel diagnostics. The separately declared final
 selection adds a paired functional-balanced LeMat-v4 panel (500 graphs per
 functional, exhausting the rare PBEsol calibration support) and applies one
 transparent Pareto-minimax operational rule across v2 20k--50k checkpoints.
+Stage-C-v2 has now completed all 50,000 declared updates at global step 60,523
+with finite terminal metrics and a clean three-rank exit. The 50k three-panel
+objectives are LeMat macro loss `1.486348`, physical composite `0.250460`,
+NN-W1 `0.572337`, and volume-W1 `0.067552`; hard validity remains one and
+failures remain zero. All 20k--50k candidates are eligible, 40k is Pareto
+dominated, and the frozen Pareto-minimax rule selects Stage-C 30k (global step
+40,523; SHA-256
+`8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9`).
+The 50k checkpoint is the completed trajectory endpoint, not the operational
+base. This remains tensor-free evidence and does not authorize E/F, tensor
+conditioning, RL, relaxation, DFT, or DFPT.
+
+Stage-D preparation now uses one immutable formula/prototype-disjoint response
+cache with 3,946 graphs and 43,015 atoms (3,173/398/375). Label coverage is
+3,946 piezoelectric, 3,943 dielectric/Born/Gamma, 2,893 audited JARVIS elastic,
+and 1,266 strict internal-strain graphs. Elasticity follows the single GPa
+engineering-Voigt -> Kelvin -> Cartesian C_ijkl conversion; all pre-existing
+non-elastic cache tensors remain bitwise unchanged. Heavy-tailed tensor targets
+use a train-only invertible O(3)-covariant radial-asinh chart rather than sample
+deletion or ordinary RMS. The final cache/normalizer SHA-256 values are
+`4f780dba78b422e7b6f3e0db338cf769c968b9865f7096f5d5add0227f737e1c` and
+`27112e0c3f32911903ce9740942bbe50a10c3634275ab4c986946f1d3af87d35`.
+The paired 2,000-step response-probe D0 screen selected the full Cartesian
+baseline: the auxiliary worsened probe error by 0.0423% instead of improving it
+by the required 5%, while tensor and other-task retention passed. Do not tune
+the auxiliary weight or add it to formal D. D0 is mechanism selection, not
+predictive qualification and not E/F authorization.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
