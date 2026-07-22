@@ -1,0 +1,26 @@
+{
+  "counts": {
+    "calibration_rows": 252475,
+    "calibration_union_failures": 0,
+    "metric_condition_failures": 0,
+    "minimum_width_failures": 0,
+    "nonpositive_volume_failures": 0,
+    "selected_rows": 5068752,
+    "test_rows": 253247,
+    "test_union_failures": 0,
+    "train_rows": 4563030,
+    "train_union_failures": 0,
+    "union_failures": 0
+  },
+  "examples": [],
+  "index": "/home/workspace/lrh/DATA/T2C-Flow/processed/lemat_training_index_v3",
+  "index_manifest_sha256": "1d8b443ec019fb3d88d25fdbdad78f1d869adc22fdd841c8b985d10315035f83",
+  "index_sha256": "78ae796ec6bbb6b880ad16a004c81268a6e13aa62e2506ec76a9fa636f5be2e5",
+  "maximum_observed_metric_condition": 7706.2765950336725,
+  "minimum_observed_width_angstrom": 0.5096901232470784,
+  "schema": "gaugeflow.lemat_lattice_domain_audit.v1",
+  "thresholds": {
+    "maximum_metric_condition": 10000.0,
+    "minimum_width_angstrom": 0.5
+  }
+}

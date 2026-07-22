@@ -1,0 +1,47 @@
+{
+  "counts": {
+    "calibration_rows": 252475,
+    "calibration_union_failures": 0,
+    "metric_condition_failures": 1,
+    "minimum_width_failures": 2,
+    "nonpositive_volume_failures": 0,
+    "selected_rows": 5068754,
+    "test_rows": 253247,
+    "test_union_failures": 0,
+    "train_rows": 4563032,
+    "train_union_failures": 2,
+    "union_failures": 2
+  },
+  "examples": [
+    {
+      "index_position": 1404197,
+      "lattice_determinant": 256.03644200724517,
+      "metric_condition": 10877.689195709298,
+      "minimum_width_angstrom": 0.35095227499816656,
+      "row_group": 247,
+      "row_in_group": 516,
+      "source_index": 4,
+      "split": "train"
+    },
+    {
+      "index_position": 3845965,
+      "lattice_determinant": 135.40908653722602,
+      "metric_condition": 1455.0304982319867,
+      "minimum_width_angstrom": 0.4922988489996757,
+      "row_group": 37,
+      "row_in_group": 9,
+      "source_index": 13,
+      "split": "train"
+    }
+  ],
+  "index": "/home/workspace/lrh/DATA/T2C-Flow/processed/lemat_training_index_v2",
+  "index_manifest_sha256": "24eb6d4f8c59b67ba19c1132a0aa4ffa78a7c05bbaf5b210458b019f32bc44a5",
+  "index_sha256": "6ab73b2b21b937f756b1811318b620b32c96152493d10d3a674d8a94a4680fc1",
+  "maximum_observed_metric_condition": 10877.689195709298,
+  "minimum_observed_width_angstrom": 0.35095227499816656,
+  "schema": "gaugeflow.lemat_lattice_domain_audit.v1",
+  "thresholds": {
+    "maximum_metric_condition": 10000.0,
+    "minimum_width_angstrom": 0.5
+  }
+}

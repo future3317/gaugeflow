@@ -7,6 +7,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+import numpy as np
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
@@ -22,16 +23,62 @@ from .lemat_data import (
     validate_lemat_physical_label_policy,
 )
 from .matpes_data import MatPESPhysicalRecord
-from .matpes_index import SPLIT_TO_INDEX
+from .matpes_index import (
+    DEFAULT_MAXIMUM_LATTICE_METRIC_CONDITION,
+    DEFAULT_MINIMUM_LATTICE_WIDTH_ANGSTROM,
+    SPLIT_TO_INDEX,
+)
 
-LEMAT_INDEX_SCHEMA = 1
-_INDEX_COLUMNS = [
+LEMAT_INDEX_SCHEMA = 2
+_OVERLAP_COLUMNS = [
     "immutable_id",
     "entalpic_fingerprint",
     "nsites",
     "functional",
     "cross_compatibility",
 ]
+_INDEX_COLUMNS = [
+    *_OVERLAP_COLUMNS,
+    "lattice_vectors",
+]
+
+
+def _batched_lattice_quality_codes(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    minimum_width_angstrom: float,
+    maximum_metric_condition: float,
+) -> np.ndarray:
+    """Return -1 malformed, 0 accepted, or width/condition/volume bits."""
+
+    codes = np.full(len(rows), -1, dtype=np.int8)
+    positions: list[int] = []
+    lattices: list[np.ndarray] = []
+    for position, row in enumerate(rows):
+        try:
+            lattice = np.asarray(row["lattice_vectors"], dtype=np.float64)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if lattice.shape == (3, 3) and bool(np.isfinite(lattice).all()):
+            positions.append(position)
+            lattices.append(lattice)
+    if not positions:
+        return codes
+    lattice_batch = np.stack(lattices)
+    metric = lattice_batch @ np.swapaxes(lattice_batch, -1, -2)
+    eigenvalues = np.linalg.eigvalsh(metric)
+    minimum_width = np.sqrt(np.maximum(eigenvalues[:, 0], 0.0))
+    condition = eigenvalues[:, -1] / np.maximum(
+        eigenvalues[:, 0], np.finfo(np.float64).tiny
+    )
+    determinant = np.linalg.det(lattice_batch)
+    valid_codes = (minimum_width < minimum_width_angstrom).astype(np.int8)
+    valid_codes |= (
+        (condition > maximum_metric_condition).astype(np.int8) << 1
+    )
+    valid_codes |= ((determinant <= 0.0).astype(np.int8) << 2)
+    codes[np.asarray(positions)] = valid_codes
+    return codes
 
 
 class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
@@ -179,13 +226,22 @@ def build_lemat_index(
     excluded_material_ids: set[str] | None = None,
     excluded_material_ids_artifact_sha256: str | None = None,
     max_row_groups_per_source: int | None = None,
+    minimum_lattice_width_angstrom: float = DEFAULT_MINIMUM_LATTICE_WIDTH_ANGSTROM,
+    maximum_lattice_metric_condition: float = DEFAULT_MAXIMUM_LATTICE_METRIC_CONDITION,
 ) -> dict[str, Any]:
     """Build a source-balanced-ready row-group index without copying 5.4M records."""
 
     policy = validate_lemat_physical_label_policy(physical_label_policy)
     flattened = [(functional, Path(path)) for functional, paths in sources.items() for path in paths]
-    if not flattened or len(flattened) > 255 or maximum_atoms < 1 or maximum_atoms > 255:
-        raise ValueError("LeMat sources or maximum_atoms are invalid")
+    if (
+        not flattened
+        or len(flattened) > 255
+        or maximum_atoms < 1
+        or maximum_atoms > 255
+        or minimum_lattice_width_angstrom <= 0.0
+        or maximum_lattice_metric_condition <= 1.0
+    ):
+        raise ValueError("LeMat source or index-domain bounds are invalid")
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise FileExistsError(f"refusing to overwrite LeMat index {output}")
     output.mkdir(parents=True, exist_ok=True)
@@ -211,7 +267,7 @@ def build_lemat_index(
             if max_row_groups_per_source is not None:
                 groups = min(groups, max_row_groups_per_source)
             for group in range(groups):
-                rows = parquet.read_row_group(group, columns=_INDEX_COLUMNS).to_pylist()
+                rows = parquet.read_row_group(group, columns=_OVERLAP_COLUMNS).to_pylist()
                 for row in rows:
                     material_id = row.get("immutable_id")
                     if isinstance(material_id, str) and (
@@ -222,6 +278,8 @@ def build_lemat_index(
                         except ValueError:
                             pass
     excluded_large = excluded_overlap = excluded_direct_id = excluded_fingerprint = 0
+    excluded_degenerate = excluded_minimum_width = excluded_metric_condition = 0
+    excluded_nonpositive_volume = 0
     invalid_rows = 0
     compatible_rows = 0
     split_by_group: dict[str, int] = {}
@@ -233,6 +291,11 @@ def build_lemat_index(
         selected = 0
         for group in range(groups):
             rows = parquet.read_row_group(group, columns=_INDEX_COLUMNS).to_pylist()
+            lattice_quality_codes = _batched_lattice_quality_codes(
+                rows,
+                minimum_width_angstrom=minimum_lattice_width_angstrom,
+                maximum_metric_condition=maximum_lattice_metric_condition,
+            )
             for row_number, row in enumerate(rows):
                 try:
                     functional = str(row["functional"]).lower()
@@ -252,6 +315,15 @@ def build_lemat_index(
                         excluded_overlap += 1
                         excluded_direct_id += int(direct_overlap)
                         excluded_fingerprint += int(fingerprint_overlap and not direct_overlap)
+                        continue
+                    lattice_quality = int(lattice_quality_codes[row_number])
+                    if lattice_quality < 0:
+                        raise ValueError("malformed lattice")
+                    if lattice_quality:
+                        excluded_degenerate += 1
+                        excluded_minimum_width += lattice_quality & 1
+                        excluded_metric_condition += (lattice_quality >> 1) & 1
+                        excluded_nonpositive_volume += (lattice_quality >> 2) & 1
                         continue
                     split = SPLIT_TO_INDEX[
                         lemat_iid_split(
@@ -311,6 +383,8 @@ def build_lemat_index(
         "index_file": index_path.name,
         "index_sha256": sha256_file(index_path),
         "maximum_atoms": maximum_atoms,
+        "minimum_lattice_width_angstrom": minimum_lattice_width_angstrom,
+        "maximum_lattice_metric_condition": maximum_lattice_metric_condition,
         "seed": seed,
         "calibration_fraction": calibration_fraction,
         "test_fraction": test_fraction,
@@ -319,6 +393,10 @@ def build_lemat_index(
         "unique_split_groups": len(split_by_group),
         "compatible_selected_rows": compatible_rows,
         "excluded_large_cells": excluded_large,
+        "excluded_degenerate_lattice_rows": excluded_degenerate,
+        "excluded_minimum_lattice_width_rows": excluded_minimum_width,
+        "excluded_lattice_metric_condition_rows": excluded_metric_condition,
+        "excluded_nonpositive_lattice_volume_rows": excluded_nonpositive_volume,
         "excluded_external_overlap": excluded_overlap,
         "excluded_direct_id_rows": excluded_direct_id,
         "excluded_cross_id_fingerprint_rows": excluded_fingerprint,

@@ -55,6 +55,21 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     rows = [_row(index) for index in range(200)]
     rows[0]["immutable_id"] = "agm-overlap"
     rows[1]["entalpic_fingerprint"] = rows[0]["entalpic_fingerprint"]
+    rows[2]["lattice_vectors"] = [
+        [0.4, 0.0, 0.0],
+        [0.0, 3.0, 0.0],
+        [0.0, 0.0, 4.0],
+    ]
+    rows[3]["lattice_vectors"] = [
+        [0.6, 0.0, 0.0],
+        [0.0, 3.0, 0.0],
+        [0.0, 0.0, 100.0],
+    ]
+    rows[4]["lattice_vectors"] = [
+        [-2.0, 0.0, 0.0],
+        [0.0, 3.0, 0.0],
+        [0.0, 0.0, 4.0],
+    ]
     parquet = tmp_path / "pbe.parquet"
     pq.write_table(pa.Table.from_pylist(rows), parquet, row_group_size=20)
     root = tmp_path / "index"
@@ -73,7 +88,11 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     assert manifest["excluded_material_ids_count"] == 1
     assert manifest["excluded_material_ids_artifact_sha256"] == "a" * 64
     assert manifest["exclusion_artifact_bound"]
-    assert sum(manifest["split_counts"].values()) == 198
+    assert manifest["excluded_degenerate_lattice_rows"] == 3
+    assert manifest["excluded_minimum_lattice_width_rows"] == 1
+    assert manifest["excluded_lattice_metric_condition_rows"] == 1
+    assert manifest["excluded_nonpositive_lattice_volume_rows"] == 1
+    assert sum(manifest["split_counts"].values()) == 195
     dataset = IndexedLeMatDataset(root, "train", require_qualified=False)
     assert dataset[0].functional == "pbe"
     assert dataset[0].element_tokens.numel() == 2

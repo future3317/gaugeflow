@@ -188,7 +188,7 @@ def main() -> None:
         "train",
         verify_hashes=rank == 0,
     )
-    dist.barrier()
+    dist.barrier(device_ids=[local_rank])
     feature_cache = matpes_dataset.teacher_feature_cache
     if not isinstance(feature_cache, MatPESTeacherFeatureCache) or (
         feature_cache.feature_dim != int(stage_b_metadata["teacher_feature_dim"])
@@ -303,7 +303,7 @@ def main() -> None:
                 rank_runtime_states=gathered,
                 metadata=metadata,
             )
-        dist.barrier()
+        dist.barrier(device_ids=[local_rank])
 
     if args.resume is None:
         save_checkpoint()
@@ -384,7 +384,7 @@ def main() -> None:
             graphs_since_log = 0
         if objects.trainer.step in checkpoint_steps:
             save_checkpoint()
-    dist.barrier()
+    dist.barrier(device_ids=[local_rank])
     dist.destroy_process_group()
 
 

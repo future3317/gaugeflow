@@ -23,6 +23,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--exclude-material-ids", type=Path)
     parser.add_argument("--max-row-groups-per-source", type=int)
+    parser.add_argument("--minimum-lattice-width-angstrom", type=float, default=0.5)
+    parser.add_argument("--maximum-lattice-metric-condition", type=float, default=1.0e4)
     return parser.parse_args()
 
 
@@ -49,6 +51,8 @@ def main() -> None:
         excluded_material_ids=excluded,
         excluded_material_ids_artifact_sha256=excluded_artifact_sha256,
         max_row_groups_per_source=args.max_row_groups_per_source,
+        minimum_lattice_width_angstrom=args.minimum_lattice_width_angstrom,
+        maximum_lattice_metric_condition=args.maximum_lattice_metric_condition,
     )
     print(json.dumps(manifest, indent=2, sort_keys=True))
 
