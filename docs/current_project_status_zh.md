@@ -58,6 +58,38 @@ paired updates。baseline/probe 的 response-field loss 为 `0.35080761/0.350955
 
 ![Stage-D D0](../reports/stage_d_d0_response_v1/stage_d_d0_response.png)
 
+正式 Stage-D 随后使用完整 Cartesian baseline 训练到 step 7,500 并 early-stop，选择
+validation 最优 step 4,500（SHA-256
+`67dd8e8a4624fe87b6df2bc2580adfe04b777dfbad001102e7ecb2f6059a8497`）。
+validation/test total 为 `0.284270/0.256640`；test piezoelectric、response probe、
+dielectric、elastic、Born、Gamma、internal strain 分别为
+`0.249202/0.294194/0.522682/0.059267/0.106917/0.329163/0.272606`。
+它已冻结为 E/F 的独立 response evaluator，但不代表 tensor-conditioned generation 已通过。
+
+### Stage-E E0 common-noise orbit mimic
+
+E0 在完全相同 noisy state、diffusion clocks 和随机数下，只替换同一 tensor orbit 的
+代表元，并比较 categorical JS、Cartesian tangent、log-volume/log-shape 和边际 response
+field。common-noise orbit mimic 是唯一同时改善 endpoint fine、orbit residual、atlas
+information 与 target-swap separation 的臂：`2.067480 -> 1.818112`、
+`4.379e-4 -> 1.997e-4`、`2.598e-5 -> 2.373e-4`、
+`0.103512 -> 0.238860`。soft retention 和三种 exact-null 修复均损害条件学习，未保留
+为 runtime fallback。
+
+当前软件边界是显式双角色：Stage-C 30k 只负责 null/unconditional；选中的 E0
+orbit-mimic checkpoint（SHA-256
+`19392da08eb5d92ef3a4e7a799359983a62c6fd59a572d9f2d14475b68676b32`）要求真实存在的
+tensor condition，不能作为 null fallback。64-sample paired direct-condition rollout 已由
+冻结 Stage-D evaluator 独立检查并失败：tensor-orbit RMSE
+`1.066727 -> 1.403886`，NN-W1 `0.248767 -> 0.366399`，有效距离比例
+`1.0 -> 0.984375`；volume-W1 略改善且零 failure。说明离线 orbit-mimic 机制没有跨过
+generated-side exposure shift。E 尚未资格化，下一步先补条件 composition/lattice 接口和
+on-policy exposure，F 仍阻塞。
+
+![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
+
+![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)
+
 ### GaugeFlow-base A1 自由联合结果
 
 A1 使用 34,284,207 参数、BF16 learned path、FP32 geometry、effective batch 64 和 seed

@@ -1,0 +1,7 @@
+{
+  "best_checkpoint_path": "/home/workspace/lrh/DATA/T2C-Flow/runs/stage_d_response_training_v1/best_checkpoint.pt",
+  "best_checkpoint_sha256": "67dd8e8a4624fe87b6df2bc2580adfe04b777dfbad001102e7ecb2f6059a8497",
+  "best_step": 4500,
+  "device": "NVIDIA GeForce RTX 4090",
+  "source_checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9"
+}

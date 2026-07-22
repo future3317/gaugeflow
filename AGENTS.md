@@ -533,6 +533,44 @@ by the required 5%, while tensor and other-task retention passed. Do not tune
 the auxiliary weight or add it to formal D. D0 is mechanism selection, not
 predictive qualification and not E/F authorization.
 
+Formal Stage D then trained the independent full-Cartesian multi-task response
+model to step 7,500 and selected the validation-best step 4,500 checkpoint
+(SHA-256
+`67dd8e8a4624fe87b6df2bc2580adfe04b777dfbad001102e7ecb2f6059a8497`).
+Validation/test total losses are `0.284270/0.256640`; test piezoelectric and
+response-probe losses are `0.249202/0.294194`, and dielectric, elastic, Born,
+Gamma, and internal-strain losses are
+`0.522682/0.059267/0.106917/0.329163/0.272606`. This qualifies the frozen D
+checkpoint as the independent evaluator for E/F mechanism work; it is not a
+claim of tensor-conditioned generation, relaxation, or DFT/DFPT closure.
+
+Stage-E E0 uses paired forwards on the same noisy state, clocks, and random
+draw while changing only the representative of one tensor orbit. The typed
+loss compares categorical JS, Cartesian coordinate tangents, volume/shape
+charts, and the marginalized response field; raw atlas candidate IDs are never
+compared. The orbit-mimic arm improves validation fine loss
+`2.067480 -> 1.818112`, reduces typed orbit residual by 54.4%
+(`4.379e-4 -> 1.997e-4`), raises posterior information about ninefold, and
+increases target-swap separation `0.103512 -> 0.238860`. Soft retention and
+three exact-null repairs lose this conditional Pareto point. Keep only two
+explicit roles: C-30k owns null/unconditional sampling, while the selected E0
+checkpoint (SHA-256
+`19392da08eb5d92ef3a4e7a799359983a62c6fd59a572d9f2d14475b68676b32`)
+requires a supplied tensor condition and must never act as a null fallback.
+E0 remains a mechanism screen; F stays blocked pending the paired rollout with
+the independent Stage-D evaluator.
+
+That 64-target, 50-step paired rollout has now completed and failed. The frozen
+Stage-D normalized tensor-orbit RMSE is `1.066727` for C-30k and `1.403886` for
+the condition-required E0 checkpoint; the paired conditioned-minus-base 95%
+interval is `[-0.003943, 0.769720]`. NN-W1 worsens
+`0.248767 -> 0.366399`, and the valid-distance fraction falls
+`1.0 -> 0.984375 < 0.99`; volume-W1 slightly improves and both paths retain
+zero failures and positive finite lattices. Therefore Stage E is not qualified
+and F0 must not run. The next E implementation must condition the missing
+composition/lattice side-state interfaces and include generated-side exposure;
+do not attempt to rescue this result by increasing only the mimic weight.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`

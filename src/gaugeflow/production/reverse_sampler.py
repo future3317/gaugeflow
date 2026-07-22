@@ -784,6 +784,7 @@ class TensorFreeReverseSampler:
         self,
         blueprint: ParentBlueprintBatch,
         *,
+        tensor_condition: torch.Tensor | None = None,
         steps: int = 100,
         initial_state: ContinuousReverseInitialState | None = None,
         initialization_generator: torch.Generator | None = None,
@@ -842,8 +843,27 @@ class TensorFreeReverseSampler:
         log_volume = self.lattice_standardizer.decode_volume(volume_latent, blueprint.node_counts)
         log_shape = self.lattice_standardizer.decode_shape(shape_latent)
         log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, log_shape)
-        condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
-        condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
+        if tensor_condition is None:
+            condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
+            condition_present = torch.zeros(
+                (graphs, 1), dtype=torch.bool, device=device
+            )
+        else:
+            if (
+                tensor_condition.shape != (graphs, 18)
+                or tensor_condition.dtype != dtype
+                or tensor_condition.device != device
+                or not bool(torch.isfinite(tensor_condition).all())
+            ):
+                raise ValueError(
+                    "tensor condition must be finite [graphs,18] in the blueprint chart"
+                )
+            # A supplied all-zero tensor is a physical zero condition, not the
+            # missing/null branch. Absence is represented only by ``None``.
+            condition = tensor_condition
+            condition_present = torch.ones(
+                (graphs, 1), dtype=torch.bool, device=device
+            )
         times = reverse_time_grid(
             self.vp_schedule,
             self.maximum_time,

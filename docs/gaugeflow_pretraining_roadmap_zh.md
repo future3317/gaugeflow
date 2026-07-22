@@ -277,6 +277,13 @@ sample order、augmentation RNG 和单 seed 跑 2,000 paired updates；只有 pr
 至少改善 5%、完整 piezo loss 与其他任务 macro 分别不恶化超过 2%，才把 auxiliary
 固化进正式 D。D 不读取生成器 rollout，继续保持独立评价器边界。
 
+D0 已完成并否决 probe auxiliary：response-field error 相对改善为 `-0.0423%`，而非
+要求的 `+5%`。正式 D 因此保留完整 Cartesian baseline，在 7,500 step early-stop，选择
+validation 最优的 step 4,500 checkpoint（SHA-256
+`67dd8e8a4624fe87b6df2bc2580adfe04b777dfbad001102e7ecb2f6059a8497`）。
+validation/test total 为 `0.284270/0.256640`，test piezo/probe 为
+`0.249202/0.294194`。该 checkpoint 只作为 E/F 的冻结独立评价器，不是生成结果。
+
 ## 8. 阶段 E：tensor-orbit adapter
 
 E 同时等待合格 GaugeFlow-base 与合格 D 模型。先冻结元素 embedding、大部分 message
@@ -294,6 +301,19 @@ E0 的首选优化是 common-noise orbit mimic：同一结构、同一 diffusion
 atlas 候选编号不能直接逐项比较，可比较重标号 posterior 或边际 response field。另加
 冻结 Stage-C teacher 的 null-condition retention，但该项只在 condition-dropout/空条件分支
 计算，绝不能压到正常 tensor-conditioned 分支。hidden/attention mimic 不作主要 loss。
+
+E0 六臂机制筛选现已完成。common-noise orbit mimic 将 fine loss 从 `2.067480` 改善到
+`1.818112`，typed orbit residual 降低 `54.4%`，posterior information 约提高 9 倍，
+target-swap separation 从 `0.103512` 增至 `0.238860`。soft retention 虽把 null drift
+降到 `0.048221`，但损害 fine/orbit/posterior；atlas-only、低秩 residual 和 centered
+block 三种 exact-null 修复也都失去条件 Pareto 点，因此不进入 production。当前采用
+显式双角色：C-30k 专管 null/unconditional，选中的 orbit-mimic E0 checkpoint 专管
+condition-present；后者不得作为 null fallback。64 个 held-out tensor targets、50-step
+paired rollout 已完成且失败：冻结 D tensor-orbit RMSE `1.066727 -> 1.403886`，配对
+95% 区间 `[-0.003943,0.769720]`；NN-W1 `0.248767 -> 0.366399`，有效距离比例
+`1.0 -> 0.984375 < 0.99`。volume-W1 略改善且零 failure，但不能抵消目标和碰撞失败。
+下一版 E 必须补上 tensor-conditioned composition/lattice side-state law，并加入
+generated-side exposure；不能只增大 mimic 权重。F 继续阻塞。
 
 ## 9. 阶段 F：受约束 reward post-training
 

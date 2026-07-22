@@ -1,0 +1,22 @@
+{
+  "arm": "orbit_mimic_exact_null",
+  "boundary": "Post-E0 one-seed repair screen. Only condition-exclusive geometry-query and atlas parameters are trainable; the learned null token and every shared Stage-C block/readout remain byte-frozen. This cannot qualify full Stage E/F, relaxation, DFT or DFPT.",
+  "checkpoint_sha256": "8550f9573908900b56267fe9740181ed37f0a19fa008e13e7710d5d3cf4c9e79",
+  "device": "NVIDIA GeForce RTX 4090",
+  "schema": "gaugeflow.stage_e_e0_result.v1",
+  "steps": 1000,
+  "trainable_parameters": 3316237,
+  "validation": {
+    "aligned_tensor_norm": 0.006265685002972532,
+    "atlas_gate": 0.013187659510549565,
+    "condition_norm": 3.6154305022209883,
+    "fine": 2.657142906449735,
+    "null_retention": 3.772568550955424e-10,
+    "orbit_mimic": 0.003559208431728308,
+    "posterior_information": 1.4080934482518792e-05,
+    "representative_response": 2.763033937784251e-07,
+    "rotated_fine": 2.6680129268206656,
+    "target_swap_separation": 0.14701540162786841,
+    "unique_candidates": 6442.0625
+  }
+}

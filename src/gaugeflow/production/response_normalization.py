@@ -50,6 +50,23 @@ class ResponseNormalizer:
             }
         )
 
+    def normalize_piezoelectric(
+        self,
+        value: torch.Tensor,
+        source_index: torch.Tensor,
+    ) -> torch.Tensor:
+        """Map physical piezoelectric tensors to the shared covariant chart."""
+
+        if value.ndim != 4 or value.shape[-3:] != (3, 3, 3):
+            raise ValueError("piezoelectric values must have shape [graphs,3,3,3]")
+        if source_index.shape != value.shape[:1] or source_index.dtype != torch.long:
+            raise ValueError("piezoelectric source index must contain one integer per graph")
+        if int(source_index.min()) < 0 or int(source_index.max()) >= self.source_count:
+            raise ValueError("piezoelectric source index lies outside the normalizer vocabulary")
+        return _radial_asinh(
+            value / self.piezoelectric_scale[source_index, None, None, None]
+        )
+
     def normalize(
         self,
         target: ResponseTargets,
@@ -74,9 +91,9 @@ class ResponseNormalizer:
             - self.born_isotropic_location[node_source, None, None] * identity
         ) / self.born_scale[node_source, None, None])
         return ResponseTargets(
-            piezoelectric=_radial_asinh(
-                target.piezoelectric
-                / self.piezoelectric_scale[graph_source, None, None, None]
+            piezoelectric=self.normalize_piezoelectric(
+                target.piezoelectric,
+                graph_source,
             ),
             dielectric=dielectric,
             elastic=_radial_asinh(

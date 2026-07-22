@@ -525,6 +525,7 @@ def main() -> None:
         "validation": validation_metrics,
         "test": test_metrics,
         "best_step": best_step if formal_training else last_step,
+        "best_checkpoint_sha256": sha256_file(best_path) if formal_training else None,
         "stopped_early": stopped_early,
         "elapsed_seconds": time.perf_counter() - started,
         "peak_cuda_memory_mib": torch.cuda.max_memory_allocated(device) / 2**20,

@@ -1,0 +1,22 @@
+{
+  "arm": "orbit_mimic_residual_adapter",
+  "boundary": "One-seed Stage-E mechanism repair. The Stage-C function is exact on condition_present=false; only atlas/query and explicitly gated low-rank residual adapters train. This cannot qualify full Stage E/F, relaxation, DFT or DFPT.",
+  "checkpoint_sha256": "cbc9f6b3787f56a1c20c2e735a0a82d12d905fd49f10d262395d9e81214f284c",
+  "device": "NVIDIA GeForce RTX 4090",
+  "schema": "gaugeflow.stage_e_e0_result.v1",
+  "steps": 1000,
+  "trainable_parameters": 3480429,
+  "validation": {
+    "aligned_tensor_norm": 0.006896547274664044,
+    "atlas_gate": 0.013187786556045467,
+    "condition_norm": 3.6154305022209883,
+    "fine": 2.8063770039007068,
+    "null_retention": 4.4733997235646417e-10,
+    "orbit_mimic": 0.0002825449267467948,
+    "posterior_information": 1.1731150449501015e-05,
+    "representative_response": 3.0874422839903895e-07,
+    "rotated_fine": 2.8234522682614625,
+    "target_swap_separation": 0.13767134910449386,
+    "unique_candidates": 6442.03125
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "arm": "orbit_mimic_retention",
+  "boundary": "E0 is a one-seed mechanism screen on Stage-D train/validation structures with oracle piezoelectric conditions. It cannot qualify tensor-conditioned free generation, Stage E, Stage F, relaxation, DFT or DFPT.",
+  "checkpoint_sha256": "77a0a2ecf827a53650923ae044ba839635ef79206c899319423763b59cd840b4",
+  "device": "NVIDIA GeForce RTX 4090",
+  "schema": "gaugeflow.stage_e_e0_result.v1",
+  "steps": 1000,
+  "trainable_parameters": 13398319,
+  "validation": {
+    "aligned_tensor_norm": 0.004247270611926979,
+    "atlas_gate": 0.013187501855099981,
+    "condition_norm": 3.6154305022209883,
+    "fine": 2.1934813261032104,
+    "null_retention": 0.04822112541296519,
+    "orbit_mimic": 0.00047763533683792926,
+    "posterior_information": 6.691064955655079e-06,
+    "representative_response": 1.425726010705758e-07,
+    "rotated_fine": 2.19702619779855,
+    "target_swap_separation": 0.25677289394661784,
+    "unique_candidates": 6446.078125
+  }
+}

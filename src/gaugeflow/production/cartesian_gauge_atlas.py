@@ -574,13 +574,17 @@ class StratifiedCartesianGaugeAtlas(nn.Module):
         tensor = piezo_from_irreps(piezo_irreps)
         invariant, condition_covariance = self.invariant(tensor)
         geometry_covariance = geometry_queries.frame_tensor
-        geometry_signal = torch.linalg.vector_norm(geometry_queries.rank_three.flatten(1), dim=-1)
+        # Candidate availability is a property of whether a concrete geometry
+        # exists, not of the still-trainable Cartesian descriptors. A zero or
+        # isotropic descriptor must enter the global cubature fallback rather
+        # than permanently bypass the atlas and receive no gradient.
+        geometry_available = torch.bincount(edge_graph, minlength=graphs) > 0
         condition_signal = torch.linalg.vector_norm(tensor.flatten(1), dim=-1)
         signal_floor = 32.0 * torch.finfo(tensor.dtype).eps
         geometry_frames = [
             self._frame_data(
                 geometry_covariance[index],
-                directional=bool(geometry_signal[index].detach() > signal_floor),
+                directional=bool(geometry_available[index]),
             )
             for index in range(graphs)
         ]
@@ -637,7 +641,18 @@ class StratifiedCartesianGaugeAtlas(nn.Module):
             confidence[indices] = (local_kl / maximum_kl.clamp_min(1e-12)).clamp(0.0, 1.0)
         available = counts > 0
         snr = self.schedule.snr(time)
-        gate = self.lambda_max * (snr / (1.0 + snr)) * confidence * available.to(confidence)
+        # The candidate prior is itself the finite conditional measure. A
+        # posterior equal to that prior means uncertainty, not absence of the
+        # tensor condition. A small prior-marginal floor keeps a first-order
+        # gradient through the aligned tensor at uniform initialization; the
+        # KL confidence then increases its influence as alignment specializes.
+        alignment_strength = 0.05 + 0.95 * confidence
+        gate = (
+            self.lambda_max
+            * (snr / (1.0 + snr))
+            * alignment_strength
+            * available.to(posterior)
+        )
         fixed_response = response_field(aligned.unsqueeze(1), self.probes.to(aligned).unsqueeze(0)).reshape(graphs, 18)
         aligned_features = torch.cat(
             (fixed_response, entropy.unsqueeze(-1), counts.to(tensor).log1p().unsqueeze(-1), gate.unsqueeze(-1)), dim=-1

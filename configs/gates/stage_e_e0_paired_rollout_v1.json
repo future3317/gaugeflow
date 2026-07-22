@@ -1,0 +1,21 @@
+{
+  "protocol": "stage_e_e0_paired_rollout_v1",
+  "seed": 5711,
+  "samples": 64,
+  "batch_size": 2,
+  "reverse_steps": 50,
+  "continuous_mode": "reverse_sde",
+  "time_grid": "uniform_log_alpha",
+  "orbit_frames": 384,
+  "bootstrap_resamples": 2000,
+  "wasserstein_quantile_points": 512,
+  "checks": {
+    "sampling_failures": 0,
+    "finite_positive_lattice_fraction": 1.0,
+    "minimum_distance_fraction_at_0_5_angstrom_min": 0.99,
+    "conditioned_minus_base_nn_w1_max": 0.02,
+    "conditioned_minus_base_volume_w1_max": 0.01,
+    "orbit_error_paired_improvement": "paired bootstrap upper bound below zero"
+  },
+  "boundary": "Restricted P1 direct-condition rollout with held-out target tensors and observed node counts. Composition, assignment, lattice and coordinates are generated, but this is not parent-conditioned OOD Stage E, Stage F, relaxation, DFT or DFPT."
+}

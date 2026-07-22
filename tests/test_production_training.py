@@ -1132,6 +1132,39 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
         )
 
 
+def test_joint_sampler_distinguishes_physical_zero_tensor_from_missing_condition():
+    model = _small_product_model()
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2]))
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=_small_composition_model(),
+    )
+    seen: list[tuple[torch.Tensor, torch.Tensor]] = []
+
+    def capture_condition(_module, args):
+        seen.append((args[6].detach().clone(), args[7].detach().clone()))
+
+    handle = model.register_forward_pre_hook(capture_condition)
+    physical_zero = torch.zeros((1, 18))
+    try:
+        sampler.sample(
+            blueprint,
+            tensor_condition=physical_zero,
+            steps=1,
+            initialization_generator=torch.Generator().manual_seed(141),
+            categorical_generator=torch.Generator().manual_seed(142),
+            continuous_mode="probability_flow",
+        )
+    finally:
+        handle.remove()
+    assert seen
+    assert all(torch.equal(condition, physical_zero) for condition, _ in seen)
+    assert all(bool(present.all()) for _, present in seen)
+
+
 def test_element_reverse_sampler_uses_observed_geometry_and_finishes_without_masks() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     del elements

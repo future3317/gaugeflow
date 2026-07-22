@@ -542,6 +542,32 @@ class TensorFreeHybridDiffusion(nn.Module):
             **denoiser_time_arguments,
         )
 
+        return self.loss_from_prediction(
+            clean_elements,
+            clean_lattice,
+            batch,
+            fractional_to_cartesian,
+            noisy,
+            prediction,
+        )
+
+    def loss_from_prediction(
+        self,
+        clean_elements: torch.Tensor,
+        clean_lattice: torch.Tensor,
+        batch: torch.Tensor,
+        fractional_to_cartesian: torch.Tensor,
+        noisy: TensorFreeNoisyBatch,
+        prediction: HybridDenoiserOutput,
+    ) -> HybridLossOutput:
+        """Score one prediction against an already sampled common noisy state.
+
+        Stage-E uses this public decomposition to evaluate two tensor-orbit
+        representatives against exactly the same probability-path draw.  It
+        does not resample noise or duplicate target construction.
+        """
+
+        graphs = noisy.time.numel()
         if noisy.orderless_occupation is None:
             node_cross_entropy = F.cross_entropy(prediction.clean_element_logits, clean_elements, reduction="none")
             mask = noisy.element_was_masked.to(node_cross_entropy)

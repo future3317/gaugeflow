@@ -1,0 +1,28 @@
+{
+  "protocol": "stage_e_e0_exact_null_adapter_v1",
+  "seed": 5705,
+  "steps": 1000,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "orbit_mimic_exact_null": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.0,
+      "exact_null": true
+    }
+  },
+  "evaluation": {
+    "common_noise": true,
+    "null_typed_drift_max": 0.000001,
+    "target_swap_separation": "must remain positive",
+    "posterior_information_min": 0.0
+  },
+  "boundary": "Post-E0 one-seed repair screen. Only condition-exclusive geometry-query and atlas parameters are trainable; the learned null token and every shared Stage-C block/readout remain byte-frozen. This cannot qualify full Stage E/F, relaxation, DFT or DFPT."
+}

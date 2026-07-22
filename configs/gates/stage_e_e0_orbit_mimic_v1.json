@@ -1,0 +1,37 @@
+{
+  "protocol": "stage_e_e0_orbit_mimic_v1",
+  "seed": 5705,
+  "steps": 1000,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "baseline": {
+      "orbit_weight": 0.0,
+      "retention_weight": 0.0
+    },
+    "orbit_mimic": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.0
+    },
+    "orbit_mimic_retention": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1
+    }
+  },
+  "evaluation": {
+    "common_noise": true,
+    "posterior_comparison": "marginalized response field; never raw candidate IDs",
+    "representative_residual_reduction_min": 0.5,
+    "target_swap_separation": "must be positive and improve over baseline",
+    "posterior_information_min": 0.0,
+    "null_typed_drift_max": 0.03
+  },
+  "boundary": "E0 is a one-seed mechanism screen on Stage-D train/validation structures with oracle piezoelectric conditions. It cannot qualify tensor-conditioned free generation, Stage E, Stage F, relaxation, DFT or DFPT."
+}

@@ -197,6 +197,37 @@ def test_atlas_has_finite_backward_gradients():
     assert condition.grad is not None and torch.isfinite(condition.grad).all()
 
 
+def test_untrained_zero_rank_three_query_does_not_dead_gate_alignment():
+    atlas = StratifiedCartesianGaugeAtlas(
+        16, residual_circle_samples=4, generic_chart_samples=1
+    ).eval()
+    rank_three = torch.zeros((1, 2, 3, 3, 3), requires_grad=True)
+    zero_first = torch.zeros((1, 2, 3))
+    zero_second = torch.zeros((1, 2, 3, 3))
+    zero_third = torch.zeros((1, 2, 3, 3, 3))
+    query = CartesianGeometryQueries(
+        first=zero_first,
+        second=zero_second,
+        third=zero_third,
+        rank_three=rank_three,
+        frame_tensor=torch.zeros((1, 3, 3)),
+    )
+    condition = torch.randn((1, 18), generator=torch.Generator().manual_seed(140))
+    output = atlas(
+        condition,
+        torch.ones((1, 1), dtype=torch.bool),
+        torch.tensor([[1.0, 0.0, 0.0]]),
+        torch.zeros(1, dtype=torch.long),
+        query,
+        torch.tensor([0.4]),
+    )
+    assert output.effective_frame_count.item() > 0
+    assert output.gate.item() > 0.0
+    output.graph_condition.square().sum().backward()
+    assert rank_three.grad is not None and torch.isfinite(rank_three.grad).all()
+    assert torch.linalg.vector_norm(rank_three.grad) > 0.0
+
+
 def test_candidate_measure_deduplication_is_order_and_duplicate_expansion_invariant():
     atlas = StratifiedCartesianGaugeAtlas(16, generic_chart_samples=1).double().eval()
     first, second = _rotation(130), _rotation(131)

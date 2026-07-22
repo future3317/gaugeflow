@@ -1,0 +1,39 @@
+{
+  "arm": "baseline",
+  "best_checkpoint_sha256": "67dd8e8a4624fe87b6df2bc2580adfe04b777dfbad001102e7ecb2f6059a8497",
+  "best_step": 4500,
+  "cache_sha256": "4f780dba78b422e7b6f3e0db338cf769c968b9865f7096f5d5add0227f737e1c",
+  "elapsed_seconds": 2417.168266214896,
+  "maximum_steps": 8000,
+  "normalizer_sha256": "27112e0c3f32911903ce9740942bbe50a10c3634275ab4c986946f1d3af87d35",
+  "peak_cuda_memory_mib": 13263.2451171875,
+  "probe_weight": 0.0,
+  "protocol_sha256": "573196c2f54d05f0f08dd4f7766a9a80592130db24e6f05c9923816e60c7aa23",
+  "schema": "gaugeflow.stage_d_response_training.v1",
+  "seed": 5731,
+  "source_checkpoint_sha256": "8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9",
+  "source_checkpoint_step": 40523,
+  "status": "complete",
+  "steps": 7500,
+  "stopped_early": true,
+  "test": {
+    "born_loss": 0.1069170020222664,
+    "dielectric_loss": 0.5226817283630371,
+    "elastic_loss": 0.05926715009411176,
+    "gamma_loss": 0.32916300296783446,
+    "internal_strain_loss": 0.27260634485880536,
+    "loss": 0.25663955823580425,
+    "piezoelectric_loss": 0.24920207715034484,
+    "piezoelectric_probe_loss": 0.29419367281595865
+  },
+  "validation": {
+    "born_loss": 0.1360808583210461,
+    "dielectric_loss": 0.6191533720073987,
+    "elastic_loss": 0.07193182251561227,
+    "gamma_loss": 0.3014080844931866,
+    "internal_strain_loss": 0.29908785343769206,
+    "loss": 0.28427008183757263,
+    "piezoelectric_loss": 0.27795842754181904,
+    "piezoelectric_probe_loss": 0.32882363802224546
+  }
+}
