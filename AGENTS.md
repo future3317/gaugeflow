@@ -493,6 +493,12 @@ three-GPU resume smoke passes, and formal training continues with checkpoints
 every 5,000 steps. The 10k/20k physical composite losses are
 `0.38709/0.32535`; NN-W1 values are `0.55329/0.56282`, with exact composition,
 positive lattices, valid distances and zero failures retained.
+The same fixed diagnostic at 30k/40k gives physical composite
+`0.29083/0.26518`, teacher-feature cosine `0.93226/0.93639`, and NN-W1
+`0.56561/0.57846`. All 512-sample hard-validity fractions remain one and
+failures remain zero. This is a physical-transfer versus local-geometry
+retention trade-off, not sampler collapse; the final checkpoint is selected
+from the declared Pareto panel rather than by optimizer step alone.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

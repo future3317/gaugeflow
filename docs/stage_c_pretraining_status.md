@@ -70,20 +70,24 @@ support. A three-GPU one-step resume smoke passed before v2 continued.
 
 ## Mid-training evidence
 
-| Metric | Stage-B | Stage-C 10k | Stage-C 20k |
-|---|---:|---:|---:|
-| Physical composite | `0.5929` | `0.3871` | `0.3254` |
-| Energy RMSE | `0.1143` | `0.0955` | `0.0859` |
-| Force RMSE | `0.3882` | `0.3318` | `0.3053` |
-| Stress RMSE | `0.5733` | `0.4301` | `0.3888` |
-| Teacher cosine | `0.8996` | `0.9171` | `0.9264` |
-| NN-W1 | `0.5444` | `0.5533` | `0.5628` |
-| Volume-W1 | `0.0722` | `0.0624` | `0.0676` |
+| Metric | Stage-B | Stage-C 10k | Stage-C 20k | Stage-C 30k | Stage-C 40k |
+|---|---:|---:|---:|---:|---:|
+| Physical composite | `0.5929` | `0.3871` | `0.3254` | `0.2908` | `0.2652` |
+| Energy RMSE | `0.1143` | `0.0955` | `0.0859` | `0.0801` | `0.0757` |
+| Force RMSE | `0.3882` | `0.3318` | `0.3053` | `0.2898` | `0.2748` |
+| Stress RMSE | `0.5733` | `0.4301` | `0.3888` | `0.3643` | `0.3469` |
+| Teacher cosine | `0.8996` | `0.9171` | `0.9264` | `0.9323` | `0.9364` |
+| NN-W1 | `0.5444` | `0.5533` | `0.5628` | `0.5656` | `0.5785` |
+| Volume-W1 | `0.0722` | `0.0624` | `0.0676` | `0.0680` | `0.0711` |
 
 Physical representation improves monotonically. Generative validity remains
 perfect with zero failures, while the monotone NN-W1 increase is tracked as a
-possible physical-transfer versus generative-retention trade-off. The next
-full diagnostic is the Stage-C 30k checkpoint (global step 40,523).
+physical-transfer versus generative-retention trade-off. At 30k, all 512
+samples still have exact composition, finite positive lattices, valid minimum
+distance and zero failures; this remains true at 40k. The larger 30k-to-40k
+NN-W1 increase (`+0.0128`) makes the trade-off material: selection will use the
+physical/retention Pareto frontier, not the last optimizer step. The next full
+diagnostic is the final Stage-C 50k checkpoint (global step 60,523).
 
 ## Evaluation contract
 
