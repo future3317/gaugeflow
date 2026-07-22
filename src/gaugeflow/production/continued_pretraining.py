@@ -215,7 +215,8 @@ def accumulate_continued_pretraining_step(
     lemat_rank_fraction: float,
     alex_rank_fraction: float,
     physical_denominators: PhysicalLossDenominators | None = None,
-    generator: torch.Generator | None = None,
+    lemat_generator: torch.Generator | None = None,
+    alex_generator: torch.Generator | None = None,
 ) -> ContinuedPretrainingLosses:
     """Accumulate one mathematically global three-stream objective.
 
@@ -237,14 +238,14 @@ def accumulate_continued_pretraining_step(
     lemat_loss = structure_replay_loss(
         trainer.diffusion,
         lemat,
-        generator=generator,
+        generator=lemat_generator,
         precision=trainer.config.precision,
     )
     (weights.lemat_structure * lemat_rank_fraction * lemat_loss).backward()
     alex_loss = structure_replay_loss(
         trainer.diffusion,
         alex,
-        generator=generator,
+        generator=alex_generator,
         precision=trainer.config.precision,
     )
     (weights.alex_structure * alex_rank_fraction * alex_loss).backward()

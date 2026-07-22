@@ -58,6 +58,7 @@ def main() -> None:
             rank=rank,
             world_size=args.world_size,
             seed=args.seed,
+            block_index=dataset.sampling_block_index,
         )
         for rank in range(args.world_size)
     ]
@@ -65,6 +66,7 @@ def main() -> None:
     rank_counts = torch.zeros(args.world_size, dtype=torch.long)
     resume_state: dict[str, object] | None = None
     resume_reference: torch.Tensor | None = None
+    unique_blocks_per_batch: list[int] = []
     for batch in range(args.batches):
         local = [stream.next_indices() for stream in streams]
         global_indices = torch.empty(sum(value.numel() for value in local), dtype=torch.long)
@@ -73,6 +75,9 @@ def main() -> None:
             rank_counts[rank] += value.numel()
         source_counts += torch.bincount(
             dataset.functional_group_index[global_indices], minlength=len(weights)
+        )
+        unique_blocks_per_batch.append(
+            int(torch.unique(dataset.sampling_block_index[global_indices]).numel())
         )
         states = [stream.state for stream in streams]
         if len({(state.source_epochs, state.source_offsets) for state in states}) != 1:
@@ -90,6 +95,7 @@ def main() -> None:
         rank=0,
         world_size=args.world_size,
         seed=args.seed,
+        block_index=dataset.sampling_block_index,
     )
     resumed.load_state_dict(resume_state)
     if not torch.equal(resumed.next_indices(), resume_reference):
@@ -97,7 +103,7 @@ def main() -> None:
     fractions = source_counts.double() / source_counts.sum()
     target = torch.full_like(fractions, 1.0 / len(weights))
     result = {
-        "schema": "gaugeflow.lemat_balanced_stream_smoke.v1",
+        "schema": "gaugeflow.lemat_balanced_stream_smoke.v2",
         "index": str(args.index.resolve()),
         "functional_names": list(dataset.functional_names),
         "dataset_functional_rows": {
@@ -114,6 +120,10 @@ def main() -> None:
             for index, name in enumerate(dataset.functional_names)
         },
         "maximum_absolute_balance_error": float((fractions - target).abs().max()),
+        "parquet_blocks_per_global_batch": {
+            "mean": sum(unique_blocks_per_batch) / len(unique_blocks_per_batch),
+            "maximum": max(unique_blocks_per_batch),
+        },
         "exact_resume": True,
         "finite": True,
     }

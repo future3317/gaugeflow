@@ -36,6 +36,7 @@ class BalancedRankShardedStream:
         rank: int,
         world_size: int,
         seed: int,
+        block_index: torch.Tensor | None = None,
     ) -> None:
         if (
             source_index.ndim != 1
@@ -65,13 +66,52 @@ class BalancedRankShardedStream:
         self.rank = rank
         self.world_size = world_size
         self.seed = seed
+        if block_index is not None and (
+            block_index.ndim != 1
+            or block_index.shape != source_index.shape
+            or block_index.dtype not in {torch.int16, torch.int32, torch.int64}
+            or int(block_index.min()) < 0
+        ):
+            raise ValueError("balanced stream block partition is invalid")
+        self.block_index = (
+            block_index.cpu().contiguous().long() if block_index is not None else None
+        )
         self._source_members = tuple(
             torch.nonzero(self.source_index == source, as_tuple=False).squeeze(1)
             for source in range(source_count)
         )
         if any(members.numel() == 0 for members in self._source_members):
             raise ValueError("balanced stream cannot sample an empty source")
+        if self.block_index is not None:
+            block_count = int(self.block_index.max()) + 1
+            block_sources = torch.full((block_count,), -1, dtype=torch.long)
+            for source, members in enumerate(self._source_members):
+                blocks = torch.unique(self.block_index[members])
+                if bool((block_sources[blocks] >= 0).any()):
+                    raise ValueError("balanced stream block crosses source boundaries")
+                block_sources[blocks] = source
+            if bool((block_sources < 0).any()):
+                raise ValueError("balanced stream block vocabulary is not compact")
+            grouped_blocks: list[tuple[torch.Tensor, ...]] = []
+            for members in self._source_members:
+                member_blocks = self.block_index[members]
+                order = torch.argsort(member_blocks, stable=True)
+                sorted_members = members[order]
+                _, counts = torch.unique_consecutive(
+                    member_blocks[order], return_counts=True
+                )
+                grouped_blocks.append(tuple(torch.split(sorted_members, counts.tolist())))
+            self._source_blocks: tuple[tuple[torch.Tensor, ...], ...] | None = tuple(
+                grouped_blocks
+            )
+        else:
+            self._source_blocks = None
         self._source_digest = hashlib.sha256(self.source_index.numpy().tobytes()).hexdigest()
+        self._block_digest = (
+            hashlib.sha256(self.block_index.numpy().tobytes()).hexdigest()
+            if self.block_index is not None
+            else None
+        )
         self._batch = 0
         self._source_epochs = [0] * source_count
         self._source_offsets = [0] * source_count
@@ -85,7 +125,17 @@ class BalancedRankShardedStream:
         generator = torch.Generator().manual_seed(
             self.seed + 1_000_003 * self._source_epochs[source] + 10_007 * source
         )
-        return torch.randperm(self._source_members[source].numel(), generator=generator)
+        members = self._source_members[source]
+        if self._source_blocks is None:
+            return members[torch.randperm(members.numel(), generator=generator)]
+        blocks = self._source_blocks[source]
+        block_order = torch.randperm(len(blocks), generator=generator).tolist()
+        return torch.cat(
+            [
+                blocks[index][torch.randperm(blocks[index].numel(), generator=generator)]
+                for index in block_order
+            ]
+        )
 
     def _take_source(self, source: int, count: int) -> torch.Tensor:
         chunks: list[torch.Tensor] = []
@@ -93,8 +143,7 @@ class BalancedRankShardedStream:
             members = self._source_members[source]
             offset = self._source_offsets[source]
             take = min(count, members.numel() - offset)
-            positions = self._source_permutations[source][offset : offset + take]
-            chunks.append(members[positions])
+            chunks.append(self._source_permutations[source][offset : offset + take])
             self._source_offsets[source] += take
             count -= take
             if self._source_offsets[source] == members.numel():
@@ -135,8 +184,9 @@ class BalancedRankShardedStream:
     def state_dict(self) -> dict[str, Any]:
         state = self.state
         return {
-            "schema": 1,
+            "schema": 2,
             "source_digest": self._source_digest,
+            "block_digest": self._block_digest,
             "source_weights": self.source_weights,
             "global_batch_size": self.global_batch_size,
             "rank": self.rank,
@@ -151,8 +201,9 @@ class BalancedRankShardedStream:
 
     def load_state_dict(self, state: dict[str, Any]) -> None:
         expected = {
-            "schema": 1,
+            "schema": 2,
             "source_digest": self._source_digest,
+            "block_digest": self._block_digest,
             "source_weights": self.source_weights,
             "global_batch_size": self.global_batch_size,
             "rank": self.rank,

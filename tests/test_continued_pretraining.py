@@ -146,7 +146,8 @@ def test_three_stream_objective_accumulates_all_losses_before_one_update() -> No
         ContinuedPretrainingWeights(0.4, 0.3, 0.3),
         lemat_rank_fraction=1.0,
         alex_rank_fraction=1.0,
-        generator=torch.Generator().manual_seed(19),
+        lemat_generator=torch.Generator().manual_seed(19),
+        alex_generator=torch.Generator().manual_seed(23),
     )
     gradients = [parameter.grad for parameter in model.parameters() if parameter.grad is not None]
     assert torch.isfinite(losses.lemat_structure)

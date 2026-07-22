@@ -114,6 +114,14 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
         self._functional_group_index = source_to_functional[
             self.source_index[self.indices].long()
         ].contiguous()
+        block_keys = (
+            self.source_index[self.indices].long().bitwise_left_shift(32)
+            | self.row_group[self.indices].long()
+        )
+        _, self._sampling_block_index = torch.unique(
+            block_keys, sorted=True, return_inverse=True
+        )
+        self._sampling_block_index = self._sampling_block_index.contiguous()
         self._files: dict[int, pq.ParquetFile] = {}
         self._group_cache: OrderedDict[tuple[int, int], Any] = OrderedDict()
 
@@ -131,6 +139,12 @@ class IndexedLeMatDataset(Dataset[MatPESPhysicalRecord]):
         """Return split-local functional groups for balanced sampling."""
 
         return self._functional_group_index
+
+    @property
+    def sampling_block_index(self) -> torch.Tensor:
+        """Return compact split-local parquet blocks for locality-aware sampling."""
+
+        return self._sampling_block_index
 
     def __getitem__(self, index: int) -> MatPESPhysicalRecord:
         if not -len(self) <= index < len(self):

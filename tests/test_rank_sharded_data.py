@@ -105,3 +105,36 @@ def test_balanced_stream_resume_is_exact_and_binds_source_partition() -> None:
         assert "configuration mismatch" in str(error)
     else:
         raise AssertionError("balanced stream accepted a different source partition")
+
+
+def test_balanced_stream_block_locality_and_checkpoint_binding() -> None:
+    source = torch.zeros(16, dtype=torch.uint8)
+    blocks = torch.tensor([0] * 4 + [1] * 4 + [2] * 4 + [3] * 4)
+    common = dict(
+        source_index=source,
+        source_weights=(1.0,),
+        global_batch_size=4,
+        rank=0,
+        world_size=1,
+        seed=41,
+        block_index=blocks,
+    )
+    stream = BalancedRankShardedStream(**common)
+    batches = [stream.next_indices() for _ in range(2)]
+    assert all(torch.unique(blocks[batch]).numel() == 1 for batch in batches)
+    observed = torch.cat(batches)
+    assert torch.unique(observed).numel() == observed.numel()
+
+    state = stream.state_dict()
+    reference = stream.next_indices()
+    resumed = BalancedRankShardedStream(**common)
+    resumed.load_state_dict(state)
+    assert torch.equal(resumed.next_indices(), reference)
+
+    changed = BalancedRankShardedStream(**{**common, "block_index": blocks.roll(1)})
+    try:
+        changed.load_state_dict(state)
+    except ValueError as error:
+        assert "configuration mismatch" in str(error)
+    else:
+        raise AssertionError("balanced stream accepted a different block partition")

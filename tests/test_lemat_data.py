@@ -79,4 +79,8 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     assert dataset[0].element_tokens.numel() == 2
     assert dataset.functional_names == ("pbe",)
     assert torch.equal(dataset.functional_group_index, torch.zeros(len(dataset), dtype=torch.long))
+    blocks = dataset.sampling_block_index
+    assert blocks.shape == (len(dataset),)
+    assert int(blocks.min()) == 0
+    assert int(blocks.max()) + 1 == torch.unique(blocks).numel()
     assert normalize_external_material_id("alex<AGM001>") == "agm001"
