@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pyarrow as pa
@@ -77,6 +78,7 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
         [0.0, 3.0, 0.0],
         [0.0, 0.0, 4.0],
     ]
+    rows[5]["cartesian_site_positions"] = [[0.0, 0.0, 0.0]]
     parquet = tmp_path / "pbe.parquet"
     pq.write_table(pa.Table.from_pylist(rows), parquet, row_group_size=20)
     root = tmp_path / "index"
@@ -99,7 +101,20 @@ def test_lemat_index_reads_parquet_and_excludes_wrapped_alex_id(tmp_path: Path) 
     assert manifest["excluded_minimum_lattice_width_rows"] == 1
     assert manifest["excluded_lattice_metric_condition_rows"] == 1
     assert manifest["excluded_nonpositive_lattice_volume_rows"] == 1
-    assert sum(manifest["split_counts"].values()) == 195
+    assert manifest["excluded_malformed_geometry_rows"] == 1
+    assert sum(manifest["split_counts"].values()) == 194
+    malformed = json.loads(
+        (root / str(manifest["excluded_malformed_geometry_file"])).read_text(encoding="utf-8")
+    )
+    assert malformed == [
+        {
+            "immutable_id": "agm000000005",
+            "reason": "cartesian_positions_disagree_with_nsites",
+            "row_group": 0,
+            "row_in_group": 5,
+            "source_index": 0,
+        }
+    ]
     dataset = IndexedLeMatDataset(root, "train", require_qualified=False)
     assert dataset[0].functional == "pbe"
     assert dataset[0].element_tokens.numel() == 2

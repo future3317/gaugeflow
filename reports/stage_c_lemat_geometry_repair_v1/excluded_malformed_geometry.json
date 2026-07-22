@@ -1,0 +1,16 @@
+[
+  {
+    "immutable_id": "oqmd-2969647",
+    "reason": "cartesian_positions_disagree_with_nsites",
+    "row_group": 14,
+    "row_in_group": 158,
+    "source_index": 11
+  },
+  {
+    "immutable_id": "oqmd-2964825",
+    "reason": "cartesian_positions_disagree_with_nsites",
+    "row_group": 158,
+    "row_in_group": 881,
+    "source_index": 14
+  }
+]

@@ -39,14 +39,14 @@ materials-discovery capability.
 
 ## Active run
 
-- Protocol: `configs/gates/stage_c_lemat_continued_pretraining_v1.json`
+- Protocol: `configs/gates/stage_c_lemat_continued_pretraining_v2.json`
 - Seed: `5705`
 - Optimizer updates: `50,000`
 - Three fixed roles: LeMat structure / MatPES physical / Alex structure
 - Global batch per role: `64`
-- Checkpoints: every `10,000` updates
+- Checkpoints: every `5,000` updates
 - Devices at launch: RTX 4090 GPUs `1,3,4`
-- Run directory: `/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_lemat_continued_pretraining_v1`
+- Run directory: `/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_lemat_continued_pretraining_v2`
 
 The run presents 3.2M examples from each stream. Because LeMat is sampled with
 equal PBE/PBEsol/SCAN source weight, this is an expected-exposure budget rather
@@ -61,10 +61,33 @@ prefetched to a dedicated CUDA stream. Prefetch never crosses a checkpoint
 boundary; a four-step interrupted-resume comparison found zero mismatches over
 2,245 tensor leaves and 696 scalar leaves.
 
-## Pending evaluation
+Stage-C-v1 stopped after a source row declared eight sites but stored 15
+positions and species. A complete geometry-boundary rebuild found and removed
+two malformed OQMD records from LeMat-v4. The 20k checkpoint was migrated
+without changing model, optimizer, EMA, MatPES/Alex cursors or objective RNG
+states; only the LeMat stream was deterministically re-based on the clean
+support. A three-GPU one-step resume smoke passed before v2 continued.
 
-No Stage-C learning result is reported until a declared checkpoint is evaluated
-on all three panels:
+## Mid-training evidence
+
+| Metric | Stage-B | Stage-C 10k | Stage-C 20k |
+|---|---:|---:|---:|
+| Physical composite | `0.5929` | `0.3871` | `0.3254` |
+| Energy RMSE | `0.1143` | `0.0955` | `0.0859` |
+| Force RMSE | `0.3882` | `0.3318` | `0.3053` |
+| Stress RMSE | `0.5733` | `0.4301` | `0.3888` |
+| Teacher cosine | `0.8996` | `0.9171` | `0.9264` |
+| NN-W1 | `0.5444` | `0.5533` | `0.5628` |
+| Volume-W1 | `0.0722` | `0.0624` | `0.0676` |
+
+Physical representation improves monotonically. Generative validity remains
+perfect with zero failures, while the monotone NN-W1 increase is tracked as a
+possible physical-transfer versus generative-retention trade-off. The next
+full diagnostic is the Stage-C 30k checkpoint (global step 40,523).
+
+## Evaluation contract
+
+Declared checkpoints are evaluated on all three panels:
 
 1. LeMat held-out geometry denoising;
 2. MatPES held-out normalized energy, force, Kelvin stress, force cosine, and

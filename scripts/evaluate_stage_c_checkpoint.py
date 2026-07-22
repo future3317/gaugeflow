@@ -60,7 +60,7 @@ def main() -> None:
         raise RuntimeError("Stage-C checkpoint evaluation requires CUDA")
 
     metadata = read_physical_checkpoint_metadata(args.checkpoint)
-    if metadata.get("protocol") != "stage_c_lemat_continued_pretraining_v1":
+    if metadata.get("protocol") != "stage_c_lemat_continued_pretraining_v2":
         raise ValueError("checkpoint is not a Stage-C-v1 continuation")
     stage_b_metadata = metadata.get("stage_b_metadata")
     if not isinstance(stage_b_metadata, dict):

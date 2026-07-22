@@ -1,0 +1,173 @@
+{
+  "bounded_smoke": false,
+  "calibration_fraction": 0.05,
+  "compatible_selected_rows": 4712913,
+  "excluded_benchmark_fingerprints": 129302,
+  "excluded_cross_id_fingerprint_rows": 0,
+  "excluded_degenerate_lattice_rows": 2,
+  "excluded_direct_id_rows": 129152,
+  "excluded_external_overlap": 129152,
+  "excluded_large_cells": 240530,
+  "excluded_lattice_metric_condition_rows": 1,
+  "excluded_malformed_geometry_file": "excluded_malformed_geometry.json",
+  "excluded_malformed_geometry_rows": 2,
+  "excluded_malformed_geometry_sha256": "e10745e73f117c2d2ab6f87da98a70959c5ac7291dec602dc359cbcc5c95374d",
+  "excluded_material_ids_artifact_sha256": "2baf633949a24d5905ce227121583e0154e12114434bd60542a9bc8a250b833e",
+  "excluded_material_ids_content_sha256": "24fa4485a8eaca89424cc2d8e762e4401d11ca7fc2cd10198f8f915767efcc3a",
+  "excluded_material_ids_count": 135040,
+  "excluded_minimum_lattice_width_rows": 2,
+  "excluded_nonpositive_lattice_volume_rows": 0,
+  "exclusion_artifact_bound": true,
+  "index_file": "index.pt",
+  "index_sha256": "f76ce15c7aa94370b9d2ab4ec927c8f4a8cab685f0b1c6798f83f17cff66cb4c",
+  "maximum_atoms": 20,
+  "maximum_lattice_metric_condition": 10000.0,
+  "minimum_lattice_width_angstrom": 0.5,
+  "physical_label_policy": "compatible_only",
+  "qualified": true,
+  "schema": 3,
+  "scope": "LeMat-BulkUnique N<=20 structure and masked physical-label index",
+  "seed": 5705,
+  "sources": [
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00000-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293084,
+      "sha256": "a52d18f5a3e7b9bbef0e32c010558ac704867817ff6e3fbe23c0eeadce52e212"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00001-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293072,
+      "sha256": "92bcb4d158d8cfe98dced2348df71e302d18ed42fb8e19b11f975af3e0195e3d"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00002-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293067,
+      "sha256": "b02bac026c2319ab98ab9961ccb2c5344125db019e549c5cafc4ff9448a24da4"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00003-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293078,
+      "sha256": "84ee3b6fe6de076b2c45de0c2f634d0f2daa9475de821f4e1d7096595fd94dec"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00004-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293012,
+      "sha256": "180e49dbefea91517cdcc8baa899ca3d054dd123d196113680db4f5b3a2236d3"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00005-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293227,
+      "sha256": "16bdca5f6692ce0a8b44160aa23868312ea12a6ab81da05e1db4ec000dd142b0"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00006-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293312,
+      "sha256": "002b6fec1c4cafaf7eb8bfcc6186af835fdeb9366ebe5ea7d24e30eaf49989ec"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00007-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293056,
+      "sha256": "21989bfd23d008d8687157a676401f0c72538dc145de4064ed2055899ed4ea63"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00008-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293559,
+      "sha256": "5976927c86564602fc69e0467cb73886037e9b6249c3507467b742fa45b5553d"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00009-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293054,
+      "sha256": "57801d460ff037b44208829062c4f426f3cbfc77f5b2cc2c5d1f2cf250c3e752"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00010-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293292,
+      "sha256": "7d2dc3364b8c38242fd8d7eb210a1a93a2fd14e8592e0be98dc719bb9d2eb9f5"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00011-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293267,
+      "sha256": "ae62af3ad9dbefdecf51b54fcfc8f4733c0e803c13287d7ae45564324141faed"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00012-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293158,
+      "sha256": "16019bc877047d97d0581dfadaaf32f6d58659bec6715392100c40cafea393f3"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00013-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 293344,
+      "sha256": "a84dc8f1a3faed0cd9b03a92c09cf98e4481335c4c31779b5d53c52b1c443971"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00014-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 292974,
+      "sha256": "1f1a17b4919e4b58eef7eeb17912ffc9dfd1d93b3ee81025c3ddfb3aaf2d1dce"
+    },
+    {
+      "functional": "pbe",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00015-of-00016.parquet",
+      "row_groups_seen": 313,
+      "rows_selected": 292949,
+      "sha256": "4ac2800dee2702b90330efbbb69c3f1ec5cf87f7643ddb2b0b0ab96bc002551c"
+    },
+    {
+      "functional": "pbesol",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbesol/train-00000-of-00001.parquet",
+      "row_groups_seen": 16,
+      "rows_selected": 10035,
+      "sha256": "72482afd5791ea303914d3d7a4f44a256cfc3ee0f7cfed24ac77be8b024e4060"
+    },
+    {
+      "functional": "scan",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_scan/train-00000-of-00002.parquet",
+      "row_groups_seen": 209,
+      "rows_selected": 184003,
+      "sha256": "801b7273c3a7f986cb268ea72b270479ff3f907271cafd6ce8b3b18b69fa911c"
+    },
+    {
+      "functional": "scan",
+      "path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_scan/train-00001-of-00002.parquet",
+      "row_groups_seen": 209,
+      "rows_selected": 184207,
+      "sha256": "62880c84ab6898c180574c3f20005370ab61abc9e45ea3f5ef3d31924ead3b78"
+    }
+  ],
+  "split_counts": {
+    "calibration": 252475,
+    "test": 253247,
+    "train": 4563028
+  },
+  "test_fraction": 0.05,
+  "unique_split_groups": 4878235
+}

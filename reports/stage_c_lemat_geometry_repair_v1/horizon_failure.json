@@ -1,0 +1,29 @@
+{
+  "batches_examined": 320,
+  "batches_requested": 1000,
+  "batches_skipped": 4000,
+  "checkpoint": "/home/workspace/lrh/DATA/T2C-Flow/runs/stage_c_lemat_continued_pretraining_v1/checkpoint_step_00030523.pt",
+  "failures": [
+    {
+      "batch_offset": 320,
+      "cartesian_shape": [
+        15,
+        3
+      ],
+      "checkpoint_batch_offset": 4320,
+      "error": "ValueError: LeMat Cartesian positions disagree with nsites",
+      "functional": "pbe",
+      "global_index_row": 4253383,
+      "immutable_id": "oqmd-2964825",
+      "indexed_node_count": 8,
+      "row_group": 158,
+      "row_in_group": 881,
+      "row_nsites": 8,
+      "source_index": 14,
+      "source_path": "/home/workspace/lrh/DATA/LeMat-BulkUnique/unique_pbe/train-00014-of-00016.parquet",
+      "species_count": 15,
+      "split_index": 3829157
+    }
+  ],
+  "schema": "gaugeflow.lemat_checkpoint_horizon_audit.v1"
+}

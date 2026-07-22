@@ -36,12 +36,16 @@ is therefore no catastrophic forgetting, but the monotone
 later checkpoints as a physical-transfer versus generative-retention
 trade-off.
 
-The original training process disappeared externally after writing finite
-metrics through Stage-C step 24,277; no traceback, OOM, non-finite value or
-early-stop event was recorded. Training was resumed without configuration
-changes from the complete step-20,000 checkpoint, restoring its optimizer,
-EMA, three data-stream cursors and RNG state. Future long-run protocols should
-checkpoint every 5,000 steps to bound work lost to an external interruption.
+The first training launcher did not retain stderr, so its stop after finite
+metrics through Stage-C step 24,277 was initially unclassified. An exact resume
+then reproduced the cause: LeMat material `oqmd-2964825` declares `nsites=8`
+but stores 15 Cartesian positions and 15 species. The fail-closed parser
+correctly rejected it. The v3 index had inspected lattice and count metadata
+but not the nested position/species lengths, so its qualification was
+incomplete. Training remains stopped at the complete step-20,000 checkpoint
+while a geometry-complete clean index is built. No runtime parser fallback is
+introduced. Future long-run protocols should checkpoint every 5,000 steps to
+bound work lost to an interruption.
 
 The machine-readable evidence is in `result.json`, produced by
 `scripts/evaluate_stage_c_checkpoint.py`.

@@ -1,0 +1,1 @@
+{"alex_structure_loss": 1.3216084241867065, "gradient_norm": 2.039206027984619, "graphs_per_second": 62.45860602886391, "lemat_structure_loss": 1.7211408615112305, "matpes_physical_loss": 0.378884494304657, "peak_cuda_memory_mib": 11657.67724609375, "stage_c_step": 20001, "step": 30524}

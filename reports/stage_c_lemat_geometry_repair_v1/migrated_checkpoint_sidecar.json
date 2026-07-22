@@ -1,0 +1,167 @@
+{
+  "metadata": {
+    "migration": {
+      "preserved": [
+        "model",
+        "optimizer",
+        "EMA",
+        "MatPES stream",
+        "Alex stream",
+        "CPU/CUDA and objective RNG states"
+      ],
+      "reason": "v3 did not inspect nested positions/species lengths and admitted two malformed source records",
+      "rebased": "rank-0 LeMat stream at batch 20,000; unused LeMat streams at batch zero",
+      "source_checkpoint": "checkpoint_step_00030523.pt",
+      "source_checkpoint_sha256": "a0b813ab0f88664ebb49da54c34f9cc60b98776dcc3b4814a7c83887538aef00",
+      "source_global_step": 30523,
+      "source_protocol": "stage_c_lemat_continued_pretraining_v1",
+      "source_stage_c_step": 20000
+    },
+    "prerequisites": {
+      "alex_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+      "continued_checkpointing_sha256": "53563fd62e9e7db6db43d84540c820cfc1ff9b9605d6d968cbe3ecb34bf91ac5",
+      "continued_pretraining_sha256": "6005ac32b0eeaf237ac2456d02817d35f47084b91d0e5d630deb949568c6e1e9",
+      "lemat_index_manifest_sha256": "d07441fb2a9ebcd83ae46a6b43729207d0d813cf483c14c7afe37bde010809b9",
+      "lemat_index_sha256": "f76ce15c7aa94370b9d2ab4ec927c8f4a8cab685f0b1c6798f83f17cff66cb4c",
+      "matpes_index_manifest_sha256": "fa2caa5af104a966dc5954b480d5d8cf6cca7a19e0221d46176633563b2f44a2",
+      "matpes_index_sha256": "181518816f9ad56ad916411fa9a8cb0b89ef0a70f363bc61cc5bc836a87ff0dd",
+      "matpes_normalizer_sha256": "fe3158deaaca084b31a001ab9d2c22a7456bcfa7a59cc03d3bef95e565a9ae18",
+      "runner_sha256": "fad1823b8475f47e1d3e2bb12fcf6cfe347d15d04fbb6f6494b3bde12221cf6c",
+      "stage_b_checkpoint_sha256": "4eb176c0649ab347182ce1815a894f288cb83fa8f13a5be814549c98f49e4435",
+      "teacher_cache_manifest_sha256": "16eac65ee44cf42c1c86ef9c1dfe4a7d1005af4234fd094d1a8ca621990f8d91"
+    },
+    "protocol": "stage_c_lemat_continued_pretraining_v2",
+    "protocol_sha256": "587bf38c705bade6034f73a819cc254c188abdb018b97654c3ec545e232388e1",
+    "seed": 5705,
+    "stage_b_metadata": {
+      "a1_checkpoint_sha256": "7c8fb7afc3aee6d4723d700b59f2a0523da25e897a46de8e9d2c7e5db824b6da",
+      "a1_training_config": {
+        "categorical_path": "orderless_reveal",
+        "composition_conditioning": true,
+        "composition_loss_weight": 0.0,
+        "coordinate_clean_side_information": false,
+        "coordinate_sigma_max": 0.5,
+        "coordinate_sigma_min": 0.005,
+        "ema_decay": 0.999,
+        "gradient_clip_norm": 1.0,
+        "learning_rate": 0.0002,
+        "maximum_time": 0.999,
+        "minimum_time": 0.001,
+        "modality_time_mode": "shared",
+        "objective": "joint",
+        "precision": "bf16",
+        "weight_decay": 1e-06
+      },
+      "functional_vocabulary": {
+        "PBE": 0,
+        "r2SCAN": 1
+      },
+      "lattice_standardization": {
+        "protocol": "h1a_p1_lattice_standardization",
+        "schema": 1,
+        "shape_basis_columns": [
+          [
+            -0.055077565891370396,
+            -0.13289226852332603,
+            0.6918148000946541,
+            0.21868608548143262,
+            -0.3457476706316658
+          ],
+          [
+            0.07114461345099977,
+            0.16525165836960415,
+            -0.6659347580284221,
+            0.3901697829768853,
+            -0.1964572181278127
+          ],
+          [
+            -0.016067047405622106,
+            -0.03235938973464339,
+            -0.025880042039585494,
+            -0.6088558684660428,
+            0.5422048887771329
+          ],
+          [
+            0.5596403183316749,
+            0.5793371694467364,
+            0.08114657394087763,
+            -0.41696611498216635,
+            -0.4131896062214073
+          ],
+          [
+            -0.8063057345756474,
+            0.27245266508245825,
+            -0.10054027183655727,
+            -0.33647989413365553,
+            -0.3902736761078397
+          ],
+          [
+            0.16828705294259158,
+            -0.7376465235163318,
+            -0.24609000613665488,
+            -0.3770397959148629,
+            -0.47417061837729535
+          ]
+        ],
+        "shape_mean": [
+          -0.4294491260638268,
+          -0.11786332687092696,
+          0.5473124529665396,
+          -0.013732683945023614,
+          0.04159981275737194,
+          0.05896690470144748
+        ],
+        "shape_scales": [
+          0.1433088549348088,
+          0.2432789461046058,
+          0.3529913984744957,
+          0.5743728123129379,
+          0.6844771540490712
+        ],
+        "source_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+        "source_rows": 540164,
+        "source_split": "train",
+        "volume_residual_definition": "z_v=(log(V)-log(N)-mean)/std",
+        "volume_residual_mean": 3.1274442448918003,
+        "volume_residual_std": 0.36263499631001317
+      },
+      "matpes_index_manifest_sha256": "fa2caa5af104a966dc5954b480d5d8cf6cca7a19e0221d46176633563b2f44a2",
+      "matpes_normalizer_sha256": "fe3158deaaca084b31a001ab9d2c22a7456bcfa7a59cc03d3bef95e565a9ae18",
+      "model_config": {
+        "angular_channels": 16,
+        "atlas_residual_circle_samples": 8,
+        "edge_dim": 128,
+        "edge_refresh_rank": 32,
+        "hidden_dim": 384,
+        "independent_modality_times": false,
+        "layers": 8,
+        "modality_time_conditioning": "separate",
+        "radial_cutoff": 8.0,
+        "radial_dim": 24,
+        "vector_dim": 64
+      },
+      "physical_training_config": {
+        "ema_decay": 0.999,
+        "energy_weight": 1.0,
+        "feature_weight": 1.0,
+        "force_weight": 1.0,
+        "gradient_clip_norm": 1.0,
+        "learning_rate": 0.0001,
+        "precision": "bf16",
+        "stress_weight": 1.0,
+        "weight_decay": 1e-06
+      },
+      "protocol": "stage_b_physical_representation_v1_1",
+      "protocol_sha256": "3130088ee2214562b7d3c4a1573480b4947552349ee9f91bec3bd31231b1ab19",
+      "seed": 5705,
+      "teacher_cache_manifest_sha256": "16eac65ee44cf42c1c86ef9c1dfe4a7d1005af4234fd094d1a8ca621990f8d91",
+      "teacher_feature_dim": 128,
+      "world_size": 2
+    },
+    "world_size": 3
+  },
+  "metadata_sha256": "fb795bffeb0c46f0ac6ffc5b8c44be22cb8a4965858df5d87ed49432f2132271",
+  "schema": 1,
+  "weights_file": "checkpoint_step_00030523.pt",
+  "weights_sha256": "4af706435bedcb78713e09042bf68ec62ae30914e1ed0e637820901994859b6f"
+}

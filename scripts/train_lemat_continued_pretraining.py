@@ -40,6 +40,8 @@ from gaugeflow.production.physical_pretraining import load_functional_physical_n
 from gaugeflow.production.rank_sharded_data import ExactRankShardedStream
 from gaugeflow.production.teacher_feature_cache import MatPESTeacherFeatureCache
 
+STAGE_C_PROTOCOL = "stage_c_lemat_continued_pretraining_v2"
+
 
 @dataclass(frozen=True)
 class _PreparedRoleBatch:
@@ -202,7 +204,7 @@ def _consume_prepared_role_batch(
 def main() -> None:
     args = parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "stage_c_lemat_continued_pretraining_v1" or protocol.get(
+    if protocol.get("protocol") != STAGE_C_PROTOCOL or protocol.get(
         "status_before_run"
     ) != "frozen_method_not_run":
         raise ValueError("unexpected or unfrozen Stage-C protocol")
@@ -329,6 +331,11 @@ def main() -> None:
         "world_size": world_size,
         "seed": seed,
     }
+    checkpoint_migration = protocol.get("checkpoint_migration")
+    if checkpoint_migration is not None:
+        if not isinstance(checkpoint_migration, dict):
+            raise ValueError("Stage-C checkpoint migration contract is invalid")
+        metadata["migration"] = checkpoint_migration
 
     checkpoint = args.stage_b_checkpoint if args.resume is None else args.resume
     if args.resume is not None and read_physical_checkpoint_metadata(checkpoint) != metadata:

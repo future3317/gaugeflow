@@ -482,10 +482,17 @@ physical loss.  Each local structure mean is weighted by its exact rank graph
 fraction before gradient summation; physical heads retain their global
 label-bearing denominators.  LeMat, MatPES and Alex cursors restore together
 or fail closed. The executable runner and CUDA resume smoke are complete.
-The formal `stage_c_lemat_continued_pretraining_v1` run was launched on
-2026-07-22 from the Stage-B-v1.1 checkpoint for 50,000 optimizer steps. It has
-no reported learning result until its declared checkpoints and held-out
-evaluations are complete.
+Stage-C-v1 reached its complete 20k checkpoint and then reproducibly rejected a
+malformed LeMat row (`oqmd-2964825`: `nsites=8`, 15 positions/species). The v3
+index had not inspected nested geometry lengths. A complete v4 rebuild checks
+periodicity, positions, species and element symbols and removes exactly two
+malformed OQMD records with hash-bound evidence; train count is 4,563,028.
+Stage-C-v2 preserves the 20k model, optimizer, EMA, MatPES/Alex cursors and RNG
+states and deterministically re-bases only the LeMat stream. Its one-step
+three-GPU resume smoke passes, and formal training continues with checkpoints
+every 5,000 steps. The 10k/20k physical composite losses are
+`0.38709/0.32535`; NN-W1 values are `0.55329/0.56282`, with exact composition,
+positive lattices, valid distances and zero failures retained.
 
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the

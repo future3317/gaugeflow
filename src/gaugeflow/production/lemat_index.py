@@ -10,6 +10,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 import pyarrow.parquet as pq
 import torch
+from pymatgen.core import Element
 from torch.utils.data import Dataset
 
 from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
@@ -29,7 +30,7 @@ from .matpes_index import (
     SPLIT_TO_INDEX,
 )
 
-LEMAT_INDEX_SCHEMA = 2
+LEMAT_INDEX_SCHEMA = 3
 _OVERLAP_COLUMNS = [
     "immutable_id",
     "entalpic_fingerprint",
@@ -39,8 +40,32 @@ _OVERLAP_COLUMNS = [
 ]
 _INDEX_COLUMNS = [
     *_OVERLAP_COLUMNS,
+    "nperiodic_dimensions",
+    "dimension_types",
     "lattice_vectors",
+    "cartesian_site_positions",
+    "species_at_sites",
 ]
+_VALID_ELEMENT_SYMBOLS = frozenset(element.symbol for element in Element)
+
+
+def _geometry_issue(row: Mapping[str, Any], node_count: int) -> str | None:
+    """Return the first source-geometry defect excluded by the index boundary."""
+
+    if row.get("nperiodic_dimensions") != 3 or list(row.get("dimension_types", [])) != [1, 1, 1]:
+        return "nonperiodic_or_invalid_dimension_types"
+    try:
+        cartesian = np.asarray(row["cartesian_site_positions"], dtype=np.float64)
+    except (KeyError, TypeError, ValueError):
+        return "malformed_cartesian_positions"
+    if cartesian.shape != (node_count, 3) or not bool(np.isfinite(cartesian).all()):
+        return "cartesian_positions_disagree_with_nsites"
+    species = row.get("species_at_sites")
+    if not isinstance(species, list) or len(species) != node_count:
+        return "species_disagree_with_nsites"
+    if not all(isinstance(symbol, str) and symbol in _VALID_ELEMENT_SYMBOLS for symbol in species):
+        return "invalid_element_symbol"
+    return None
 
 
 def _batched_lattice_quality_codes(
@@ -319,7 +344,8 @@ def build_lemat_index(
     excluded_large = excluded_overlap = excluded_direct_id = excluded_fingerprint = 0
     excluded_degenerate = excluded_minimum_width = excluded_metric_condition = 0
     excluded_nonpositive_volume = 0
-    invalid_rows = 0
+    excluded_malformed_geometry = 0
+    malformed_geometry_evidence: list[dict[str, Any]] = []
     compatible_rows = 0
     split_by_group: dict[str, int] = {}
     for source_number, (declared_functional, path) in enumerate(flattened):
@@ -345,6 +371,19 @@ def build_lemat_index(
                         raise ValueError("nonpositive node count")
                     if node_count > maximum_atoms:
                         excluded_large += 1
+                        continue
+                    geometry_issue = _geometry_issue(row, node_count)
+                    if geometry_issue is not None:
+                        excluded_malformed_geometry += 1
+                        malformed_geometry_evidence.append(
+                            {
+                                "immutable_id": row.get("immutable_id"),
+                                "source_index": source_number,
+                                "row_group": group,
+                                "row_in_group": row_number,
+                                "reason": geometry_issue,
+                            }
+                        )
                         continue
                     normalized_id = normalize_external_material_id(str(row["immutable_id"]))
                     key = lemat_split_group(row)
@@ -375,7 +414,16 @@ def build_lemat_index(
                     if split_by_group.setdefault(key, split) != split:
                         raise AssertionError("LeMat group received inconsistent splits")
                 except (KeyError, TypeError, ValueError):
-                    invalid_rows += 1
+                    excluded_malformed_geometry += 1
+                    malformed_geometry_evidence.append(
+                        {
+                            "immutable_id": row.get("immutable_id"),
+                            "source_index": source_number,
+                            "row_group": group,
+                            "row_in_group": row_number,
+                            "reason": "malformed_index_metadata",
+                        }
+                    )
                     continue
                 values["source_index"].append(source_number)
                 values["row_group"].append(group)
@@ -403,6 +451,11 @@ def build_lemat_index(
     }
     index_path = output / "index.pt"
     torch.save(payload, index_path)
+    malformed_path = output / "excluded_malformed_geometry.json"
+    malformed_path.write_text(
+        json.dumps(malformed_geometry_evidence, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     split_counts = {
         name: int((payload["split_index"] == code).sum())
         for name, code in SPLIT_TO_INDEX.items()
@@ -410,7 +463,6 @@ def build_lemat_index(
     bounded = max_row_groups_per_source is not None
     qualified = (
         not bounded
-        and invalid_rows == 0
         and all(split_counts.values())
         and exclusion_artifact_bound
     )
@@ -436,6 +488,9 @@ def build_lemat_index(
         "excluded_minimum_lattice_width_rows": excluded_minimum_width,
         "excluded_lattice_metric_condition_rows": excluded_metric_condition,
         "excluded_nonpositive_lattice_volume_rows": excluded_nonpositive_volume,
+        "excluded_malformed_geometry_rows": excluded_malformed_geometry,
+        "excluded_malformed_geometry_file": malformed_path.name,
+        "excluded_malformed_geometry_sha256": sha256_file(malformed_path),
         "excluded_external_overlap": excluded_overlap,
         "excluded_direct_id_rows": excluded_direct_id,
         "excluded_cross_id_fingerprint_rows": excluded_fingerprint,
@@ -444,7 +499,6 @@ def build_lemat_index(
         "excluded_material_ids_content_sha256": canonical_json_hash(sorted(excluded)),
         "excluded_material_ids_artifact_sha256": excluded_material_ids_artifact_sha256,
         "exclusion_artifact_bound": exclusion_artifact_bound,
-        "invalid_index_rows": invalid_rows,
         "bounded_smoke": bounded,
     }
     (output / "manifest.json").write_text(
