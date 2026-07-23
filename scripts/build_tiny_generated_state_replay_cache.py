@@ -22,6 +22,7 @@ from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
 from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.checkpointing import load_production_checkpoint, read_production_checkpoint_metadata
 from gaugeflow.production.composition_runtime import load_qualified_composition_model
+from gaugeflow.production.continued_checkpointing import build_continued_pretraining_objects
 from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.generated_state_replay import (
     GeneratedCarrierRole,
@@ -32,6 +33,10 @@ from gaugeflow.production.generated_state_replay import (
 )
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape, project_lattice_state
+from gaugeflow.production.physical_checkpointing import (
+    load_physical_ema_for_evaluation,
+    read_physical_checkpoint_metadata,
+)
 from gaugeflow.production.reverse_sampler import TensorFreeReverseSampler
 from gaugeflow.production.training import ExponentialMovingAverage
 
@@ -77,37 +82,49 @@ def _load_sampler(
     *,
     device: torch.device,
 ) -> tuple[TensorFreeReverseSampler, dict[str, Any]]:
-    metadata = read_production_checkpoint_metadata(checkpoint)
+    denoiser: HybridCrystalDenoiser
+    try:
+        metadata = read_production_checkpoint_metadata(checkpoint)
+    except ValueError:
+        metadata = read_physical_checkpoint_metadata(checkpoint)
     model_config = metadata.get("model_config")
     training_config = metadata.get("training_config")
     standardization = metadata.get("lattice_standardization")
-    if not isinstance(model_config, dict) or not isinstance(training_config, dict) or not isinstance(
-        standardization,
-        dict,
-    ):
+    if isinstance(model_config, dict) and isinstance(training_config, dict) and isinstance(standardization, dict):
+        denoiser = HybridCrystalDenoiser(**model_config).to(device)
+        ema = ExponentialMovingAverage(denoiser, float(training_config["ema_decay"]))
+        load_production_checkpoint(checkpoint, model=denoiser, ema=ema, map_location=device)
+        ema.copy_to(denoiser)
+        denoiser.eval()
+    else:
         stage_b_metadata = metadata.get("stage_b_metadata")
-        if isinstance(stage_b_metadata, dict):
-            model_config = stage_b_metadata.get("model_config")
-            training_config = stage_b_metadata.get("a1_training_config")
-            standardization = stage_b_metadata.get("lattice_standardization")
-    if not isinstance(model_config, dict) or not isinstance(training_config, dict):
-        raise ValueError("base checkpoint metadata lacks model/training config")
-    if not isinstance(standardization, dict):
-        raise ValueError("base checkpoint metadata lacks lattice standardization")
+        if not isinstance(stage_b_metadata, dict):
+            raise ValueError("base checkpoint metadata lacks model/training config")
+        training_config = stage_b_metadata.get("a1_training_config")
+        standardization = stage_b_metadata.get("lattice_standardization")
+        physical_config = stage_b_metadata.get("physical_training_config")
+        if not isinstance(training_config, dict) or not isinstance(standardization, dict):
+            raise ValueError("Stage-B/C checkpoint metadata lacks A1 runtime config")
+        if not isinstance(physical_config, dict):
+            raise ValueError("Stage-B/C checkpoint metadata lacks physical EMA config")
+        objects = build_continued_pretraining_objects(
+            stage_b_metadata,
+            device=device,
+            optimizer_owner=False,
+        )
+        ema = ExponentialMovingAverage(objects.model, float(physical_config["ema_decay"]))
+        load_physical_ema_for_evaluation(checkpoint, model=objects.model, ema=ema, map_location=device)
+        objects.model.eval()
+        denoiser = objects.model.backbone
     if training_config.get("categorical_path") != "orderless_reveal":
         raise ValueError("tiny replay writer requires an orderless exact-count product checkpoint")
-    model = HybridCrystalDenoiser(**model_config).to(device)
-    ema = ExponentialMovingAverage(model, float(training_config["ema_decay"]))
-    load_production_checkpoint(checkpoint, model=model, ema=ema, map_location=device)
-    ema.copy_to(model)
-    model.eval()
     composition_model = load_qualified_composition_model(
         composition_checkpoint,
         composition_protocol,
         device=device,
     )
     sampler = TensorFreeReverseSampler(
-        model,
+        denoiser,
         P1LatticeStandardizer.from_mapping(standardization),
         coordinate_sigma_min=float(training_config["coordinate_sigma_min"]),
         coordinate_sigma_max=float(training_config["coordinate_sigma_max"]),
