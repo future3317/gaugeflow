@@ -1056,3 +1056,52 @@ mathematical/software pass and authorizes one separately frozen, from-scratch,
 single-seed IID oracle-composition assignment training Gate. It does not pass a
 learned assignment or open generated composition, `p(N)`, L1/M1, tensor work,
 relaxation, DFT, or DFPT.
+
+### Current production evidence: A1--E0
+
+The following entries summarize the active manuscript evidence. Full logs,
+figures, manifests and per-run numbers remain in `reports/`; these summaries
+are the canonical index for historical experiments that are no longer runtime
+paths.
+
+**A1 GaugeFlow-base.** The geometry-complete orderless assignment successor
+passes its supported-IID Gate (calibration/test reveal-order ELBO reductions
+`0.70939/0.85290`, orbit-aligned accuracy `0.93864/0.94080`, exact counts and
+zero failures). The explicit node-count law, lattice L1, and four-arm
+generated-side coordinate exposure also pass in their declared scopes. An
+equal-exposure 34.28M/57.68M/97.58M screen selects the 34.28M model by the
+minimum-sufficient rule. One exact Alex-MP-20 pass gives free A1 NN/volume W1
+`0.5550/0.0733`, element/node-prior JSD `0.0475/0.0039`, exact composition and
+positive lattice one, and zero sampling failures. This is a flexible-carrier
+tensor-free base, not a free parent or tensor-conditioned generator.
+
+**Stage B/C physical transfer.** One MatPES pass lowers physical calibration
+loss `19.6127 -> 0.5929`, reaches PBE teacher-feature cosine `0.8996`, and
+retains A1 at NN/volume W1 `0.5444/0.0722`. Continued pretraining on a
+functionally balanced LeMat/MatPES/Alex mixture reaches physical/LeMat losses
+`0.2505/1.4863` at 50k; NN/volume W1 is `0.5723/0.0676`. The preregistered
+Pareto-minimax rule selects C-30k as the operational checkpoint. These are
+representation-transfer and retention results, not stability or discovery
+claims.
+
+**Stage D response evaluator.** The independent multi-task Cartesian response
+model is trained on the immutable 3,946-structure cache. The six-direction
+response probe is rejected as redundant (probe error changes by `-0.0423%`,
+far below its 5% criterion). Formal D retains the full Cartesian objective;
+the validation-best checkpoint is step 4,500 with test total/piezoelectric/
+response-probe losses `0.256640/0.249202/0.294194`. D is an evaluator only.
+
+**Stage E0 orbit-mimic screen.** Common-noise typed orbit mimic lowers
+teacher-forced fine loss `2.067480 -> 1.818112`, typed orbit residual
+`4.379e-4 -> 1.997e-4`, and increases target-swap separation
+`0.103512 -> 0.238860`. Soft retention and exact-null alternatives are not
+retained. The selected E0 checkpoint nevertheless fails the generated-side
+paired rollout: independent tensor-orbit RMSE worsens `1.066727 -> 1.403886`,
+NN-W1 worsens `0.248767 -> 0.366399`, and valid-distance fraction falls to
+`0.984375`; sampling failures remain zero. This is an exposure/interface
+failure, not permission to increase mimic weight or start F.
+
+The current manuscript therefore reports A1--D and the E0 mechanism/rollout
+boundary, while the earlier Gate chains, retired unary details, and negative
+feature/sampler screens remain available only through this history and the
+versioned report directories.
