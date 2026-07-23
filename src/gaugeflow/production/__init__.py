@@ -93,6 +93,13 @@ from .composition_state import (
     fit_integer_partition_log_prior,
 )
 from .equivariant_denoiser import HybridCrystalDenoiser, LatticeDenoiserOutput
+from .generated_state_replay import (
+    GeneratedCarrierRole,
+    GeneratedStateReplayEntry,
+    GeneratedStateReplayKey,
+    GeneratedStateSource,
+    validate_no_forbidden_source_ids,
+)
 from .generation_law import (
     CarrierSelectionSample,
     CrystalGenerationState,
@@ -220,8 +227,12 @@ __all__ = [
     "ElementReverseDiagnostics",
     "GeneratedElementBatch",
     "GeneratedCoordinateBatch",
+    "GeneratedCarrierRole",
     "GeneratedHybridBatch",
     "GeneratedLatticeBatch",
+    "GeneratedStateReplayEntry",
+    "GeneratedStateReplayKey",
+    "GeneratedStateSource",
     "HybridCrystalDenoiser",
     "LatticeDenoiserOutput",
     "LatticeLossOutput",
@@ -288,6 +299,7 @@ __all__ = [
     "rotate_orbit_representative",
     "sample_proper_rotations",
     "tensor_conditioning_training_loss",
+    "validate_no_forbidden_source_ids",
     "project_hybrid_reverse_state",
     "parent_action_site_features",
     "parent_carrier_graph_features",
