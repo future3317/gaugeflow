@@ -312,6 +312,22 @@ paired bootstrap 结果为：64src/10 的 NN/volume 95% CI 分别为
 retention window 的 34M checkpoint。下一步应做同一 34M 下的 on-policy replay refresh，而不是
 立即启动 58M/98M 或 Stage-F。
 
+on-policy refresh 随后已经完成最小闭环。`78b4258 feat: refresh replay carriers from candidate checkpoints`
+为 replay cache builder 增加 `--carrier-checkpoint`，不传时旧行为不变；传入时只用 candidate
+checkpoint 生成 detached replay carriers，训练 base identity 仍为 Stage-C 40523。用 128src/15
+candidate 作为 carrier sampler、同一 `selection_seed=6101`、`source_start_index=96`、
+`sample_count=128`、`reverse_steps=4` 构建
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_onpolicy_from_128src15_v1/`，
+manifest SHA-256 为 `8248155385c7db5373638465207e5d6cf77a80935ae67eb423c972a5d7a572e8`，
+provenance 与 training-contract audit 均通过。基于该 cache 的 15-step 34M run 通过，checkpoint
+SHA-256 为 `5c65a51808bff7d0143cbdd326a9389bbb6c41a222d842d168f5cfbe3737c3da`。
+但 val128 结果几乎不变：frozen-carrier 128src/15 的 NN/volume delta 为
+`+0.004080/+0.001527`，on-policy refresh 为 `+0.004054/+0.001537`；volume bootstrap
+区间分别为 `[+0.000125,+0.001797]` 与 `[+0.000119,+0.001806]`。因此简单的 frozen Stage-C
+carrier support 假设不成立；当前更像 replay objective 下的 update-dose / retention-boundary
+不匹配。下一步应先测试能否用更小 effective parameter displacement 获得 replay loss improvement，
+仍不得启动 Stage-F 或直接扩大到 58M/98M。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

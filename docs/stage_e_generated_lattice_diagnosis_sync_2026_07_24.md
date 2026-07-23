@@ -1093,3 +1093,109 @@ stable overlap window.
 The next evidence-backed action is to test on-policy replay refresh under the
 same 34M model, using carriers from the current candidate rather than only
 frozen Stage-C base carriers.  Capacity scaling and Stage-F remain deferred.
+
+### 2026-07-24 update: on-policy carrier refresh probe
+
+The replay cache builder now supports an explicit carrier sampler checkpoint:
+
+```text
+78b4258 feat: refresh replay carriers from candidate checkpoints
+```
+
+`--carrier-checkpoint` is optional.  When absent, the builder keeps the old
+behavior and uses `--base-checkpoint` for both replay identity and carrier
+sampling.  When present, `--base-checkpoint` remains the replay training base
+identity, while `--carrier-checkpoint` is used only to generate detached replay
+carriers.  For generated-state replay correctness checkpoints, the carrier
+checkpoint SHA-256 is written as the sampler protocol identity so caches cannot
+be silently reused across candidate checkpoints.
+
+Server verification:
+
+```text
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python -m pytest -q tests/test_generated_state_replay.py
+  23 passed
+
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check scripts/build_tiny_generated_state_replay_cache.py tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy scripts/build_tiny_generated_state_replay_cache.py tests/test_generated_state_replay.py
+  Success
+```
+
+A 1-source smoke cache from the 128src/15 candidate passed round-trip and
+training-contract audit.  The full 128-source on-policy refresh then reused the
+same support window as the 128-source frozen-carrier probe:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_onpolicy_from_128src15_v1/
+carrier checkpoint:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_v1/checkpoint_step_00000015.pt
+carrier checkpoint SHA-256:
+  c903523e446f4f4df973e7fdc3e0c6b6fd80e695573f9bdcc2f7896aab76c859
+selection_seed:
+  6101
+source_start_index:
+  96
+source_sample_count:
+  128
+reverse_steps:
+  4
+entries:
+  512 = 128 sources x 4 roles
+manifest SHA-256:
+  8248155385c7db5373638465207e5d6cf77a80935ae67eb423c972a5d7a572e8
+```
+
+The on-policy cache audit passed:
+
+```text
+clean_retention_loss_ratio_to_max_generated:
+  0.3016592524713397
+all_role_terminal_gradient_groups_nonzero:
+  true
+forbidden source ID check:
+  count=773
+```
+
+A 15-step 34M correctness run on this on-policy cache passed:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_onpolicy_from_128src15_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+  5c65a51808bff7d0143cbdd326a9389bbb6c41a222d842d168f5cfbe3737c3da
+clean_retention_loss_ratio_max:
+  0.6008108316824258
+final_parameter_update_norm:
+  5.064511316301915
+```
+
+Val128 record-mode evaluation:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_onpolicy_from_128src15_15_eval_val128_records_v1.json
+```
+
+Comparison to the frozen-carrier 128src/15 run:
+
+| candidate | all replay role losses lower | agg NN delta | agg volume delta | NN 95% CI | volume 95% CI | P(volume delta <= 0) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| frozen carriers, 128src/15 | yes | +0.004080 | +0.001527 | [-0.001886, +0.009150] | [+0.000125, +0.001797] | 0.0190 |
+| on-policy carriers from 128src/15, 15-step | yes | +0.004054 | +0.001537 | [-0.001985, +0.009145] | [+0.000119, +0.001806] | 0.0190 |
+
+Interpretation:
+
+```text
+Refreshing carriers from the current 128src/15 candidate does not change the
+val128 retention outcome in any meaningful way.  The replay losses still move
+in the right direction, hard validity remains unchanged, and the volume-W1
+paired bootstrap remains strictly positive.  The current failure is therefore
+not explained by the simple frozen-Stage-C-carrier support hypothesis.
+```
+
+The next minimum hypothesis is update-dose / retention-boundary mismatch under
+the current replay objective.  Before any capacity scaling, the next diagnostic
+should test whether replay improvement can be obtained at a smaller effective
+parameter displacement, for example by lowering learning rate or using an
+explicit predeclared retention trust rule.  Do not change model capacity,
+sampler semantics, Stage-F status or paper pass/fail language yet.

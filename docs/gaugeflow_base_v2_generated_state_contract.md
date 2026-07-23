@@ -784,6 +784,48 @@ strictly positive for volume-W1, while the one interval crossing zero
 measured 34M checkpoint that combines all-role replay loss improvement with a
 stable val128 retention window.
 
+The simple on-policy support hypothesis was then tested without changing model
+capacity, loss, optimizer family or sampler semantics.  The replay cache
+builder gained an optional `--carrier-checkpoint` argument:
+
+```text
+78b4258 feat: refresh replay carriers from candidate checkpoints
+```
+
+When this argument is supplied, `--base-checkpoint` remains the training base
+identity and the carrier checkpoint is used only for detached replay-carrier
+generation.  A 1-source smoke and a full 128-source refresh from the 128src/15
+candidate both passed provenance and training-contract audits.
+
+On-policy refresh artifact:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_onpolicy_from_128src15_v1/
+manifest SHA-256:
+  8248155385c7db5373638465207e5d6cf77a80935ae67eb423c972a5d7a572e8
+carrier checkpoint SHA-256:
+  c903523e446f4f4df973e7fdc3e0c6b6fd80e695573f9bdcc2f7896aab76c859
+```
+
+The resulting 15-step checkpoint:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_onpolicy_from_128src15_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+  5c65a51808bff7d0143cbdd326a9389bbb6c41a222d842d168f5cfbe3737c3da
+```
+
+Val128 comparison:
+
+| candidate | all replay role losses lower | agg NN delta | agg volume delta | NN 95% CI | volume 95% CI |
+| --- | --- | ---: | ---: | ---: | ---: |
+| frozen carriers, 128src/15 | yes | +0.004080 | +0.001527 | [-0.001886, +0.009150] | [+0.000125, +0.001797] |
+| on-policy carriers from 128src/15, 15-step | yes | +0.004054 | +0.001537 | [-0.001985, +0.009145] | [+0.000119, +0.001806] |
+
+This does not support the simple explanation that frozen Stage-C carriers are
+the main bottleneck.  The current 34M evidence points instead to an
+update-dose / retention-boundary mismatch under the replay objective.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic
