@@ -81,6 +81,15 @@ def _load_sampler(
     model_config = metadata.get("model_config")
     training_config = metadata.get("training_config")
     standardization = metadata.get("lattice_standardization")
+    if not isinstance(model_config, dict) or not isinstance(training_config, dict) or not isinstance(
+        standardization,
+        dict,
+    ):
+        stage_b_metadata = metadata.get("stage_b_metadata")
+        if isinstance(stage_b_metadata, dict):
+            model_config = stage_b_metadata.get("model_config")
+            training_config = stage_b_metadata.get("a1_training_config")
+            standardization = stage_b_metadata.get("lattice_standardization")
     if not isinstance(model_config, dict) or not isinstance(training_config, dict):
         raise ValueError("base checkpoint metadata lacks model/training config")
     if not isinstance(standardization, dict):
