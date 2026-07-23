@@ -180,17 +180,40 @@ The current answers to the required handoff questions are:
 ## Next Allowed Work
 
 The next line is A-v2 generated-state coverage, starting with provenance rather
-than scale:
+than scale.  The first provenance layer is now partially implemented and smoke
+tested; the work must continue as a correctness audit before any large training
+run.
 
-1. Use the generated-state contract in
+Completed provenance steps:
+
+1. The generated-state contract in
    [`gaugeflow_base_v2_generated_state_contract.md`](gaugeflow_base_v2_generated_state_contract.md).
-2. Implement or extend only the replay/cache writer around
+2. Replay/cache writer and loader around
    `GeneratedStateReplayEntry`.
-3. Validate fail-closed behavior for stale checkpoint hashes, sampler protocol
+3. Fail-closed behavior for stale checkpoint hashes, sampler protocol
    mismatch, target leakage and forbidden source ID overlap.
-4. Run only a small synthetic or tiny real replay-cache smoke first.
-5. Start the 34M 2--5k correctness run only after replay provenance passes.
-6. Defer 58M/98M or multi-GPU full training until the 34M generated-state
+4. Synthetic four-role cache smoke.
+5. Tiny real cache smoke using two real Alex train structures and four carrier
+   roles.
+
+Current immediate task:
+
+1. Implement a replay-cache per-role loss/gradient correctness audit.
+2. Load
+   `/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/`.
+3. Reconstruct the Stage-C 30k/global 40523 backbone and current
+   `TensorFreeHybridDiffusion` training path.
+4. For `clean_clean`, `generated_assignment`, `generated_lattice` and
+   `generated_joint`, report finite total/element/coordinate/volume/shape loss,
+   nonzero active-path gradients and clean-retention behavior.
+5. Verify zero overlap with Stage-D validation/test and Stage-E factorial
+   targets before treating the audit as a valid training contract check.
+
+Deferred work:
+
+1. Start the 34M 2--5k correctness run only after the per-role replay audit
+   passes.
+2. Defer 58M/98M or multi-GPU full training until the 34M generated-state
    contract is proven.
 
 Large GPU capacity should be used after this provenance layer is closed, not to
@@ -218,11 +241,23 @@ Server artifacts:
   stage_e_countsfix_shape_scale025_official_smoke32_v1/
   stage_e_orderless_partial_v2_shape_scale025_smoke32_v1/
   stage_e_orderless_partial_v2_shape_scale0_smoke32_v1/
+  generated_state_replay_cache_smoke_v2/
+  generated_state_replay_tiny_real_smoke_v3/
 ```
 
 Code/provenance boundary:
 
 ```text
 src/gaugeflow/production/generated_state_replay.py
+scripts/smoke_generated_state_replay_manifest.py
+scripts/build_tiny_generated_state_replay_cache.py
 tests/test_generated_state_replay.py
+```
+
+Latest A-v2 provenance commits:
+
+```text
+8bb37cab docs: record generated-state replay cache status
+48186d52 fix: load Stage-C backbone for tiny replay cache
+55cdb62e docs: record tiny real generated-state replay smoke
 ```

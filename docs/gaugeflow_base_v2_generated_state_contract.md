@@ -2,7 +2,7 @@
 
 Status: draft implementation contract, not a training result.
 
-Implementation status as of `8bb37cab`:
+Implementation status as of `55cdb62e`:
 
 - `GeneratedStateReplayEntry` validates role/source compatibility, exact counts,
   partial reveal semantics, lattice positivity, shape subspace membership,
@@ -22,11 +22,10 @@ manifest SHA-256:
   a4ab27e0793c30c5a76fb077867828c41b4eb6b3d2096dabd3d23f5f7cfafac1
 ```
 
-This is still only the provenance/cache layer.  It does not authorize 34M
-training until a tiny real replay writer has produced entries from actual
-current-model generated carriers and passed the same contract.
+This is still only the synthetic provenance/cache layer.  It did not authorize
+34M training by itself; the next required step was a tiny real replay writer.
 
-Real tiny-cache status as of `48186d52`:
+Real tiny-cache status as of `55cdb62e`:
 
 - `scripts/build_tiny_generated_state_replay_cache.py` now loads the frozen
   Stage-C 30k/global 40523 backbone from its physical continued-pretraining
@@ -55,9 +54,27 @@ source IDs:
 ```
 
 This closes the first real cache-provenance smoke.  It is still not a training
-result and not a generated-quality claim.  The next step is a bounded 34M
-correctness run that consumes this contract and reports per-role gradient,
-finite-loss, clean-retention and generated-state stratification checks.
+result and not a generated-quality claim.  The next step is not a capacity run
+yet; it is a replay-cache per-role loss/gradient correctness audit that proves
+the training objective can consume each carrier role without target leakage or
+silent dead gradients.
+
+Immediate audit requirements:
+
+- load the tiny real cache at
+  `/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/`;
+- reconstruct the frozen Stage-C 30k/global 40523 backbone and current
+  `TensorFreeHybridDiffusion` training path;
+- pack each role into a graph batch without mixing structures;
+- run the current product-space denoising loss without changing the model or
+  loss definition;
+- report finite total, element, coordinate, volume and shape losses per role;
+- backprop a weighted role loss and confirm nonzero gradients in the active
+  element, lattice and coordinate parameter groups;
+- confirm `clean_clean` retention does not immediately explode relative to the
+  generated roles;
+- save a small JSON report under the server evaluations directory;
+- run `pytest`, `ruff` and `mypy` on the touched files before committing.
 
 ## Purpose
 
@@ -246,6 +263,7 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Implement only the replay/provenance data layer and its property tests first.
-Do not start multi-GPU training until the cache contract can fail closed on
-synthetic leakage and stale-checkpoint cases.
+Implement the replay-cache per-role loss/gradient correctness audit first.
+Do not start multi-GPU training until this audit passes on the tiny real cache
+and proves that generated-state replay entries enter the same loss path with
+correct composition, assignment, lattice and coordinate provenance.
