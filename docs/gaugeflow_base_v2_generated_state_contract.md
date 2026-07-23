@@ -344,6 +344,40 @@ Before any 58M/98M capacity run, the 34M A-v2 prototype must pass:
 
 The first 2--5k update run is a correctness run, not a final capacity result.
 
+## Retraining Plan Boundary
+
+The retraining plan in `../../重训计划.md` is the fallback after the Stage-E v1
+diagnosis is frozen, not permission to restart the full pipeline immediately.
+The authorized order is:
+
+```text
+freeze E-v1 evidence
+  -> broaden A-v2 generated-state replay coverage
+  -> 34M correctness and retention validation
+  -> predeclared 34M/58M/98M capacity competition
+  -> formal A-v2 training
+  -> B/C-v2 only after A-v2 improves free-joint generation
+  -> E-v2 tensor adapter only after the base path is qualified
+```
+
+Batch size, model width and GPU count may be increased only after the data
+contract and rollout-retention checks are stable.  Larger batch/multi-GPU runs
+must keep the same generated-state provenance fields, forbidden-source checks,
+checkpoint-hash enforcement, sampler protocol identity, evaluation targets and
+predeclared checkpoint-selection rule.  Higher throughput is an execution
+optimization, not a scientific variable.
+
+The immediate A-v2 implementation remains the broader 34M replay cache:
+
+- add a `--forbidden-source-ids` input to the cache builder and fail closed on
+  selected-source overlap;
+- replace contiguous source slices with deterministic random/permuted source
+  selection;
+- build 32/64-source caches with the same four carrier roles;
+- rerun the training-contract audit before any longer training;
+- repeat the same smoke32 replay/free-generation evaluator and require
+  replay-role improvement without free-generation retention regression.
+
 ## Capacity Competition
 
 Only after the 34M contract passes may 34M/58M/98M be compared.  They must use:

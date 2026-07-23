@@ -166,6 +166,40 @@ The current answers to the required handoff questions are:
 | Is Stage-E still blocked? | Yes. |
 | Next minimal root-cause hypothesis? | v1 lacks a provenance-qualified generated-state coverage contract across generated assignment, lattice and coordinate carriers. |
 
+## Current Conversation Sync
+
+The latest working goal is to continue diagnosis until the Stage-E
+generated-lattice/coordinate degradation has an evidence-backed root cause and
+then apply only the minimum authorized fix.  If those local fixes cannot
+restore retention, the fallback is the staged retraining plan in
+`../../重训计划.md`, not an immediate blind restart of A/B/C/E.
+
+The latest diagnosis should be read in this order:
+
+1. `composition_counts` provenance was a real interface bug and explains the
+   historical adapter's volume drift.
+2. The counts-fixed adapter then exposed a more specific failure:
+   volume correction and local geometry were decoupled, with full shape
+   residual worsening `oracle_ca` NN/condition tails.
+3. Lattice-coordinate counterfactuals showed that clean coordinates on the
+   C-new lattice did not immediately fail, so the endpoint lattice is not by
+   itself proven unphysical.
+4. The remaining failure is a reverse-trajectory coupling problem: generated
+   shape trajectories change periodic distances and dynamic neighbor graphs,
+   placing the coordinate score outside its qualified carrier distribution.
+5. Shape-residual dose testing showed `shape_scale=0.25` is a useful
+   diagnostic candidate, but not a Stage-E pass.
+6. Partial/MASK orderless exposure is a real missing carrier regime, yet a
+   single shared E-v1 lattice adapter cannot serve both clean/full and
+   partial/MASK carriers without damaging retention.
+7. The eight-entry generated-state replay run closed the optimizer/interface
+   path, but overfit its tiny cache and damaged free-generation retention.
+
+Therefore the active route is broader provenance-checked generated-state
+coverage at 34M before any capacity expansion.  Available GPUs may be used for
+parallel cache building, smoke evaluation, and later predeclared capacity
+competition, but not to bypass the 34M replay-role plus free-retention gate.
+
 ## Do Not Do
 
 - Do not start Stage-F.
@@ -176,6 +210,12 @@ The current answers to the required handoff questions are:
 - Do not update the paper to say tensor-conditioned generation works.
 - Do not delete historical worktrees, checkpoints, runs or evaluations without
   a separate read-only inventory and explicit approval.
+- Do not make 58M/98M, larger batch, multi-GPU, or larger model capacity the
+  next explanation for the current failure until the 34M generated-state path
+  has non-degraded rollout evidence.
+- Do not treat coordinate exposure as authorized solely from the NN regression;
+  the clean-coordinate counterfactual first points to generated lattice/graph
+  trajectory coupling.
 
 ## Next Allowed Work
 
@@ -213,6 +253,12 @@ Current immediate task:
    correctness run.
 3. Do not expand to 58M/98M or multi-GPU capacity competition until 34M has
    both replay-role improvement and non-degraded free-generation retention.
+4. Extend the replay-cache builder before scaling it: accept a forbidden source
+   ID file, fail closed on overlap, and prefer deterministic random/permuted
+   source selection over contiguous source slices.
+5. Run the same training-contract audit and same smoke32 evaluator on the
+   broader 32/64-source cache before increasing steps, batch size, or model
+   width.
 
 Deferred work:
 
