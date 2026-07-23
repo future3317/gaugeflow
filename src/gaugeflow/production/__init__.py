@@ -100,8 +100,10 @@ from .generated_state_replay import (
     GeneratedStateReplayManifest,
     GeneratedStateReplayManifestRow,
     GeneratedStateSource,
+    load_generated_state_replay_cache,
     load_generated_state_replay_manifest,
     validate_no_forbidden_source_ids,
+    write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
 from .generation_law import (
@@ -300,6 +302,7 @@ __all__ = [
     "faithful_parent_action",
     "load_production_checkpoint",
     "load_production_runtime_state",
+    "load_generated_state_replay_cache",
     "load_generated_state_replay_manifest",
     "read_production_checkpoint_metadata",
     "reverse_time_grid",
@@ -307,6 +310,7 @@ __all__ = [
     "sample_proper_rotations",
     "tensor_conditioning_training_loss",
     "validate_no_forbidden_source_ids",
+    "write_generated_state_replay_cache",
     "write_generated_state_replay_manifest",
     "project_hybrid_reverse_state",
     "parent_action_site_features",

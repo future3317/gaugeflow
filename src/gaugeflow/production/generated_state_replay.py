@@ -58,6 +58,20 @@ _LATTICE_SOURCES = {
     "generated_joint": {"generated_lattice", "generated_joint", "replay_cache"},
 }
 
+_CACHE_MANIFEST_FILENAME = "generated_state_replay_manifest.json"
+_CACHE_PAYLOAD_FILENAME = "generated_state_replay_payload.pt"
+_TENSOR_PAYLOAD_KEYS = {
+    "node_count",
+    "composition_counts",
+    "assignment_tokens",
+    "assignment_reveal_rank",
+    "assignment_reveal_count",
+    "lattice",
+    "lattice_log_volume",
+    "lattice_log_shape",
+    "fractional_coordinates",
+}
+
 
 def _require_source(value: str, name: str) -> None:
     if value not in _SOURCES:
@@ -377,6 +391,17 @@ def _require_int_list(value: object, name: str) -> list[int]:
     return [int(item) for item in value]
 
 
+def _require_tensor_dict(value: object, name: str) -> dict[str, torch.Tensor]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be an object")
+    result: dict[str, torch.Tensor] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not isinstance(item, torch.Tensor):
+            raise ValueError(f"{name} must map strings to tensors")
+        result[key] = item
+    return result
+
+
 @dataclass(frozen=True)
 class GeneratedStateReplayManifestRow:
     """Small manifest row that binds one replay entry to tensor payload hashes."""
@@ -483,18 +508,7 @@ class GeneratedStateReplayManifestRow:
             raise ValueError("assignment source is incompatible with replay role")
         if self.lattice_source not in _LATTICE_SOURCES[self.key.role]:
             raise ValueError("lattice source is incompatible with replay role")
-        required = {
-            "node_count",
-            "composition_counts",
-            "assignment_tokens",
-            "assignment_reveal_rank",
-            "assignment_reveal_count",
-            "lattice",
-            "lattice_log_volume",
-            "lattice_log_shape",
-            "fractional_coordinates",
-        }
-        if set(self.tensor_sha256) != required:
+        if set(self.tensor_sha256) != _TENSOR_PAYLOAD_KEYS:
             raise ValueError("replay manifest row has incomplete tensor payload hashes")
 
 
@@ -595,6 +609,122 @@ def load_generated_state_replay_manifest(path: Path) -> GeneratedStateReplayMani
     if not isinstance(value, dict):
         raise ValueError("generated-state replay manifest must be a JSON object")
     return GeneratedStateReplayManifest.from_json_object(value)
+
+
+def _entry_to_payload(entry: GeneratedStateReplayEntry) -> dict[str, object]:
+    entry.validate()
+    return {
+        "key": entry.key.to_json_object(),
+        "source_split": entry.source_split,
+        "parent_or_flexible_carrier_id": entry.parent_or_flexible_carrier_id,
+        "composition_source": entry.composition_source,
+        "assignment_source": entry.assignment_source,
+        "lattice_source": entry.lattice_source,
+        "coordinate_source": entry.coordinate_source,
+        "tensors": {
+            "node_count": entry.node_count.detach().cpu(),
+            "composition_counts": entry.composition_counts.detach().cpu(),
+            "assignment_tokens": entry.assignment_tokens.detach().cpu(),
+            "assignment_reveal_rank": entry.assignment_reveal_rank.detach().cpu(),
+            "assignment_reveal_count": entry.assignment_reveal_count.detach().cpu(),
+            "lattice": entry.lattice.detach().cpu(),
+            "lattice_log_volume": entry.lattice_log_volume.detach().cpu(),
+            "lattice_log_shape": entry.lattice_log_shape.detach().cpu(),
+            "fractional_coordinates": entry.fractional_coordinates.detach().cpu(),
+        },
+    }
+
+
+def _entry_from_payload(value: object) -> GeneratedStateReplayEntry:
+    if not isinstance(value, dict):
+        raise ValueError("generated-state replay payload entry must be an object")
+    key_value = value.get("key")
+    if not isinstance(key_value, dict):
+        raise ValueError("generated-state replay payload entry requires a key object")
+    tensors = _require_tensor_dict(value.get("tensors"), "replay payload tensors")
+    if set(tensors) != _TENSOR_PAYLOAD_KEYS:
+        raise ValueError("generated-state replay payload has incomplete tensors")
+    composition_source = _require_string(value.get("composition_source"), "composition source")
+    assignment_source = _require_string(value.get("assignment_source"), "assignment source")
+    lattice_source = _require_string(value.get("lattice_source"), "lattice source")
+    coordinate_source = _require_string(value.get("coordinate_source"), "coordinate source")
+    for source_name, source in (
+        ("composition", composition_source),
+        ("assignment", assignment_source),
+        ("lattice", lattice_source),
+        ("coordinate", coordinate_source),
+    ):
+        _require_source(source, source_name)
+    entry = GeneratedStateReplayEntry(
+        key=GeneratedStateReplayKey.from_json_object(key_value),
+        source_split=_require_string(value.get("source_split"), "source split"),
+        parent_or_flexible_carrier_id=_require_string(
+            value.get("parent_or_flexible_carrier_id"),
+            "carrier id",
+        ),
+        node_count=tensors["node_count"],
+        composition_counts=tensors["composition_counts"],
+        composition_source=composition_source,  # type: ignore[arg-type]
+        assignment_tokens=tensors["assignment_tokens"],
+        assignment_source=assignment_source,  # type: ignore[arg-type]
+        assignment_reveal_rank=tensors["assignment_reveal_rank"],
+        assignment_reveal_count=tensors["assignment_reveal_count"],
+        lattice=tensors["lattice"],
+        lattice_source=lattice_source,  # type: ignore[arg-type]
+        lattice_log_volume=tensors["lattice_log_volume"],
+        lattice_log_shape=tensors["lattice_log_shape"],
+        fractional_coordinates=tensors["fractional_coordinates"],
+        coordinate_source=coordinate_source,  # type: ignore[arg-type]
+    )
+    entry.validate()
+    return entry
+
+
+def write_generated_state_replay_cache(
+    directory: Path,
+    entries: list[GeneratedStateReplayEntry],
+) -> str:
+    """Write replay payload tensors plus manifest, returning the manifest hash."""
+
+    manifest = GeneratedStateReplayManifest.from_entries(entries)
+    manifest.validate_against_entries(entries)
+    directory.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "format_version": 1,
+        "entries": [_entry_to_payload(entry) for entry in entries],
+    }
+    torch.save(payload, directory / _CACHE_PAYLOAD_FILENAME)
+    return write_generated_state_replay_manifest(directory / _CACHE_MANIFEST_FILENAME, manifest)
+
+
+def load_generated_state_replay_cache(
+    directory: Path,
+    *,
+    expected_base_checkpoint_sha256: str | None = None,
+    expected_sampler_commit: str | None = None,
+    expected_sampler_protocol_sha256: str | None = None,
+    forbidden_source_ids: set[str] | None = None,
+) -> tuple[list[GeneratedStateReplayEntry], GeneratedStateReplayManifest]:
+    """Load a replay cache and reject stale or tampered payloads."""
+
+    manifest = load_generated_state_replay_manifest(directory / _CACHE_MANIFEST_FILENAME)
+    manifest.validate(
+        expected_base_checkpoint_sha256=expected_base_checkpoint_sha256,
+        expected_sampler_commit=expected_sampler_commit,
+        expected_sampler_protocol_sha256=expected_sampler_protocol_sha256,
+        forbidden_source_ids=forbidden_source_ids,
+    )
+    payload: Any = torch.load(directory / _CACHE_PAYLOAD_FILENAME, map_location="cpu")
+    if not isinstance(payload, dict):
+        raise ValueError("generated-state replay payload must be an object")
+    if payload.get("format_version") != 1:
+        raise ValueError("unsupported generated-state replay payload version")
+    entries_value = payload.get("entries")
+    if not isinstance(entries_value, list):
+        raise ValueError("generated-state replay payload requires an entries list")
+    entries = [_entry_from_payload(item) for item in entries_value]
+    manifest.validate_against_entries(entries)
+    return entries, manifest
 
 
 def validate_no_forbidden_source_ids(

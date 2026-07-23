@@ -11,8 +11,10 @@ from gaugeflow.production.generated_state_replay import (
     GeneratedStateReplayEntry,
     GeneratedStateReplayKey,
     GeneratedStateReplayManifest,
+    load_generated_state_replay_cache,
     load_generated_state_replay_manifest,
     validate_no_forbidden_source_ids,
+    write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
@@ -162,6 +164,16 @@ def main() -> None:
     loaded = load_generated_state_replay_manifest(manifest_path)
     loaded.validate_against_entries(entries)
 
+    cache_dir = output_dir / "cache"
+    cache_hash = write_generated_state_replay_cache(cache_dir, entries)
+    cache_entries, cache_manifest = load_generated_state_replay_cache(
+        cache_dir,
+        expected_base_checkpoint_sha256=BASE_SHA,
+        expected_sampler_commit=SAMPLER_COMMIT,
+        expected_sampler_protocol_sha256=PROTOCOL_SHA,
+    )
+    cache_manifest.validate_against_entries(cache_entries)
+
     forbidden_overlap_rejected = False
     try:
         loaded.validate(forbidden_source_ids={"synthetic<generated_joint>"})
@@ -174,11 +186,14 @@ def main() -> None:
         "roles": list(roles),
         "manifest_path": str(manifest_path),
         "manifest_sha256": manifest_hash,
+        "cache_manifest_sha256": cache_hash,
+        "cache_round_trip_matches": cache_manifest.canonical_sha256() == cache_hash,
+        "cache_entry_count": len(cache_entries),
         "round_trip_sha256": loaded.canonical_sha256(),
         "round_trip_matches": loaded.canonical_sha256() == manifest_hash,
         "forbidden_overlap_rejected": forbidden_overlap_rejected,
     }
-    if not report["round_trip_matches"] or not forbidden_overlap_rejected:
+    if not report["round_trip_matches"] or not report["cache_round_trip_matches"] or not forbidden_overlap_rejected:
         raise RuntimeError("generated-state replay manifest smoke failed")
 
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -8,8 +8,10 @@ from gaugeflow.production.generated_state_replay import (
     GeneratedStateReplayKey,
     GeneratedStateReplayManifest,
     GeneratedStateReplayManifestRow,
+    load_generated_state_replay_cache,
     load_generated_state_replay_manifest,
     validate_no_forbidden_source_ids,
+    write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
 
@@ -176,3 +178,62 @@ def test_generated_state_replay_manifest_rejects_duplicate_keys_and_forbidden_id
     single = GeneratedStateReplayManifest.from_entries([entry])
     with pytest.raises(ValueError, match="forbidden source ids"):
         single.validate(forbidden_source_ids={"alex<unit-test>"})
+
+
+def test_generated_state_replay_cache_round_trips_payload_and_manifest(tmp_path) -> None:
+    entry = _entry()
+    manifest_hash = write_generated_state_replay_cache(tmp_path, [entry])
+    entries, manifest = load_generated_state_replay_cache(
+        tmp_path,
+        expected_base_checkpoint_sha256="base-sha",
+        expected_sampler_commit="commit-sha",
+        expected_sampler_protocol_sha256="protocol-sha",
+    )
+
+    assert manifest.canonical_sha256() == manifest_hash
+    assert len(entries) == 1
+    assert entries[0].key == entry.key
+    assert torch.equal(entries[0].composition_counts, entry.composition_counts)
+    assert torch.equal(entries[0].assignment_tokens, entry.assignment_tokens)
+    assert torch.equal(entries[0].lattice, entry.lattice)
+    assert torch.equal(entries[0].fractional_coordinates, entry.fractional_coordinates)
+
+
+def test_generated_state_replay_cache_rejects_tampered_payload(tmp_path) -> None:
+    entry = _entry()
+    write_generated_state_replay_cache(tmp_path, [entry])
+    tampered = GeneratedStateReplayEntry(
+        **{
+            **entry.__dict__,
+            "lattice_log_shape": entry.lattice_log_shape.clone() + 0.25,
+        }
+    )
+    payload = {
+        "format_version": 1,
+        "entries": [
+            {
+                "key": tampered.key.to_json_object(),
+                "source_split": tampered.source_split,
+                "parent_or_flexible_carrier_id": tampered.parent_or_flexible_carrier_id,
+                "composition_source": tampered.composition_source,
+                "assignment_source": tampered.assignment_source,
+                "lattice_source": tampered.lattice_source,
+                "coordinate_source": tampered.coordinate_source,
+                "tensors": {
+                    "node_count": tampered.node_count,
+                    "composition_counts": tampered.composition_counts,
+                    "assignment_tokens": tampered.assignment_tokens,
+                    "assignment_reveal_rank": tampered.assignment_reveal_rank,
+                    "assignment_reveal_count": tampered.assignment_reveal_count,
+                    "lattice": tampered.lattice,
+                    "lattice_log_volume": tampered.lattice_log_volume,
+                    "lattice_log_shape": tampered.lattice_log_shape,
+                    "fractional_coordinates": tampered.fractional_coordinates,
+                },
+            }
+        ],
+    }
+    torch.save(payload, tmp_path / "generated_state_replay_payload.pt")
+
+    with pytest.raises(ValueError, match="does not match replay entry payload"):
+        load_generated_state_replay_cache(tmp_path)
