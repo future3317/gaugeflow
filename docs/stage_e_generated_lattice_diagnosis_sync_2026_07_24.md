@@ -251,6 +251,12 @@ Completed provenance steps:
     protocol.
 13. The 32-source cache passed the same training-contract audit and a 20-step
     34M optimizer smoke without saving a production checkpoint.
+14. A 32-source 2k correctness run passed training-interface checks but still
+    degraded smoke32 free-generation NN, so broader coverage alone is not yet
+    sufficient.
+15. Shorter-update diagnostics showed a 200-step EMA checkpoint preserves
+    smoke32 free-generation much better while still reducing all replay-role
+    losses.
 
 Current immediate task:
 
@@ -266,10 +272,10 @@ Current immediate task:
 5. Run the same training-contract audit and same smoke32 evaluator on the
    broader 32/64-source cache before increasing steps, batch size, or model
    width.
-6. The 32-source cache has passed cache/audit/20-step training smoke.  The next
-   allowed experiment is a bounded 34M correctness run on this broader cache,
-   followed by the same replay/free-generation evaluator.  It is still not a
-   58M/98M capacity run.
+6. The 32-source cache has passed cache/audit/20-step training smoke, and the
+   bounded 2k run has now been evaluated.  The next allowed experiment is not
+   capacity scaling; it is a predeclared update-dose/checkpoint-selection
+   diagnostic around the 32-source 200-step EMA candidate.
 
 Deferred work:
 
@@ -431,6 +437,39 @@ first_step_parameter_update_norm: 1.0244015304898244
 final_parameter_update_norm: 5.814717134166754
 clean_retention_loss_ratio_max: 0.7123302917464417
 forbidden_source_id_check: executed, count=773
+```
+
+32-source 34M correctness/evaluation summary:
+
+| cache | steps | weights | replay role losses | free NN-W1 | NN delta | volume-W1 | volume delta | distance-valid |
+| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 8-source | 2000 | EMA | all lower | 2.058926 | +1.520519 | 0.441431 | +0.107634 | 0.9375 |
+| 8-source | 2000 | raw | all lower | 1.957643 | +1.419236 | 0.485221 | +0.151424 | 1.0000 |
+| 32-source | 200 | EMA | all lower | 0.571096 | +0.032688 | 0.325896 | -0.007901 | 1.0000 |
+| 32-source | 200 | raw | all lower | 1.124272 | +0.585865 | 0.267458 | -0.066339 | 1.0000 |
+| 32-source | 500 | EMA | all lower | 0.666141 | +0.127733 | 0.327441 | -0.006356 | 1.0000 |
+| 32-source | 2000 | EMA | all lower | 1.085160 | +0.546752 | 0.288742 | -0.045055 | 1.0000 |
+| 32-source | 2000 | raw | all lower | 1.492386 | +0.953979 | 0.315211 | -0.018586 | 0.9375 |
+
+Current interpretation:
+
+```text
+Broader provenance coverage fixes the catastrophic 8-entry overfit mode only
+when the update dose is kept small and EMA weights are used.  Replay-role loss
+improvement by itself is not a sufficient selection metric: longer 500/2000
+training continues to improve cached role losses while degrading free rollout
+geometry.  The next root-cause hypothesis is replay-over-optimization/update
+dose under a still-narrow generated-state support, not model capacity.
+```
+
+Current candidate:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_200_v1/
+checkpoint_step_00000200.pt
+checkpoint SHA-256:
+  164dc4277c6fd80274990ff4452731f1cb43b4c7a2ef61e7d27c45a68a03f995
+status: diagnostic candidate only
 ```
 
 Latest 34M correctness run:
