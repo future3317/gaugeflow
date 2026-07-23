@@ -14,6 +14,7 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
+from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
 def _key(role: str = "generated_joint") -> GeneratedStateReplayKey:
@@ -237,3 +238,18 @@ def test_generated_state_replay_cache_rejects_tampered_payload(tmp_path) -> None
 
     with pytest.raises(ValueError, match="does not match replay entry payload"):
         load_generated_state_replay_cache(tmp_path)
+
+
+def test_generated_state_replay_correctness_role_weight_is_equal() -> None:
+    assert _role_weight(4) == pytest.approx(0.25)
+    with pytest.raises(ValueError, match="role count"):
+        _role_weight(0)
+
+
+def test_generated_state_replay_correctness_parameter_update_norm() -> None:
+    module = torch.nn.Linear(2, 1)
+    reference = {name: parameter.detach().cpu().clone() for name, parameter in module.named_parameters()}
+    assert _parameter_update_norm(module, reference) == pytest.approx(0.0)
+    with torch.no_grad():
+        module.weight.add_(1.0)
+    assert _parameter_update_norm(module, reference) > 0.0
