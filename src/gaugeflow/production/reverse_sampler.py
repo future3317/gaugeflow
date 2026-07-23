@@ -141,7 +141,14 @@ def vp_reverse_step(
     noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
     step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
     clean_coefficient = alpha_to * step_noise / noise_from
-    state_coefficient = (survival_from / survival_to.clamp_min(1.0e-12)).sqrt() * (1.0 - survival_to) / noise_from
+    # q(x_s | x_t, x_0) uses the cumulative-alpha ratio
+    # alpha_t / alpha_s = sqrt(alpha_bar_t / alpha_bar_s) on x_t.
+    # This is the standard DDPM posterior coefficient; dropping the
+    # denominator alpha_s changes the transition kernel rather than merely
+    # stabilizing it.
+    state_coefficient = (
+        alpha_from / alpha_to.clamp_min(1.0e-12)
+    ) * (1.0 - survival_to) / noise_from
     mean = clean_coefficient * clean_estimate + state_coefficient * state
     variance = schedule.posterior_variance(time_from, time_to)
     return mean + variance.sqrt() * standard_normal(state.shape, state, generator)
@@ -156,6 +163,15 @@ class ReverseTrajectoryDiagnostics:
     coordinate_step_rms: torch.Tensor
     volume_step_rms: torch.Tensor
     shape_step_rms: torch.Tensor
+    # Optional lattice telemetry for generated-side exposure audits.
+    trajectory_time: torch.Tensor | None = None
+    trajectory_log_volume: torch.Tensor | None = None
+    trajectory_shape_norm: torch.Tensor | None = None
+    trajectory_physical_volume: torch.Tensor | None = None
+    trajectory_condition_number: torch.Tensor | None = None
+    posterior_clean_coefficient: torch.Tensor | None = None
+    posterior_state_coefficient: torch.Tensor | None = None
+    posterior_variance: torch.Tensor | None = None
 
 
 @dataclass(frozen=True)
@@ -212,6 +228,16 @@ class LatticeReverseDiagnostics:
     time: torch.Tensor
     volume_step_rms: torch.Tensor
     shape_step_rms: torch.Tensor
+    # Optional telemetry, populated only when trace_lattice=True.  The
+    # production reverse kernel is unchanged when tracing is disabled.
+    trajectory_time: torch.Tensor | None = None
+    trajectory_log_volume: torch.Tensor | None = None
+    trajectory_shape_norm: torch.Tensor | None = None
+    trajectory_physical_volume: torch.Tensor | None = None
+    trajectory_condition_number: torch.Tensor | None = None
+    posterior_clean_coefficient: torch.Tensor | None = None
+    posterior_state_coefficient: torch.Tensor | None = None
+    posterior_variance: torch.Tensor | None = None
 
 
 @dataclass(frozen=True)
@@ -517,6 +543,7 @@ class TensorFreeReverseSampler:
         continuous_generator: torch.Generator | None = None,
         continuous_mode: ContinuousReverseMode = "reverse_sde",
         time_grid: str = "uniform_log_alpha",
+        trace_lattice: bool = False,
     ) -> GeneratedLatticeBatch:
         """Reverse only ``L_t`` conditional on an unordered clean composition."""
 
@@ -588,6 +615,21 @@ class TensorFreeReverseSampler:
         )
         volume_steps: list[torch.Tensor] = []
         shape_steps: list[torch.Tensor] = []
+        trajectory_log_volume: list[torch.Tensor] = []
+        trajectory_shape_norm: list[torch.Tensor] = []
+        trajectory_physical_volume: list[torch.Tensor] = []
+        trajectory_condition_number: list[torch.Tensor] = []
+        posterior_clean_coefficients: list[torch.Tensor] = []
+        posterior_state_coefficients: list[torch.Tensor] = []
+        posterior_variances: list[torch.Tensor] = []
+        if trace_lattice:
+            initial_lattice = LatticeVolumeShape(log_volume, log_shape).lattice(
+                blueprint.fractional_to_cartesian
+            )
+            trajectory_log_volume.append(log_volume.detach().cpu())
+            trajectory_shape_norm.append(log_shape.detach().norm(dim=-1).cpu())
+            trajectory_physical_volume.append(torch.linalg.det(initial_lattice).detach().cpu())
+            trajectory_condition_number.append(torch.linalg.cond(initial_lattice).detach().cpu())
         was_training = self.denoiser.training
         self.denoiser.eval()
         trajectory_error: RuntimeError | ValueError | None = None
@@ -639,6 +681,33 @@ class TensorFreeReverseSampler:
                     )
                     volume_steps.append((next_volume - log_volume).square().mean().sqrt())
                     shape_steps.append((next_shape - log_shape).square().mean().sqrt())
+                    if trace_lattice:
+                        next_lattice = LatticeVolumeShape(next_volume, next_shape).lattice(
+                            blueprint.fractional_to_cartesian
+                        )
+                        trajectory_log_volume.append(next_volume.detach().cpu())
+                        trajectory_shape_norm.append(next_shape.detach().norm(dim=-1).cpu())
+                        trajectory_physical_volume.append(torch.linalg.det(next_lattice).detach().cpu())
+                        trajectory_condition_number.append(torch.linalg.cond(next_lattice).detach().cpu())
+                        alpha_from = self.vp_schedule.alpha(time_from)
+                        alpha_to = self.vp_schedule.alpha(time_to)
+                        survival_from = alpha_from.square()
+                        survival_to = alpha_to.square()
+                        noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
+                        step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
+                        posterior_clean_coefficients.append(
+                            (alpha_to * step_noise / noise_from).detach().cpu()
+                        )
+                        posterior_state_coefficients.append(
+                            (
+                                (alpha_from / alpha_to.clamp_min(1.0e-12))
+                                * (1.0 - survival_to)
+                                / noise_from
+                            ).detach().cpu()
+                        )
+                        posterior_variances.append(
+                            self.vp_schedule.posterior_variance(time_from, time_to).detach().cpu()
+                        )
                     volume_latent = next_volume_latent
                     shape_latent = self.lattice_standardizer.encode_shape(next_shape)
                     log_volume = next_volume
@@ -665,6 +734,18 @@ class TensorFreeReverseSampler:
                 time=times[1:].detach().cpu(),
                 volume_step_rms=torch.stack(volume_steps).detach().cpu(),
                 shape_step_rms=torch.stack(shape_steps).detach().cpu(),
+                trajectory_time=times.detach().cpu() if trace_lattice else None,
+                trajectory_log_volume=torch.stack(trajectory_log_volume) if trace_lattice else None,
+                trajectory_shape_norm=torch.stack(trajectory_shape_norm) if trace_lattice else None,
+                trajectory_physical_volume=torch.stack(trajectory_physical_volume) if trace_lattice else None,
+                trajectory_condition_number=torch.stack(trajectory_condition_number) if trace_lattice else None,
+                posterior_clean_coefficient=(
+                    torch.stack(posterior_clean_coefficients) if trace_lattice else None
+                ),
+                posterior_state_coefficient=(
+                    torch.stack(posterior_state_coefficients) if trace_lattice else None
+                ),
+                posterior_variance=torch.stack(posterior_variances) if trace_lattice else None,
             ),
         )
 
@@ -860,6 +941,7 @@ class TensorFreeReverseSampler:
         continuous_generator: torch.Generator | None = None,
         continuous_mode: ContinuousReverseMode = "reverse_sde",
         time_grid: str = "uniform_log_alpha",
+        trace_lattice: bool = False,
     ) -> GeneratedHybridBatch:
         if steps < 1:
             raise ValueError("reverse sampler requires at least one step")
@@ -957,6 +1039,21 @@ class TensorFreeReverseSampler:
         coordinate_steps: list[torch.Tensor] = []
         volume_steps: list[torch.Tensor] = []
         shape_steps: list[torch.Tensor] = []
+        trajectory_log_volume: list[torch.Tensor] = []
+        trajectory_shape_norm: list[torch.Tensor] = []
+        trajectory_physical_volume: list[torch.Tensor] = []
+        trajectory_condition_number: list[torch.Tensor] = []
+        posterior_clean_coefficients: list[torch.Tensor] = []
+        posterior_state_coefficients: list[torch.Tensor] = []
+        posterior_variances: list[torch.Tensor] = []
+        if trace_lattice:
+            initial_lattice = LatticeVolumeShape(log_volume, log_shape).lattice(
+                blueprint.fractional_to_cartesian
+            )
+            trajectory_log_volume.append(log_volume.detach().cpu())
+            trajectory_shape_norm.append(log_shape.detach().norm(dim=-1).cpu())
+            trajectory_physical_volume.append(torch.linalg.det(initial_lattice).detach().cpu())
+            trajectory_condition_number.append(torch.linalg.cond(initial_lattice).detach().cpu())
         was_training = self.denoiser.training
         self.denoiser.eval()
         trajectory_error: RuntimeError | ValueError | None = None
@@ -1082,6 +1179,33 @@ class TensorFreeReverseSampler:
                     coordinate_steps.append((projected.fractional_coordinates - coordinates).square().mean().sqrt())
                     volume_steps.append((next_volume - log_volume).square().mean().sqrt())
                     shape_steps.append((projected.log_shape - log_shape).square().mean().sqrt())
+                    if trace_lattice:
+                        next_lattice = LatticeVolumeShape(next_volume, projected.log_shape).lattice(
+                            blueprint.fractional_to_cartesian
+                        )
+                        trajectory_log_volume.append(next_volume.detach().cpu())
+                        trajectory_shape_norm.append(projected.log_shape.detach().norm(dim=-1).cpu())
+                        trajectory_physical_volume.append(torch.linalg.det(next_lattice).detach().cpu())
+                        trajectory_condition_number.append(torch.linalg.cond(next_lattice).detach().cpu())
+                        alpha_from = self.vp_schedule.alpha(time_from)
+                        alpha_to = self.vp_schedule.alpha(time_to)
+                        survival_from = alpha_from.square()
+                        survival_to = alpha_to.square()
+                        noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
+                        step_noise = (1.0 - survival_from / survival_to.clamp_min(1.0e-12)).clamp(0.0, 1.0)
+                        posterior_clean_coefficients.append(
+                            (alpha_to * step_noise / noise_from).detach().cpu()
+                        )
+                        posterior_state_coefficients.append(
+                            (
+                                (alpha_from / alpha_to.clamp_min(1.0e-12))
+                                * (1.0 - survival_to)
+                                / noise_from
+                            ).detach().cpu()
+                        )
+                        posterior_variances.append(
+                            self.vp_schedule.posterior_variance(time_from, time_to).detach().cpu()
+                        )
                     coordinates = projected.fractional_coordinates
                     log_volume = next_volume
                     log_shape = projected.log_shape
@@ -1137,5 +1261,17 @@ class TensorFreeReverseSampler:
                 coordinate_step_rms=torch.stack(coordinate_steps).detach().cpu(),
                 volume_step_rms=torch.stack(volume_steps).detach().cpu(),
                 shape_step_rms=torch.stack(shape_steps).detach().cpu(),
+                trajectory_time=times.detach().cpu() if trace_lattice else None,
+                trajectory_log_volume=torch.stack(trajectory_log_volume) if trace_lattice else None,
+                trajectory_shape_norm=torch.stack(trajectory_shape_norm) if trace_lattice else None,
+                trajectory_physical_volume=torch.stack(trajectory_physical_volume) if trace_lattice else None,
+                trajectory_condition_number=torch.stack(trajectory_condition_number) if trace_lattice else None,
+                posterior_clean_coefficient=(
+                    torch.stack(posterior_clean_coefficients) if trace_lattice else None
+                ),
+                posterior_state_coefficient=(
+                    torch.stack(posterior_state_coefficients) if trace_lattice else None
+                ),
+                posterior_variance=torch.stack(posterior_variances) if trace_lattice else None,
             ),
         )

@@ -291,6 +291,48 @@ class CenteredResidualAdapter(nn.Module):
         return self.active(value) - reference
 
 
+class LatticeResidualAdapter(nn.Module):
+    """Exact-zero residual for generated-side lattice exposure.
+
+    The frozen ``reference`` copy makes the correction identically zero at
+    construction while gradients still pass through ``active``.  Both volume
+    and the five-dimensional P1 shape chart share the same graph context, so
+    the adapter cannot violate the lattice quotient or shape projector.
+    """
+
+    def __init__(self, hidden_dim: int, *, context_dim: int | None = None) -> None:
+        super().__init__()
+        if context_dim is None:
+            context_dim = hidden_dim
+        adapter_dim = min(64, hidden_dim)
+        self.active = nn.Sequential(
+            nn.Linear(context_dim, adapter_dim),
+            nn.SiLU(),
+            nn.Linear(adapter_dim, adapter_dim),
+        )
+        self.reference = copy.deepcopy(self.active)
+        self.reference.requires_grad_(False)
+        self.reference.eval()
+        self.volume_head = nn.Linear(adapter_dim, 1)
+        self.shape_head = nn.Linear(adapter_dim, 5)
+        nn.init.zeros_(self.volume_head.bias)
+        nn.init.zeros_(self.shape_head.bias)
+
+    def forward(
+        self,
+        context: torch.Tensor,
+        volume: torch.Tensor,
+        shape: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        with torch.no_grad():
+            reference = self.reference(context)
+        delta = self.active(context) - reference
+        return (
+            volume + self.volume_head(delta).squeeze(-1),
+            shape + self.shape_head(delta),
+        )
+
+
 class HybridCrystalDenoiser(nn.Module):
     """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
 
@@ -319,6 +361,7 @@ class HybridCrystalDenoiser(nn.Module):
         self.edge_dim = int(edge_dim)
         self.hidden_dim = int(hidden_dim)
         self.tensor_residual_adapter: CenteredResidualAdapter | None = None
+        self.lattice_residual_adapter: LatticeResidualAdapter | None = None
         if modality_time_conditioning is None:
             modality_time_conditioning = "separate" if independent_modality_times else "coordinate"
         if modality_time_conditioning not in {
@@ -433,6 +476,28 @@ class HybridCrystalDenoiser(nn.Module):
                 device=reference.device,
                 dtype=reference.dtype,
             )
+
+    def attach_lattice_residual_adapter(self) -> None:
+        """Attach the exact-zero generated-side lattice exposure adapter."""
+
+        if self.lattice_residual_adapter is None:
+            reference = self.element_embedding.weight
+            self.lattice_residual_adapter = LatticeResidualAdapter(
+                self.hidden_dim, context_dim=4 * self.hidden_dim
+            ).to(
+                device=reference.device,
+                dtype=reference.dtype,
+            )
+
+    def _apply_lattice_residual_adapter(
+        self,
+        context: torch.Tensor,
+        volume: torch.Tensor,
+        shape: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if self.lattice_residual_adapter is None:
+            return volume, shape
+        return self.lattice_residual_adapter(context, volume, shape)
 
     @property
     def angular_channels(self) -> int:
@@ -635,9 +700,14 @@ class HybridCrystalDenoiser(nn.Module):
             (composition_mean, composition_scaled_sum, graph_time, graph_state),
             dim=-1,
         )
+        clean_volume_latent, clean_shape_latent = self._apply_lattice_residual_adapter(
+            lattice_context,
+            self.volume_head(lattice_context).squeeze(-1),
+            self.shape_head(lattice_context),
+        )
         return LatticeDenoiserOutput(
-            clean_volume_latent=self.volume_head(lattice_context).squeeze(-1),
-            clean_shape_latent=self.shape_head(lattice_context),
+            clean_volume_latent=clean_volume_latent,
+            clean_shape_latent=clean_shape_latent,
         )
 
     def _encode_hybrid_state(
@@ -1046,8 +1116,11 @@ class HybridCrystalDenoiser(nn.Module):
             # Fractional zero mean is the translation-horizontal tangent chart
             # used by the coordinate probability path.
             fractional_score = fractional_score - graph_mean(fractional_score, batch, graphs)[batch]
-        clean_volume_latent = self.volume_head(lattice_context).squeeze(-1)
-        clean_shape_latent = self.shape_head(lattice_context)
+        clean_volume_latent, clean_shape_latent = self._apply_lattice_residual_adapter(
+            lattice_context,
+            self.volume_head(lattice_context).squeeze(-1),
+            self.shape_head(lattice_context),
+        )
         return HybridDenoiserOutput(
             clean_element_logits=element_logits,
             clean_composition_logits=composition_logits,

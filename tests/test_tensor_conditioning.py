@@ -7,6 +7,7 @@ from gaugeflow.production.equivariant_denoiser import (
     CenteredResidualAdapter,
     HybridCrystalDenoiser,
     HybridDenoiserOutput,
+    LatticeResidualAdapter,
 )
 from gaugeflow.production.tensor_conditioning import (
     null_condition_retention_distance,
@@ -280,3 +281,19 @@ def test_attached_adapter_present_branch_matches_stage_c_null_at_initialization(
     active_gradients = [parameter.grad for parameter in model.tensor_residual_adapter.active.parameters()]
     assert all(gradient is not None and torch.isfinite(gradient).all() for gradient in active_gradients)
     assert sum(float(gradient.square().sum()) for gradient in active_gradients if gradient is not None) > 0.0
+
+
+def test_lattice_residual_adapter_is_exact_zero_and_has_gradients() -> None:
+    adapter = LatticeResidualAdapter(hidden_dim=8)
+    context = torch.randn((3, 8), generator=torch.Generator().manual_seed(29))
+    volume = torch.randn(3, generator=torch.Generator().manual_seed(30))
+    shape = torch.randn((3, 5), generator=torch.Generator().manual_seed(31))
+    actual_volume, actual_shape = adapter(context, volume, shape)
+    torch.testing.assert_close(actual_volume, volume, atol=0.0, rtol=0.0)
+    torch.testing.assert_close(actual_shape, shape, atol=0.0, rtol=0.0)
+    loss = actual_volume.square().mean() + actual_shape.square().mean()
+    loss.backward()
+    gradients = [parameter.grad for parameter in adapter.active.parameters()]
+    assert all(gradient is not None and torch.isfinite(gradient).all() for gradient in gradients)
+    assert sum(float(gradient.square().sum()) for gradient in gradients if gradient is not None) > 0.0
+    assert all(parameter.grad is None for parameter in adapter.reference.parameters())

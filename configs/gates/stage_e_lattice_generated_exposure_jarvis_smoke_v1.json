@@ -1,0 +1,18 @@
+{
+  "protocol": "stage_e_lattice_generated_exposure_v1",
+  "status": "smoke",
+  "seed": 20260723,
+  "steps": 2,
+  "batch_size": 2,
+  "learning_rate": 0.00005,
+  "weight_decay": 0.000001,
+  "exposure_time": 0.7,
+  "exposure_delta": 0.15,
+  "precision": "bf16",
+  "exposure_definition": "one detached reverse-SDE VP step from a matched noisy lattice state",
+  "terminal_repair": false,
+  "shape_constraint": "P1 projector at every encoded and decoded state",
+  "composition_constraint": "element tokens and node counts remain fixed; no assignment or count repair",
+  "data_source": "qualified Stage-D JARVIS response cache",
+  "conditioning": "normalized piezoelectric tensor condition, target-free lattice exposure"
+}

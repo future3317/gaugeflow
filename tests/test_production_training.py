@@ -1450,6 +1450,44 @@ def test_vp_probability_flow_step_matches_ddim_algebra():
     assert torch.allclose(observed[1], clean[1], atol=1.0e-6)
 
 
+def test_vp_reverse_sde_step_matches_closed_form_posterior():
+    schedule = CosineNoiseSchedule()
+    clean = torch.tensor([[0.2, -0.4], [0.7, 0.1]])
+    state = torch.tensor([[1.1, -0.3], [-0.4, 0.8]])
+    time_from = torch.tensor([[0.8], [0.6]])
+    time_to = torch.tensor([[0.3], [0.0]])
+    seed = 12345
+    observed = vp_reverse_step(
+        schedule,
+        state,
+        clean,
+        time_from,
+        time_to,
+        generator=torch.Generator().manual_seed(seed),
+        mode="reverse_sde",
+    )
+    alpha_from = schedule.alpha(time_from)
+    alpha_to = schedule.alpha(time_to)
+    survival_from = alpha_from.square()
+    survival_to = alpha_to.square()
+    noise_from = (1.0 - survival_from).clamp_min(1.0e-12)
+    step_noise = (1.0 - survival_from / survival_to).clamp(0.0, 1.0)
+    expected_mean = (
+        alpha_to * step_noise / noise_from * clean
+        + alpha_from / alpha_to * (1.0 - survival_to) / noise_from * state
+    )
+    expected_noise = torch.randn(
+        state.shape,
+        dtype=state.dtype,
+        device=state.device,
+        generator=torch.Generator().manual_seed(seed),
+    )
+    expected = expected_mean + schedule.posterior_variance(
+        time_from, time_to
+    ).sqrt() * expected_noise
+    assert torch.allclose(observed, expected, atol=1.0e-6)
+
+
 def test_joint_reverse_modes_accept_common_initial_state_and_finish_cleanly():
     torch.manual_seed(107)
     blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))

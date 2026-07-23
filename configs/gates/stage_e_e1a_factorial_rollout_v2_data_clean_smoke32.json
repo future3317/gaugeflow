@@ -1,0 +1,15 @@
+{
+  "protocol": "stage_e_e1a_factorial_rollout_v2",
+  "seed": 20260723,
+  "samples": 32,
+  "batch_size": 8,
+  "reverse_steps": 50,
+  "continuous_mode": "reverse_sde",
+  "orbit_frames": 384,
+  "wasserstein_quantile_points": 128,
+  "arms": ["oracle_cal", "oracle_ca", "oracle_c", "free"],
+  "data_quality": {
+    "exclude_pure_noble_gas": true
+  },
+  "status": "diagnostic_smoke_not_qualification"
+}
