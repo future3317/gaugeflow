@@ -308,6 +308,7 @@ def tensor_conditioning_training_loss(
     orbit_weights: TypedFieldWeights = TypedFieldWeights(),
     retention_weights: TypedFieldWeights = TypedFieldWeights(response=0.0),
     generator: torch.Generator | None = None,
+    clean_side_information: bool = False,
 ) -> TensorConditioningTrainingOutput:
     """Evaluate fine, orbit-mimic and null-retention losses on one noisy draw.
 
@@ -334,6 +335,7 @@ def tensor_conditioning_training_loss(
             shape_projector,
             fractional_to_cartesian,
             generator=generator,
+            clean_side_information=clean_side_information,
         )
     first = predict_common_noisy_state(
         diffusion.denoiser,

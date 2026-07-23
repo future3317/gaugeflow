@@ -1,0 +1,25 @@
+{
+  "protocol": "stage_e_e1_clean_side_v1",
+  "purpose": "close the clean-side coordinate modality-clock interface identified by E1a",
+  "seed": 5705,
+  "steps": 1500,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "clean_side": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1,
+      "clean_side_information": true
+    }
+  },
+  "source_boundary": "initialized from qualified Stage-C 30k checkpoint; no Stage-D evaluator weights are trainable",
+  "qualification_boundary": "mechanism retraining only; must pass oracle-cal arm before any generated-side claim or F/RL",
+  "objective": "coordinate noisy state with clean element/lattice side states, preserving exact null retention"
+}

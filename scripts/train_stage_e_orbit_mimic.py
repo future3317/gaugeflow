@@ -300,6 +300,7 @@ def main() -> None:
         "stage_e_e0_orbit_mimic_v1",
         "stage_e_e0_orbit_mimic_smoke_v1",
         "stage_e_e0_exact_null_adapter_v1",
+        "stage_e_e1_clean_side_v1",
     }:
         raise ValueError("unexpected Stage-E protocol")
     arm = protocol["arms"].get(args.arm)
@@ -375,6 +376,7 @@ def main() -> None:
                 orbit_weight=orbit_weight,
                 retention_weight=retention_weight,
                 generator=noise_generator,
+                clean_side_information=bool(arm.get("clean_side_information", False)),
             )
         if not torch.isfinite(output.loss):
             raise FloatingPointError("Stage-E loss is non-finite")
@@ -414,7 +416,11 @@ def main() -> None:
     checkpoint_path = args.output / "checkpoint.pt"
     torch.save(
         {
-            "schema": "gaugeflow.stage_e_e0.v1",
+            "schema": (
+                "gaugeflow.stage_e_e1.v1"
+                if protocol.get("protocol") == "stage_e_e1_clean_side_v1"
+                else "gaugeflow.stage_e_e0.v1"
+            ),
             "arm": args.arm,
             "model": {
                 name: value.detach().cpu().clone()
@@ -429,7 +435,11 @@ def main() -> None:
         checkpoint_path,
     )
     result = {
-        "schema": "gaugeflow.stage_e_e0_result.v1",
+        "schema": (
+            "gaugeflow.stage_e_e1_result.v1"
+            if protocol.get("protocol") == "stage_e_e1_clean_side_v1"
+            else "gaugeflow.stage_e_e0_result.v1"
+        ),
         "arm": args.arm,
         "steps": int(protocol["steps"]),
         "trainable_parameters": sum(parameter.numel() for parameter in parameters),
