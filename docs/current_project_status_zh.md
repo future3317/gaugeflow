@@ -136,6 +136,19 @@ partial/MASK orderless carrier；该 partial adapter 不是 production 候选。
 冻结 v1 证据边界，并按 A-v2 generated-state coverage contract 做小规模验证，而不是继续
 围绕 E-v1 adapter 做标量调参。
 
+A-v2 generated-state provenance 层已经进入可执行状态，但还不是训练结果。
+`GeneratedStateReplayEntry`、manifest、cache writer/loader、synthetic four-role cache、two-source
+tiny real cache 和训练合约审计已经通过。最新 tiny real cache 位于
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/`，
+包含 `mp-1007760`、`mp-1091415` 两个 Alex train source、四个 carrier roles、8 条 entries；
+manifest SHA-256 为
+`c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a`。训练合约审计确认
+每个 role 的 terminal element/lattice/coordinate gradient groups 非零、clean retention ratio 为
+`0.61315789912139`，并用 773 个 Stage-D validation/test 与冻结 Stage-E 256 factorial
+target forbidden IDs 做了零交集检查。下一步是先实现 34M generated-state correctness
+training runner，并在 8-entry smoke 通过后再做 2--5k correctness run；58M/98M、多卡容量竞争和
+完整重训仍必须等 34M contract 被证明后再启动。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

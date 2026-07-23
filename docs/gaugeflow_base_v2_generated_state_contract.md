@@ -1,8 +1,9 @@
 # GaugeFlow-base v2 Generated-State Contract
 
-Status: draft implementation contract, not a training result.
+Status: draft implementation contract with tiny-cache provenance audit passed;
+not a generated-quality or capacity-training result.
 
-Implementation status as of `55cdb62e`:
+Implementation status as of `2e44df8`:
 
 - `GeneratedStateReplayEntry` validates role/source compatibility, exact counts,
   partial reveal semantics, lattice positivity, shape subspace membership,
@@ -54,12 +55,12 @@ source IDs:
 ```
 
 This closes the first real cache-provenance smoke.  It is still not a training
-result and not a generated-quality claim.  The next step is not a capacity run
-yet; it is a replay-cache per-role loss/gradient correctness audit that proves
-the training objective can consume each carrier role without target leakage or
+result and not a generated-quality claim.  The next completed step was a
+replay-cache per-role loss/gradient correctness audit proving that the current
+training objective can consume each carrier role without target leakage or
 silent dead gradients.
 
-Immediate audit requirements:
+Completed audit requirements:
 
 - load the tiny real cache at
   `/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/`;
@@ -304,7 +305,9 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Start the 34M 2--5k generated-state correctness training run.  It must consume
-the same replay contract, report losses and gradients by carrier role, and
+Implement the 34M generated-state replay correctness runner, then run a tiny
+8-entry smoke before the 2--5k correctness experiment.  It must consume the same
+replay contract, report losses and gradients by carrier role, record clean
+retention and generated-state stratification, verify parameter updates, and
 remain bounded as a correctness run.  Multi-GPU 58M/98M capacity training
 remains deferred until this 34M generated-state contract is proven.

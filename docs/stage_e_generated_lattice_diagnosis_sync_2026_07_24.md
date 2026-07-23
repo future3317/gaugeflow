@@ -202,16 +202,19 @@ Completed provenance steps:
 
 Current immediate task:
 
-1. Start the bounded 34M 2--5k generated-state correctness run.
-2. Keep the same replay/provenance contract and report per-role losses,
-   gradients, clean retention and generated-state stratification.
-3. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
+1. Implement a narrow 34M generated-state replay correctness training runner.
+2. First run a tiny bounded smoke on the eight-entry real replay cache, then
+   the 2--5k correctness run if the smoke is finite.
+3. Keep the same replay/provenance contract and report per-role losses,
+   gradients, clean retention, generated-state stratification, parameter update
+   norms and forbidden-panel identity checks.
+4. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
    contract is proven.
 
 Deferred work:
 
-1. Start the 34M 2--5k correctness run only after the per-role replay audit
-   passes.
+1. Run the 34M 2--5k correctness experiment only after the tiny training smoke
+   verifies finite loss, nonzero active gradients and actual parameter updates.
 2. Defer 58M/98M or multi-GPU full training until the 34M generated-state
    contract is proven.
 
@@ -264,4 +267,6 @@ Latest A-v2 provenance commits:
 8bb37cab docs: record generated-state replay cache status
 48186d52 fix: load Stage-C backbone for tiny replay cache
 55cdb62e docs: record tiny real generated-state replay smoke
+11ac6a9 feat: audit generated-state replay training contract
+2e44df8 docs: record replay training contract audit
 ```
