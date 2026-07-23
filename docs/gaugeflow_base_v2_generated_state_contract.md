@@ -611,6 +611,46 @@ val128:
   status no_eligible_checkpoint
 ```
 
+The follow-up 25-step EMA dose on the same 64-source cache was:
+
+```text
+checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_25_v1/checkpoint_step_00000025.pt
+SHA-256:
+be6502201e45f9c148eca62e267b99e94688d084ef7ee87d1208acd0eaa07e7e
+training status:
+  passed
+clean_retention_loss_ratio_max:
+  0.6652758184518932
+final_parameter_update_norm:
+  6.36599659641117
+all_final_role_terminal_gradient_groups_nonzero:
+  true
+```
+
+Its paired evaluator results were:
+
+```text
+smoke32:
+  NN-W1 delta +0.011847870611836897
+  volume-W1 delta -0.003934128688430516
+  selected by /home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_smoke32_v3.json
+
+val64:
+  NN-W1 delta +0.0018497076198800144
+  volume-W1 delta -0.001064961873843237
+  eligible, but selector kept 50-step because its NN-W1 delta was lower
+
+val128:
+  NN-W1 delta +0.014133542065700389
+  volume-W1 delta +0.001539324195554817
+  rejected by strict volume non-inferiority
+```
+
+Thus reducing the update dose from 50 to 25 improves the val128 volume drift
+but does not make the candidate eligible under the predeclared zero-margin
+volume rule.  The 25-step checkpoint is diagnostic only.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic

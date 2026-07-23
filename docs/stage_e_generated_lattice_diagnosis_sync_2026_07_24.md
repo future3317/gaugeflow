@@ -725,3 +725,99 @@ increase on-policy replay support under the same 34M model with an even more
 explicit selection grid, or predeclare a statistically meaningful paired
 non-inferiority margin before judging volume-W1.  It should not start Stage-F
 or capacity scaling.
+
+### 2026-07-24 update: 64-source 25-step dose
+
+To test whether the 50-step candidate was already too large an update, a
+25-step EMA checkpoint was trained on the same 64-source replay cache, with the
+same base model, replay entries, target-exclusion contract, optimizer family
+and evaluator.  This was a dose diagnostic only, not a new architecture or a
+production run.
+
+```text
+checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_25_v1/checkpoint_step_00000025.pt
+SHA-256:
+be6502201e45f9c148eca62e267b99e94688d084ef7ee87d1208acd0eaa07e7e
+training status:
+  passed
+clean_retention_loss_ratio_max:
+  0.6652758184518932
+final_parameter_update_norm:
+  6.36599659641117
+all_final_role_terminal_gradient_groups_nonzero:
+  true
+forbidden source ID check:
+  count=773
+```
+
+Evaluation reports:
+
+```text
+smoke32:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_25_eval_smoke32_v1.json
+NN-W1 delta:
+  +0.011847870611836897
+volume-W1 delta:
+  -0.003934128688430516
+
+val64:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_25_eval_val64_v1.json
+NN-W1 delta:
+  +0.0018497076198800144
+volume-W1 delta:
+  -0.001064961873843237
+
+val128:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_25_eval_val128_v1.json
+NN-W1 delta:
+  +0.014133542065700389
+volume-W1 delta:
+  +0.001539324195554817
+```
+
+Hard validity did not regress in these panels, and all replay-role total losses
+were lower than base.  The selector reports were:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_smoke32_v3.json
+status:
+  diagnostic_checkpoint_selected
+selected:
+  64src_25_ema
+
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val64_v2.json
+status:
+  diagnostic_checkpoint_selected
+selected:
+  64src_50_ema_val64
+reason:
+  both 25-step and 50-step were eligible, but the selector tie-break chose the
+  lower NN-W1 delta: 50-step -0.0032876 vs 25-step +0.0018497
+
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val128_v2.json
+status:
+  no_eligible_checkpoint
+reason:
+  both 25-step and 50-step violated strict volume_w1_non_inferior=false under
+  max_volume_w1_delta=0.0
+```
+
+The 25-step run reduces the val128 volume drift relative to 50-step
+(`+0.001539` vs `+0.004166`) while keeping NN drift small and hard validity
+stable.  It does not remove the strict zero-margin val128 failure.  The current
+root-cause statement is therefore:
+
+```text
+Missing composition_counts caused the historical adapter volume drift.
+Full shape residual caused the counts-fixed oracle_ca NN/shape tail.
+A-v2 generated-state replay is the right diagnostic direction and update dose
+matters, but 34M replay retention is still sitting on a narrow rollout-level
+volume non-inferiority boundary.  Stage-E v1 remains blocked.
+```
+
+Do not use the 25-step checkpoint as production.  The next admissible action is
+a smaller bounded dose probe such as 10-step EMA on the same 64-source cache, or
+a predeclared paired/statistical non-inferiority margin.  Do not retrospectively
+loosen the selector, do not start Stage-F, and do not launch 58M/98M capacity
+training before the 34M evidence is stable beyond val128.

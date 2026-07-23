@@ -234,6 +234,22 @@ generated-state replay 的方向是正确的，早期 EMA 小剂量能降低 rol
 但 rollout-level volume/NN 非劣窗口仍很窄，不能靠增加训练步数或扩大模型解决。下一项最小假设应是
 replay cache 的 on-policy/support 覆盖与 update-dose 选择规则，而不是 58M/98M 容量。
 
+随后追加了同一 64-source cache 上的 25-step EMA 剂量诊断：
+`/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_25_v1/checkpoint_step_00000025.pt`，
+SHA-256 为 `be6502201e45f9c148eca62e267b99e94688d084ef7ee87d1208acd0eaa07e7e`。训练审计通过：
+clean-retention loss ratio max 为 `0.6652758184518932`，final parameter update norm 为
+`6.36599659641117`，所有 final role terminal gradient groups 均非零，773 个 forbidden IDs 检查无交集。
+smoke32 中 NN-W1 delta `+0.0118479`、volume-W1 delta `-0.0039341`；val64 中 NN-W1 delta
+`+0.0018497`、volume-W1 delta `-0.0010650`；val128 中 NN-W1 delta `+0.0141335`、volume-W1
+delta `+0.0015393`。hard validity 全部不退化，replay role total losses 全部降低。
+
+新的 selector 报告显示：smoke32 选择 `64src_25_ema`；val64 仍按最低 NN drift 选择
+`64src_50_ema_val64`；val128 仍 `status=no_eligible_checkpoint`，因为 25-step 和 50-step 都违反
+严格 `volume_delta <= 0`，但 25-step 的 volume drift 已从 50-step 的 `+0.0041660` 收窄到
+`+0.0015393`。因此最新结论不是“需要更大模型”，而是 update dose 确实影响 retention，
+但 strict zero-margin volume 非劣在 val128 上仍未稳定。25-step checkpoint 只能作为诊断候选，
+不得作为 Stage-E production checkpoint。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)
