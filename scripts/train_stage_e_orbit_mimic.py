@@ -44,6 +44,7 @@ def parse_args() -> argparse.Namespace:
             "orbit_mimic",
             "orbit_mimic_retention",
             "orbit_mimic_exact_null",
+            "clean_side",
         ),
         required=True,
     )
