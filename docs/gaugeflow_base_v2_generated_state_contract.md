@@ -563,6 +563,55 @@ status: no_eligible_checkpoint
 ```
 
 Therefore the 100-step EMA checkpoint remains diagnostic and is not promoted.
+The next A-v2 step broadened generated-state replay support to 64 sources while
+keeping the 34M model, loss, optimizer, seed family and evaluator fixed:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64_real_v1/
+entries: 256 = 64 sources x 4 roles
+manifest SHA-256:
+bd10fa96d0175fa799da075906a18cb96fcffb609d9e3df63c5bea9dfcdfe11f
+training_contract_audit:
+  passed
+```
+
+The 64-source dose result is:
+
+```text
+50-step EMA smoke32:
+  NN-W1 delta +0.01968915038580843
+  volume-W1 delta -0.008498153915681483
+  selector status diagnostic_checkpoint_selected
+100-step EMA smoke32:
+  NN-W1 delta +0.05308763983682652
+  selector rejected by NN non-inferiority
+200-step EMA smoke32:
+  NN-W1 delta +0.08841968069719286
+  selector rejected by NN non-inferiority
+```
+
+The selected 50-step EMA checkpoint:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_50_v1/checkpoint_step_00000050.pt
+SHA-256:
+acd2cd7b298961f9b0b80fc4004b7fd1bdf78531592c1e7c3e8202577545ab5a
+```
+
+It passed the strict 64-sample selector but not the 128-sample selector:
+
+```text
+val64:
+  NN-W1 delta -0.003287582641064324
+  volume-W1 delta -0.0015413750587506825
+  status diagnostic_checkpoint_selected
+val128:
+  NN-W1 delta +0.021104979598597695
+  volume-W1 delta +0.004166020493344594
+  status no_eligible_checkpoint
+```
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
-either broaden generated-state replay support or declare a new validation
-margin before another bounded 34M diagnostic is run.
+address replay support/on-policy coverage or predeclare a statistically
+meaningful paired non-inferiority margin before another bounded 34M diagnostic
+is run.

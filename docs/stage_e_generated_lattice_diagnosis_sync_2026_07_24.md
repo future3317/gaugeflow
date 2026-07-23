@@ -503,11 +503,15 @@ forbidden_source_id_check: executed, count=773
 
 ## Current Handoff State
 
-As of pushed HEAD:
+This handoff lineage includes:
 
 ```text
 ef22924dc84fe1688d51dee7b70144e7dc59d90b
-docs: record replay early-EMA dose window
+  docs: record replay early-EMA dose window
+250da94b4a14c9da46165c25098bc2974f8e965b
+  feat: select generated-state replay checkpoint
+4b072bb5d0cf16d83a29117c7670a33a7586b296
+  docs: record replay 64-sample validation
 ```
 
 The active scientific boundary is:
@@ -625,3 +629,99 @@ both replay-role improvement and non-degraded rollout retention beyond smoke32.
 The next admissible work is either broader generated-state replay support or a
 new predeclared non-inferiority rule before running another bounded 34M
 diagnostic; it is not immediate capacity scaling.
+
+## 64-Source Replay Support Follow-Up
+
+A broader 64-source real replay cache was built as the next admissible
+diagnostic, without changing model capacity, loss, optimizer or sampler:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64_real_v1/
+entries:
+  256 = 64 sources x 4 roles
+selection_seed:
+  6101
+source_start_index:
+  32
+refresh_id:
+  3
+reverse_steps:
+  4
+manifest SHA-256:
+  bd10fa96d0175fa799da075906a18cb96fcffb609d9e3df63c5bea9dfcdfe11f
+forbidden source ID check:
+  executed, count=773
+```
+
+The 64-source training-contract audit passed:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64_real_v1/training_contract_audit.json
+all_role_terminal_gradient_groups_nonzero:
+  true
+clean_retention_loss_ratio_to_max_generated:
+  0.31113227758714657
+```
+
+64-source early-dose smoke32:
+
+| cache | steps | weights | replay role losses | NN delta | volume delta | distance-valid delta | selector |
+| --- | ---: | --- | --- | ---: | ---: | ---: | --- |
+| 64-source | 50 | EMA | all lower | +0.019689 | -0.008498 | 0.0 | selected |
+| 64-source | 100 | EMA | all lower | +0.053088 | -0.016800 | 0.0 | rejected: NN |
+| 64-source | 200 | EMA | all lower | +0.088420 | -0.029519 | 0.0 | rejected: NN |
+
+The selected 64-source 50-step EMA checkpoint is:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_50_v1/checkpoint_step_00000050.pt
+SHA-256:
+acd2cd7b298961f9b0b80fc4004b7fd1bdf78531592c1e7c3e8202577545ab5a
+```
+
+Selector reports:
+
+```text
+smoke32:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_smoke32_v2.json
+status:
+  diagnostic_checkpoint_selected
+
+val64:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val64_v1.json
+status:
+  diagnostic_checkpoint_selected
+NN-W1 delta:
+  -0.003287582641064324
+volume-W1 delta:
+  -0.0015413750587506825
+
+val128:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val128_v1.json
+status:
+  no_eligible_checkpoint
+NN-W1 delta:
+  +0.021104979598597695
+volume-W1 delta:
+  +0.004166020493344594
+reason:
+  volume_w1_non_inferior=false under max_volume_w1_delta=0.0
+```
+
+Interpretation:
+
+```text
+The failure mode is now more specific than "need more capacity".  Broader
+generated-state replay support plus a smaller EMA update dose can pass smoke32
+and val64, while 100/200 steps already over-update NN.  However strict
+volume-W1 non-inferiority is still unstable by val128.  The active root-cause
+hypothesis is replay support/on-policy coverage plus update-dose selection,
+not 58M/98M model size.
+```
+
+Do not promote the 64-source 50-step checkpoint to production.  It is the best
+current diagnostic candidate only.  The next bounded experiment should either
+increase on-policy replay support under the same 34M model with an even more
+explicit selection grid, or predeclare a statistically meaningful paired
+non-inferiority margin before judging volume-W1.  It should not start Stage-F
+or capacity scaling.

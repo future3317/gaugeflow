@@ -206,6 +206,34 @@ base/candidate 的 free NN-W1 为 `0.7234887633/0.7274343809`，delta
 提升为 production checkpoint；下一步应先扩大 generated-state replay support 或重新预注册更合理的
 非劣 margin，再重跑 34M 诊断，不应直接扩大模型容量。
 
+随后执行了 64-source real replay support 诊断，而不是扩大模型容量。新 cache 位于
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64_real_v1/`，
+使用同一 `selection_seed=6101` 的后续 permutation window（`start_index=32`、
+`sample_count=64`），包含 64 个真实 source、256 条 role entries，manifest SHA-256 为
+`bd10fa96d0175fa799da075906a18cb96fcffb609d9e3df63c5bea9dfcdfe11f`，forbidden overlap
+检查仍覆盖 773 个 Stage-D/Stage-E IDs。training-contract audit 通过，四个 terminal
+gradient groups 均非零，clean retention loss ratio to max generated 为 `0.3111322776`。
+
+在该 64-source cache 上，100/200-step EMA 虽然继续降低所有 replay role total loss 和
+volume-W1，但 smoke32 NN drift 分别为 `+0.0530876/+0.0884197`，按预声明
+`max_nn_w1_delta=0.05` 均被 selector 排除。追加的 50-step EMA 通过 smoke32 selector：
+NN-W1 delta `+0.0196892`、volume-W1 delta `-0.0084982`、distance-valid/exact composition/
+finite-positive lattice/sampling failures/terminal masks 全部不退化；checkpoint 为
+`/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_50_v1/checkpoint_step_00000050.pt`，
+SHA-256 为 `acd2cd7b298961f9b0b80fc4004b7fd1bdf78531592c1e7c3e8202577545ab5a`。
+64-sample validation 对该 checkpoint 也通过 strict selector：NN-W1 delta `-0.0032876`、
+volume-W1 delta `-0.0015414`，hard validity 全部不退化。
+
+但 128-sample diagnostic panel 又显示 strict volume 非劣不稳定：
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_50_eval_val128_v1.json`
+中 NN-W1 delta 为 `+0.0211050`，仍在 NN 容忍范围内；volume-W1 delta 为
+`+0.0041660`，因此
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val128_v1.json`
+给出 `status=no_eligible_checkpoint`。这把根因进一步收窄到：
+generated-state replay 的方向是正确的，早期 EMA 小剂量能降低 role losses 且不破坏 hard validity，
+但 rollout-level volume/NN 非劣窗口仍很窄，不能靠增加训练步数或扩大模型解决。下一项最小假设应是
+replay cache 的 on-policy/support 覆盖与 update-dose 选择规则，而不是 58M/98M 容量。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)
