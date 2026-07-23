@@ -17,7 +17,6 @@ from gaugeflow.production.generated_state_replay import (
 )
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
-
 MASK_TOKEN = CHEMICAL_ELEMENT_COUNT
 BASE_SHA = "synthetic-base-checkpoint-sha"
 SAMPLER_COMMIT = "synthetic-sampler-commit"
