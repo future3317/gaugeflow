@@ -235,11 +235,29 @@ final_parameter_update_norm: 5.814717134166754
 
 The bounded 34M correctness run on this cache has now been completed at several
 update doses.  The 2k run passed replay-role training checks but still failed
-short free-generation retention.  A shorter 200-step EMA checkpoint is the first
-diagnostic point that keeps smoke32 free-generation close to base while lowering
-all replay-role losses:
+short free-generation retention.  Shorter EMA checkpoints define the first
+diagnostic window that keeps smoke32 free-generation close to base while
+lowering all replay-role losses:
 
 ```text
+32-source 100-step EMA:
+  checkpoint:
+    /home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/checkpoint_step_00000100.pt
+  checkpoint SHA-256:
+    8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
+  free-generation NN-W1:
+    0.5384073850 -> 0.5451422579
+  free-generation volume-W1:
+    0.3337970015 -> 0.3269401460
+  distance-valid:
+    1.0 -> 1.0
+
+32-source 100-step raw:
+  free-generation NN-W1:
+    0.5384073850 -> 0.9694130108
+  distance-valid:
+    1.0 -> 0.96875
+
 32-source 200-step EMA:
   checkpoint:
     /home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_200_v1/checkpoint_step_00000200.pt
@@ -253,6 +271,10 @@ all replay-role losses:
     1.0 -> 1.0
   replay role losses:
     lower than base for all four roles
+
+32-source 300-step EMA:
+  free-generation NN-W1:
+    0.5384073850 -> 0.6697907347
 
 32-source 500-step EMA:
   free-generation NN-W1:
@@ -271,9 +293,10 @@ all replay-role losses:
 
 This does not authorize capacity scaling.  The evidence now says replay-role
 loss minimization can over-optimize the cached generated states while harming
-rollout geometry.  The next A-v2 correctness work is update-dose/checkpoint
-selection with a broader replay support and explicit free-generation retention,
-not a larger model.
+rollout geometry.  Raw weights are already too aggressive at 100/200 steps, so
+the viable diagnostic path is early EMA checkpoint selection with explicit
+free-generation retention.  The next A-v2 correctness work is not a larger
+model.
 
 ## Purpose
 
@@ -460,12 +483,12 @@ optimization, not a scientific variable.
 
 The immediate A-v2 implementation remains the broader 34M replay cache:
 
-- treat the 32-source 200-step EMA checkpoint as a diagnostic candidate, not a
-  production checkpoint;
+- treat the 32-source 100/200-step EMA checkpoints as diagnostic candidates,
+  not production checkpoints;
 - require a predeclared checkpoint-selection rule that includes free-generation
   retention, not replay-role loss alone;
 - run the next bounded 34M correctness diagnostic with explicit intermediate
-  checkpoints or a shorter update budget around the 200-step region;
+  checkpoints or a shorter update budget around the 100--200 step region;
 - build a 64-source cache only if the 32-source run shows retention is no
   longer immediately broken or if the 32-source evidence is too noisy to decide.
 
@@ -498,7 +521,7 @@ This contract does not authorize:
 
 Add or use a checkpoint-selection protocol for the 34M generated-state replay
 correctness run that evaluates intermediate checkpoints against both replay
-roles and smoke32 free-generation retention.  The first target region is around
-the 32-source 200-step EMA checkpoint.  Multi-GPU 58M/98M capacity training
-remains deferred until 34M has replay-role improvement and non-degraded
-free-generation retention under that predeclared selection rule.
+roles and smoke32 free-generation retention.  The first target region is the
+32-source 100--200 step EMA window.  Multi-GPU 58M/98M capacity training remains
+deferred until 34M has replay-role improvement and non-degraded free-generation
+retention under that predeclared selection rule.

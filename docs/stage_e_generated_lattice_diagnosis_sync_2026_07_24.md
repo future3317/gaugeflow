@@ -254,9 +254,10 @@ Completed provenance steps:
 14. A 32-source 2k correctness run passed training-interface checks but still
     degraded smoke32 free-generation NN, so broader coverage alone is not yet
     sufficient.
-15. Shorter-update diagnostics showed a 200-step EMA checkpoint preserves
-    smoke32 free-generation much better while still reducing all replay-role
-    losses.
+15. Shorter-update diagnostics showed that the usable region is early and
+    EMA-dependent: 100/200-step EMA checkpoints preserve smoke32
+    free-generation much better while still reducing all replay-role losses,
+    while 100/200-step raw weights and 300+ step EMA already drift.
 
 Current immediate task:
 
@@ -445,8 +446,11 @@ forbidden_source_id_check: executed, count=773
 | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | 8-source | 2000 | EMA | all lower | 2.058926 | +1.520519 | 0.441431 | +0.107634 | 0.9375 |
 | 8-source | 2000 | raw | all lower | 1.957643 | +1.419236 | 0.485221 | +0.151424 | 1.0000 |
+| 32-source | 100 | EMA | all lower | 0.545142 | +0.006735 | 0.326940 | -0.006857 | 1.0000 |
+| 32-source | 100 | raw | all lower | 0.969413 | +0.431006 | 0.296441 | -0.037356 | 0.9688 |
 | 32-source | 200 | EMA | all lower | 0.571096 | +0.032688 | 0.325896 | -0.007901 | 1.0000 |
 | 32-source | 200 | raw | all lower | 1.124272 | +0.585865 | 0.267458 | -0.066339 | 1.0000 |
+| 32-source | 300 | EMA | all lower | 0.669791 | +0.131383 | 0.328313 | -0.005484 | 1.0000 |
 | 32-source | 500 | EMA | all lower | 0.666141 | +0.127733 | 0.327441 | -0.006356 | 1.0000 |
 | 32-source | 2000 | EMA | all lower | 1.085160 | +0.546752 | 0.288742 | -0.045055 | 1.0000 |
 | 32-source | 2000 | raw | all lower | 1.492386 | +0.953979 | 0.315211 | -0.018586 | 0.9375 |
@@ -456,8 +460,9 @@ Current interpretation:
 ```text
 Broader provenance coverage fixes the catastrophic 8-entry overfit mode only
 when the update dose is kept small and EMA weights are used.  Replay-role loss
-improvement by itself is not a sufficient selection metric: longer 500/2000
-training continues to improve cached role losses while degrading free rollout
+improvement by itself is not a sufficient selection metric: raw weights at
+100/200 steps are already too aggressive, and EMA checkpoints at 300/500/2000
+steps continue to improve cached role losses while degrading free rollout
 geometry.  The next root-cause hypothesis is replay-over-optimization/update
 dose under a still-narrow generated-state support, not model capacity.
 ```
@@ -465,11 +470,17 @@ dose under a still-narrow generated-state support, not model capacity.
 Current candidate:
 
 ```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/
+checkpoint_step_00000100.pt
+checkpoint SHA-256:
+  8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
+
 /home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_200_v1/
 checkpoint_step_00000200.pt
 checkpoint SHA-256:
   164dc4277c6fd80274990ff4452731f1cb43b4c7a2ef61e7d27c45a68a03f995
-status: diagnostic candidate only
+status: diagnostic candidates only; 100-step EMA has the smallest smoke32 NN
+drift, 200-step EMA has slightly stronger replay-role improvement.
 ```
 
 Latest 34M correctness run:
