@@ -6,7 +6,11 @@ import torch
 from gaugeflow.production.generated_state_replay import (
     GeneratedStateReplayEntry,
     GeneratedStateReplayKey,
+    GeneratedStateReplayManifest,
+    GeneratedStateReplayManifestRow,
+    load_generated_state_replay_manifest,
     validate_no_forbidden_source_ids,
+    write_generated_state_replay_manifest,
 )
 
 
@@ -129,3 +133,46 @@ def test_generated_state_replay_rejects_forbidden_source_overlap() -> None:
     validate_no_forbidden_source_ids([entry], {"other"})
     with pytest.raises(ValueError, match="forbidden source ids"):
         validate_no_forbidden_source_ids([entry], {"alex<unit-test>"})
+
+
+def test_generated_state_replay_manifest_round_trips_with_stable_hash(tmp_path) -> None:
+    entry = _entry()
+    manifest = GeneratedStateReplayManifest.from_entries([entry])
+    manifest.validate(
+        expected_base_checkpoint_sha256="base-sha",
+        expected_sampler_commit="commit-sha",
+        expected_sampler_protocol_sha256="protocol-sha",
+    )
+    manifest.validate_against_entries([entry])
+
+    path = tmp_path / "generated-state-replay-manifest.json"
+    written_hash = write_generated_state_replay_manifest(path, manifest)
+    loaded = load_generated_state_replay_manifest(path)
+
+    assert loaded.to_json_object() == manifest.to_json_object()
+    assert loaded.canonical_sha256() == written_hash
+    loaded.validate_against_entries([entry])
+
+
+def test_generated_state_replay_manifest_rejects_payload_digest_mismatch() -> None:
+    entry = _entry()
+    row = GeneratedStateReplayManifestRow.from_entry(entry)
+    bad_hashes = dict(row.tensor_sha256)
+    bad_hashes["lattice_log_shape"] = "wrong"
+    manifest = GeneratedStateReplayManifest(
+        rows=(GeneratedStateReplayManifestRow(**{**row.__dict__, "tensor_sha256": bad_hashes}),)
+    )
+
+    with pytest.raises(ValueError, match="does not match replay entry payload"):
+        manifest.validate_against_entries([entry])
+
+
+def test_generated_state_replay_manifest_rejects_duplicate_keys_and_forbidden_ids() -> None:
+    entry = _entry()
+    manifest = GeneratedStateReplayManifest.from_entries([entry, entry])
+    with pytest.raises(ValueError, match="duplicate cache keys"):
+        manifest.validate()
+
+    single = GeneratedStateReplayManifest.from_entries([entry])
+    with pytest.raises(ValueError, match="forbidden source ids"):
+        single.validate(forbidden_source_ids={"alex<unit-test>"})
