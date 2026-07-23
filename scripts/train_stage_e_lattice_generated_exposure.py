@@ -25,9 +25,10 @@ from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.lattice_volume_shape import project_lattice_state
 from gaugeflow.production.lemat_index import IndexedLeMatDataset
+from gaugeflow.production.orderless_product_state import partial_occupation_from_reveal_rank
 from gaugeflow.production.physical_checkpointing import read_physical_checkpoint_metadata
 from gaugeflow.production.response_data import StageDResponseDataset, collate_response_records
-from gaugeflow.production.reverse_sampler import vp_reverse_step
+from gaugeflow.production.reverse_sampler import sample_uniform_reveal_ranks, vp_reverse_step
 from gaugeflow.tensor import piezo_to_irreps
 
 
@@ -84,6 +85,36 @@ def _exact_composition_counts(
     ).reshape(graph_count, vocabulary_size)
 
 
+def _validate_element_exposure(value: str) -> str:
+    if value not in {"clean", "orderless_partial"}:
+        raise ValueError("element_exposure must be 'clean' or 'orderless_partial'")
+    return value
+
+
+def _orderless_partial_tokens(
+    clean_tokens: torch.Tensor,
+    batch: torch.Tensor,
+    composition_counts: torch.Tensor,
+    node_counts: torch.Tensor,
+    time: torch.Tensor,
+    reveal_rank: torch.Tensor,
+    *,
+    vocabulary_size: int,
+    mask_token: int,
+) -> torch.Tensor:
+    reveal_count = torch.floor((1.0 - time) * node_counts.to(time)).long()
+    reveal_count = torch.minimum(reveal_count, node_counts.long() - 1)
+    return partial_occupation_from_reveal_rank(
+        clean_tokens,
+        batch,
+        composition_counts,
+        reveal_rank,
+        reveal_count,
+        vocabulary_size=vocabulary_size,
+        mask_token=mask_token,
+    ).partial_tokens
+
+
 def _generated_exposure_loss(
     diffusion: TensorFreeHybridDiffusion,
     clean: Any,
@@ -92,6 +123,7 @@ def _generated_exposure_loss(
     exposure_delta: float,
     generator: torch.Generator,
     precision: str,
+    element_exposure: str = "clean",
     tensor_condition: torch.Tensor | None = None,
     condition_present: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
@@ -115,6 +147,31 @@ def _generated_exposure_loss(
         graphs,
         diffusion.categorical.element_count,
     )
+    element_exposure = _validate_element_exposure(element_exposure)
+    first_element_tokens = clean.element_tokens
+    exposed_element_tokens = clean.element_tokens
+    if element_exposure == "orderless_partial":
+        reveal_rank = sample_uniform_reveal_ranks(clean.batch, generator=generator)
+        first_element_tokens = _orderless_partial_tokens(
+            clean.element_tokens,
+            clean.batch,
+            composition_counts,
+            clean.node_counts,
+            time_from,
+            reveal_rank,
+            vocabulary_size=diffusion.categorical.element_count,
+            mask_token=diffusion.categorical.mask_index,
+        )
+        exposed_element_tokens = _orderless_partial_tokens(
+            clean.element_tokens,
+            clean.batch,
+            composition_counts,
+            clean.node_counts,
+            time_to,
+            reveal_rank,
+            vocabulary_size=diffusion.categorical.element_count,
+            mask_token=diffusion.categorical.mask_index,
+        )
     # Generate the exposure carrier without backpropagating through its
     # stochastic reverse transition.  The adapter still receives gradients
     # from the denoising query evaluated on that carrier.
@@ -133,7 +190,7 @@ def _generated_exposure_loss(
         )
         noisy_shape = diffusion.lattice_standardizer.encode_shape(noisy.log_shape)
         first = diffusion.denoiser.forward_lattice(
-            noisy.element_tokens,
+            first_element_tokens,
             noisy.log_volume,
             noisy.log_shape,
             clean.batch,
@@ -177,7 +234,7 @@ def _generated_exposure_loss(
         enabled=precision == "bf16" and clean.lattice.device.type == "cuda",
     ):
         exposed = diffusion.denoiser.forward_lattice(
-            clean.element_tokens,
+            exposed_element_tokens,
             generated_log_volume,
             generated_log_shape,
             clean.batch,
@@ -199,7 +256,7 @@ def _generated_exposure_loss(
         # protects the qualified clean-side field while the adapter learns
         # the detached generated-side carrier.
         clean_prediction = diffusion.denoiser.forward_lattice(
-            noisy.element_tokens,
+            first_element_tokens,
             noisy.log_volume,
             noisy.log_shape,
             clean.batch,
@@ -224,6 +281,8 @@ def _generated_exposure_loss(
         "clean_volume_loss": float(clean_volume_loss.detach()),
         "clean_shape_loss": float(clean_shape_loss.detach()),
         "generated_log_volume_abs_max": float(generated_log_volume.abs().max().detach()),
+        "first_mask_fraction": float((first_element_tokens == diffusion.categorical.mask_index).float().mean()),
+        "exposed_mask_fraction": float((exposed_element_tokens == diffusion.categorical.mask_index).float().mean()),
     }
     return loss, metrics
 
@@ -298,6 +357,7 @@ def main() -> None:
             return collate_structure_records(dataset.select(selected))
     batch_size = int(protocol["batch_size"])
     steps = int(protocol["steps"])
+    element_exposure = _validate_element_exposure(str(protocol.get("element_exposure", "clean")))
     if batch_size < 1 or steps < 1:
         raise ValueError("lattice exposure batch size and steps must be positive")
     optimizer = torch.optim.AdamW(
@@ -332,6 +392,7 @@ def main() -> None:
             exposure_delta=float(protocol["exposure_delta"]),
             generator=noise_generator,
             precision=str(protocol.get("precision", "bf16")),
+            element_exposure=element_exposure,
             tensor_condition=tensor_condition,
             condition_present=condition_present,
         )
@@ -377,6 +438,7 @@ def main() -> None:
         "final": history[-1],
         "source_checkpoint_sha256": payload["source_checkpoint_sha256"],
         "source_kind": payload["source_kind"],
+        "element_exposure": element_exposure,
         "lemat_manifest_sha256": payload["lemat_manifest_sha256"],
         "response_cache_sha256": payload["response_cache_sha256"],
     }

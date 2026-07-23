@@ -396,6 +396,71 @@ def test_generated_lattice_exposure_uses_exact_composition_context() -> None:
     assert torch.equal(relabeled_counts.sum(dim=1), blueprint.node_counts)
 
 
+def test_generated_lattice_exposure_can_use_orderless_partial_element_state() -> None:
+    elements, _, lattice, blueprint = _small_stage_e_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    )
+    model.attach_lattice_residual_adapter()
+    diffusion = TensorFreeHybridDiffusion(
+        model,
+        _standardizer(),
+    )
+    clean = SimpleNamespace(
+        element_tokens=elements,
+        lattice=lattice,
+        batch=blueprint.batch,
+        node_counts=blueprint.node_counts,
+    )
+    captured_tokens: list[torch.Tensor] = []
+    captured_counts: list[torch.Tensor] = []
+    original = model.forward_lattice
+
+    def capture(tokens, *args, **kwargs):
+        counts = kwargs.get("composition_counts")
+        assert isinstance(counts, torch.Tensor)
+        captured_tokens.append(tokens.detach().clone())
+        captured_counts.append(counts.detach().clone())
+        return original(tokens, *args, **kwargs)
+
+    model.forward_lattice = capture  # type: ignore[method-assign]
+    try:
+        loss, metrics = _generated_exposure_loss(
+            diffusion,
+            clean,
+            exposure_time=0.75,
+            exposure_delta=0.50,
+            generator=torch.Generator().manual_seed(134),
+            precision="fp32",
+            element_exposure="orderless_partial",
+        )
+    finally:
+        model.forward_lattice = original  # type: ignore[method-assign]
+
+    assert torch.isfinite(loss)
+    expected = _exact_composition_counts(
+        elements,
+        blueprint.batch,
+        int(blueprint.node_counts.numel()),
+        diffusion.categorical.element_count,
+    )
+    assert len(captured_tokens) == 3
+    assert all(torch.equal(counts, expected) for counts in captured_counts)
+    assert torch.equal(captured_tokens[0], captured_tokens[2])
+    assert torch.equal(captured_tokens[0], torch.full_like(elements, diffusion.categorical.mask_index))
+    assert not torch.equal(captured_tokens[1], elements)
+    assert bool((captured_tokens[1] == diffusion.categorical.mask_index).any())
+    revealed = captured_tokens[1] != diffusion.categorical.mask_index
+    assert bool(revealed.any())
+    assert torch.equal(captured_tokens[1][revealed], elements[revealed])
+    assert metrics["first_mask_fraction"] == 1.0
+    assert 0.0 < metrics["exposed_mask_fraction"] < 1.0
+
+
 def test_lattice_residual_shape_scale_preserves_volume_channel() -> None:
     generator = torch.Generator().manual_seed(91)
     model = HybridCrystalDenoiser(
