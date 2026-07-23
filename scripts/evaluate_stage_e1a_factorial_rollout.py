@@ -80,6 +80,10 @@ def _fixed_counts(tokens: torch.Tensor, batch: torch.Tensor, graphs: int) -> tor
     return torch.bincount(flat, minlength=graphs * 118).reshape(graphs, 118)
 
 
+def _seeded(device: torch.device, seed: int) -> torch.Generator:
+    return torch.Generator(device=device).manual_seed(seed)
+
+
 def _run_arm(
     sampler: TensorFreeReverseSampler,
     arm: str,
@@ -99,7 +103,7 @@ def _run_arm(
     # that expose a discrete reverse path.
     if arm == "oracle_cal":
         initial = sampler.initialize_coordinate_state(
-            blueprint, generator=torch.Generator().manual_seed(seed)
+            blueprint, generator=_seeded(blueprint.batch.device, seed)
         )
         coordinate_generated = sampler.sample_coordinates(
             target_elements,
@@ -108,14 +112,14 @@ def _run_arm(
             tensor_condition=role_condition,
             steps=steps,
             initial_state=initial,
-            continuous_generator=torch.Generator().manual_seed(seed + 2),
+            continuous_generator=_seeded(blueprint.batch.device, seed + 2),
             continuous_mode="reverse_sde",
         )
         return coordinate_generated.element_tokens, coordinate_generated.fractional_coordinates, coordinate_generated.lattice
 
     if arm == "oracle_ca":
         lattice_initial = sampler.initialize_lattice_state(
-            blueprint, generator=torch.Generator().manual_seed(seed)
+            blueprint, generator=_seeded(blueprint.batch.device, seed)
         )
         lattice = sampler.sample_lattice(
             target_elements,
@@ -123,11 +127,11 @@ def _run_arm(
             tensor_condition=role_condition,
             steps=steps,
             initial_state=lattice_initial,
-            continuous_generator=torch.Generator().manual_seed(seed + 1),
+            continuous_generator=_seeded(blueprint.batch.device, seed + 1),
             continuous_mode="reverse_sde",
         ).lattice
         coordinate_initial = sampler.initialize_coordinate_state(
-            blueprint, generator=torch.Generator().manual_seed(seed + 3)
+            blueprint, generator=_seeded(blueprint.batch.device, seed + 3)
         )
         coordinate_generated = sampler.sample_coordinates(
             target_elements,
@@ -136,7 +140,7 @@ def _run_arm(
             tensor_condition=role_condition,
             steps=steps,
             initial_state=coordinate_initial,
-            continuous_generator=torch.Generator().manual_seed(seed + 4),
+            continuous_generator=_seeded(blueprint.batch.device, seed + 4),
             continuous_mode="reverse_sde",
         )
         return coordinate_generated.element_tokens, coordinate_generated.fractional_coordinates, lattice
@@ -147,9 +151,9 @@ def _run_arm(
         tensor_condition=role_condition,
         composition_counts=counts,
         steps=steps,
-        initialization_generator=torch.Generator().manual_seed(seed),
-        categorical_generator=torch.Generator().manual_seed(seed + 1),
-        continuous_generator=torch.Generator().manual_seed(seed + 2),
+        initialization_generator=_seeded(blueprint.batch.device, seed),
+        categorical_generator=_seeded(blueprint.batch.device, seed + 1),
+        continuous_generator=_seeded(blueprint.batch.device, seed + 2),
         continuous_mode="reverse_sde",
     )
     return generated.element_tokens, generated.fractional_coordinates, generated.lattice
