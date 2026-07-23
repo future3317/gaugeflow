@@ -362,6 +362,7 @@ class HybridCrystalDenoiser(nn.Module):
         self.hidden_dim = int(hidden_dim)
         self.tensor_residual_adapter: CenteredResidualAdapter | None = None
         self.lattice_residual_adapter: LatticeResidualAdapter | None = None
+        self.lattice_residual_shape_scale = 1.0
         if modality_time_conditioning is None:
             modality_time_conditioning = "separate" if independent_modality_times else "coordinate"
         if modality_time_conditioning not in {
@@ -489,6 +490,14 @@ class HybridCrystalDenoiser(nn.Module):
                 dtype=reference.dtype,
             )
 
+    def set_lattice_residual_shape_scale(self, scale: float) -> None:
+        """Scale only the shape component of an attached lattice adapter."""
+
+        value = float(scale)
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError("lattice residual shape scale must be finite and nonnegative")
+        self.lattice_residual_shape_scale = value
+
     def _apply_lattice_residual_adapter(
         self,
         context: torch.Tensor,
@@ -497,7 +506,11 @@ class HybridCrystalDenoiser(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if self.lattice_residual_adapter is None:
             return volume, shape
-        return self.lattice_residual_adapter(context, volume, shape)
+        adapted_volume, adapted_shape = self.lattice_residual_adapter(context, volume, shape)
+        shape_scale = self.lattice_residual_shape_scale
+        if shape_scale == 1.0:
+            return adapted_volume, adapted_shape
+        return adapted_volume, shape + shape_scale * (adapted_shape - shape)
 
     @property
     def angular_channels(self) -> int:

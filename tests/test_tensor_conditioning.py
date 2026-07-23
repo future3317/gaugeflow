@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
 import torch
 
 from gaugeflow.production.blueprint import ParentBlueprintBatch
@@ -393,6 +394,44 @@ def test_generated_lattice_exposure_uses_exact_composition_context() -> None:
     assert relabeled_counts[0, 4] == 0
     assert relabeled_counts[0, 7] == expected[0, 4]
     assert torch.equal(relabeled_counts.sum(dim=1), blueprint.node_counts)
+
+
+def test_lattice_residual_shape_scale_preserves_volume_channel() -> None:
+    generator = torch.Generator().manual_seed(91)
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    )
+    model.attach_lattice_residual_adapter()
+    assert model.lattice_residual_adapter is not None
+    with torch.no_grad():
+        model.lattice_residual_adapter.active[0].bias.add_(0.25)
+        model.lattice_residual_adapter.volume_head.weight.fill_(0.5)
+        model.lattice_residual_adapter.shape_head.weight.fill_(0.25)
+
+    context = torch.randn((3, 4 * model.hidden_dim), generator=generator)
+    volume = torch.randn((3,), generator=generator)
+    shape = torch.randn((3, 5), generator=generator)
+
+    full_volume, full_shape = model._apply_lattice_residual_adapter(context, volume, shape)
+    assert not torch.allclose(full_volume, volume)
+    assert not torch.allclose(full_shape, shape)
+
+    model.set_lattice_residual_shape_scale(0.0)
+    volume_only, shape_zero = model._apply_lattice_residual_adapter(context, volume, shape)
+    torch.testing.assert_close(volume_only, full_volume)
+    torch.testing.assert_close(shape_zero, shape)
+
+    model.set_lattice_residual_shape_scale(0.25)
+    scaled_volume, scaled_shape = model._apply_lattice_residual_adapter(context, volume, shape)
+    torch.testing.assert_close(scaled_volume, full_volume)
+    torch.testing.assert_close(scaled_shape - shape, 0.25 * (full_shape - shape))
+
+    with pytest.raises(ValueError, match="finite and nonnegative"):
+        model.set_lattice_residual_shape_scale(-0.1)
 
 
 def test_free_generated_side_uses_sampled_counts_not_clean_target_counts() -> None:

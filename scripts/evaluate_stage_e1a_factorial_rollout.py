@@ -73,6 +73,12 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--lattice-adapter-shape-scale",
+        type=float,
+        default=1.0,
+        help="nonnegative multiplier for the lattice adapter shape residual; volume residual stays unchanged",
+    )
+    parser.add_argument(
         "--trajectory-output",
         type=Path,
         default=None,
@@ -420,6 +426,10 @@ def main() -> None:
         raise ValueError("unexpected Stage-E1a protocol")
     if args.output.exists():
         raise FileExistsError(f"refusing to overwrite {args.output}")
+    if not torch.isfinite(torch.tensor(float(args.lattice_adapter_shape_scale))) or float(
+        args.lattice_adapter_shape_scale
+    ) < 0.0:
+        raise ValueError("lattice adapter shape scale must be finite and nonnegative")
     device = torch.device(args.device)
     if device.type != "cuda" or not torch.cuda.is_available():
         raise RuntimeError("formal Stage-E1a rollout requires CUDA")
@@ -491,7 +501,9 @@ def main() -> None:
         # backwards-compatible historical diagnostics.
         if args.lattice_adapter_role == "both":
             _load_lattice_adapter(base_model, args.lattice_adapter, args.stage_c_checkpoint)
+            base_model.set_lattice_residual_shape_scale(float(args.lattice_adapter_shape_scale))
         _load_lattice_adapter(conditioned_model, args.lattice_adapter, args.stage_c_checkpoint)
+        conditioned_model.set_lattice_residual_shape_scale(float(args.lattice_adapter_shape_scale))
     base_model.eval()
     conditioned_model.eval()
     composition_model = load_qualified_composition_model(
@@ -541,6 +553,7 @@ def main() -> None:
                 "sha256": sha256_file(args.lattice_adapter),
                 "schema": "gaugeflow.stage_e_lattice_generated_exposure.v1",
                 "role": args.lattice_adapter_role,
+                "shape_scale": float(args.lattice_adapter_shape_scale),
             }
             if args.lattice_adapter is not None
             else None
