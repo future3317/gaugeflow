@@ -14,6 +14,12 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
+from scripts.build_tiny_generated_state_replay_cache import (
+    _read_forbidden_source_ids,
+    _reject_forbidden_selection,
+    _select_source_indices,
+    _source_ids_for_indices,
+)
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
@@ -253,3 +259,59 @@ def test_generated_state_replay_correctness_parameter_update_norm() -> None:
     with torch.no_grad():
         module.weight.add_(1.0)
     assert _parameter_update_norm(module, reference) > 0.0
+
+
+def test_tiny_replay_builder_reads_forbidden_source_ids(tmp_path) -> None:
+    json_path = tmp_path / "forbidden.json"
+    json_path.write_text('["mp-1", "mp-2", "mp-1"]\n', encoding="utf-8")
+    assert _read_forbidden_source_ids(json_path) == {"mp-1", "mp-2"}
+
+    text_path = tmp_path / "forbidden.txt"
+    text_path.write_text("mp-3\n\nmp-4\n", encoding="utf-8")
+    assert _read_forbidden_source_ids(text_path) == {"mp-3", "mp-4"}
+    assert _read_forbidden_source_ids(None) is None
+
+
+def test_tiny_replay_builder_selects_contiguous_or_seeded_sources() -> None:
+    assert _select_source_indices(
+        split_size=10,
+        start_index=2,
+        sample_count=3,
+        selection_seed=None,
+    ) == [2, 3, 4]
+
+    selected = _select_source_indices(
+        split_size=10,
+        start_index=2,
+        sample_count=3,
+        selection_seed=5705,
+    )
+    repeated = _select_source_indices(
+        split_size=10,
+        start_index=2,
+        sample_count=3,
+        selection_seed=5705,
+    )
+    assert selected == repeated
+    assert selected != [2, 3, 4]
+    assert len(selected) == len(set(selected)) == 3
+    assert all(0 <= index < 10 for index in selected)
+
+
+def test_tiny_replay_builder_rejects_forbidden_selected_sources() -> None:
+    material_ids = ["mp-0", "mp-1", "mp-2", "mp-3"]
+    selected_ids = _source_ids_for_indices(material_ids, [3, 1])
+    assert selected_ids == ["mp-3", "mp-1"]
+    _reject_forbidden_selection(selected_ids, {"mp-0"})
+    with pytest.raises(ValueError, match="selected replay sources overlap forbidden source ids"):
+        _reject_forbidden_selection(selected_ids, {"mp-1"})
+
+
+def test_tiny_replay_builder_rejects_out_of_range_selection() -> None:
+    with pytest.raises(ValueError, match="outside the packed Alex split"):
+        _select_source_indices(
+            split_size=4,
+            start_index=3,
+            sample_count=2,
+            selection_seed=None,
+        )

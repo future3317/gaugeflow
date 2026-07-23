@@ -13,7 +13,7 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import torch
 
@@ -51,6 +51,21 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--split", default="train", choices=("train", "val", "test"))
     parser.add_argument("--start-index", type=int, default=0)
     parser.add_argument("--sample-count", type=int, default=2)
+    parser.add_argument(
+        "--selection-seed",
+        type=int,
+        default=None,
+        help=(
+            "If set, select a deterministic random permutation window instead "
+            "of a contiguous source slice."
+        ),
+    )
+    parser.add_argument(
+        "--forbidden-source-ids",
+        type=Path,
+        default=None,
+        help="Optional JSON list or newline-delimited source IDs that must not be selected.",
+    )
     parser.add_argument("--reverse-steps", type=int, default=4)
     parser.add_argument("--seed", type=int, default=5705)
     parser.add_argument("--refresh-id", type=int, default=0)
@@ -68,6 +83,50 @@ def _current_git_commit() -> str:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         return "unknown-git-commit"
+
+
+def _read_forbidden_source_ids(path: Path | None) -> set[str] | None:
+    if path is None:
+        return None
+    text = path.read_text(encoding="utf-8").strip()
+    if not text:
+        return set()
+    if text.startswith("["):
+        value: Any = json.loads(text)
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise ValueError("forbidden source ID JSON must be a list of strings")
+        return set(value)
+    return {line.strip() for line in text.splitlines() if line.strip()}
+
+
+def _select_source_indices(
+    *,
+    split_size: int,
+    start_index: int,
+    sample_count: int,
+    selection_seed: int | None,
+) -> list[int]:
+    stop = start_index + sample_count
+    if start_index < 0 or sample_count < 1 or stop > split_size:
+        raise ValueError("requested source selection is outside the packed Alex split")
+    if selection_seed is None:
+        return list(range(start_index, stop))
+    generator = torch.Generator(device="cpu").manual_seed(selection_seed)
+    permutation = torch.randperm(split_size, generator=generator)
+    return [int(index) for index in permutation[start_index:stop].tolist()]
+
+
+def _source_ids_for_indices(material_ids: Sequence[str], indices: Sequence[int]) -> list[str]:
+    return [str(material_ids[index]) for index in indices]
+
+
+def _reject_forbidden_selection(source_ids: Sequence[str], forbidden_source_ids: set[str] | None) -> None:
+    if forbidden_source_ids is None:
+        return
+    overlap = sorted(set(source_ids) & forbidden_source_ids)
+    if overlap:
+        preview = ", ".join(overlap[:5])
+        raise ValueError(f"selected replay sources overlap forbidden source ids: {preview}")
 
 
 def _dense_counts(tokens: torch.Tensor, batch: torch.Tensor, graphs: int) -> torch.Tensor:
@@ -211,12 +270,17 @@ def main() -> None:
         device=device,
     )
     dataset = PackedAlexP1Dataset(args.cache_root, args.split, include_material_id=True)
-    stop = args.start_index + args.sample_count
-    if args.start_index < 0 or stop > len(dataset):
-        raise ValueError("requested source slice is outside the packed Alex split")
-    indices = torch.arange(args.start_index, stop, dtype=torch.long)
+    selected_indices = _select_source_indices(
+        split_size=len(dataset),
+        start_index=args.start_index,
+        sample_count=args.sample_count,
+        selection_seed=args.selection_seed,
+    )
+    source_ids = _source_ids_for_indices(dataset.material_ids_audit_only, selected_indices)
+    forbidden_source_ids = _read_forbidden_source_ids(args.forbidden_source_ids)
+    _reject_forbidden_selection(source_ids, forbidden_source_ids)
+    indices = torch.tensor(selected_indices, dtype=torch.long)
     source = dataset.select_model_batch(indices, device=device)
-    source_ids = dataset.material_ids_audit_only[args.start_index:stop]
     node_counts = torch.bincount(source.batch, minlength=args.sample_count)
     blueprint = ParentBlueprintBatch.from_node_counts(node_counts, dtype=source.lattice.dtype, device=device)
     clean_counts = _dense_counts(source.atom_types, source.batch, args.sample_count)
@@ -362,6 +426,9 @@ def main() -> None:
         "split": args.split,
         "source_start_index": args.start_index,
         "source_sample_count": args.sample_count,
+        "source_selection_mode": "permuted" if args.selection_seed is not None else "contiguous",
+        "selection_seed": args.selection_seed,
+        "source_indices": selected_indices,
         "entry_count": len(entries),
         "loaded_entry_count": len(loaded_entries),
         "reverse_steps": args.reverse_steps,
@@ -371,6 +438,10 @@ def main() -> None:
         "manifest_sha256": manifest_hash,
         "loaded_manifest_sha256": loaded_manifest.canonical_sha256(),
         "roles_per_source": 4,
+        "forbidden_source_id_check": {
+            "executed": forbidden_source_ids is not None,
+            "count": 0 if forbidden_source_ids is None else len(forbidden_source_ids),
+        },
         "source_rows": rows,
     }
     if report["loaded_manifest_sha256"] != manifest_hash or len(loaded_entries) != len(entries):
