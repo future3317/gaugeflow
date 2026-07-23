@@ -535,8 +535,34 @@ SHA-256:
 8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
 ```
 
-This is a diagnostic candidate only.  The next step is a bounded 64-sample
-validation using the same evaluator, frozen target panel and random-stream
-policy.  Multi-GPU 58M/98M capacity training remains deferred until 34M has
-replay-role improvement and non-degraded free-generation retention beyond the
-smoke32 selector panel.
+This is a diagnostic candidate only.  The bounded 64-sample validation was run
+with the same evaluator, frozen target panel and random-stream policy:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_32src_100_eval_val64_v1.json
+```
+
+It retained NN and hard-validity behavior but failed the strict predeclared
+volume non-inferiority rule:
+
+```text
+NN-W1 delta: +0.003945617583326899
+volume-W1 delta: +0.0007898849176624784
+distance-valid delta: 0.0
+sampling failures delta: 0.0
+terminal masks delta: 0.0
+exact composition delta: 0.0
+finite-positive lattice delta: 0.0
+```
+
+The selector report is:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_val64_v1.json
+status: no_eligible_checkpoint
+```
+
+Therefore the 100-step EMA checkpoint remains diagnostic and is not promoted.
+Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
+either broaden generated-state replay support or declare a new validation
+margin before another bounded 34M diagnostic is run.

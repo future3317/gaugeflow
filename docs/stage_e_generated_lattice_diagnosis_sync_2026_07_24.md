@@ -571,8 +571,57 @@ distance_valid_delta: 0.0
 replay_total_loss_improvement: 0.5635005235671997
 ```
 
-This is still diagnostic checkpoint selection, not a production promotion.
-The next bounded step is a 64-sample validation with the same evaluator and
-frozen random-stream policy.  Full 58M/98M or multi-GPU capacity training
-remains deferred until 34M shows both replay-role improvement and non-degraded
-rollout retention beyond smoke32.
+This was still diagnostic checkpoint selection, not a production promotion.
+The selected 100-step EMA checkpoint was then evaluated on a bounded 64-sample
+panel with the same evaluator and frozen random-stream policy:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_32src_100_eval_val64_v1.json
+```
+
+64-sample result:
+
+```text
+base/candidate NN-W1:
+  0.7234887633353652 / 0.7274343809186921
+NN-W1 delta:
+  +0.003945617583326899
+base/candidate volume-W1:
+  0.11830551960912764 / 0.11909540452679011
+volume-W1 delta:
+  +0.0007898849176624784
+distance-valid delta:
+  0.0
+sampling failures delta:
+  0.0
+terminal masks delta:
+  0.0
+exact composition delta:
+  0.0
+finite-positive lattice delta:
+  0.0
+```
+
+The same selector was applied to the 64-sample output:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_val64_v1.json
+status:
+  no_eligible_checkpoint
+reason:
+  volume_w1_non_inferior=false under max_volume_w1_delta=0.0
+```
+
+Interpretation:
+
+```text
+The 32-source 100-step EMA checkpoint preserves NN and hard validity on the
+64-sample panel, but it does not pass the predeclared strict volume
+non-inferiority rule.  It remains a diagnostic candidate only.
+```
+
+Full 58M/98M or multi-GPU capacity training remains deferred until 34M shows
+both replay-role improvement and non-degraded rollout retention beyond smoke32.
+The next admissible work is either broader generated-state replay support or a
+new predeclared non-inferiority rule before running another bounded 34M
+diagnostic; it is not immediate capacity scaling.

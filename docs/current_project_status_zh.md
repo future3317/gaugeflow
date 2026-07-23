@@ -194,6 +194,18 @@ distance-valid/sampling failure/terminal masks/exact composition/finite-positive
 checkpoint，不是 production checkpoint。下一步是用同一 evaluator、冻结随机流做 bounded
 64-sample validation；在 64-sample 证据通过前，不启动 58M/98M、多卡容量竞争或完整重训。
 
+该 64-sample validation 随后已完成：
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_32src_100_eval_val64_v1.json`。
+base/candidate 的 free NN-W1 为 `0.7234887633/0.7274343809`，delta
+`+0.0039456176`；exact composition、finite-positive lattice、distance-valid、sampling failures
+和 terminal masks 均不退化，replay role total losses 仍全部下降。但 volume-W1 为
+`0.1183055196/0.1190954045`，delta `+0.0007898849`，因此按预声明 `max_volume_w1_delta=0`
+的 selector 不通过。正式判定报告为
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_val64_v1.json`，
+`status=no_eligible_checkpoint`。这说明 32-source 100-step EMA 只是 smoke32 诊断候选，尚不能
+提升为 production checkpoint；下一步应先扩大 generated-state replay support 或重新预注册更合理的
+非劣 margin，再重跑 34M 诊断，不应直接扩大模型容量。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)
