@@ -928,6 +928,71 @@ def test_coordinate_reverse_sampler_holds_side_states_and_replays_common_noise()
     )
 
 
+def test_coordinate_reverse_sampler_forwards_present_tensor_condition() -> None:
+    elements, _, lattice, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    seen: list[tuple[torch.Tensor, torch.Tensor]] = []
+
+    def capture(_module, args):
+        seen.append((args[6].detach().clone(), args[7].detach().clone()))
+
+    handle = model.register_forward_pre_hook(capture)
+    try:
+        TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8).sample_coordinates(
+            elements,
+            lattice,
+            blueprint,
+            tensor_condition=torch.ones((2, 18)),
+            steps=1,
+            initialization_generator=torch.Generator().manual_seed(126),
+            continuous_mode="probability_flow",
+        )
+    finally:
+        handle.remove()
+    assert seen
+    assert all(bool(present.all()) for _, present in seen)
+    assert all(torch.equal(condition, torch.ones((2, 18))) for condition, _ in seen)
+
+
+def test_lattice_reverse_sampler_forwards_present_tensor_condition_without_geometry_path() -> None:
+    elements, _, _, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    full_forward_calls = 0
+
+    def count_full_forward(_module, _inputs, _output):
+        nonlocal full_forward_calls
+        full_forward_calls += 1
+
+    handle = model.register_forward_hook(count_full_forward)
+    try:
+        generated = TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8).sample_lattice(
+            elements,
+            blueprint,
+            tensor_condition=torch.ones((2, 18)),
+            steps=1,
+            initialization_generator=torch.Generator().manual_seed(127),
+            continuous_mode="probability_flow",
+        )
+    finally:
+        handle.remove()
+    assert full_forward_calls == 0
+    assert torch.isfinite(generated.lattice).all()
+
+
 def test_graph_weighted_accumulation_matches_one_full_batch_update() -> None:
     elements, coordinates, lattice, blueprint = _small_clean_batch()
     reference_model = HybridCrystalDenoiser(
@@ -1130,6 +1195,35 @@ def test_joint_reverse_sampler_reveals_elements_and_projects_state():
             torch.tensor(0.0),
             atol=2e-5,
         )
+
+
+def test_joint_reverse_sampler_accepts_fixed_composition_without_repair():
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
+    counts = torch.zeros((2, 118), dtype=torch.long)
+    counts[0, 5] = 1
+    counts[0, 8] = 1
+    counts[1, 5] = 2
+    counts[1, 8] = 1
+    sampler = TensorFreeReverseSampler(
+        _small_product_model(),
+        _standardizer(),
+        maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=_small_composition_model(),
+    )
+    generated = sampler.sample(
+        blueprint,
+        composition_counts=counts,
+        steps=2,
+        categorical_generator=torch.Generator().manual_seed(128),
+        continuous_mode="probability_flow",
+    )
+    observed = torch.bincount(
+        blueprint.batch * 118 + generated.element_tokens,
+        minlength=2 * 118,
+    ).reshape(2, 118)
+    assert torch.equal(observed, counts)
+    assert torch.equal(generated.composition_counts, counts)
 
 
 def test_joint_sampler_distinguishes_physical_zero_tensor_from_missing_condition():

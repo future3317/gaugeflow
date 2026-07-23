@@ -319,6 +319,7 @@ class TensorFreeReverseSampler:
         lattice: torch.Tensor,
         blueprint: ParentBlueprintBatch,
         *,
+        tensor_condition: torch.Tensor | None = None,
         steps: int = 100,
         initial_state: CoordinateReverseInitialState | None = None,
         initialization_generator: torch.Generator | None = None,
@@ -374,8 +375,19 @@ class TensorFreeReverseSampler:
             blueprint.shape_projector,
         )
         clean_time = torch.zeros((graphs,), dtype=dtype, device=device)
-        condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
-        condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
+        if tensor_condition is None:
+            condition = torch.zeros((graphs, 18), dtype=dtype, device=device)
+            condition_present = torch.zeros((graphs, 1), dtype=torch.bool, device=device)
+        else:
+            if (
+                tensor_condition.shape != (graphs, 18)
+                or tensor_condition.dtype != dtype
+                or tensor_condition.device != device
+                or not bool(torch.isfinite(tensor_condition).all())
+            ):
+                raise ValueError("tensor condition must be finite [graphs,18] in the blueprint chart")
+            condition = tensor_condition
+            condition_present = torch.ones((graphs, 1), dtype=torch.bool, device=device)
         times = reverse_time_grid(
             self.vp_schedule,
             self.maximum_time,
@@ -471,6 +483,7 @@ class TensorFreeReverseSampler:
         element_tokens: torch.Tensor,
         blueprint: ParentBlueprintBatch,
         *,
+        tensor_condition: torch.Tensor | None = None,
         steps: int = 100,
         initial_state: LatticeReverseInitialState | None = None,
         initialization_generator: torch.Generator | None = None,
@@ -491,6 +504,25 @@ class TensorFreeReverseSampler:
         if element_tokens.device != blueprint.batch.device:
             raise ValueError("element tokens and blueprint must share a device")
         self.categorical.validate_clean(element_tokens)
+        condition: torch.Tensor | None
+        condition_present: torch.Tensor | None
+        if tensor_condition is None:
+            # Preserve the qualified Stage-C lattice-only path exactly: it
+            # historically had no condition token at all.  Passing an
+            # explicit null token would silently change that baseline if the
+            # atlas null parameters are later calibrated.
+            condition = None
+            condition_present = None
+        else:
+            if (
+                tensor_condition.shape != (graphs, 18)
+                or tensor_condition.dtype != blueprint.shape_projector.dtype
+                or tensor_condition.device != blueprint.batch.device
+                or not bool(torch.isfinite(tensor_condition).all())
+            ):
+                raise ValueError("tensor condition must be finite [graphs,18] in the blueprint chart")
+            condition = tensor_condition
+            condition_present = torch.ones((graphs, 1), dtype=torch.bool, device=blueprint.batch.device)
         if initial_state is None:
             initial_state = self.initialize_lattice_state(
                 blueprint,
@@ -536,6 +568,11 @@ class TensorFreeReverseSampler:
                 for index in range(steps):
                     time_from = times[index].expand(graphs)
                     time_to = times[index + 1].expand(graphs)
+                    lattice_kwargs = (
+                        {"tensor_condition": condition, "condition_present": condition_present}
+                        if condition is not None and condition_present is not None
+                        else {}
+                    )
                     prediction = self.denoiser.forward_lattice(
                         element_tokens,
                         log_volume,
@@ -543,6 +580,7 @@ class TensorFreeReverseSampler:
                         blueprint.batch,
                         time_from,
                         blueprint.shape_projector,
+                        **lattice_kwargs,
                     )
                     next_volume_latent = vp_reverse_step(
                         self.vp_schedule,
@@ -785,6 +823,7 @@ class TensorFreeReverseSampler:
         blueprint: ParentBlueprintBatch,
         *,
         tensor_condition: torch.Tensor | None = None,
+        composition_counts: torch.Tensor | None = None,
         steps: int = 100,
         initial_state: ContinuousReverseInitialState | None = None,
         initialization_generator: torch.Generator | None = None,
@@ -818,15 +857,25 @@ class TensorFreeReverseSampler:
         # The qualified C law is unconditional conditional on N: its frozen
         # context is the constant unit token used during its likelihood gate.
         # This is an explicit model state, never a target-derived composition.
-        composition_context = torch.ones(
-            (graphs, self.composition_model.context_dim), dtype=dtype, device=device
-        )
-        composition_sample = self.composition_model.sample(
-            composition_context,
-            blueprint.node_counts.long(),
-            generator=categorical_generator,
-        )
-        composition_counts = composition_sample.state.to_dense(self.categorical.element_count)
+        if composition_counts is None:
+            composition_context = torch.ones(
+                (graphs, self.composition_model.context_dim), dtype=dtype, device=device
+            )
+            composition_sample = self.composition_model.sample(
+                composition_context,
+                blueprint.node_counts.long(),
+                generator=categorical_generator,
+            )
+            composition_counts = composition_sample.state.to_dense(self.categorical.element_count)
+        else:
+            if (
+                composition_counts.shape != (graphs, self.categorical.element_count)
+                or composition_counts.dtype != torch.long
+                or composition_counts.device != device
+                or bool((composition_counts < 0).any())
+            ):
+                raise ValueError("fixed composition counts must be nonnegative [graphs,elements] int64")
+            composition_counts = composition_counts.clone()
         if not torch.equal(composition_counts.sum(dim=1), blueprint.node_counts.long()):
             raise SamplingFailure("sampled composition does not close on the sampled node count")
         tokens = self.categorical.sample_prior(nodes, blueprint.shape_projector, generator=categorical_generator)

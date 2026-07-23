@@ -1,0 +1,33 @@
+{
+  "protocol": "stage_e_e1a_factorial_rollout_v1",
+  "purpose": "diagnostic factorial rollout for generated-side conditional-interface localization",
+  "status": "diagnostic_not_qualification",
+  "seed": 20260723,
+  "samples": 256,
+  "batch_size": 2,
+  "reverse_steps": 50,
+  "continuous_mode": "reverse_sde",
+  "orbit_frames": 384,
+  "wasserstein_quantile_points": 128,
+  "arms": [
+    "oracle_cal",
+    "oracle_ca",
+    "oracle_c",
+    "free"
+  ],
+  "roles": [
+    "base",
+    "conditioned",
+    "swapped"
+  ],
+  "common_noise": true,
+  "composition_contract": "fixed-count arm uses remaining-count orderless law; no terminal repair",
+  "evaluator_boundary": "frozen Stage-D independent evaluator; metrics are conditional diagnostics, not H1a/E/F qualification",
+  "decision_rule": {
+    "arm1_failure": "coordinate conditioner or evaluator/interface issue",
+    "arm2_failure_after_arm1_pass": "lattice interface is the first unsupported side state",
+    "arm3_failure_after_arm2_pass": "assignment/composition exposure is the first unsupported side state",
+    "progressive_degradation": "generated-side exposure accumulation",
+    "single_arm_jump": "localized interface gap"
+  }
+}

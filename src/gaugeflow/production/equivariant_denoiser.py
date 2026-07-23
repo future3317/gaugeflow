@@ -9,6 +9,7 @@ import torch
 from torch import nn
 
 from gaugeflow.geometry import GaussianRadialBasis, periodic_radius_multigraph
+from gaugeflow.tensor import piezo_from_irreps
 from gaugeflow.vocabulary import CHEMICAL_ELEMENT_COUNT
 
 from .cartesian_coordinate_carrier import (
@@ -498,6 +499,8 @@ class HybridCrystalDenoiser(nn.Module):
         shape_projector: torch.Tensor,
         *,
         composition_counts: torch.Tensor | None = None,
+        tensor_condition: torch.Tensor | None = None,
+        condition_present: torch.Tensor | None = None,
     ) -> LatticeDenoiserOutput:
         """Denoise ``L_t`` without accepting coordinates or building edges."""
 
@@ -522,13 +525,41 @@ class HybridCrystalDenoiser(nn.Module):
                 raise ValueError("denoiser lattice shape is outside the blueprint subspace")
         clean_time = torch.zeros_like(lattice_time)
         graph_time = self._embed_modality_times(clean_time, clean_time, lattice_time)
-        _, _, lattice_context = self._composition_lattice_context(
+        element_nodes, graph_state, _ = self._composition_lattice_context(
             element_tokens,
             log_volume,
             log_shape,
             batch,
             graph_time,
             composition_counts,
+        )
+        if tensor_condition is not None or condition_present is not None:
+            if tensor_condition is None or condition_present is None:
+                raise ValueError("lattice tensor condition requires both values")
+            if tensor_condition.shape != (graphs, 18):
+                raise ValueError("lattice tensor condition must have shape [graphs,18]")
+            if condition_present.shape not in {(graphs,), (graphs, 1)} or condition_present.dtype != torch.bool:
+                raise ValueError("lattice condition-present flag must provide one boolean per graph")
+            if tensor_condition.device != log_volume.device or not bool(torch.isfinite(tensor_condition).all()):
+                raise ValueError("lattice tensor condition must be finite and on the lattice device")
+            # The lattice-only path has no edge geometry, so it uses the same
+            # proper-SO invariant graph token as the full hybrid path with a
+            # zero available-edge gate.  This keeps the head dimension and
+            # checkpoint schema unchanged while making the condition explicit.
+            condition_token, _ = self.gauge_atlas.invariant(piezo_from_irreps(tensor_condition))
+            present = condition_present.reshape(graphs, 1)
+            condition_token = torch.where(
+                present,
+                condition_token + self.gauge_atlas.present_bias,
+                self.gauge_atlas.null_condition.unsqueeze(0).expand_as(condition_token),
+            )
+            graph_state = graph_state + condition_token
+        counts = torch.bincount(batch, minlength=graphs).to(log_volume)
+        composition_mean = graph_mean(element_nodes, batch, graphs)
+        composition_scaled_sum = graph_sum(element_nodes, batch, graphs) / counts.sqrt().unsqueeze(-1)
+        lattice_context = torch.cat(
+            (composition_mean, composition_scaled_sum, graph_time, graph_state),
+            dim=-1,
         )
         return LatticeDenoiserOutput(
             clean_volume_latent=self.volume_head(lattice_context).squeeze(-1),
