@@ -1,8 +1,8 @@
 # GaugeFlow-base v2 Generated-State Contract
 
-Status: draft implementation contract with tiny-cache provenance and 20-step
-correctness-training smoke passed; not a generated-quality or capacity-training
-result.
+Status: draft implementation contract with tiny-cache provenance and bounded
+34M 2k correctness training passed; not a generated-quality or capacity
+competition result.
 
 Implementation status as of `23cde00`:
 
@@ -141,6 +141,23 @@ all_final_role_terminal_gradient_groups_nonzero: true
 clean_retention_loss_ratio_max: 2.5471673704374154
 first_step_parameter_update_norm: 1.0069770103808358
 final_parameter_update_norm: 5.613741470653719
+forbidden_source_id_check: executed, count=773
+```
+
+- The bounded 34M 2k correctness run also passed on the same replay contract:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_2k_v1/
+status: passed
+steps: 2000
+entry_count: 8
+training_metrics_rows: 2000
+checkpoint_sha256:
+  2935365787b934cfdd58bc8a47a2cf104654cd736b946eb5f493b0223de9e560
+all_final_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_max: 5.617618305543426
+first_step_parameter_update_norm: 1.0069770103808358
+final_parameter_update_norm: 37.47103131901986
 forbidden_source_id_check: executed, count=773
 ```
 
@@ -331,8 +348,7 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Run the bounded 34M 2--5k generated-state correctness experiment.  It must
-consume the same replay contract, report losses and gradients by carrier role,
-record clean retention and generated-state stratification, verify parameter
-updates, and remain bounded as a correctness run.  Multi-GPU 58M/98M capacity
-training remains deferred until this 34M generated-state contract is proven.
+Evaluate the 34M 2k correctness checkpoint with frozen generated-state
+stratification before any capacity run.  Multi-GPU 58M/98M capacity training
+remains deferred until this 34M generated-state contract has rollout evidence,
+not only training-interface evidence.

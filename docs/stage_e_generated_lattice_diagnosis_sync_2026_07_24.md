@@ -201,15 +201,15 @@ Completed provenance steps:
    frozen Stage-E 256-sample factorial target panel.
 8. 34M generated-state replay correctness runner and 20-step tiny training
    smoke on the eight-entry real replay cache.
+9. Bounded 34M 2k generated-state correctness run on the same replay contract.
 
 Current immediate task:
 
-1. Run the bounded 34M 2--5k generated-state correctness experiment.
-2. Keep the same replay/provenance contract and report per-role losses,
-   gradients, clean retention, generated-state stratification, parameter update
-   norms and forbidden-panel identity checks.
-3. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
-   contract is proven.
+1. Evaluate the 34M 2k correctness checkpoint with the same frozen
+   generated-state stratification before any capacity run.
+2. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
+   generated-state contract has rollout evidence, not only training-interface
+   evidence.
 
 Deferred work:
 
@@ -253,6 +253,12 @@ Server artifacts:
     training_summary.json
     checkpoint_metadata.json
     training_metrics.jsonl
+  /home/workspace/lrh/DATA/T2C-Flow/runs/
+  generated_state_replay_correctness_34m_2k_v1/
+    training_summary.json
+    checkpoint_metadata.json
+    training_metrics.jsonl
+    checkpoint_step_00002000.pt
 ```
 
 Code/provenance boundary:
@@ -289,5 +295,23 @@ all_final_role_terminal_gradient_groups_nonzero: true
 clean_retention_loss_ratio_max: 2.5471673704374154
 first_step_parameter_update_norm: 1.0069770103808358
 final_parameter_update_norm: 5.613741470653719
+forbidden_source_id_check: executed, count=773
+```
+
+Latest 34M correctness run:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_2k_v1/
+status: passed
+steps: 2000
+entry_count: 8
+role_weight: 0.25
+training_metrics_rows: 2000
+checkpoint_step_00002000_sha256:
+  2935365787b934cfdd58bc8a47a2cf104654cd736b946eb5f493b0223de9e560
+all_final_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_max: 5.617618305543426
+first_step_parameter_update_norm: 1.0069770103808358
+final_parameter_update_norm: 37.47103131901986
 forbidden_source_id_check: executed, count=773
 ```

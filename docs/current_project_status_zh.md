@@ -150,8 +150,13 @@ target forbidden IDs 做了零交集检查。随后新增的
 `/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_train_smoke_v2/`
 状态为 passed，四个 role 的终端 element/lattice/coordinate 梯度贡献均非零，clean-retention max
 ratio 为 `2.5471673704374154`，first/final 参数更新范数为
-`1.0069770103808358/5.613741470653719`。下一步是 bounded 34M 2--5k correctness run；
-58M/98M、多卡容量竞争和完整重训仍必须等 34M contract 被证明后再启动。
+`1.0069770103808358/5.613741470653719`。随后 bounded 34M 2k correctness run 也已通过：
+`/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_2k_v1/`
+包含 2000 行 metrics、`checkpoint_step_00002000.pt`，checkpoint SHA-256 为
+`2935365787b934cfdd58bc8a47a2cf104654cd736b946eb5f493b0223de9e560`；clean-retention max
+ratio 为 `5.617618305543426`，final 参数更新范数为 `37.47103131901986`，四个 role 的终端
+梯度贡献仍全部非零。下一步是先用冻结 generated-state stratification 评估这个 34M 2k checkpoint；
+58M/98M、多卡容量竞争和完整重训仍必须等 34M contract 有 rollout 证据后再启动。
 
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
