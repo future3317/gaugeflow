@@ -2,6 +2,30 @@
 
 Status: draft implementation contract, not a training result.
 
+Implementation status as of `8bb37cab`:
+
+- `GeneratedStateReplayEntry` validates role/source compatibility, exact counts,
+  partial reveal semantics, lattice positivity, shape subspace membership,
+  finite coordinates and forbidden source-ID overlap.
+- `GeneratedStateReplayManifest` records deterministic per-tensor payload
+  hashes and canonical JSON SHA-256.
+- `write_generated_state_replay_cache` writes a manifest plus tensor payload;
+  `load_generated_state_replay_cache` reloads with `weights_only=True` and
+  rejects stale checkpoint/sampler identities, duplicate cache keys, forbidden
+  source IDs and tampered payloads.
+- `scripts/smoke_generated_state_replay_manifest.py` covers the four carrier
+  roles on a synthetic cache.  The latest server smoke is:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_cache_smoke_v2/
+manifest SHA-256:
+  a4ab27e0793c30c5a76fb077867828c41b4eb6b3d2096dabd3d23f5f7cfafac1
+```
+
+This is still only the provenance/cache layer.  It does not authorize 34M
+training until a tiny real replay writer has produced entries from actual
+current-model generated carriers and passed the same contract.
+
 ## Purpose
 
 GaugeFlow v1 is blocked because the base and Stage-E adapters do not jointly
