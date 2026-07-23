@@ -911,3 +911,115 @@ under the same 34M model, or to predeclare a statistically meaningful paired
 volume non-inferiority margin before judging another bounded diagnostic.  Do
 not retrospectively loosen the selector, do not start Stage-F, and do not launch
 capacity training before the 34M evidence is stable beyond val128.
+
+### 2026-07-24 update: 128-source support probe
+
+The next support probe stayed on the same 34M base and same tensor-free sampler.
+Before running it, the generated-state replay audit/training runners were made
+role-microbatch aware so a 128-source cache can be audited and trained on 24 GB
+GPUs.  This is a runner implementation fix only: it adds
+`--max-graphs-per-role-batch`, defaults to the old full-role behavior, slices by
+graph, and scales chunk losses by graph fraction so the role-average loss scale
+is unchanged.
+
+Code commits:
+
+```text
+d69e80b8 fix: microbatch generated-state replay runners
+d484fdae fix: match replay runner import ordering
+```
+
+Server verification:
+
+```text
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python -m pytest -q tests/test_generated_state_replay.py
+  21 passed
+
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check scripts/audit_generated_state_replay_training_contract.py scripts/train_generated_state_replay_correctness.py tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy scripts/audit_generated_state_replay_training_contract.py scripts/train_generated_state_replay_correctness.py tests/test_generated_state_replay.py
+  Success
+```
+
+The new replay cache:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_real_v1/
+entries:
+  512 = 128 sources x 4 roles
+selection_seed:
+  6101
+source_start_index:
+  96
+reverse_steps:
+  4
+manifest SHA-256:
+  6e7cfd853b6a3ee1464b31ddfd623df89ed00bc0c1a2c7bef3805708ceee2283
+forbidden source ID check:
+  count=773
+```
+
+Training-contract audit passed with role chunks:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_real_v1/training_contract_audit.json
+max_graphs_per_role_batch:
+  64
+clean_retention_loss_ratio_to_max_generated:
+  0.3016592524713397
+all_role_terminal_gradient_groups_nonzero:
+  true
+```
+
+Two small-dose 34M diagnostics were trained on this cache:
+
+```text
+15-step:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+  c903523e446f4f4df973e7fdc3e0c6b6fd80e695573f9bdcc2f7896aab76c859
+clean_retention_loss_ratio_max:
+  0.5973009881913536
+final_parameter_update_norm:
+  5.064493047689135
+
+25-step:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_25_v1/checkpoint_step_00000025.pt
+SHA-256:
+  e0054559728b00097c589e4134b520445ed743b3163124c1b29ba9c1992ad42d
+clean_retention_loss_ratio_max:
+  0.639684125160313
+final_parameter_update_norm:
+  6.526418000036793
+```
+
+Val128 results:
+
+| cache | steps | all replay role losses lower | NN-W1 delta | volume-W1 delta | hard validity |
+| --- | ---: | --- | ---: | ---: | --- |
+| 128-source | 15 | yes | +0.004080 | +0.001527 | unchanged |
+| 128-source | 25 | yes | +0.010673 | +0.002142 | unchanged |
+
+Selector:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128src_checkpoint_selection_val128_v1.json
+status:
+  no_eligible_checkpoint
+```
+
+Interpretation:
+
+```text
+Broadening to the next 128-source permutation window does not open a strict
+zero-margin volume-retention window.  It keeps replay losses and hard validity
+moving correctly, and NN drift is smaller than the old 64-source 25/50-step
+tail, but volume-W1 remains positive on val128.  The failure is therefore not
+explained by the 64-source cache being too small in a simple way.
+```
+
+The next minimum evidence-backed step is not 58M/98M capacity scaling.  It is
+either an on-policy replay refresh that uses carriers from the current
+candidate rather than only frozen Stage-C base carriers, or a predeclared paired
+statistical volume non-inferiority rule.  Stage-E remains blocked.

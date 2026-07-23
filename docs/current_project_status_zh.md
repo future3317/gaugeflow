@@ -269,6 +269,30 @@ all-role loss 下降；15-step 起 all-role total losses 全部下降，但 volu
 val128 rollout volume retention 没有在严格 zero-margin selector 下重叠。下一步不应扩大模型容量，
 而应先处理 on-policy/support 覆盖或预注册合理的 paired/statistical volume 非劣 margin。
 
+随后执行了最小 support 扩大诊断，而不是启动 58M/98M。首先为 replay audit/train runner 增加了
+role 内 graph microbatch，commit `d484fdae fix: match replay runner import ordering`（含前一提交
+`d69e80b8 fix: microbatch generated-state replay runners`）只影响诊断 runner 的 batch 执行方式，
+默认参数保持旧行为，不改模型、loss 或 sampler。服务器验证通过：
+`pytest -q tests/test_generated_state_replay.py` 为 21 passed，`ruff check` 和 `mypy` 均通过。
+
+新的 128-source real replay cache 使用同一 `selection_seed=6101` 的下一 permutation window：
+`source_start_index=96`、`source_sample_count=128`、`reverse_steps=4`、train split、forbidden check
+773 IDs。目录为
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_real_v1/`，共 512 entries，
+manifest SHA-256 为 `6e7cfd853b6a3ee1464b31ddfd623df89ed00bc0c1a2c7bef3805708ceee2283`。
+microbatch 审计通过，`max_graphs_per_role_batch=64`，clean-retention ratio to max generated 为
+`0.3016592525`，四个 role 的 terminal gradient groups 均非零。
+
+在该 128-source cache 上只跑了 15/25-step 小剂量 34M 诊断。15-step checkpoint SHA-256 为
+`c903523e446f4f4df973e7fdc3e0c6b6fd80e695573f9bdcc2f7896aab76c859`，25-step 为
+`e0054559728b00097c589e4134b520445ed743b3163124c1b29ba9c1992ad42d`。两者 training smoke
+均通过且 all replay role losses 下降；但 val128 中 15-step 的 NN-W1/volume-W1 delta 为
+`+0.004080/+0.001527`，25-step 为 `+0.010673/+0.002142`，hard validity 全部不退化。
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128src_checkpoint_selection_val128_v1.json`
+仍为 `status=no_eligible_checkpoint`。因此单纯把 replay source support 从 64 扩到下一 128-source
+window 没有打开 strict volume retention 窗口；当前瓶颈更像 rollout-level volume retention
+评价/覆盖边界，而不是模型容量或 64-source 样本数本身。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

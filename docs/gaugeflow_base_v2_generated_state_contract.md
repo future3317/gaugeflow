@@ -696,6 +696,66 @@ and terminal masks did not regress in these val128 runs.  The active contract
 conclusion is that no measured update dose simultaneously satisfies all-role
 replay improvement and strict zero-margin val128 volume retention.
 
+The next support probe used a new 128-source replay cache over the following
+permutation window, still under the same 34M model and frozen sampler:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128_real_v1/
+entries:
+  512 = 128 sources x 4 roles
+selection_seed:
+  6101
+source_start_index:
+  96
+reverse_steps:
+  4
+manifest SHA-256:
+  6e7cfd853b6a3ee1464b31ddfd623df89ed00bc0c1a2c7bef3805708ceee2283
+```
+
+The runner had to be made microbatch-capable for this cache size:
+
+```text
+d69e80b8 fix: microbatch generated-state replay runners
+d484fdae fix: match replay runner import ordering
+```
+
+This does not change model or loss semantics; `--max-graphs-per-role-batch`
+defaults to full-role behavior and only chunks graph batches.  Server
+verification passed for pytest, ruff and mypy on the replay runner files.
+
+The 128-source contract audit passed:
+
+```text
+max_graphs_per_role_batch:
+  64
+clean_retention_loss_ratio_to_max_generated:
+  0.3016592524713397
+all_role_terminal_gradient_groups_nonzero:
+  true
+```
+
+Val128 diagnostics:
+
+| cache | steps | all replay role losses lower | NN-W1 delta | volume-W1 delta |
+| --- | ---: | --- | ---: | ---: |
+| 128-source | 15 | yes | +0.004080 | +0.001527 |
+| 128-source | 25 | yes | +0.010673 | +0.002142 |
+
+Selector report:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_128src_checkpoint_selection_val128_v1.json
+status:
+  no_eligible_checkpoint
+```
+
+Thus the simple broader-support probe did not fix the strict val128 volume
+retention failure.  This strengthens the current contract interpretation:
+replay direction and hard validity are correct, but the zero-margin
+rollout-level volume rule has no robust overlap yet with replay-loss
+improvement.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic
