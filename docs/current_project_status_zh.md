@@ -328,6 +328,20 @@ carrier support 假设不成立；当前更像 replay objective 下的 update-do
 不匹配。下一步应先测试能否用更小 effective parameter displacement 获得 replay loss improvement，
 仍不得启动 Stage-F 或直接扩大到 58M/98M。
 
+随后对 update-dose 假设做了直接诊断。保持同一 128-source cache/base/seed/loss/sampler，只降低
+learning rate：`1e-4` 的 15-step update norm 降到 `3.024477`，all-role replay total losses
+仍下降，但 val128 NN/volume delta 仍为 `+0.003632/+0.001351`，volume bootstrap CI 为
+`[+0.000146,+0.001546]`；`5e-5` 的 update norm 降到 `1.830502`，clean_clean loss 已转正
+`+0.000072`，且 volume CI 仍为 `[+0.000125,+0.000953]`。进一步做零训练参数插值：
+`state(alpha)=base+alpha*(128src/15-base)`，`alpha=0.0625/0.125/0.25/0.5/1.0`
+的 volume CI 分别为 `[+0.000007,+0.000113]`、`[+0.000014,+0.000226]`、
+`[+0.000028,+0.000451]`、`[+0.000060,+0.000900]`、`[+0.000125,+0.001797]`。
+其中多个很小 alpha 仍能降低 replay total losses，但没有任何非零点满足 zero-margin volume retention。
+因此当前最强结论是：measured replay-improvement direction 本身与 free-generation volume retention
+冲突；问题不是简单 LR 太大、steps 太多、off-policy carrier 或 64-source support 太窄。下一项最小修复
+必须显式引入 retention/trust constraint，或撤销 replay update 的 production 候选身份；不能靠盲目扩容
+或 Stage-F 绕过。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

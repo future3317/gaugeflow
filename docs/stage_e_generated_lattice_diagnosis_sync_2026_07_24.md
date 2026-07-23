@@ -1199,3 +1199,109 @@ should test whether replay improvement can be obtained at a smaller effective
 parameter displacement, for example by lowering learning rate or using an
 explicit predeclared retention trust rule.  Do not change model capacity,
 sampler semantics, Stage-F status or paper pass/fail language yet.
+
+### 2026-07-24 update: lower-LR and interpolation dose diagnostics
+
+The next diagnostic tested the update-dose hypothesis without changing model
+capacity, replay cache, sampler, loss or seed.  Two 15-step runs used the same
+128-source frozen-carrier cache and only changed learning rate:
+
+```text
+lr=1e-4:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_lr1e4_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+  a9eefb06981f2f6fb1234b87384088528925d9d2ca81728d15ef35846ec901cf
+
+lr=5e-5:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_lr5e5_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+  117858bdb6b8070fba1ec738b7e6633a45b70886154c00a2bd66c2403116bd58
+```
+
+Both training runs passed.  Val128 record-mode outputs:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_lr1e4_15_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_lr5e5_15_eval_val128_records_v1.json
+```
+
+Lower-LR comparison:
+
+| lr | steps | final update norm | all replay role losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 2e-4 | 15 | 5.064493 | yes | -0.000402 | +0.004080 | +0.001527 | [+0.000125, +0.001797] |
+| 1e-4 | 15 | 3.024477 | yes | -0.000147 | +0.003632 | +0.001351 | [+0.000146, +0.001546] |
+| 5e-5 | 15 | 1.830502 | no | +0.000072 | +0.002677 | +0.000827 | [+0.000125, +0.000953] |
+
+Interpretation: lowering LR reduces displacement and drift, but does not open
+the zero-margin volume-retention window.  At `1e-4`, replay losses still all
+improve but volume-W1 remains significantly positive.  At `5e-5`, the clean
+role no longer improves, and volume-W1 is still significantly positive.
+
+To separate optimizer path from final update direction, zero-training EMA/model
+interpolation checkpoints were generated along the original 128src/15 update:
+
+```text
+state(alpha) = Stage-C base + alpha * (128src/15 candidate - Stage-C base)
+```
+
+Interpolation artifacts:
+
+```text
+alpha=0.0625:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_interp_a00625_v1/checkpoint_step_00000015.pt
+SHA-256:
+  8060553197db4aebb7d8ac5920dedaea565c2d9bb222a678dd4da9eba6854b4a
+
+alpha=0.125:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_interp_a0125_v1/checkpoint_step_00000015.pt
+SHA-256:
+  ab5e357efcf457a41e656257a959c1b92c4cb20df9482b6998937077e926bf8f
+
+alpha=0.25:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_interp_a025_v1/checkpoint_step_00000015.pt
+SHA-256:
+  5a9f8f6857181fbeddf346c4ab0da656922de3f71ba468237c63379f8698ab6a
+
+alpha=0.5:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_interp_a050_v1/checkpoint_step_00000015.pt
+SHA-256:
+  dfaf41dd06898f09e92b0c5bcc38b9baa32c3a4a92422ceb3237fa172c42d655
+```
+
+Record-mode interpolation evaluations:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_interp_a00625_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_interp_a0125_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_interp_a025_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_interp_a050_eval_val128_records_v1.json
+```
+
+Interpolation curve:
+
+| alpha | update norm | all replay total losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 0.0625 | 0.316531 | yes | -0.000149 | +0.000269 | +0.000096 | [+0.000007, +0.000113] |
+| 0.125 | 0.633062 | no | +0.000067 | +0.000523 | +0.000191 | [+0.000014, +0.000226] |
+| 0.25 | 1.266123 | yes | -0.000001 | +0.000873 | +0.000382 | [+0.000028, +0.000451] |
+| 0.5 | 2.532247 | yes | -0.000128 | +0.001905 | +0.000764 | [+0.000060, +0.000900] |
+| 1.0 | 5.064493 | yes | -0.000402 | +0.004080 | +0.001527 | [+0.000125, +0.001797] |
+
+The interpolation diagnostic is the strongest current evidence about this
+failure mode:
+
+```text
+Along the measured 128src/15 replay-improvement direction, volume-W1 drift is
+positive even at tiny nonzero parameter displacement.  Some very small
+interpolation points still lower all replay total losses, but none satisfy
+zero-margin val128 volume retention.  The issue is therefore not simply too
+large a learning rate, too many steps, or frozen-carrier off-policy support.  It
+is a conflict between the current replay objective update direction and
+free-generation volume retention.
+```
+
+This does not justify 58M/98M capacity scaling yet.  The next minimal fix must
+change the training objective or update rule with an explicit retention/trust
+constraint, or else keep the replay adapter out of production.  Any such change
+must be predeclared and rerun under the same val128 paired record-mode surface.

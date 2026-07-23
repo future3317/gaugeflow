@@ -826,6 +826,33 @@ This does not support the simple explanation that frozen Stage-C carriers are
 the main bottleneck.  The current 34M evidence points instead to an
 update-dose / retention-boundary mismatch under the replay objective.
 
+The update-dose hypothesis was then tested directly.  Lowering learning rate on
+the same 128-source cache reduced parameter displacement and reduced rollout
+drift, but did not satisfy zero-margin volume retention:
+
+| lr | steps | final update norm | all replay role losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 2e-4 | 15 | 5.064493 | yes | -0.000402 | +0.004080 | +0.001527 | [+0.000125, +0.001797] |
+| 1e-4 | 15 | 3.024477 | yes | -0.000147 | +0.003632 | +0.001351 | [+0.000146, +0.001546] |
+| 5e-5 | 15 | 1.830502 | no | +0.000072 | +0.002677 | +0.000827 | [+0.000125, +0.000953] |
+
+Finally, zero-training interpolations along the 128src/15 update direction
+separated optimizer path from update direction:
+
+| alpha | update norm | all replay total losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 0.0625 | 0.316531 | yes | -0.000149 | +0.000269 | +0.000096 | [+0.000007, +0.000113] |
+| 0.125 | 0.633062 | no | +0.000067 | +0.000523 | +0.000191 | [+0.000014, +0.000226] |
+| 0.25 | 1.266123 | yes | -0.000001 | +0.000873 | +0.000382 | [+0.000028, +0.000451] |
+| 0.5 | 2.532247 | yes | -0.000128 | +0.001905 | +0.000764 | [+0.000060, +0.000900] |
+| 1.0 | 5.064493 | yes | -0.000402 | +0.004080 | +0.001527 | [+0.000125, +0.001797] |
+
+The active contract conclusion is now sharper: the current replay-improvement
+direction conflicts with free-generation volume retention even at very small
+nonzero displacement.  This is not solved by smaller LR, fewer effective steps,
+or on-policy carrier refresh.  A future fix must introduce an explicit
+retention/trust constraint or keep the replay update out of production.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic
