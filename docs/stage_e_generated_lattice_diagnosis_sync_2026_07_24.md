@@ -195,19 +195,16 @@ Completed provenance steps:
 4. Synthetic four-role cache smoke.
 5. Tiny real cache smoke using two real Alex train structures and four carrier
    roles.
+6. Tiny real replay-cache per-role loss/gradient audit through the current
+   `TensorFreeHybridDiffusion` objective.
 
 Current immediate task:
 
-1. Implement a replay-cache per-role loss/gradient correctness audit.
-2. Load
-   `/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/`.
-3. Reconstruct the Stage-C 30k/global 40523 backbone and current
-   `TensorFreeHybridDiffusion` training path.
-4. For `clean_clean`, `generated_assignment`, `generated_lattice` and
-   `generated_joint`, report finite total/element/coordinate/volume/shape loss,
-   nonzero active-path gradients and clean-retention behavior.
-5. Verify zero overlap with Stage-D validation/test and Stage-E factorial
-   targets before treating the audit as a valid training contract check.
+1. Provide the forbidden-source-ID panel for Stage-D validation/test and Stage-E
+   factorial targets.
+2. Rerun the replay-cache per-role audit with that panel enabled, so zero
+   overlap is actually proven rather than inferred.
+3. Only then start the 34M 2--5k correctness run.
 
 Deferred work:
 
@@ -243,6 +240,7 @@ Server artifacts:
   stage_e_orderless_partial_v2_shape_scale0_smoke32_v1/
   generated_state_replay_cache_smoke_v2/
   generated_state_replay_tiny_real_smoke_v3/
+    training_contract_audit.json
 ```
 
 Code/provenance boundary:
@@ -251,6 +249,7 @@ Code/provenance boundary:
 src/gaugeflow/production/generated_state_replay.py
 scripts/smoke_generated_state_replay_manifest.py
 scripts/build_tiny_generated_state_replay_cache.py
+scripts/audit_generated_state_replay_training_contract.py
 tests/test_generated_state_replay.py
 ```
 

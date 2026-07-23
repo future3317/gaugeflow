@@ -76,6 +76,36 @@ Immediate audit requirements:
 - save a small JSON report under the server evaluations directory;
 - run `pytest`, `ruff` and `mypy` on the touched files before committing.
 
+Training-contract audit status:
+
+- `scripts/audit_generated_state_replay_training_contract.py` consumes the tiny
+  real replay cache through the current `TensorFreeHybridDiffusion` objective,
+  without changing the model or loss.
+- It packs entries by role, verifies role endpoint assignment tokens realize
+  `composition_counts`, checks the diffusion's observed composition counts
+  match the replay entry, and backpropagates each role loss.
+- The server audit passed on the tiny real cache:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/
+  training_contract_audit.json
+
+status: passed
+entry_count: 8
+roles: clean_clean, generated_assignment, generated_lattice, generated_joint
+all_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_to_max_generated: 0.61315789912139
+base_checkpoint_sha256:
+  8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9
+manifest_sha256:
+  c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a
+```
+
+The optional forbidden-source-ID panel was not supplied in this run, so the
+external Stage-D/Stage-E target-overlap check is not claimed here.  It remains a
+required input before a 34M correctness training run can be treated as fully
+contract-checked.
+
 ## Purpose
 
 GaugeFlow v1 is blocked because the base and Stage-E adapters do not jointly
@@ -263,7 +293,7 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Implement the replay-cache per-role loss/gradient correctness audit first.
-Do not start multi-GPU training until this audit passes on the tiny real cache
-and proves that generated-state replay entries enter the same loss path with
-correct composition, assignment, lattice and coordinate provenance.
+Provide the forbidden-source-ID panel and rerun the replay-cache per-role audit
+with that panel enabled.  Only after that zero-overlap check passes should the
+34M 2--5k correctness training run start.  Multi-GPU 58M/98M capacity training
+remains deferred until the 34M generated-state contract is proven.
