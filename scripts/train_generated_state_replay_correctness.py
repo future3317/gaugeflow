@@ -17,11 +17,11 @@ import torch
 
 try:
     from audit_generated_state_replay_training_contract import (
-        _ROLES,
         PackedReplayRole,
+        _ROLES,
+        _check_composition_counts,
         _finite_float,
         _gradient_group_norms,
-        _check_composition_counts,
         _iter_role_chunks,
         _load_diffusion,
         _pack_role_entries,
@@ -30,11 +30,11 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - exercised when imported as scripts.*
     from scripts.audit_generated_state_replay_training_contract import (
-        _ROLES,
         PackedReplayRole,
+        _ROLES,
+        _check_composition_counts,
         _finite_float,
         _gradient_group_norms,
-        _check_composition_counts,
         _iter_role_chunks,
         _load_diffusion,
         _pack_role_entries,

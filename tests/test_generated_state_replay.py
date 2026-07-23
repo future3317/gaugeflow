@@ -14,6 +14,7 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
+from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.build_tiny_generated_state_replay_cache import (
     _read_forbidden_source_ids,
     _reject_forbidden_selection,
@@ -25,7 +26,6 @@ from scripts.select_generated_state_replay_checkpoint import (
     evaluate_candidate,
     select_candidate,
 )
-from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
