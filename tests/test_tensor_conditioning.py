@@ -1,7 +1,11 @@
 import copy
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, cast
 
 import torch
 
+from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.cartesian_gauge_atlas import CartesianGaugeAtlasOutput
 from gaugeflow.production.equivariant_denoiser import (
     CenteredResidualAdapter,
@@ -9,6 +13,9 @@ from gaugeflow.production.equivariant_denoiser import (
     HybridDenoiserOutput,
     LatticeResidualAdapter,
 )
+from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
+from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
+from gaugeflow.production.reverse_sampler import TensorFreeReverseSampler
 from gaugeflow.production.tensor_conditioning import (
     null_condition_retention_distance,
     orbit_mimic_distance,
@@ -16,6 +23,7 @@ from gaugeflow.production.tensor_conditioning import (
     sample_proper_rotations,
 )
 from gaugeflow.tensor import piezo_from_irreps
+from scripts.train_stage_e_lattice_generated_exposure import _exact_composition_counts, _generated_exposure_loss
 
 
 def _output(seed: int, *, nodes: int = 5, graphs: int = 2) -> HybridDenoiserOutput:
@@ -44,6 +52,28 @@ def _output(seed: int, *, nodes: int = 5, graphs: int = 2) -> HybridDenoiserOutp
         clean_shape_latent=torch.randn((graphs, 5), generator=generator),
         gauge_atlas=atlas,
     )
+
+
+def _standardizer() -> P1LatticeStandardizer:
+    return P1LatticeStandardizer.from_json(
+        Path(__file__).parents[1] / "configs/statistics/h1a_p1_lattice_standardization.json"
+    )
+
+
+def _small_stage_e_batch() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, ParentBlueprintBatch]:
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
+    elements = torch.tensor([4, 6, 12, 15, 6], dtype=torch.long)
+    coordinates = torch.tensor(
+        [
+            [0.05, 0.10, 0.15],
+            [0.35, 0.25, 0.70],
+            [0.15, 0.75, 0.45],
+            [0.72, 0.55, 0.20],
+            [0.42, 0.31, 0.82],
+        ]
+    )
+    lattice = torch.stack((3.0 * torch.eye(3), torch.diag(torch.tensor([3.5, 4.0, 4.5]))))
+    return elements, coordinates, lattice, blueprint
 
 
 def test_sampled_orbit_representative_is_proper_and_preserves_norm() -> None:
@@ -297,3 +327,148 @@ def test_lattice_residual_adapter_is_exact_zero_and_has_gradients() -> None:
     assert all(gradient is not None and torch.isfinite(gradient).all() for gradient in gradients)
     assert sum(float(gradient.square().sum()) for gradient in gradients if gradient is not None) > 0.0
     assert all(parameter.grad is None for parameter in adapter.reference.parameters())
+
+
+def test_generated_lattice_exposure_uses_exact_composition_context() -> None:
+    elements, _, lattice, blueprint = _small_stage_e_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    )
+    model.attach_lattice_residual_adapter()
+    diffusion = TensorFreeHybridDiffusion(
+        model,
+        _standardizer(),
+    )
+    clean = SimpleNamespace(
+        element_tokens=elements,
+        lattice=lattice,
+        batch=blueprint.batch,
+        node_counts=blueprint.node_counts,
+    )
+    captured: list[torch.Tensor | None] = []
+    original = model.forward_lattice
+
+    def capture(*args, **kwargs):
+        counts = kwargs.get("composition_counts")
+        captured.append(None if counts is None else counts.detach().clone())
+        return original(*args, **kwargs)
+
+    model.forward_lattice = capture  # type: ignore[method-assign]
+    try:
+        loss, _ = _generated_exposure_loss(
+            diffusion,
+            clean,
+            exposure_time=0.5,
+            exposure_delta=0.1,
+            generator=torch.Generator().manual_seed(34),
+            precision="fp32",
+        )
+    finally:
+        model.forward_lattice = original  # type: ignore[method-assign]
+    assert torch.isfinite(loss)
+    expected = _exact_composition_counts(
+        elements,
+        blueprint.batch,
+        int(blueprint.node_counts.numel()),
+        diffusion.categorical.element_count,
+    )
+    assert len(captured) == 3
+    assert all(counts is not None and torch.equal(counts, expected) for counts in captured)
+    assert torch.equal(expected.sum(dim=1), blueprint.node_counts)
+    assert expected[0, 12] == 0
+    assert expected[1, 4] == 0
+
+    relabeled = elements.clone()
+    relabeled[elements == 4] = 7
+    relabeled_counts = _exact_composition_counts(
+        relabeled,
+        blueprint.batch,
+        int(blueprint.node_counts.numel()),
+        diffusion.categorical.element_count,
+    )
+    assert relabeled_counts[0, 4] == 0
+    assert relabeled_counts[0, 7] == expected[0, 4]
+    assert torch.equal(relabeled_counts.sum(dim=1), blueprint.node_counts)
+
+
+def test_free_generated_side_uses_sampled_counts_not_clean_target_counts() -> None:
+    blueprint = ParentBlueprintBatch.from_node_counts(torch.tensor([2, 3]))
+    sampled_counts = torch.zeros((2, 118), dtype=torch.long)
+    sampled_counts[0, 5] = 1
+    sampled_counts[0, 8] = 1
+    sampled_counts[1, 5] = 2
+    sampled_counts[1, 9] = 1
+    clean_target_counts = torch.zeros_like(sampled_counts)
+    clean_target_counts[0, 4] = 1
+    clean_target_counts[0, 6] = 1
+    clean_target_counts[1, 6] = 1
+    clean_target_counts[1, 12] = 1
+    clean_target_counts[1, 15] = 1
+
+    class DenseState:
+        def __init__(self, value: torch.Tensor) -> None:
+            self.value = value
+
+        def to_dense(self, vocabulary_size: int) -> torch.Tensor:
+            if vocabulary_size != self.value.shape[1]:
+                raise ValueError("unexpected vocabulary size")
+            return self.value.clone()
+
+    class FixedCompositionModel:
+        context_dim = 1
+        maximum_atoms = 20
+        vocabulary_size = 118
+
+        def sample(
+            self,
+            context: torch.Tensor,
+            node_counts: torch.Tensor,
+            *,
+            generator: torch.Generator | None = None,
+        ) -> Any:
+            del generator
+            assert context.shape == (2, 1)
+            assert torch.equal(node_counts, blueprint.node_counts)
+            return SimpleNamespace(state=DenseState(sampled_counts.to(context.device)))
+
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    )
+    seen: list[torch.Tensor] = []
+    original = model.forward
+
+    def capture(*args, **kwargs):
+        counts = kwargs.get("composition_counts")
+        assert isinstance(counts, torch.Tensor)
+        seen.append(counts.detach().cpu().clone())
+        return original(*args, **kwargs)
+
+    model.forward = capture  # type: ignore[method-assign]
+    sampler = TensorFreeReverseSampler(
+        model,
+        _standardizer(),
+        maximum_time=0.8,
+        categorical_path="orderless_reveal",
+        composition_model=cast(Any, FixedCompositionModel()),
+    )
+    try:
+        generated = sampler.sample(
+            blueprint,
+            steps=2,
+            categorical_generator=torch.Generator().manual_seed(35),
+            continuous_mode="probability_flow",
+        )
+    finally:
+        model.forward = original  # type: ignore[method-assign]
+    assert seen
+    assert all(torch.equal(counts, sampled_counts) for counts in seen)
+    assert all(not torch.equal(counts, clean_target_counts) for counts in seen)
+    assert torch.equal(generated.composition_counts.cpu(), sampled_counts)

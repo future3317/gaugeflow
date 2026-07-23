@@ -71,6 +71,19 @@ def _adapter_parameters(model: Any) -> list[torch.nn.Parameter]:
     return [parameter for parameter in adapter.parameters() if parameter.requires_grad]
 
 
+def _exact_composition_counts(
+    element_tokens: torch.Tensor,
+    batch: torch.Tensor,
+    graph_count: int,
+    vocabulary_size: int,
+) -> torch.Tensor:
+    flat = batch * vocabulary_size + element_tokens
+    return torch.bincount(
+        flat,
+        minlength=graph_count * vocabulary_size,
+    ).reshape(graph_count, vocabulary_size)
+
+
 def _generated_exposure_loss(
     diffusion: TensorFreeHybridDiffusion,
     clean: Any,
@@ -96,6 +109,12 @@ def _generated_exposure_loss(
         dtype=clean.lattice.dtype,
         device=clean.lattice.device,
     )
+    composition_counts = _exact_composition_counts(
+        clean.element_tokens,
+        clean.batch,
+        graphs,
+        diffusion.categorical.element_count,
+    )
     # Generate the exposure carrier without backpropagating through its
     # stochastic reverse transition.  The adapter still receives gradients
     # from the denoising query evaluated on that carrier.
@@ -120,6 +139,7 @@ def _generated_exposure_loss(
             clean.batch,
             time_from,
             blueprint.shape_projector,
+            composition_counts=composition_counts,
             tensor_condition=tensor_condition,
             condition_present=condition_present,
         )
@@ -163,6 +183,7 @@ def _generated_exposure_loss(
             clean.batch,
             time_to,
             blueprint.shape_projector,
+            composition_counts=composition_counts,
             tensor_condition=tensor_condition,
             condition_present=condition_present,
         )
@@ -184,6 +205,7 @@ def _generated_exposure_loss(
             clean.batch,
             time_from,
             blueprint.shape_projector,
+            composition_counts=composition_counts,
             tensor_condition=tensor_condition,
             condition_present=condition_present,
         )
