@@ -651,6 +651,51 @@ Thus reducing the update dose from 50 to 25 improves the val128 volume drift
 but does not make the candidate eligible under the predeclared zero-margin
 volume rule.  The 25-step checkpoint is diagnostic only.
 
+The 10/15/20-step dose window was then filled in without changing cache,
+optimizer family, seed, base checkpoint or evaluator:
+
+```text
+10-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_10_v1/checkpoint_step_00000010.pt
+SHA-256:
+e49d01c1a67d7b3fb64e090703ea1e55bf4ce16c10b18a6f1459ec9fd55e8ee3
+
+15-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+d2fc6d1bb1c7b9088d329e84901f9b3c08c1a42fe7f3e9654dafac3f046da6ca
+
+20-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_20_v1/checkpoint_step_00000020.pt
+SHA-256:
+2d0921d7da0c5ed3364fc9641dc553b0c03c3c217ea6b7abbaae7c96f31a6c26
+```
+
+All three training audits passed with nonzero final role terminal gradient
+groups and the same 773-ID forbidden-source check.  The updated val128 selector
+report:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val128_v4.json
+status:
+  no_eligible_checkpoint
+```
+
+Val128 dose table:
+
+| steps | all replay role losses lower | clean_clean loss delta | NN-W1 delta | volume-W1 delta |
+| ---: | --- | ---: | ---: | ---: |
+| 10 | no | +0.000272 | +0.002923 | +0.000934 |
+| 15 | yes | -0.000434 | +0.010864 | +0.000786 |
+| 20 | yes | -0.000819 | +0.011899 | +0.001154 |
+| 25 | yes | -0.001068 | +0.014134 | +0.001539 |
+| 50 | yes | -0.004706 | +0.021105 | +0.004166 |
+
+Hard validity, exact composition, finite-positive lattice, sampling failures
+and terminal masks did not regress in these val128 runs.  The active contract
+conclusion is that no measured update dose simultaneously satisfies all-role
+replay improvement and strict zero-margin val128 volume retention.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic

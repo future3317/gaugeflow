@@ -816,8 +816,98 @@ matters, but 34M replay retention is still sitting on a narrow rollout-level
 volume non-inferiority boundary.  Stage-E v1 remains blocked.
 ```
 
-Do not use the 25-step checkpoint as production.  The next admissible action is
-a smaller bounded dose probe such as 10-step EMA on the same 64-source cache, or
-a predeclared paired/statistical non-inferiority margin.  Do not retrospectively
-loosen the selector, do not start Stage-F, and do not launch 58M/98M capacity
-training before the 34M evidence is stable beyond val128.
+Do not use the 25-step checkpoint as production.
+
+### 2026-07-24 update: 10/15/20-step dose window
+
+The smaller-dose follow-up has now been run on the same 64-source replay cache,
+with the same base checkpoint, optimizer family, seed, evaluator and
+target-exclusion contract.  These runs only changed the number of update steps.
+
+```text
+10-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_10_v1/checkpoint_step_00000010.pt
+SHA-256:
+e49d01c1a67d7b3fb64e090703ea1e55bf4ce16c10b18a6f1459ec9fd55e8ee3
+clean_retention_loss_ratio_max:
+  0.6535009824720732
+final_parameter_update_norm:
+  4.178169844414849
+
+15-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_15_v1/checkpoint_step_00000015.pt
+SHA-256:
+d2fc6d1bb1c7b9088d329e84901f9b3c08c1a42fe7f3e9654dafac3f046da6ca
+clean_retention_loss_ratio_max:
+  0.6654225055069591
+final_parameter_update_norm:
+  5.077290425434707
+
+20-step checkpoint:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_64src_20_v1/checkpoint_step_00000020.pt
+SHA-256:
+2d0921d7da0c5ed3364fc9641dc553b0c03c3c217ea6b7abbaae7c96f31a6c26
+clean_retention_loss_ratio_max:
+  0.6657369364399568
+final_parameter_update_norm:
+  5.789911179140174
+```
+
+All three training audits passed: final role terminal element/lattice/coordinate
+gradient groups were nonzero, parameters updated, and the forbidden-source ID
+check still covered 773 IDs.
+
+The 10-step checkpoint was evaluated on smoke32, val64 and val128:
+
+| panel | NN-W1 delta | volume-W1 delta | hard validity | selector status |
+| --- | ---: | ---: | --- | --- |
+| smoke32 | +0.001246 | -0.000618 | unchanged | rejected: clean_clean replay loss not lower |
+| val64 | -0.001313 | -0.000123 | unchanged | rejected: clean_clean replay loss not lower |
+| val128 | +0.002923 | +0.000934 | unchanged | rejected: clean_clean replay loss and volume |
+
+The val128-only middle-dose panel is:
+
+| steps | all replay role losses lower | clean_clean loss delta | NN-W1 delta | volume-W1 delta | hard validity |
+| ---: | --- | ---: | ---: | ---: | --- |
+| 10 | no | +0.000272 | +0.002923 | +0.000934 | unchanged |
+| 15 | yes | -0.000434 | +0.010864 | +0.000786 | unchanged |
+| 20 | yes | -0.000819 | +0.011899 | +0.001154 | unchanged |
+| 25 | yes | -0.001068 | +0.014134 | +0.001539 | unchanged |
+| 50 | yes | -0.004706 | +0.021105 | +0.004166 | unchanged |
+
+The updated selector reports are:
+
+```text
+smoke32:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_smoke32_v4.json
+selected:
+  64src_25_ema
+
+val64:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val64_v3.json
+selected:
+  64src_50_ema_val64
+
+val128:
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_64src_checkpoint_selection_val128_v4.json
+status:
+  no_eligible_checkpoint
+```
+
+Interpretation:
+
+```text
+There is no measured 64-source 34M EMA dose that satisfies both parts of the
+strict selector on val128.  The smallest dose preserves rollout metrics best
+but does not lower clean_clean replay loss.  Once clean/replay losses all move
+in the right direction, val128 volume-W1 remains strictly positive.  This is
+not evidence for immediate 58M/98M capacity scaling; it is evidence that the
+current replay support/update-dose setup lacks a robust retention window under
+the zero-margin volume rule.
+```
+
+The next admissible action is either to broaden/on-policy refresh replay support
+under the same 34M model, or to predeclare a statistically meaningful paired
+volume non-inferiority margin before judging another bounded diagnostic.  Do
+not retrospectively loosen the selector, do not start Stage-F, and do not launch
+capacity training before the 34M evidence is stable beyond val128.
