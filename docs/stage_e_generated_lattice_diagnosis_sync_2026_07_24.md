@@ -199,16 +199,16 @@ Completed provenance steps:
    `TensorFreeHybridDiffusion` objective.
 7. Forbidden-source overlap audit against Stage-D validation/test and the
    frozen Stage-E 256-sample factorial target panel.
+8. 34M generated-state replay correctness runner and 20-step tiny training
+   smoke on the eight-entry real replay cache.
 
 Current immediate task:
 
-1. Implement a narrow 34M generated-state replay correctness training runner.
-2. First run a tiny bounded smoke on the eight-entry real replay cache, then
-   the 2--5k correctness run if the smoke is finite.
-3. Keep the same replay/provenance contract and report per-role losses,
+1. Run the bounded 34M 2--5k generated-state correctness experiment.
+2. Keep the same replay/provenance contract and report per-role losses,
    gradients, clean retention, generated-state stratification, parameter update
    norms and forbidden-panel identity checks.
-4. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
+3. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
    contract is proven.
 
 Deferred work:
@@ -249,6 +249,10 @@ Server artifacts:
     training_contract_audit_with_forbidden_panel.json
     forbidden_source_ids_stage_d_stage_e_v1.json
     forbidden_source_ids_stage_d_stage_e_v1.manifest.json
+  generated_state_replay_correctness_train_smoke_v2/
+    training_summary.json
+    checkpoint_metadata.json
+    training_metrics.jsonl
 ```
 
 Code/provenance boundary:
@@ -258,6 +262,7 @@ src/gaugeflow/production/generated_state_replay.py
 scripts/smoke_generated_state_replay_manifest.py
 scripts/build_tiny_generated_state_replay_cache.py
 scripts/audit_generated_state_replay_training_contract.py
+scripts/train_generated_state_replay_correctness.py
 tests/test_generated_state_replay.py
 ```
 
@@ -269,4 +274,20 @@ Latest A-v2 provenance commits:
 55cdb62e docs: record tiny real generated-state replay smoke
 11ac6a9 feat: audit generated-state replay training contract
 2e44df8 docs: record replay training contract audit
+23cde00 feat: train generated-state replay correctness smoke
+```
+
+Latest tiny training smoke:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_train_smoke_v2/
+status: passed
+steps: 20
+entry_count: 8
+role_weight: 0.25
+all_final_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_max: 2.5471673704374154
+first_step_parameter_update_norm: 1.0069770103808358
+final_parameter_update_norm: 5.613741470653719
+forbidden_source_id_check: executed, count=773
 ```

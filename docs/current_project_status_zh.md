@@ -145,9 +145,13 @@ manifest SHA-256 为
 `c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a`。训练合约审计确认
 每个 role 的 terminal element/lattice/coordinate gradient groups 非零、clean retention ratio 为
 `0.61315789912139`，并用 773 个 Stage-D validation/test 与冻结 Stage-E 256 factorial
-target forbidden IDs 做了零交集检查。下一步是先实现 34M generated-state correctness
-training runner，并在 8-entry smoke 通过后再做 2--5k correctness run；58M/98M、多卡容量竞争和
-完整重训仍必须等 34M contract 被证明后再启动。
+target forbidden IDs 做了零交集检查。随后新增的
+`scripts/train_generated_state_replay_correctness.py` 已经完成 20-step tiny training smoke：
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_train_smoke_v2/`
+状态为 passed，四个 role 的终端 element/lattice/coordinate 梯度贡献均非零，clean-retention max
+ratio 为 `2.5471673704374154`，first/final 参数更新范数为
+`1.0069770103808358/5.613741470653719`。下一步是 bounded 34M 2--5k correctness run；
+58M/98M、多卡容量竞争和完整重训仍必须等 34M contract 被证明后再启动。
 
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 

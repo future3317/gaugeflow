@@ -1,9 +1,10 @@
 # GaugeFlow-base v2 Generated-State Contract
 
-Status: draft implementation contract with tiny-cache provenance audit passed;
-not a generated-quality or capacity-training result.
+Status: draft implementation contract with tiny-cache provenance and 20-step
+correctness-training smoke passed; not a generated-quality or capacity-training
+result.
 
-Implementation status as of `2e44df8`:
+Implementation status as of `23cde00`:
 
 - `GeneratedStateReplayEntry` validates role/source compatibility, exact counts,
   partial reveal semantics, lattice positivity, shape subspace membership,
@@ -117,6 +118,31 @@ panel is a subset of Stage-D validation under
 (`stage_e_factorial_unique_target_count=256`), and the combined forbidden set
 contains 773 unique IDs.  The overlap-enabled audit proves the tiny replay
 cache sources `mp-1007760` and `mp-1091415` do not intersect that panel.
+
+Correctness-training smoke status:
+
+- `scripts/train_generated_state_replay_correctness.py` implements the bounded
+  34M replay correctness runner without changing model, loss or diffusion
+  semantics.
+- It uses equal role weights over `clean_clean`, `generated_assignment`,
+  `generated_lattice` and `generated_joint`, accumulates all roles into one
+  `ProductionTrainer` optimizer step, and records per-role losses, per-role
+  terminal gradient contributions, clean retention and parameter update norms.
+- The 20-step server smoke passed:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_train_smoke_v2/
+status: passed
+steps: 20
+entry_count: 8
+manifest_sha256:
+  c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a
+all_final_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_max: 2.5471673704374154
+first_step_parameter_update_norm: 1.0069770103808358
+final_parameter_update_norm: 5.613741470653719
+forbidden_source_id_check: executed, count=773
+```
 
 ## Purpose
 
@@ -305,9 +331,8 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Implement the 34M generated-state replay correctness runner, then run a tiny
-8-entry smoke before the 2--5k correctness experiment.  It must consume the same
-replay contract, report losses and gradients by carrier role, record clean
-retention and generated-state stratification, verify parameter updates, and
-remain bounded as a correctness run.  Multi-GPU 58M/98M capacity training
-remains deferred until this 34M generated-state contract is proven.
+Run the bounded 34M 2--5k generated-state correctness experiment.  It must
+consume the same replay contract, report losses and gradients by carrier role,
+record clean retention and generated-state stratification, verify parameter
+updates, and remain bounded as a correctness run.  Multi-GPU 58M/98M capacity
+training remains deferred until this 34M generated-state contract is proven.
