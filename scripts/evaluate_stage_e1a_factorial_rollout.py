@@ -29,10 +29,12 @@ from train_stage_d_response import _load_model as load_stage_d_model
 from train_stage_e_orbit_mimic import _load_backbones
 
 from gaugeflow.file_utils import load_json_object, sha256_file
+from gaugeflow.geometry import periodic_radius_multigraph
 from gaugeflow.production.blueprint import ParentBlueprintBatch
 from gaugeflow.production.composition_runtime import load_qualified_composition_model
 from gaugeflow.production.generation_metrics import minimum_periodic_distances, quantile_wasserstein, robust_scale
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
+from gaugeflow.production.lattice_volume_shape import LatticeVolumeShape
 from gaugeflow.production.response_data import StageDResponseDataset, collate_response_records
 from gaugeflow.production.response_normalization import load_response_normalizer
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
@@ -76,6 +78,17 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="optional JSON lattice trajectory aggregate for oracle_ca/oracle_c/free",
     )
+    parser.add_argument(
+        "--sample-output",
+        type=Path,
+        default=None,
+        help="optional JSON rows with paired per-sample states and lattice diagnostics",
+    )
+    parser.add_argument(
+        "--system-label",
+        default="unspecified",
+        help="label written to optional sample rows, e.g. B, C-old, or C-new",
+    )
     parser.add_argument("--device", default="cuda")
     return parser.parse_args()
 
@@ -105,6 +118,122 @@ def _fixed_counts(tokens: torch.Tensor, batch: torch.Tensor, graphs: int) -> tor
 
 def _seeded(device: torch.device, seed: int) -> torch.Generator:
     return torch.Generator(device=device).manual_seed(seed)
+
+
+
+
+def _json_number(value: torch.Tensor | float | int) -> float | None:
+    number = float(value.detach().cpu()) if isinstance(value, torch.Tensor) else float(value)
+    return number if torch.isfinite(torch.tensor(number)).item() else None
+
+
+def _json_vector(value: torch.Tensor) -> list[float | None]:
+    return [_json_number(item) for item in value.detach().cpu().reshape(-1)]
+
+
+def _json_matrix(value: torch.Tensor) -> list[list[float | None]]:
+    matrix = value.detach().cpu()
+    return [_json_vector(row) for row in matrix]
+
+
+def _nearest_neighbor_summaries(
+    fractional_coordinates: torch.Tensor,
+    lattice: torch.Tensor,
+    batch: torch.Tensor,
+    graph_count: int,
+) -> list[dict[str, float | None]]:
+    edges = periodic_radius_multigraph(fractional_coordinates, lattice, batch, cutoff=8.0)
+    nearest = fractional_coordinates.new_full((fractional_coordinates.shape[0],), float("inf"))
+    if edges.distance.numel():
+        nearest.scatter_reduce_(0, edges.target, edges.distance, reduce="amin", include_self=True)
+    summaries: list[dict[str, float | None]] = []
+    probabilities = torch.tensor([0.05, 0.10, 0.50], dtype=torch.float64)
+    for graph in range(graph_count):
+        values = nearest[batch == graph].detach().cpu().double()
+        finite = values[torch.isfinite(values)]
+        if finite.numel() == 0:
+            summaries.append({"q05": None, "q10": None, "median": None})
+            continue
+        quantiles = torch.quantile(finite, probabilities)
+        summaries.append(
+            {
+                "q05": float(quantiles[0]),
+                "q10": float(quantiles[1]),
+                "median": float(quantiles[2]),
+            }
+        )
+    return summaries
+
+
+def _first_abnormal_lattice_step(diagnostics: Any, graph_index: int) -> dict[str, float | int | str | None] | None:
+    if diagnostics is None:
+        return None
+    log_volume = diagnostics.trajectory_log_volume
+    physical_volume = diagnostics.trajectory_physical_volume
+    shape_norm = diagnostics.trajectory_shape_norm
+    condition_number = diagnostics.trajectory_condition_number
+    if log_volume is None or physical_volume is None or shape_norm is None or condition_number is None:
+        return None
+    steps = min(log_volume.shape[0], physical_volume.shape[0], shape_norm.shape[0], condition_number.shape[0])
+    time = diagnostics.trajectory_time
+    for step in range(steps):
+        values = {
+            "log_volume": log_volume[step, graph_index],
+            "physical_volume": physical_volume[step, graph_index],
+            "shape_norm": shape_norm[step, graph_index],
+            "condition_number": condition_number[step, graph_index],
+        }
+        reason = None
+        if not all(torch.isfinite(value).item() for value in values.values()):
+            reason = "nonfinite_lattice_telemetry"
+        elif float(values["physical_volume"]) <= 0.0:
+            reason = "nonpositive_volume"
+        elif float(values["shape_norm"]) > 4.0:
+            reason = "shape_norm_gt_4"
+        elif float(values["condition_number"]) > 10.0:
+            reason = "condition_number_gt_10"
+        if reason is not None:
+            return {
+                "step": step + 1,
+                "time": float(time[step + 1]) if time is not None and time.numel() > step + 1 else None,
+                "reason": reason,
+            }
+    return None
+
+
+def _lattice_sample_metrics(
+    fractional_coordinates: torch.Tensor,
+    lattice: torch.Tensor,
+    batch: torch.Tensor,
+    node_counts: torch.Tensor,
+    blueprint: ParentBlueprintBatch,
+    standardizer: P1LatticeStandardizer,
+) -> list[dict[str, Any]]:
+    graph_count = int(node_counts.numel())
+    lattice_state = LatticeVolumeShape.from_lattice(lattice, blueprint.fractional_to_cartesian)
+    log_shape = torch.einsum("bij,bj->bi", blueprint.shape_projector, lattice_state.log_shape)
+    shape_chart = standardizer.encode_shape(log_shape)
+    total_volume = torch.linalg.det(lattice)
+    singular_values = torch.linalg.svdvals(lattice)
+    condition_number = torch.linalg.cond(lattice)
+    density = node_counts.to(total_volume) / total_volume
+    nearest = _nearest_neighbor_summaries(fractional_coordinates, lattice, batch, graph_count)
+    metrics: list[dict[str, Any]] = []
+    for graph in range(graph_count):
+        metrics.append(
+            {
+                "log_volume": _json_number(lattice_state.log_volume[graph]),
+                "total_volume": _json_number(total_volume[graph]),
+                "volume_per_atom": _json_number(total_volume[graph] / node_counts[graph].to(total_volume)),
+                "shape_chart": _json_vector(shape_chart[graph]),
+                "log_shape": _json_vector(log_shape[graph]),
+                "lattice_singular_values": _json_vector(singular_values[graph]),
+                "condition_number": _json_number(condition_number[graph]),
+                "density": _json_number(density[graph]),
+                "nearest_neighbor": nearest[graph],
+            }
+        )
+    return metrics
 
 
 def _trajectory_stats(values: list[torch.Tensor]) -> dict[str, list[float]]:
@@ -368,6 +497,9 @@ def main() -> None:
     composition_model = load_qualified_composition_model(
         args.composition_checkpoint, args.composition_protocol, device=device
     )
+    sample_standardizer = P1LatticeStandardizer.from_mapping(
+        metadata["stage_b_metadata"]["lattice_standardization"]
+    ).to(device)
     samplers = {
         "base": _sampler(base_model, metadata, composition_model),
         "conditioned": _sampler(conditioned_model, metadata, composition_model),
@@ -392,6 +524,7 @@ def main() -> None:
     trajectory_diagnostics: dict[str, dict[str, list[Any]]] = {
         arm: {role: [] for role in roles} for arm in arms
     }
+    sample_rows: list[dict[str, Any]] = []
     output: dict[str, Any] = {
         "schema": (
             "gaugeflow.stage_e_e1a_result.v2"
@@ -441,6 +574,13 @@ def main() -> None:
                 condition = None if role == "base" else swapped_conditions if role == "swapped" else target_conditions
                 sampler = samplers["base"] if role == "base" else samplers["conditioned"]
                 seed = int(protocol["seed"]) + 10000 * (arms.index(arm) + 1) + 100 * start
+                diagnostics_sink = (
+                    trajectory_diagnostics[arm][role]
+                    if (args.trajectory_output is not None or args.sample_output is not None)
+                    and arm in {"oracle_ca", "oracle_c", "free"}
+                    else None
+                )
+                diagnostics_start = len(diagnostics_sink) if diagnostics_sink is not None else 0
                 try:
                     tokens, coordinates, lattice = _run_arm(
                         sampler,
@@ -457,33 +597,109 @@ def main() -> None:
                             protocol["continuous_mode"],
                         ),
                         trace_lattice=(
-                            args.trajectory_output is not None
+                            (args.trajectory_output is not None or args.sample_output is not None)
                             and arm in {"oracle_ca", "oracle_c", "free"}
                         ),
-                        diagnostics_sink=(
-                            trajectory_diagnostics[arm][role]
-                            if args.trajectory_output is not None
-                            and arm in {"oracle_ca", "oracle_c", "free"}
-                            else None
-                        ),
+                        diagnostics_sink=diagnostics_sink,
                     )
                 except (SamplingFailure, RuntimeError, ValueError, FloatingPointError) as error:
+                    error_text = f"{type(error).__name__}: {error}"
                     failures[role] += stop - start
                     role_errors[role].append(
                         torch.full((stop - start,), float("nan"), dtype=torch.float32)
                     )
                     if len(errors[role]) < 3:
-                        errors[role].append(f"{type(error).__name__}: {error}")
+                        errors[role].append(error_text)
+                    if args.sample_output is not None:
+                        for offset in range(stop - start):
+                            sample_rows.append(
+                                {
+                                    "target_id": int(selected[start + offset]),
+                                    "source_index": int(source_index[offset].detach().cpu()),
+                                    "system": str(args.system_label),
+                                    "role": role,
+                                    "arm": arm,
+                                    "seed": seed,
+                                    "success": False,
+                                    "sampling_failure": True,
+                                    "error": error_text,
+                                }
+                            )
                     continue
-                generated_batch = ParentBlueprintBatch.from_node_counts(counts).batch
-                prediction = evaluator(tokens, coordinates, lattice, generated_batch, source_index).piezoelectric
-                role_errors[role].append(_orbit_error(prediction, target_for_role, rotations).cpu())
+                generated_batch = ParentBlueprintBatch.from_node_counts(counts)
+                prediction = evaluator(
+                    tokens,
+                    coordinates,
+                    lattice,
+                    generated_batch.batch,
+                    source_index,
+                ).piezoelectric
+                orbit_error = _orbit_error(prediction, target_for_role, rotations).cpu()
+                role_errors[role].append(orbit_error)
                 successes[role] += stop - start
                 determinant = torch.linalg.det(lattice)
-                role_volumes[role].append((determinant / counts).cpu())
-                role_distances[role].append(
-                    minimum_periodic_distances(coordinates, lattice, generated_batch).cpu()
-                )
+                volume = (determinant / counts).cpu()
+                distance = minimum_periodic_distances(coordinates, lattice, generated_batch.batch).cpu()
+                role_volumes[role].append(volume)
+                role_distances[role].append(distance)
+                if args.sample_output is not None:
+                    lattice_metrics = _lattice_sample_metrics(
+                        coordinates,
+                        lattice,
+                        generated_batch.batch,
+                        counts,
+                        generated_batch,
+                        sample_standardizer,
+                    )
+                    diagnostics = (
+                        diagnostics_sink[diagnostics_start]
+                        if diagnostics_sink is not None and len(diagnostics_sink) > diagnostics_start
+                        else None
+                    )
+                    local_offsets = torch.cat((counts.new_zeros(1), counts.cumsum(0)))
+                    for offset in range(stop - start):
+                        local_node_start = int(local_offsets[offset])
+                        local_node_stop = int(local_offsets[offset + 1])
+                        clean_node_start = node_start + local_node_start
+                        clean_node_stop = node_start + local_node_stop
+                        row = {
+                            "target_id": int(selected[start + offset]),
+                            "source_index": int(source_index[offset].detach().cpu()),
+                            "system": str(args.system_label),
+                            "role": role,
+                            "arm": arm,
+                            "seed": seed,
+                            "success": True,
+                            "sampling_failure": False,
+                            "tensor_orbit_error": float(orbit_error[offset]),
+                            "distance_valid": bool(distance[offset] >= 0.5),
+                            "minimum_periodic_distance": _json_number(distance[offset]),
+                            "first_abnormal_reverse_step": _first_abnormal_lattice_step(
+                                diagnostics,
+                                offset,
+                            ),
+                            "generated_element_tokens": [
+                                int(value) for value in tokens[local_node_start:local_node_stop].detach().cpu()
+                            ],
+                            "clean_element_tokens": [
+                                int(value)
+                                for value in target_batch.element_tokens[
+                                    clean_node_start:clean_node_stop
+                                ].detach().cpu()
+                            ],
+                            "generated_fractional_coordinates": _json_matrix(
+                                coordinates[local_node_start:local_node_stop]
+                            ),
+                            "clean_fractional_coordinates": _json_matrix(
+                                target_batch.fractional_coordinates[
+                                    clean_node_start:clean_node_stop
+                                ]
+                            ),
+                            "generated_lattice": _json_matrix(lattice[offset]),
+                            "clean_lattice": _json_matrix(target_batch.lattice[start + offset]),
+                        }
+                        row.update(lattice_metrics[offset])
+                        sample_rows.append(row)
         arm_result: dict[str, Any] = {"roles": {}}
         for role in roles:
             if successes[role] == 0:
@@ -540,6 +756,23 @@ def main() -> None:
         if args.trajectory_output.exists():
             raise FileExistsError(f"refusing to overwrite trajectory report: {args.trajectory_output}")
         args.trajectory_output.write_text(json.dumps(trajectory, indent=2) + "\n", encoding="utf-8")
+    if args.sample_output is not None:
+        if args.sample_output.exists():
+            raise FileExistsError(f"refusing to overwrite sample report: {args.sample_output}")
+        sample_report = {
+            "schema": "gaugeflow.stage_e_e1a_sample_rows.v1",
+            "protocol": protocol.get("protocol"),
+            "protocol_sha256": sha256_file(args.protocol),
+            "samples": len(records),
+            "system_label": str(args.system_label),
+            "abnormal_step_thresholds": {
+                "shape_norm_gt": 4.0,
+                "condition_number_gt": 10.0,
+            },
+            "rows": sample_rows,
+        }
+        args.sample_output.parent.mkdir(parents=True, exist_ok=True)
+        args.sample_output.write_text(json.dumps(sample_report, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
