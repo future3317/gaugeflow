@@ -234,6 +234,7 @@ def main() -> None:
         role_distances: dict[str, list[torch.Tensor]] = {role: [] for role in roles}
         failures = {role: 0 for role in roles}
         errors: dict[str, list[str]] = {role: [] for role in roles}
+        successes = {role: 0 for role in roles}
         for start in range(0, len(records), int(protocol["batch_size"])):
             stop = min(start + int(protocol["batch_size"]), len(records))
             counts = target_batch.node_counts[start:stop]
@@ -264,12 +265,16 @@ def main() -> None:
                     )
                 except (SamplingFailure, RuntimeError, ValueError, FloatingPointError) as error:
                     failures[role] += stop - start
+                    role_errors[role].append(
+                        torch.full((stop - start,), float("nan"), dtype=torch.float32)
+                    )
                     if len(errors[role]) < 3:
                         errors[role].append(f"{type(error).__name__}: {error}")
                     continue
                 generated_batch = ParentBlueprintBatch.from_node_counts(counts).batch
                 prediction = evaluator(tokens, coordinates, lattice, generated_batch, source_index).piezoelectric
                 role_errors[role].append(_orbit_error(prediction, target_for_role, rotations).cpu())
+                successes[role] += stop - start
                 determinant = torch.linalg.det(lattice)
                 role_volumes[role].append((determinant / counts).cpu())
                 role_distances[role].append(
@@ -277,7 +282,7 @@ def main() -> None:
                 )
         arm_result: dict[str, Any] = {"roles": {}}
         for role in roles:
-            if not role_errors[role]:
+            if successes[role] == 0:
                 arm_result["roles"][role] = {
                     "sampling_failures": failures[role],
                     "errors": errors[role],
@@ -297,12 +302,18 @@ def main() -> None:
                     quantile_wasserstein(volume, target_volume, points=int(protocol["wasserstein_quantile_points"]))
                     / robust_scale(target_volume)
                 ),
-                "mean_tensor_orbit_error": float(torch.cat(role_errors[role]).mean()),
+                "mean_tensor_orbit_error": float(torch.cat(role_errors[role]).nanmean()),
                 "errors": errors[role],
             }
-        if role_errors["base"] and role_errors["conditioned"]:
-            difference = torch.cat(role_errors["conditioned"]) - torch.cat(role_errors["base"])
-            arm_result["conditioned_minus_base_orbit_error_mean"] = float(difference.mean())
+        if successes["base"] and successes["conditioned"]:
+            base_error = torch.cat(role_errors["base"])
+            conditioned_error = torch.cat(role_errors["conditioned"])
+            paired = torch.isfinite(base_error) & torch.isfinite(conditioned_error)
+            if bool(paired.any()):
+                arm_result["paired_successes"] = int(paired.sum())
+                arm_result["conditioned_minus_base_orbit_error_mean"] = float(
+                    (conditioned_error[paired] - base_error[paired]).mean()
+                )
         output["arms"][arm] = arm_result
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
