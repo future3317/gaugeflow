@@ -256,7 +256,7 @@ def _generated_exposure_loss(
         # protects the qualified clean-side field while the adapter learns
         # the detached generated-side carrier.
         clean_prediction = diffusion.denoiser.forward_lattice(
-            first_element_tokens,
+            noisy.element_tokens,
             noisy.log_volume,
             noisy.log_shape,
             clean.batch,

@@ -450,8 +450,8 @@ def test_generated_lattice_exposure_can_use_orderless_partial_element_state() ->
     )
     assert len(captured_tokens) == 3
     assert all(torch.equal(counts, expected) for counts in captured_counts)
-    assert torch.equal(captured_tokens[0], captured_tokens[2])
     assert torch.equal(captured_tokens[0], torch.full_like(elements, diffusion.categorical.mask_index))
+    assert torch.equal(captured_tokens[2], elements)
     assert not torch.equal(captured_tokens[1], elements)
     assert bool((captured_tokens[1] == diffusion.categorical.mask_index).any())
     revealed = captured_tokens[1] != diffusion.categorical.mask_index
