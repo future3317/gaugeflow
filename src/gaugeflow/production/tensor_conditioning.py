@@ -67,6 +67,7 @@ class TensorConditioningTrainingOutput:
     rotated_fine: HybridLossOutput
     orbit_mimic: TypedFieldDistance
     null_retention: TypedFieldDistance
+    condition_retention: TypedFieldDistance
 
 
 def sample_proper_rotations(
@@ -257,6 +258,39 @@ def null_condition_retention_distance(
     )
 
 
+def condition_retention_distance(
+    student_conditioned: HybridDenoiserOutput,
+    frozen_stage_c_conditioned: HybridDenoiserOutput,
+    batch: torch.Tensor,
+    graph_count: int,
+    *,
+    weights: TypedFieldWeights = TypedFieldWeights(
+        assignment=0.0,
+        composition=0.0,
+        coordinate=1.0,
+        volume=1.0,
+        shape=1.0,
+        response=0.0,
+    ),
+) -> TypedFieldDistance:
+    """Keep an unlabeled conditional field in a Stage-C trust region.
+
+    Tensor labels alone do not identify a coordinate or lattice endpoint.  In
+    that regime, a residual is allowed to learn only while remaining close to
+    the qualified Stage-C field.  This is distinct from null retention, which
+    protects the unconditional route.
+    """
+
+    return typed_field_distance(
+        student_conditioned,
+        frozen_stage_c_conditioned,
+        batch,
+        graph_count,
+        weights=weights,
+        include_response=False,
+    )
+
+
 def predict_common_noisy_state(
     denoiser: HybridCrystalDenoiser,
     noisy: TensorFreeNoisyBatch,
@@ -307,6 +341,15 @@ def tensor_conditioning_training_loss(
     retention_weight: float,
     orbit_weights: TypedFieldWeights = TypedFieldWeights(),
     retention_weights: TypedFieldWeights = TypedFieldWeights(response=0.0),
+    condition_retention_weight: float = 0.0,
+    condition_retention_weights: TypedFieldWeights = TypedFieldWeights(
+        assignment=0.0,
+        composition=0.0,
+        coordinate=1.0,
+        volume=1.0,
+        shape=1.0,
+        response=0.0,
+    ),
     generator: torch.Generator | None = None,
     clean_side_information: bool = False,
 ) -> TensorConditioningTrainingOutput:
@@ -319,7 +362,7 @@ def tensor_conditioning_training_loss(
     queried only with ``condition_present=False``.
     """
 
-    if orbit_weight < 0.0 or retention_weight < 0.0:
+    if orbit_weight < 0.0 or retention_weight < 0.0 or condition_retention_weight < 0.0:
         raise ValueError("Stage-E auxiliary weights must be nonnegative")
     graphs = int(clean_lattice.shape[0])
     if tensor_condition.shape != (graphs, 18):
@@ -427,8 +470,51 @@ def tensor_conditioning_training_loss(
             graphs,
             weights=retention_weights,
         )
+    if condition_retention_weight > 0.0:
+        frozen_stage_c.eval()
+        with torch.no_grad():
+            # Stage-C was trained with ``condition_present=False``.  Its raw
+            # present-atlas branch is unqualified random initialization, so
+            # using it as a trust-region target would preserve the very
+            # interface defect this arm is meant to repair.  The correct
+            # reference is the frozen Stage-C null field; the centered
+            # adapter must initially reproduce this field and may depart from
+            # it only when the tensor objective provides evidence.
+            null_condition = tensor_condition.new_zeros((graphs, 18))
+            null_present = torch.zeros(
+                (graphs, 1), dtype=torch.bool, device=tensor_condition.device
+            )
+            frozen_conditioned = predict_common_noisy_state(
+                frozen_stage_c,
+                noisy,
+                batch,
+                null_condition,
+                null_present,
+                shape_projector,
+                fractional_to_cartesian,
+            )
+        condition_retention = condition_retention_distance(
+            first,
+            frozen_conditioned,
+            batch,
+            graphs,
+            weights=condition_retention_weights,
+        )
+    else:
+        condition_retention = condition_retention_distance(
+            first,
+            first,
+            batch,
+            graphs,
+            weights=condition_retention_weights,
+        )
     fine = first_fine.loss
-    loss = fine + orbit_weight * mimic.loss + retention_weight * retention.loss
+    loss = (
+        fine
+        + orbit_weight * mimic.loss
+        + retention_weight * retention.loss
+        + condition_retention_weight * condition_retention.loss
+    )
     return TensorConditioningTrainingOutput(
         loss=loss,
         fine=fine,
@@ -436,4 +522,5 @@ def tensor_conditioning_training_loss(
         rotated_fine=rotated_fine,
         orbit_mimic=mimic,
         null_retention=retention,
+        condition_retention=condition_retention,
     )

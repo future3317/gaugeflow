@@ -888,6 +888,43 @@ def test_lattice_reverse_sampler_never_calls_full_geometry_forward() -> None:
     assert bool((torch.linalg.det(generated.lattice) > 0.0).all())
 
 
+def test_lattice_reverse_sampler_passes_exact_clean_composition_context() -> None:
+    elements, _, _, blueprint = _small_clean_batch()
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        atlas_residual_circle_samples=8,
+        modality_time_conditioning="separate",
+    )
+    seen: list[torch.Tensor] = []
+    original = model.forward_lattice
+
+    def capture(*args, **kwargs):
+        value = kwargs.get("composition_counts")
+        assert isinstance(value, torch.Tensor)
+        seen.append(value.detach().clone())
+        return original(*args, **kwargs)
+
+    model.forward_lattice = capture  # type: ignore[method-assign]
+    TensorFreeReverseSampler(model, _standardizer(), maximum_time=0.8).sample_lattice(
+        elements,
+        blueprint,
+        steps=1,
+        initialization_generator=torch.Generator().manual_seed(122),
+        continuous_generator=torch.Generator().manual_seed(123),
+        continuous_mode="probability_flow",
+    )
+    expected = torch.zeros((2, 118), dtype=torch.long)
+    expected[0, 4] = 1
+    expected[0, 6] = 1
+    expected[1, 6] = 1
+    expected[1, 12] = 1
+    expected[1, 15] = 1
+    assert seen and torch.equal(seen[0], expected)
+
+
 def test_coordinate_reverse_sampler_holds_side_states_and_replays_common_noise() -> None:
     elements, _, lattice, blueprint = _small_clean_batch()
     model = HybridCrystalDenoiser(

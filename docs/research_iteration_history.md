@@ -1056,3 +1056,47 @@ mathematical/software pass and authorizes one separately frozen, from-scratch,
 single-seed IID oracle-composition assignment training Gate. It does not pass a
 learned assignment or open generated composition, `p(N)`, L1/M1, tensor work,
 relaxation, DFT, or DFPT.
+
+### Stage-E interface repair and factorial localization
+
+The first E0 common-noise orbit-mimic screen improved teacher-forced losses but
+failed its generated-side paired rollout: the independent Stage-D normalized
+tensor-orbit RMSE increased from `1.066727` to `1.403886`, nearest-neighbour W1
+from `0.248767` to `0.366399`, and the valid-distance fraction fell to
+`0.984375`. This was retained as a generated-side failure, not rescued by a
+larger mimic coefficient.
+
+An E3-v1 audit then found two implementation defects. The atlas invariant
+encoder put quadratic, cubic, and quartic contractions behind one denominator,
+creating latent norms of order `10^4`; and lattice-only and hybrid paths fed
+different condition coordinates to the adapter. E3-v2 computes homogeneous
+contractions on a unit tensor with bounded log magnitude, shares a
+geometry-free condition token across side-state paths, and uses a centered
+zero-initialized residual with immediate internal gradients. The 21 targeted
+tests, ruff, and mypy all pass; the v2 smoke has finite loss, condition
+retention `6.14e-6`, and null retention `2.43e-10`.
+
+The frozen 256-structure E1a factorial diagnostic (50 reverse-SDE steps, common
+random streams) localized the first large jump to the lattice-only arm. Its
+`oracle_cal` conditioned-minus-base orbit error was `+0.02924`; `oracle_ca`
+reported base/E3 orbit errors `1747.62256/2.29049` and volume W1
+`3.487e26/3.498e26`; `oracle_c` volume W1 was `26.3881/30.3458`; and `free`
+volume W1 was `0.33465/0.32005`. All roles were finite with zero sampling
+failures. Auditing the four extreme rows showed single-token krypton (token 35)
+structures with physical-zero piezo labels. They are a data-support outlier,
+not evidence of universal adapter divergence. The original panel remains
+immutable; a separately versioned clean-data panel quarantines all six pure
+noble-gas validation rows before repeating the diagnostic. Neither panel
+provides target separation sufficient to qualify tensor-conditioned generation
+or unlock Stage-F.
+
+The clean-panel replication completed all 12 roles with zero failures. The
+pure-noble-gas quarantine removed the original data-support confound, but
+`oracle_ca` still showed the first generated-lattice jump: base/E3 orbit error
+`352.49091/2641.72339` and volume W1 `61.12725/64.31692`, while `oracle_cal`
+remained finite (`1.18895/1.22523`). `oracle_c` and `free` again showed no
+useful tensor target separation. This narrows the remaining issue to
+lattice-only generated-side exposure (with finite-NFE sensitivity still to be
+audited), rather than the quarantined Kr rows or a universal E3 numerical
+explosion. The full clean result is archived separately and must not be merged
+with v1 metrics.

@@ -1,0 +1,33 @@
+{
+  "protocol": "stage_e_e3_adapter_trust_region_v1",
+  "purpose": "test an adapter-only conditional residual under an explicit Stage-C field trust region",
+  "seed": 5705,
+  "steps": 1200,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "adapter_trust_region": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1,
+      "condition_retention_weight": 1.0,
+      "exact_null": true,
+      "adapter_only": true
+    }
+  },
+  "evaluation": {
+    "condition_retention": "coordinate, volume and shape typed distance to frozen Stage-C present branch",
+    "null_typed_drift_max": 0.000001,
+    "oracle_cal": "must be non-inferior to Stage-C before generated-side exposure"
+  },
+  "boundary": "one-seed trust-region mechanism screen only; it cannot qualify tensor-conditioned free generation or F/RL",
+  "source_boundary": "initialized from the qualified Stage-C checkpoint; only tensor_residual_adapter.active is trainable",
+  "qualification_boundary": "no generated-side, tensor, F/RL or materials-discovery claim is unlocked by this protocol",
+  "objective": "common-noise orbit mimic plus null retention and conditional Stage-C typed trust region"
+}

@@ -291,6 +291,31 @@ class TensorFreeReverseSampler:
         self.maximum_time = float(maximum_time)
         self.guardrails = guardrails
 
+    def _clean_composition_counts(
+        self,
+        element_tokens: torch.Tensor,
+        batch: torch.Tensor,
+        graphs: int,
+    ) -> torch.Tensor:
+        """Materialize the exact composition state for a clean side path.
+
+        The joint sampler already carries ``composition_counts`` as an
+        explicit state.  Coordinate-only and lattice-only entry points receive
+        clean element tokens instead, but the denoiser was trained with the
+        corresponding exact-count context whenever composition conditioning is
+        enabled.  Reconstructing it here is lossless and keeps all reverse
+        paths on the same product-space interface; it is not a terminal count
+        repair or a new stochastic draw.
+        """
+
+        if graphs < 1:
+            raise ValueError("clean composition counts require at least one graph")
+        flat = batch * self.categorical.element_count + element_tokens
+        return torch.bincount(
+            flat,
+            minlength=graphs * self.categorical.element_count,
+        ).reshape(graphs, self.categorical.element_count)
+
     def initialize_coordinate_state(
         self,
         blueprint: ParentBlueprintBatch,
@@ -345,6 +370,7 @@ class TensorFreeReverseSampler:
         if element_tokens.device != device or lattice.device != device or lattice.dtype != dtype:
             raise ValueError("coordinate side states must match the blueprint dtype and device")
         self.categorical.validate_clean(element_tokens)
+        composition_counts = self._clean_composition_counts(element_tokens, blueprint.batch, graphs)
         if not bool(torch.isfinite(lattice).all()) or bool((torch.linalg.det(lattice) <= 0.0).any()):
             raise ValueError("coordinate conditioning lattices must be finite and right handed")
         if self.guardrails is not None:
@@ -416,6 +442,7 @@ class TensorFreeReverseSampler:
                         condition_present,
                         blueprint.shape_projector,
                         blueprint.fractional_to_cartesian,
+                        composition_counts=composition_counts,
                         element_time=clean_time,
                         lattice_time=clean_time,
                     )
@@ -504,6 +531,7 @@ class TensorFreeReverseSampler:
         if element_tokens.device != blueprint.batch.device:
             raise ValueError("element tokens and blueprint must share a device")
         self.categorical.validate_clean(element_tokens)
+        composition_counts = self._clean_composition_counts(element_tokens, blueprint.batch, graphs)
         condition: torch.Tensor | None
         condition_present: torch.Tensor | None
         if tensor_condition is None:
@@ -580,6 +608,7 @@ class TensorFreeReverseSampler:
                         blueprint.batch,
                         time_from,
                         blueprint.shape_projector,
+                        composition_counts=composition_counts,
                         **lattice_kwargs,
                     )
                     next_volume_latent = vp_reverse_step(

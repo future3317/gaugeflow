@@ -1,0 +1,32 @@
+{
+  "protocol": "stage_e_e3_adapter_trust_region_v2",
+  "purpose": "software and zero-initialization smoke for the scale-stable E3 adapter",
+  "status": "smoke_not_qualification",
+  "seed": 5705,
+  "steps": 8,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 2,
+  "validation_graphs": 4,
+  "arms": {
+    "adapter_trust_region": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1,
+      "condition_retention_weight": 1.0,
+      "exact_null": true,
+      "adapter_only": true
+    }
+  },
+  "evaluation": {
+    "initial_present_matches_stage_c_null": true,
+    "active_adapter_gradient": "nonzero on the first backward pass",
+    "shared_lattice_hybrid_condition_coordinates": true,
+    "finite_loss": true
+  },
+  "boundary": "software smoke only; no Stage-E qualification or generated-side claim"
+}

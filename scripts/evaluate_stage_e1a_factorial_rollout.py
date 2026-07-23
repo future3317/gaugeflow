@@ -38,6 +38,8 @@ from gaugeflow.production.response_normalization import load_response_normalizer
 from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
 from gaugeflow.tensor import fixed_so3_frames, piezo_to_irreps, rotate_rank3
 
+_NOBLE_GAS_TOKENS = frozenset({1, 9, 17, 35, 53, 85, 117})
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -95,6 +97,7 @@ def _run_arm(
     *,
     steps: int,
     seed: int,
+    continuous_mode: str,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     blueprint = ParentBlueprintBatch.from_node_counts(node_counts)
     graphs = int(node_counts.numel())
@@ -113,9 +116,13 @@ def _run_arm(
             steps=steps,
             initial_state=initial,
             continuous_generator=_seeded(blueprint.batch.device, seed + 2),
-            continuous_mode="reverse_sde",
+            continuous_mode=continuous_mode,
         )
-        return coordinate_generated.element_tokens, coordinate_generated.fractional_coordinates, coordinate_generated.lattice
+        return (
+            coordinate_generated.element_tokens,
+            coordinate_generated.fractional_coordinates,
+            coordinate_generated.lattice,
+        )
 
     if arm == "oracle_ca":
         lattice_initial = sampler.initialize_lattice_state(
@@ -128,7 +135,7 @@ def _run_arm(
             steps=steps,
             initial_state=lattice_initial,
             continuous_generator=_seeded(blueprint.batch.device, seed + 1),
-            continuous_mode="reverse_sde",
+            continuous_mode=continuous_mode,
         ).lattice
         coordinate_initial = sampler.initialize_coordinate_state(
             blueprint, generator=_seeded(blueprint.batch.device, seed + 3)
@@ -141,7 +148,7 @@ def _run_arm(
             steps=steps,
             initial_state=coordinate_initial,
             continuous_generator=_seeded(blueprint.batch.device, seed + 4),
-            continuous_mode="reverse_sde",
+            continuous_mode=continuous_mode,
         )
         return coordinate_generated.element_tokens, coordinate_generated.fractional_coordinates, lattice
 
@@ -154,7 +161,7 @@ def _run_arm(
         initialization_generator=_seeded(blueprint.batch.device, seed),
         categorical_generator=_seeded(blueprint.batch.device, seed + 1),
         continuous_generator=_seeded(blueprint.batch.device, seed + 2),
-        continuous_mode="reverse_sde",
+        continuous_mode=continuous_mode,
     )
     return generated.element_tokens, generated.fractional_coordinates, generated.lattice
 
@@ -163,7 +170,11 @@ def _run_arm(
 def main() -> None:
     args = parse_args()
     protocol = load_json_object(args.protocol)
-    if protocol.get("protocol") != "stage_e_e1a_factorial_rollout_v1":
+    protocol_name = protocol.get("protocol")
+    if protocol_name not in {
+        "stage_e_e1a_factorial_rollout_v1",
+        "stage_e_e1a_factorial_rollout_v2",
+    }:
         raise ValueError("unexpected Stage-E1a protocol")
     if args.output.exists():
         raise FileExistsError(f"refusing to overwrite {args.output}")
@@ -172,9 +183,25 @@ def main() -> None:
         raise RuntimeError("formal Stage-E1a rollout requires CUDA")
 
     validation = StageDResponseDataset(args.cache, "val")
-    selected = torch.randperm(
-        len(validation), generator=torch.Generator().manual_seed(int(protocol["seed"]))
-    )[: int(protocol["samples"])]
+    candidates = torch.arange(len(validation), dtype=torch.long)
+    data_quality = protocol.get("data_quality", {})
+    excluded: list[int] = []
+    if bool(data_quality.get("exclude_pure_noble_gas", False)):
+        eligible: list[int] = []
+        for index in range(len(validation)):
+            tokens = validation[index].element_tokens
+            unique = torch.unique(tokens)
+            if unique.numel() == 1 and int(unique.item()) in _NOBLE_GAS_TOKENS:
+                excluded.append(index)
+            else:
+                eligible.append(index)
+        candidates = torch.tensor(eligible, dtype=torch.long)
+    if int(protocol["samples"]) > candidates.numel():
+        raise ValueError("factorial protocol requests more samples than its eligible panel")
+    permutation = torch.randperm(
+        candidates.numel(), generator=torch.Generator().manual_seed(int(protocol["seed"]))
+    )
+    selected = candidates[permutation[: int(protocol["samples"])]].tolist()
     records = [validation[int(index)] for index in selected]
     target_batch = collate_response_records(records).to(device)
     normalizer = load_response_normalizer(
@@ -194,6 +221,8 @@ def main() -> None:
         "gaugeflow.stage_e_e0.v1",
         "gaugeflow.stage_e_e1.v1",
         "gaugeflow.stage_e_e2.v1",
+        "gaugeflow.stage_e_e3.v1",
+        "gaugeflow.stage_e_e3.v2",
     }:
         raise ValueError("Stage-E checkpoint schema is not a supported conditional arm")
     if stage_e.get("arm") not in {
@@ -201,11 +230,16 @@ def main() -> None:
         "clean_side",
         "mixed_side",
         "centered_adapter",
+        "adapter_trust_region",
     }:
         raise ValueError("Stage-E checkpoint is not a supported conditional arm")
     if stage_e.get("source_checkpoint_sha256") != sha256_file(args.stage_c_checkpoint):
         raise ValueError("Stage-E checkpoint source mismatch")
-    if stage_e.get("schema") == "gaugeflow.stage_e_e2.v1":
+    if stage_e.get("schema") in {
+        "gaugeflow.stage_e_e2.v1",
+        "gaugeflow.stage_e_e3.v1",
+        "gaugeflow.stage_e_e3.v2",
+    }:
         conditioned_model.attach_tensor_residual_adapter()
     conditioned_model.load_state_dict(stage_e["model"], strict=True)
     base_model.eval()
@@ -235,10 +269,19 @@ def main() -> None:
     arms = tuple(str(value) for value in protocol["arms"])
     roles = ("base", "conditioned", "swapped")
     output: dict[str, Any] = {
-        "schema": "gaugeflow.stage_e_e1a_result.v1",
+        "schema": (
+            "gaugeflow.stage_e_e1a_result.v2"
+            if protocol_name == "stage_e_e1a_factorial_rollout_v2"
+            else "gaugeflow.stage_e_e1a_result.v1"
+        ),
         "protocol": protocol.get("protocol"),
         "protocol_sha256": sha256_file(args.protocol),
         "samples": len(records),
+        "eligible_validation_samples": int(candidates.numel()),
+        "data_quality": {
+            "exclude_pure_noble_gas": bool(data_quality.get("exclude_pure_noble_gas", False)),
+            "excluded_validation_indices": excluded,
+        },
         "arms": {},
     }
     for arm in arms:
@@ -275,6 +318,7 @@ def main() -> None:
                         counts,
                         steps=int(protocol["reverse_steps"]),
                         seed=seed,
+                        continuous_mode=str(protocol["continuous_mode"]),
                     )
                 except (SamplingFailure, RuntimeError, ValueError, FloatingPointError) as error:
                     failures[role] += stop - start
@@ -329,6 +373,13 @@ def main() -> None:
                 )
         output["arms"][arm] = arm_result
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    expected_schema = (
+        "gaugeflow.stage_e_e1a_result.v2"
+        if protocol_name == "stage_e_e1a_factorial_rollout_v2"
+        else "gaugeflow.stage_e_e1a_result.v1"
+    )
+    if output["schema"] != expected_schema:
+        raise AssertionError("factorial output schema does not match its protocol")
     args.output.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
 
 

@@ -7,6 +7,7 @@ from torch import nn
 from gaugeflow.geometry import GaussianRadialBasis
 from gaugeflow.production.cartesian_gauge_atlas import (
     CartesianGeometryQueries,
+    CartesianOrbitInvariantEncoder,
     CartesianSTFGeometryQueryEncoder,
     StratifiedCartesianGaugeAtlas,
     _FrameData,
@@ -45,6 +46,20 @@ def _geometry(positions: torch.Tensor) -> tuple[torch.Tensor, ...]:
 def _encoder() -> CartesianSTFGeometryQueryEncoder:
     torch.manual_seed(114)
     return CartesianSTFGeometryQueryEncoder(16, 5, query_channels=2, layers=3).eval()
+
+
+def test_orbit_invariant_encoder_is_scale_stable_for_present_conditions():
+    torch.manual_seed(117)
+    encoder = CartesianOrbitInvariantEncoder(32).eval()
+    tensor = torch.randn((4, 3, 3, 3))
+    first, _ = encoder(tensor)
+    scaled, _ = encoder(1.0e4 * tensor)
+    assert torch.isfinite(first).all()
+    assert torch.isfinite(scaled).all()
+    # The normalized covariants are bounded; changing only the tensor
+    # magnitude must not create a four-order-of-magnitude latent explosion.
+    ratio = scaled.norm(dim=-1) / first.norm(dim=-1).clamp_min(1e-6)
+    assert float(ratio.max()) < 20.0
 
 
 def test_cartesian_stf_moments_are_trace_free_and_covariant():

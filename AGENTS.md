@@ -571,6 +571,39 @@ and F0 must not run. The next E implementation must condition the missing
 composition/lattice side-state interfaces and include generated-side exposure;
 do not attempt to rescue this result by increasing only the mimic weight.
 
+The E3-v2 implementation repair is now complete.  The Cartesian invariant
+encoder computes higher-order contractions on a unit-norm tensor and keeps a
+bounded log-magnitude feature; lattice-only and hybrid paths share a
+geometry-free tensor condition token; and the centered adapter is exactly zero
+at initialization while retaining immediate adapter gradients.  The targeted
+server suite is `42 passed`, with ruff and mypy clean.  Its one-seed mechanism
+screen is finite (`condition_retention=0.00258868`, `null_retention=2.95e-10`,
+`orbit_mimic=3.43e-6`), but target-swap separation remains `-0.00246`, so this
+is a software/interface repair, not tensor-conditioning efficacy.
+
+The frozen 256-structure E1a factorial diagnostic then completed with zero
+sampling failures.  `oracle_cal` is stable (base/E3 orbit error
+`1.25658/1.28583`); `oracle_ca` is the first large jump (base/E3 orbit error
+`1747.62256/2.29049`, volume W1 `3.487e26/3.498e26`); `oracle_c` has volume W1
+`26.3881/30.3458`; and `free` has volume W1 `0.33465/0.32005`.  The four
+extreme lattice rows are pure krypton (token 35) physical-zero response
+records.  The original panel is immutable; a v2 data-clean protocol explicitly
+quarantines the six pure noble-gas validation rows and repeats the factorial.
+Neither v1 nor the E3 mechanism screen qualifies tensor-conditioned generation
+or authorizes F/RL.
+
+The separately archived v2 data-clean factorial keeps the six pure noble-gas
+rows out and still completes all 12 roles with zero failures.  `oracle_cal`
+remains finite (base/E3 orbit `1.18895/1.22523`), but `oracle_ca` still has the
+first generated-side jump (base/E3 orbit `352.49091/2641.72339`, volume W1
+`61.12725/64.31692`); `oracle_c` and `free` have orbit errors
+`1.25292/1.26444` and `1.26829/1.26776` with no useful target separation.
+Thus noble-gas support explains the original v1 outliers but not the remaining
+lattice-only exposure failure.  The full v2 JSON was produced by a pre-schema-
+fix evaluator and retains a v1-compatible top-level schema; the corrected
+writer is verified by the archived v2 schema smoke.  Do not rewrite the full
+run or treat either diagnostic as tensor efficacy.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`

@@ -47,6 +47,7 @@ def parse_args() -> argparse.Namespace:
             "clean_side",
             "mixed_side",
             "centered_adapter",
+            "adapter_trust_region",
         ),
         required=True,
     )
@@ -96,6 +97,7 @@ def _select_trainable_parameters(
     last_blocks: int,
     *,
     exact_null: bool,
+    adapter_only: bool = False,
 ) -> list[torch.nn.Parameter]:
     if not 1 <= last_blocks <= len(model.blocks):
         raise ValueError("Stage-E last-block count is outside the backbone")
@@ -127,10 +129,13 @@ def _select_trainable_parameters(
                 and name != "gauge_atlas.null_condition"
             )
         )
-        trainable = condition_specific or (
-            not exact_null
-            and (name.startswith(terminal_prefixes) or block_selected)
-        )
+        if adapter_only:
+            trainable = name.startswith("tensor_residual_adapter.active.")
+        else:
+            trainable = condition_specific or (
+                not exact_null
+                and (name.startswith(terminal_prefixes) or block_selected)
+            )
         parameter.requires_grad_(trainable)
         if trainable:
             selected.append(parameter)
@@ -201,6 +206,7 @@ def _evaluate(
     seed: int,
     device: torch.device,
     use_bf16: bool,
+    condition_retention_weight: float = 0.0,
 ) -> dict[str, float]:
     diffusion.denoiser.eval()
     totals = {
@@ -211,6 +217,7 @@ def _evaluate(
             "orbit_mimic",
             "representative_response",
             "null_retention",
+            "condition_retention",
             "posterior_information",
             "target_swap_separation",
             "condition_norm",
@@ -252,6 +259,7 @@ def _evaluate(
                 present,
                 orbit_weight=1.0,
                 retention_weight=1.0,
+                condition_retention_weight=condition_retention_weight,
                 generator=generator,
             )
             swapped_condition = condition.roll(1, dims=0)
@@ -279,6 +287,7 @@ def _evaluate(
             "orbit_mimic": output.orbit_mimic.loss,
             "representative_response": output.orbit_mimic.response,
             "null_retention": output.null_retention.loss,
+            "condition_retention": output.condition_retention.loss,
             "posterior_information": _posterior_information(
                 output.first_fine.prediction
             ),
@@ -307,6 +316,8 @@ def main() -> None:
         "stage_e_e1_clean_side_v1",
         "stage_e_e1_mixed_side_v1",
         "stage_e_e2_centered_adapter_v1",
+        "stage_e_e3_adapter_trust_region_v1",
+        "stage_e_e3_adapter_trust_region_v2",
     }:
         raise ValueError("unexpected Stage-E protocol")
     arm = protocol["arms"].get(args.arm)
@@ -326,7 +337,11 @@ def main() -> None:
     student, teacher, diffusion, source_metadata = _load_backbones(
         args.checkpoint, device
     )
-    if protocol.get("protocol") == "stage_e_e2_centered_adapter_v1":
+    if protocol.get("protocol") in {
+        "stage_e_e2_centered_adapter_v1",
+        "stage_e_e3_adapter_trust_region_v1",
+        "stage_e_e3_adapter_trust_region_v2",
+    }:
         # Attach only after the Stage-C state has been restored.  The adapter
         # carries its frozen same-initialization reference in the E2 schema;
         # the Stage-C checkpoint remains strict-load compatible and unchanged.
@@ -335,6 +350,7 @@ def main() -> None:
         student,
         int(protocol["trainable_last_blocks"]),
         exact_null=bool(arm.get("exact_null", False)),
+        adapter_only=bool(arm.get("adapter_only", False)),
     )
     optimizer = torch.optim.AdamW(
         parameters,
@@ -354,6 +370,7 @@ def main() -> None:
     use_bf16 = protocol["precision"] == "bf16"
     orbit_weight = float(arm["orbit_weight"])
     retention_weight = float(arm["retention_weight"])
+    condition_retention_weight = float(arm.get("condition_retention_weight", 0.0))
     started = time.perf_counter()
     metrics_path = args.output / "training_metrics.jsonl"
     for step in range(1, int(protocol["steps"]) + 1):
@@ -396,6 +413,7 @@ def main() -> None:
                 present,
                 orbit_weight=orbit_weight,
                 retention_weight=retention_weight,
+                condition_retention_weight=condition_retention_weight,
                 generator=noise_generator,
                 clean_side_information=use_clean_side,
             )
@@ -417,6 +435,7 @@ def main() -> None:
                 "orbit_mimic": float(output.orbit_mimic.loss),
                 "representative_response": float(output.orbit_mimic.response),
                 "null_retention": float(output.null_retention.loss),
+                "condition_retention": float(output.condition_retention.loss),
                 "gradient_norm": float(gradient_norm),
                 "graphs_per_second": step * batch_size / (time.perf_counter() - started),
                 "clean_side_information": use_clean_side,
@@ -434,6 +453,7 @@ def main() -> None:
         seed=seed + 100,
         device=device,
         use_bf16=use_bf16,
+        condition_retention_weight=condition_retention_weight,
     )
     checkpoint_path = args.output / "checkpoint.pt"
     torch.save(
@@ -442,8 +462,18 @@ def main() -> None:
                 "gaugeflow.stage_e_e1.v1"
                 if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}
                 else "gaugeflow.stage_e_e0.v1"
-                if protocol.get("protocol") != "stage_e_e2_centered_adapter_v1"
-                else "gaugeflow.stage_e_e2.v1"
+                if protocol.get("protocol") not in {
+                    "stage_e_e2_centered_adapter_v1",
+                    "stage_e_e3_adapter_trust_region_v1",
+                    "stage_e_e3_adapter_trust_region_v2",
+                }
+                else (
+                    "gaugeflow.stage_e_e3.v2"
+                    if protocol.get("protocol") == "stage_e_e3_adapter_trust_region_v2"
+                    else "gaugeflow.stage_e_e3.v1"
+                    if protocol.get("protocol") == "stage_e_e3_adapter_trust_region_v1"
+                    else "gaugeflow.stage_e_e2.v1"
+                )
             ),
             "arm": args.arm,
             "model": {
@@ -460,7 +490,11 @@ def main() -> None:
     )
     result = {
         "schema": (
-            "gaugeflow.stage_e_e2_result.v1"
+            "gaugeflow.stage_e_e3_result.v2"
+            if protocol.get("protocol") == "stage_e_e3_adapter_trust_region_v2"
+            else "gaugeflow.stage_e_e3_result.v1"
+            if protocol.get("protocol") == "stage_e_e3_adapter_trust_region_v1"
+            else "gaugeflow.stage_e_e2_result.v1"
             if protocol.get("protocol") == "stage_e_e2_centered_adapter_v1"
             else "gaugeflow.stage_e_e1_result.v1"
             if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}

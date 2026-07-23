@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import math
 import copy
+import math
 from dataclasses import dataclass, replace
 
 import torch
@@ -527,6 +527,32 @@ class HybridCrystalDenoiser(nn.Module):
         )
         return element_nodes, graph_state, lattice_context
 
+    def _tensor_condition_embedding(self, tensor_condition: torch.Tensor) -> torch.Tensor:
+        """Return the geometry-free invariant token shared by side-state paths.
+
+        The lattice-only sampler has no edge geometry and therefore cannot use
+        the atlas' aligned-frame token.  A residual adapter must nevertheless
+        receive the same condition coordinates in the lattice and hybrid
+        paths; otherwise it is trained on one input distribution and sampled
+        on another.  The invariant tensor token is the common, representative-
+        independent part of the condition and is valid for scalar lattice
+        readouts as well as the graph field.
+        """
+
+        invariant, _ = self.gauge_atlas.invariant(
+            piezo_from_irreps(tensor_condition)
+        )
+        return invariant + self.gauge_atlas.present_bias
+
+    def _centered_tensor_residual(self, tensor_condition: torch.Tensor) -> torch.Tensor:
+        """Map the shared condition token through an exact zero residual."""
+
+        condition_token = self._tensor_condition_embedding(tensor_condition)
+        null_token = self.gauge_atlas.null_condition.unsqueeze(0).expand_as(condition_token)
+        if self.tensor_residual_adapter is None:
+            return condition_token - null_token
+        return self.tensor_residual_adapter(condition_token - null_token)
+
     def forward_lattice(
         self,
         element_tokens: torch.Tensor,
@@ -584,16 +610,23 @@ class HybridCrystalDenoiser(nn.Module):
             # proper-SO invariant graph token as the full hybrid path with a
             # zero available-edge gate.  This keeps the head dimension and
             # checkpoint schema unchanged while making the condition explicit.
-            condition_token, _ = self.gauge_atlas.invariant(piezo_from_irreps(tensor_condition))
             present = condition_present.reshape(graphs, 1)
-            condition_token = torch.where(
-                present,
-                condition_token + self.gauge_atlas.present_bias,
-                self.gauge_atlas.null_condition.unsqueeze(0).expand_as(condition_token),
-            )
             if self.tensor_residual_adapter is not None:
-                residual = self.tensor_residual_adapter(condition_token)
-                condition_token = condition_token + residual * present.to(condition_token)
+                # Use the same geometry-free condition coordinates as the
+                # hybrid path.  This path is explicitly exercised by the
+                # generated-lattice sampler; it must not be an unseen input
+                # distribution for an adapter trained only on hybrid states.
+                condition_token = self._centered_tensor_residual(tensor_condition)
+                condition_token = condition_token * present.to(condition_token)
+            else:
+                condition_token, _ = self.gauge_atlas.invariant(
+                    piezo_from_irreps(tensor_condition)
+                )
+                condition_token = torch.where(
+                    present,
+                    condition_token + self.gauge_atlas.present_bias,
+                    self.gauge_atlas.null_condition.unsqueeze(0).expand_as(condition_token),
+                )
             graph_state = graph_state + condition_token
         counts = torch.bincount(batch, minlength=graphs).to(log_volume)
         composition_mean = graph_mean(element_nodes, batch, graphs)
@@ -709,12 +742,38 @@ class HybridCrystalDenoiser(nn.Module):
         node_condition = gauge_atlas.graph_condition[batch]
         if self.tensor_residual_adapter is not None and bool(condition_present.any()):
             present = condition_present.to(gauge_atlas.graph_condition)
-            graph_condition = gauge_atlas.graph_condition + present * self.tensor_residual_adapter(
+            null_condition = self.gauge_atlas.null_condition.unsqueeze(0).expand_as(
                 gauge_atlas.graph_condition
             )
+            # Use only a centered residual over the frozen Stage-C null
+            # field.  This removes the untrained raw present-atlas path from
+            # the initialization while retaining an immediate adapter
+            # gradient.  The same residual controls edge response, so no
+            # tensor-dependent equivariant vector can leak into the backbone
+            # before the adapter has learned it.
+            residual = self._centered_tensor_residual(tensor_condition)
+            graph_condition = null_condition + present * residual
+            graph_state = graph_state + present * residual
+            edge_gate = torch.tanh(residual.mean(dim=-1, keepdim=True))
+            edge_graph = batch[source] if source.numel() else batch.new_empty((0,))
+            edge_response = gauge_atlas.edge_response * edge_gate[edge_graph]
+            edge_response = torch.where(
+                condition_present.reshape(-1)[edge_graph].unsqueeze(-1),
+                edge_response,
+                torch.zeros_like(edge_response),
+            )
             gauge_atlas = replace(gauge_atlas, graph_condition=graph_condition)
+            gauge_atlas = replace(gauge_atlas, edge_response=edge_response)
             node_condition = graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition + node_state
+        # The lattice readout is part of the shared product-space field.  It
+        # must see the effective (possibly centered-adapter) graph condition;
+        # the pre-atlas ``lattice_context`` captured the Stage-C state before
+        # this branch and would otherwise make tensor conditioning silently
+        # disappear from hybrid volume/shape heads.
+        lattice_context = torch.cat(
+            (lattice_context[..., : 3 * self.hidden_dim], graph_state), dim=-1
+        )
         if source.numel():
             self_image = ((source == target) & edges.image_shift.ne(0).any(dim=-1)).to(nodes).unsqueeze(-1)
             edge_state = self.edge_state_initializer(

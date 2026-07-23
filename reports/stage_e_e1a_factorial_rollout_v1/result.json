@@ -1,0 +1,140 @@
+{
+  "schema": "gaugeflow.stage_e_e1a_result.v1",
+  "protocol": "stage_e_e1a_factorial_rollout_v1",
+  "protocol_sha256": "6490635e734209ec3e56a21867b0c4fd00232cf14f6d54c70415ca0722cefb8c",
+  "samples": 256,
+  "arms": {
+    "oracle_cal": {
+      "roles": {
+        "base": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.9921875,
+          "normalized_nearest_neighbor_wasserstein": 0.6702772310359765,
+          "normalized_volume_wasserstein": 0.0,
+          "mean_tensor_orbit_error": 1.2565820217132568,
+          "errors": []
+        },
+        "conditioned": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.9921875,
+          "normalized_nearest_neighbor_wasserstein": 0.6832189399070268,
+          "normalized_volume_wasserstein": 0.0,
+          "mean_tensor_orbit_error": 1.2858264446258545,
+          "errors": []
+        },
+        "swapped": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.9921875,
+          "normalized_nearest_neighbor_wasserstein": 0.6773381935248091,
+          "normalized_volume_wasserstein": 0.0,
+          "mean_tensor_orbit_error": 1.2385168075561523,
+          "errors": []
+        }
+      },
+      "paired_successes": 256,
+      "conditioned_minus_base_orbit_error_mean": 0.02924443781375885
+    },
+    "oracle_ca": {
+      "roles": {
+        "base": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.94140625,
+          "normalized_nearest_neighbor_wasserstein": 0.7792294095574708,
+          "normalized_volume_wasserstein": 3.487382844653907e+26,
+          "mean_tensor_orbit_error": 1747.62255859375,
+          "errors": []
+        },
+        "conditioned": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.9375,
+          "normalized_nearest_neighbor_wasserstein": 0.7973501596917605,
+          "normalized_volume_wasserstein": 3.4983053972214324e+26,
+          "mean_tensor_orbit_error": 2.2904882431030273,
+          "errors": []
+        },
+        "swapped": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.94921875,
+          "normalized_nearest_neighbor_wasserstein": 0.797708966547257,
+          "normalized_volume_wasserstein": 3.4983053972215e+26,
+          "mean_tensor_orbit_error": 1.9974524974822998,
+          "errors": []
+        }
+      },
+      "paired_successes": 256,
+      "conditioned_minus_base_orbit_error_mean": -1745.3319091796875
+    },
+    "oracle_c": {
+      "roles": {
+        "base": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.984375,
+          "normalized_nearest_neighbor_wasserstein": 0.6148233337347454,
+          "normalized_volume_wasserstein": 26.38808314538896,
+          "mean_tensor_orbit_error": 1.2100684642791748,
+          "errors": []
+        },
+        "conditioned": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.984375,
+          "normalized_nearest_neighbor_wasserstein": 0.6192434086362356,
+          "normalized_volume_wasserstein": 30.345785981916656,
+          "mean_tensor_orbit_error": 1.2297238111495972,
+          "errors": []
+        },
+        "swapped": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 0.984375,
+          "normalized_nearest_neighbor_wasserstein": 0.619843941262957,
+          "normalized_volume_wasserstein": 30.35513093429469,
+          "mean_tensor_orbit_error": 1.2252599000930786,
+          "errors": []
+        }
+      },
+      "paired_successes": 256,
+      "conditioned_minus_base_orbit_error_mean": 0.019655287265777588
+    },
+    "free": {
+      "roles": {
+        "base": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 1.0,
+          "normalized_nearest_neighbor_wasserstein": 0.24618503001498115,
+          "normalized_volume_wasserstein": 0.3346463249653315,
+          "mean_tensor_orbit_error": 1.229166865348816,
+          "errors": []
+        },
+        "conditioned": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 1.0,
+          "normalized_nearest_neighbor_wasserstein": 0.2558170519410922,
+          "normalized_volume_wasserstein": 0.32005056880643545,
+          "mean_tensor_orbit_error": 1.229456901550293,
+          "errors": []
+        },
+        "swapped": {
+          "sampling_failures": 0,
+          "finite_positive_lattice_fraction": 1.0,
+          "minimum_distance_fraction_at_0_5_angstrom": 1.0,
+          "normalized_nearest_neighbor_wasserstein": 0.2558724671179934,
+          "normalized_volume_wasserstein": 0.3201567070164331,
+          "mean_tensor_orbit_error": 1.2268680334091187,
+          "errors": []
+        }
+      },
+      "paired_successes": 256,
+      "conditioned_minus_base_orbit_error_mean": 0.00029006763361394405
+    }
+  }
+}

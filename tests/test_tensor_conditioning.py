@@ -183,3 +183,100 @@ def test_centered_residual_preserves_null_branch_after_active_update() -> None:
         present_adapted.coordinate_fractional_scaled_score,
         present_base.coordinate_fractional_scaled_score,
     )
+
+
+def test_attached_adapter_present_branch_matches_stage_c_null_at_initialization() -> None:
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+        modality_time_conditioning="separate",
+    ).eval()
+    reference_model = copy.deepcopy(model).eval()
+    model.attach_tensor_residual_adapter()
+    tokens = torch.tensor([4, 6, 12, 15], dtype=torch.long)
+    coordinates = torch.tensor(
+        [[0.05, 0.10, 0.15], [0.35, 0.25, 0.70], [0.15, 0.75, 0.45], [0.72, 0.55, 0.20]]
+    )
+    batch = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    log_volume = torch.log(torch.tensor([64.0, 91.125]))
+    log_shape = torch.zeros((2, 6))
+    time = torch.full((2,), 0.4)
+    condition = torch.randn((2, 18), generator=torch.Generator().manual_seed(23))
+    projector = torch.eye(6).expand(2, -1, -1).clone()
+    chart = torch.eye(3).expand(2, -1, -1).clone()
+    null = torch.zeros((2, 1), dtype=torch.bool)
+    present = torch.ones((2, 1), dtype=torch.bool)
+    expected = reference_model(
+        tokens,
+        coordinates,
+        log_volume,
+        log_shape,
+        batch,
+        time,
+        condition,
+        null,
+        projector,
+        chart,
+        element_time=time,
+        lattice_time=time,
+    )
+    actual = model(
+        tokens,
+        coordinates,
+        log_volume,
+        log_shape,
+        batch,
+        time,
+        condition,
+        present,
+        projector,
+        chart,
+        element_time=time,
+        lattice_time=time,
+    )
+    torch.testing.assert_close(
+        actual.coordinate_fractional_scaled_score,
+        expected.coordinate_fractional_scaled_score,
+        atol=0.0,
+        rtol=0.0,
+    )
+    torch.testing.assert_close(actual.clean_volume_latent, expected.clean_volume_latent, atol=0.0, rtol=0.0)
+    torch.testing.assert_close(actual.clean_shape_latent, expected.clean_shape_latent, atol=0.0, rtol=0.0)
+    lattice_expected = reference_model.forward_lattice(
+        tokens,
+        log_volume,
+        log_shape,
+        batch,
+        time,
+        projector,
+        tensor_condition=condition,
+        condition_present=null,
+    )
+    lattice_actual = model.forward_lattice(
+        tokens,
+        log_volume,
+        log_shape,
+        batch,
+        time,
+        projector,
+        tensor_condition=condition,
+        condition_present=present,
+    )
+    torch.testing.assert_close(
+        lattice_actual.clean_volume_latent,
+        lattice_expected.clean_volume_latent,
+        atol=0.0,
+        rtol=0.0,
+    )
+    torch.testing.assert_close(
+        lattice_actual.clean_shape_latent,
+        lattice_expected.clean_shape_latent,
+        atol=0.0,
+        rtol=0.0,
+    )
+    actual.clean_volume_latent.sum().backward()
+    active_gradients = [parameter.grad for parameter in model.tensor_residual_adapter.active.parameters()]
+    assert all(gradient is not None and torch.isfinite(gradient).all() for gradient in active_gradients)
+    assert sum(float(gradient.square().sum()) for gradient in active_gradients if gradient is not None) > 0.0

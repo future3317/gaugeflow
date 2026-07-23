@@ -279,12 +279,25 @@ class CartesianOrbitInvariantEncoder(nn.Module):
         # frame covariance in FP32 while allowing the small MLP to autocast.
         with torch.autocast(device_type=tensor.device.type, enabled=False):
             descriptor_tensor = tensor.float() if tensor.dtype in {torch.float16, torch.bfloat16} else tensor
-            first, second = self.frame_covariants(descriptor_tensor)
+            # The raw quadratic/cubic invariants have different homogeneous
+            # degrees.  Feeding them all through one ``1 + ||T||^2`` divisor
+            # makes the higher-degree terms grow like ||T||^2 or ||T||^4.
+            # The present-atlas branch is not exercised by Stage-C, so this
+            # latent scale defect was invisible until Stage-E attached a
+            # condition adapter; ordinary normalized piezo tensors then
+            # produced invariant tokens with norms of 10^3--10^4.  Separate
+            # magnitude from orientation: compute all covariants on a unit-
+            # norm tensor and retain a bounded monotone magnitude feature.
+            scale = descriptor_tensor.square().sum(dim=(1, 2, 3), keepdim=True).sqrt()
+            safe_scale = scale.clamp_min(1e-8)
+            unit_tensor = descriptor_tensor / safe_scale
+            first, second = self.frame_covariants(unit_tensor)
             first2, second2 = first @ first, second @ second
-            scale = descriptor_tensor.square().sum(dim=(1, 2, 3), keepdim=True).sqrt().clamp_min(1e-8)
+            log_scale = torch.log1p(scale).reshape(-1)
+            bounded_scale = log_scale / (1.0 + log_scale)
             features = torch.stack(
                 (
-                    scale.squeeze(-1).squeeze(-1).squeeze(-1),
+                    bounded_scale,
                     torch.diagonal(first, dim1=-2, dim2=-1).sum(-1),
                     torch.diagonal(first2, dim1=-2, dim2=-1).sum(-1),
                     torch.linalg.det(first),
@@ -296,8 +309,7 @@ class CartesianOrbitInvariantEncoder(nn.Module):
                 ),
                 dim=-1,
             )
-            normalized = features / (1.0 + scale.reshape(-1, 1).square())
-        return self.network(normalized), first + 0.61803398875 * second
+        return self.network(features), first + 0.61803398875 * second
 
 
 @dataclass(frozen=True)
