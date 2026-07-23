@@ -197,14 +197,16 @@ Completed provenance steps:
    roles.
 6. Tiny real replay-cache per-role loss/gradient audit through the current
    `TensorFreeHybridDiffusion` objective.
+7. Forbidden-source overlap audit against Stage-D validation/test and the
+   frozen Stage-E 256-sample factorial target panel.
 
 Current immediate task:
 
-1. Provide the forbidden-source-ID panel for Stage-D validation/test and Stage-E
-   factorial targets.
-2. Rerun the replay-cache per-role audit with that panel enabled, so zero
-   overlap is actually proven rather than inferred.
-3. Only then start the 34M 2--5k correctness run.
+1. Start the bounded 34M 2--5k generated-state correctness run.
+2. Keep the same replay/provenance contract and report per-role losses,
+   gradients, clean retention and generated-state stratification.
+3. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
+   contract is proven.
 
 Deferred work:
 
@@ -241,6 +243,9 @@ Server artifacts:
   generated_state_replay_cache_smoke_v2/
   generated_state_replay_tiny_real_smoke_v3/
     training_contract_audit.json
+    training_contract_audit_with_forbidden_panel.json
+    forbidden_source_ids_stage_d_stage_e_v1.json
+    forbidden_source_ids_stage_d_stage_e_v1.manifest.json
 ```
 
 Code/provenance boundary:

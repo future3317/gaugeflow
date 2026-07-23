@@ -89,22 +89,33 @@ Training-contract audit status:
 ```text
 /home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/
   training_contract_audit.json
+  training_contract_audit_with_forbidden_panel.json
+  forbidden_source_ids_stage_d_stage_e_v1.json
+  forbidden_source_ids_stage_d_stage_e_v1.manifest.json
 
 status: passed
 entry_count: 8
 roles: clean_clean, generated_assignment, generated_lattice, generated_joint
 all_role_terminal_gradient_groups_nonzero: true
 clean_retention_loss_ratio_to_max_generated: 0.61315789912139
+forbidden_source_id_check: executed, count=773
 base_checkpoint_sha256:
   8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9
 manifest_sha256:
   c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a
+training_contract_audit_with_forbidden_panel_sha256:
+  0851830f0feccbc3156f3a826ddd42b0696a84695dcbf9899936fd6913e2c64c
+forbidden_source_ids_sha256:
+  043de2544a52de76a81b656a27e49365e1d0cb3908b8dcb3d1dbae3affcd9650
 ```
 
-The optional forbidden-source-ID panel was not supplied in this run, so the
-external Stage-D/Stage-E target-overlap check is not claimed here.  It remains a
-required input before a 34M correctness training run can be treated as fully
-contract-checked.
+The forbidden-source-ID panel contains all Stage-D validation/test material IDs
+and the frozen 256-sample Stage-E factorial target panel.  The Stage-E target
+panel is a subset of Stage-D validation under
+`configs/gates/stage_e_e1a_factorial_rollout_v2_data_clean.json`
+(`stage_e_factorial_unique_target_count=256`), and the combined forbidden set
+contains 773 unique IDs.  The overlap-enabled audit proves the tiny replay
+cache sources `mp-1007760` and `mp-1091415` do not intersect that panel.
 
 ## Purpose
 
@@ -293,7 +304,7 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Provide the forbidden-source-ID panel and rerun the replay-cache per-role audit
-with that panel enabled.  Only after that zero-overlap check passes should the
-34M 2--5k correctness training run start.  Multi-GPU 58M/98M capacity training
-remains deferred until the 34M generated-state contract is proven.
+Start the 34M 2--5k generated-state correctness training run.  It must consume
+the same replay contract, report losses and gradients by carrier role, and
+remain bounded as a correctness run.  Multi-GPU 58M/98M capacity training
+remains deferred until this 34M generated-state contract is proven.
