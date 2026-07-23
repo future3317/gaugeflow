@@ -25,6 +25,7 @@ from scripts.select_generated_state_replay_checkpoint import (
     evaluate_candidate,
     select_candidate,
 )
+from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
@@ -255,6 +256,32 @@ def test_generated_state_replay_correctness_role_weight_is_equal() -> None:
     assert _role_weight(4) == pytest.approx(0.25)
     with pytest.raises(ValueError, match="role count"):
         _role_weight(0)
+
+
+def test_generated_state_replay_role_chunks_preserve_graph_local_state() -> None:
+    terminal = _entry(role="generated_joint")
+    terminal = GeneratedStateReplayEntry(
+        **{
+            **terminal.__dict__,
+            "assignment_tokens": torch.tensor([4, 6, 6, 12, 15], dtype=torch.long),
+            "assignment_reveal_count": torch.tensor([2, 3], dtype=torch.long),
+        }
+    )
+    entries = [terminal, terminal]
+    packed = _pack_role_entries("generated_joint", entries, device=torch.device("cpu"))
+
+    chunks = _iter_role_chunks(packed, 1)
+
+    assert [int(chunk.node_counts.numel()) for chunk in chunks] == [1, 1, 1, 1]
+    assert sum(int(chunk.node_counts.sum()) for chunk in chunks) == int(packed.node_counts.sum())
+    assert torch.equal(torch.cat([chunk.assignment_tokens for chunk in chunks]), packed.assignment_tokens)
+    assert torch.equal(
+        torch.cat([chunk.fractional_coordinates for chunk in chunks]),
+        packed.fractional_coordinates,
+    )
+    assert torch.equal(torch.cat([chunk.composition_counts for chunk in chunks]), packed.composition_counts)
+    for chunk in chunks:
+        assert torch.equal(chunk.batch, torch.repeat_interleave(torch.arange(1), chunk.node_counts.cpu()))
 
 
 def test_generated_state_replay_correctness_parameter_update_norm() -> None:

@@ -21,6 +21,8 @@ try:
         PackedReplayRole,
         _finite_float,
         _gradient_group_norms,
+        _check_composition_counts,
+        _iter_role_chunks,
         _load_diffusion,
         _pack_role_entries,
         _parameter_group,
@@ -32,6 +34,8 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when imported as scr
         PackedReplayRole,
         _finite_float,
         _gradient_group_norms,
+        _check_composition_counts,
+        _iter_role_chunks,
         _load_diffusion,
         _pack_role_entries,
         _parameter_group,
@@ -76,6 +80,12 @@ def _parse_args() -> argparse.Namespace:
         "--save-checkpoint",
         action="store_true",
         help="Write a final training checkpoint under output-dir. Keep this under server /runs, not git.",
+    )
+    parser.add_argument(
+        "--max-graphs-per-role-batch",
+        type=int,
+        default=0,
+        help="If positive, split each role into graph chunks of this size and accumulate graph-weighted losses.",
     )
     return parser.parse_args()
 
@@ -187,27 +197,80 @@ def _gradient_delta_norms(
 
 def _role_loss_report(
     role: GeneratedCarrierRole,
-    output: Any,
+    metrics: dict[str, float],
     *,
     gradient_delta_norms: dict[str, float],
     graph_count: int,
     loss_weight: float,
+    max_graphs_per_role_batch: int,
 ) -> dict[str, Any]:
     return {
         "role": role,
         "graph_count": graph_count,
         "loss_weight": loss_weight,
-        "loss": _finite_float(output.loss),
-        "weighted_loss": _finite_float(output.loss.detach() * loss_weight),
-        "element_loss": _finite_float(output.element_loss),
-        "composition_loss": _finite_float(output.composition_loss),
-        "coordinate_loss": _finite_float(output.coordinate_loss),
-        "volume_loss": _finite_float(output.volume_loss),
-        "shape_loss": _finite_float(output.shape_loss),
-        "masked_fraction": _finite_float(output.masked_fraction),
+        "loss": metrics["loss"],
+        "weighted_loss": metrics["loss"] * loss_weight,
+        "element_loss": metrics["element_loss"],
+        "composition_loss": metrics["composition_loss"],
+        "coordinate_loss": metrics["coordinate_loss"],
+        "volume_loss": metrics["volume_loss"],
+        "shape_loss": metrics["shape_loss"],
+        "masked_fraction": metrics["masked_fraction"],
         "gradient_delta_norms": gradient_delta_norms,
         "nonzero_gradient_delta_groups": {key: value > 0.0 for key, value in gradient_delta_norms.items()},
+        "max_graphs_per_role_batch": int(max_graphs_per_role_batch),
     }
+
+
+def _accumulate_role_step(
+    trainer: ProductionTrainer,
+    packed: PackedReplayRole,
+    *,
+    role_weight: float,
+    generator: torch.Generator,
+    max_graphs_per_role_batch: int,
+) -> dict[str, Any]:
+    total_graphs = int(packed.node_counts.numel())
+    before_gradients = _clone_current_group_gradients(trainer.diffusion.denoiser)
+    metric_sums = {
+        "loss": 0.0,
+        "element_loss": 0.0,
+        "composition_loss": 0.0,
+        "coordinate_loss": 0.0,
+        "volume_loss": 0.0,
+        "shape_loss": 0.0,
+        "masked_fraction": 0.0,
+    }
+    for chunk in _iter_role_chunks(packed, max_graphs_per_role_batch):
+        chunk_graphs = int(chunk.node_counts.numel())
+        chunk_weight = role_weight * chunk_graphs / total_graphs
+        output = trainer.accumulate_hybrid_step(
+            chunk.assignment_tokens,
+            chunk.fractional_coordinates,
+            chunk.lattice,
+            chunk.batch,
+            chunk.blueprint,
+            loss_weight=chunk_weight,
+            generator=generator,
+        )
+        _check_composition_counts(chunk, output)
+        metric_sums["loss"] += _finite_float(output.loss) * chunk_graphs
+        metric_sums["element_loss"] += _finite_float(output.element_loss) * chunk_graphs
+        metric_sums["composition_loss"] += _finite_float(output.composition_loss) * chunk_graphs
+        metric_sums["coordinate_loss"] += _finite_float(output.coordinate_loss) * chunk_graphs
+        metric_sums["volume_loss"] += _finite_float(output.volume_loss) * chunk_graphs
+        metric_sums["shape_loss"] += _finite_float(output.shape_loss) * chunk_graphs
+        metric_sums["masked_fraction"] += _finite_float(output.masked_fraction) * chunk_graphs
+    metrics = {key: value / total_graphs for key, value in metric_sums.items()}
+    gradient_deltas = _gradient_delta_norms(trainer.diffusion.denoiser, before_gradients)
+    return _role_loss_report(
+        packed.role,
+        metrics,
+        gradient_delta_norms=gradient_deltas,
+        graph_count=total_graphs,
+        loss_weight=role_weight,
+        max_graphs_per_role_batch=max_graphs_per_role_batch,
+    )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -224,6 +287,8 @@ def _run_training(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("steps must be positive")
     if args.clean_retention_max_ratio <= 0.0:
         raise ValueError("clean retention max ratio must be positive")
+    if args.max_graphs_per_role_batch < 0:
+        raise ValueError("max graphs per role batch must be non-negative")
     if args.output_dir.exists() and any(args.output_dir.iterdir()):
         raise FileExistsError(f"refusing to write into nonempty output directory: {args.output_dir}")
     device = torch.device(args.device)
@@ -268,30 +333,12 @@ def _run_training(args: argparse.Namespace) -> dict[str, Any]:
             losses_by_role: dict[str, float] = {}
             for role in _ROLES:
                 packed = packed_roles[role]
-                before_gradients = _clone_current_group_gradients(diffusion.denoiser)
-                output = trainer.accumulate_hybrid_step(
-                    packed.assignment_tokens,
-                    packed.fractional_coordinates,
-                    packed.lattice,
-                    packed.batch,
-                    packed.blueprint,
-                    loss_weight=role_weight,
+                report = _accumulate_role_step(
+                    trainer,
+                    packed,
+                    role_weight=role_weight,
                     generator=generator,
-                )
-                if output.noisy.composition_counts is None:
-                    raise RuntimeError("replay training did not pass composition counts into diffusion")
-                if not torch.equal(
-                    output.noisy.composition_counts.detach().cpu(),
-                    packed.composition_counts.detach().cpu(),
-                ):
-                    raise RuntimeError(f"role {role} used composition counts different from replay entry")
-                gradient_deltas = _gradient_delta_norms(diffusion.denoiser, before_gradients)
-                report = _role_loss_report(
-                    role,
-                    output,
-                    gradient_delta_norms=gradient_deltas,
-                    graph_count=int(packed.node_counts.numel()),
-                    loss_weight=role_weight,
+                    max_graphs_per_role_batch=args.max_graphs_per_role_batch,
                 )
                 role_reports.append(report)
                 losses_by_role[str(role)] = float(report["loss"])
@@ -347,6 +394,7 @@ def _run_training(args: argparse.Namespace) -> dict[str, Any]:
         "seed": args.seed,
         "training_config": training_config.__dict__,
         "role_weight": role_weight,
+        "max_graphs_per_role_batch": int(args.max_graphs_per_role_batch),
         "final_role_reports": final_role_reports,
         "clean_retention_loss_ratio_max": max(clean_retention_ratios),
         "clean_retention_max_ratio": args.clean_retention_max_ratio,

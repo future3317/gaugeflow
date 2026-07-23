@@ -77,6 +77,12 @@ def _parse_args() -> argparse.Namespace:
         default=10.0,
         help="Fail if clean_clean total loss exceeds this multiple of the largest generated-role total loss.",
     )
+    parser.add_argument(
+        "--max-graphs-per-role-batch",
+        type=int,
+        default=0,
+        help="If positive, split each role into graph chunks of this size and accumulate graph-weighted losses.",
+    )
     return parser.parse_args()
 
 
@@ -184,6 +190,47 @@ def _pack_role_entries(
     return packed
 
 
+def _slice_packed_role(packed: PackedReplayRole, start: int, stop: int) -> PackedReplayRole:
+    graph_count = int(packed.node_counts.numel())
+    if start < 0 or stop <= start or stop > graph_count:
+        raise ValueError(f"invalid graph slice {start}:{stop} for {graph_count} graphs")
+    offsets = torch.cat(
+        (
+            torch.zeros(1, dtype=torch.long, device=packed.node_counts.device),
+            torch.cumsum(packed.node_counts, dim=0),
+        )
+    )
+    node_start = int(offsets[start].detach().cpu())
+    node_stop = int(offsets[stop].detach().cpu())
+    node_counts = packed.node_counts[start:stop]
+    blueprint = ParentBlueprintBatch.from_node_counts(
+        node_counts.detach().cpu(),
+        dtype=packed.lattice.dtype,
+        device=packed.lattice.device,
+    )
+    return PackedReplayRole(
+        role=packed.role,
+        source_structure_ids=packed.source_structure_ids[start:stop],
+        node_counts=node_counts,
+        composition_counts=packed.composition_counts[start:stop],
+        assignment_tokens=packed.assignment_tokens[node_start:node_stop],
+        fractional_coordinates=packed.fractional_coordinates[node_start:node_stop],
+        lattice=packed.lattice[start:stop],
+        batch=blueprint.batch,
+        blueprint=blueprint,
+    )
+
+
+def _iter_role_chunks(packed: PackedReplayRole, max_graphs_per_batch: int) -> list[PackedReplayRole]:
+    graph_count = int(packed.node_counts.numel())
+    if max_graphs_per_batch <= 0 or max_graphs_per_batch >= graph_count:
+        return [packed]
+    return [
+        _slice_packed_role(packed, start, min(start + max_graphs_per_batch, graph_count))
+        for start in range(0, graph_count, max_graphs_per_batch)
+    ]
+
+
 def _parameter_group(name: str) -> str | None:
     if name.startswith(("element_embedding.", "element_head.", "composition_head.")):
         return "element"
@@ -219,6 +266,13 @@ def _finite_float(value: torch.Tensor) -> float:
     return float(value.detach().cpu())
 
 
+def _check_composition_counts(packed: PackedReplayRole, output: Any) -> None:
+    if output.noisy.composition_counts is None:
+        raise RuntimeError("composition-conditioned replay audit did not pass composition counts")
+    if not torch.equal(output.noisy.composition_counts.detach().cpu(), packed.composition_counts.detach().cpu()):
+        raise RuntimeError(f"role {packed.role} used composition counts different from replay entry")
+
+
 def _audit_role(
     diffusion: TensorFreeHybridDiffusion,
     packed: PackedReplayRole,
@@ -226,51 +280,72 @@ def _audit_role(
     seed: int,
     loss_weight: float,
     precision: str,
+    max_graphs_per_batch: int,
 ) -> dict[str, Any]:
     diffusion.train()
     diffusion.denoiser.zero_grad(set_to_none=True)
     generator = torch.Generator(device=packed.lattice.device).manual_seed(seed)
     use_bf16 = precision == "bf16" and packed.lattice.device.type == "cuda"
-    with torch.autocast(
-        device_type=packed.lattice.device.type,
-        dtype=torch.bfloat16,
-        enabled=use_bf16,
-    ):
-        output = diffusion(
-            packed.assignment_tokens,
-            packed.fractional_coordinates,
-            packed.lattice,
-            packed.batch,
-            packed.blueprint.shape_projector,
-            packed.blueprint.fractional_to_cartesian,
-            generator=generator,
-        )
-        optimization_loss = output.loss * loss_weight
-    if output.noisy.composition_counts is None:
-        raise RuntimeError("composition-conditioned replay audit did not pass composition counts")
-    if not torch.equal(output.noisy.composition_counts.detach().cpu(), packed.composition_counts.detach().cpu()):
-        raise RuntimeError(f"role {packed.role} used composition counts different from replay entry")
-    if not torch.isfinite(optimization_loss.detach()):
-        raise FloatingPointError(f"role {packed.role} optimization loss is non-finite")
-    optimization_loss.backward()
+    metric_sums = {
+        "loss": 0.0,
+        "element_loss": 0.0,
+        "composition_loss": 0.0,
+        "coordinate_loss": 0.0,
+        "volume_loss": 0.0,
+        "shape_loss": 0.0,
+        "masked_fraction": 0.0,
+    }
+    weighted_loss = 0.0
+    total_graphs = int(packed.node_counts.numel())
+    for chunk in _iter_role_chunks(packed, max_graphs_per_batch):
+        chunk_graphs = int(chunk.node_counts.numel())
+        chunk_fraction = chunk_graphs / total_graphs
+        with torch.autocast(
+            device_type=packed.lattice.device.type,
+            dtype=torch.bfloat16,
+            enabled=use_bf16,
+        ):
+            output = diffusion(
+                chunk.assignment_tokens,
+                chunk.fractional_coordinates,
+                chunk.lattice,
+                chunk.batch,
+                chunk.blueprint.shape_projector,
+                chunk.blueprint.fractional_to_cartesian,
+                generator=generator,
+            )
+            optimization_loss = output.loss * loss_weight * chunk_fraction
+        _check_composition_counts(chunk, output)
+        if not torch.isfinite(optimization_loss.detach()):
+            raise FloatingPointError(f"role {packed.role} optimization loss is non-finite")
+        optimization_loss.backward()
+        weighted_loss += _finite_float(optimization_loss)
+        metric_sums["loss"] += _finite_float(output.loss) * chunk_graphs
+        metric_sums["element_loss"] += _finite_float(output.element_loss) * chunk_graphs
+        metric_sums["composition_loss"] += _finite_float(output.composition_loss) * chunk_graphs
+        metric_sums["coordinate_loss"] += _finite_float(output.coordinate_loss) * chunk_graphs
+        metric_sums["volume_loss"] += _finite_float(output.volume_loss) * chunk_graphs
+        metric_sums["shape_loss"] += _finite_float(output.shape_loss) * chunk_graphs
+        metric_sums["masked_fraction"] += _finite_float(output.masked_fraction) * chunk_graphs
     gradient_norms = _gradient_group_norms(diffusion.denoiser)
     nonzero = {key: value > 0.0 for key, value in gradient_norms.items()}
     return {
         "role": packed.role,
         "source_structure_ids": list(packed.source_structure_ids),
-        "graph_count": int(packed.node_counts.numel()),
+        "graph_count": total_graphs,
         "node_count": int(packed.node_counts.sum().detach().cpu()),
-        "loss": _finite_float(output.loss),
-        "element_loss": _finite_float(output.element_loss),
-        "composition_loss": _finite_float(output.composition_loss),
-        "coordinate_loss": _finite_float(output.coordinate_loss),
-        "volume_loss": _finite_float(output.volume_loss),
-        "shape_loss": _finite_float(output.shape_loss),
-        "masked_fraction": _finite_float(output.masked_fraction),
+        "loss": metric_sums["loss"] / total_graphs,
+        "element_loss": metric_sums["element_loss"] / total_graphs,
+        "composition_loss": metric_sums["composition_loss"] / total_graphs,
+        "coordinate_loss": metric_sums["coordinate_loss"] / total_graphs,
+        "volume_loss": metric_sums["volume_loss"] / total_graphs,
+        "shape_loss": metric_sums["shape_loss"] / total_graphs,
+        "masked_fraction": metric_sums["masked_fraction"] / total_graphs,
         "loss_weight": float(loss_weight),
-        "weighted_loss": _finite_float(optimization_loss),
+        "weighted_loss": weighted_loss,
         "gradient_norms": gradient_norms,
         "nonzero_gradient_groups": nonzero,
+        "max_graphs_per_role_batch": int(max_graphs_per_batch),
         "composition_count_sums": [int(value) for value in packed.composition_counts.sum(dim=1).detach().cpu()],
     }
 
@@ -281,6 +356,8 @@ def main() -> None:
         raise ValueError("loss weight must be positive")
     if args.clean_retention_max_ratio <= 0.0:
         raise ValueError("clean retention max ratio must be positive")
+    if args.max_graphs_per_role_batch < 0:
+        raise ValueError("max graphs per role batch must be non-negative")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is not available")
@@ -312,6 +389,7 @@ def main() -> None:
                 seed=args.seed + 1009 * role_index,
                 loss_weight=args.loss_weight,
                 precision=precision,
+                max_graphs_per_batch=args.max_graphs_per_role_batch,
             )
         )
     losses = {str(report["role"]): float(report["loss"]) for report in role_reports}
@@ -337,6 +415,7 @@ def main() -> None:
         "clean_retention_max_ratio": args.clean_retention_max_ratio,
         "clean_retention_not_exploded": clean_retention_not_exploded,
         "all_role_terminal_gradient_groups_nonzero": all_gradients_nonzero,
+        "max_graphs_per_role_batch": int(args.max_graphs_per_role_batch),
         "forbidden_source_id_check": {
             "executed": forbidden_source_ids is not None,
             "count": 0 if forbidden_source_ids is None else len(forbidden_source_ids),
