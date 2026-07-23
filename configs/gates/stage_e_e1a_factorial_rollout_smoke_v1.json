@@ -1,0 +1,13 @@
+{
+  "protocol": "stage_e_e1a_factorial_rollout_v1",
+  "purpose": "software and interface smoke for the Stage-E1a factorial rollout",
+  "status": "smoke_not_qualification",
+  "seed": 20260723,
+  "samples": 8,
+  "batch_size": 2,
+  "reverse_steps": 5,
+  "continuous_mode": "probability_flow",
+  "orbit_frames": 64,
+  "wasserstein_quantile_points": 32,
+  "arms": ["oracle_cal", "oracle_ca", "oracle_c", "free"]
+}
