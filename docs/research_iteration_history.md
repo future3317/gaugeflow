@@ -1100,3 +1100,11 @@ lattice-only generated-side exposure (with finite-NFE sensitivity still to be
 audited), rather than the quarantined Kr rows or a universal E3 numerical
 explosion. The full clean result is archived separately and must not be merged
 with v1 metrics.
+
+A bounded 32-structure lattice-only NFE smoke reused identical initialized
+states at 25/50/100/200 steps. Reverse-SDE tails were non-monotone, including a
+72,582 volume-per-atom outlier and normalized W1 273.88 in one batch at 100
+steps; probability-flow W1 increased 0.59/1.88/4.46/7.24 across the same NFE
+values. This is directional evidence for a state-dependent generated-lattice
+field/exposure issue, not permission to increase NFE, promote probability flow,
+or clip terminal volumes. A properly nested-Brownian audit remains separate.

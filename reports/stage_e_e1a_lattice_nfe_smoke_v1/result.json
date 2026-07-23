@@ -1,0 +1,200 @@
+{
+  "protocol": "stage_e_e1a_lattice_nfe_smoke_v1",
+  "checkpoint": "stage_c_step_30523",
+  "panel_indices": [
+    381,
+    328,
+    136,
+    90,
+    175,
+    314,
+    341,
+    50,
+    5,
+    371,
+    353,
+    264,
+    128,
+    100,
+    249,
+    274,
+    278,
+    222,
+    13,
+    66,
+    303,
+    266,
+    330,
+    316,
+    382,
+    394,
+    272,
+    257,
+    123,
+    189,
+    178,
+    64
+  ],
+  "rows": [
+    {
+      "mode": "reverse_sde",
+      "steps": 25,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 59.595706939697266,
+      "median_volume": 21.910573959350586,
+      "normalized_volume_w1": 0.36455917127101034
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 50,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 187.63694763183594,
+      "median_volume": 22.407011032104492,
+      "normalized_volume_w1": 0.8325400847575486
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 100,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 61.14512634277344,
+      "median_volume": 23.62531280517578,
+      "normalized_volume_w1": 0.39902399992643767
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 200,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 64.16559600830078,
+      "median_volume": 22.598546981811523,
+      "normalized_volume_w1": 0.3605097160447229
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 25,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 102.97566986083984,
+      "median_volume": 23.750043869018555,
+      "normalized_volume_w1": 0.5897608990532941
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 50,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 182.54832458496094,
+      "median_volume": 23.509262084960938,
+      "normalized_volume_w1": 0.8533959333593456
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 100,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 395.64617919921875,
+      "median_volume": 23.348966598510742,
+      "normalized_volume_w1": 1.5505931948379854
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 200,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 1022.7633056640625,
+      "median_volume": 23.534597396850586,
+      "normalized_volume_w1": 3.6121263405553776
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 25,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 91.98296356201172,
+      "median_volume": 22.936420440673828,
+      "normalized_volume_w1": 0.4978254301642067
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 50,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 3941.369873046875,
+      "median_volume": 24.416370391845703,
+      "normalized_volume_w1": 15.309345144738106
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 100,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 1,
+      "max_volume": 72582.4140625,
+      "median_volume": 23.825000762939453,
+      "normalized_volume_w1": 273.8786247657836
+    },
+    {
+      "mode": "reverse_sde",
+      "steps": 200,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 749.6876831054688,
+      "median_volume": 23.527956008911133,
+      "normalized_volume_w1": 4.6096538449804765
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 25,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 230.08900451660156,
+      "median_volume": 23.217071533203125,
+      "normalized_volume_w1": 1.8829001054299013
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 50,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 346.2232666015625,
+      "median_volume": 23.132389068603516,
+      "normalized_volume_w1": 2.860762475723559
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 100,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 592.6463012695312,
+      "median_volume": 23.553504943847656,
+      "normalized_volume_w1": 4.4581606981158926
+    },
+    {
+      "mode": "probability_flow",
+      "steps": 200,
+      "n": 16,
+      "finite_positive": 1.0,
+      "tail_gt_1e4": 0,
+      "max_volume": 1088.4866943359375,
+      "median_volume": 24.460186004638672,
+      "normalized_volume_w1": 7.238189551386915
+    }
+  ]
+}

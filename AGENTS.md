@@ -604,6 +604,15 @@ fix evaluator and retains a v1-compatible top-level schema; the corrected
 writer is verified by the archived v2 schema smoke.  Do not rewrite the full
 run or treat either diagnostic as tensor efficacy.
 
+A bounded 32-structure lattice-only NFE smoke then reused the same initialized
+states at 25/50/100/200 steps.  Reverse-SDE volume tails were non-monotone
+(one batch reached max volume-per-atom 72,582 and normalized W1 273.88 at 100
+steps), while probability-flow W1 increased `0.59/1.88/4.46/7.24` across the
+same NFE values.  This is not a solver qualification and does not authorize
+NFE increases, probability-flow promotion, or terminal clipping; it indicates
+a state-dependent generated-lattice field/exposure problem.  A nested-Brownian
+audit is still required before attributing any residual variance to the solver.
+
 The first clean production integration exposed a Cartesian index-type defect.
 The reverse sampler adds a tangent drift to fractional coordinates, so the
 only active chart is `v_r=v_f L` and `v_f=v_r L^-1`; the retired `L^T`
