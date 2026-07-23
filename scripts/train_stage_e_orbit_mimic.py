@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
             "orbit_mimic_retention",
             "orbit_mimic_exact_null",
             "clean_side",
+            "mixed_side",
         ),
         required=True,
     )
@@ -302,6 +303,7 @@ def main() -> None:
         "stage_e_e0_orbit_mimic_smoke_v1",
         "stage_e_e0_exact_null_adapter_v1",
         "stage_e_e1_clean_side_v1",
+        "stage_e_e1_mixed_side_v1",
     }:
         raise ValueError("unexpected Stage-E protocol")
     arm = protocol["arms"].get(args.arm)
@@ -360,6 +362,16 @@ def main() -> None:
         shape_projector, chart = _charts(moved)
         student.train()
         optimizer.zero_grad(set_to_none=True)
+        clean_side_probability = float(arm.get("clean_side_probability", 0.0))
+        if not 0.0 <= clean_side_probability <= 1.0:
+            raise ValueError("clean_side_probability must lie in [0,1]")
+        use_clean_side = bool(
+            arm.get("clean_side_information", False)
+            or (
+                clean_side_probability > 0.0
+                and torch.rand((), generator=data_generator).item() < clean_side_probability
+            )
+        )
         with torch.autocast(
             device_type="cuda", dtype=torch.bfloat16, enabled=use_bf16
         ):
@@ -377,7 +389,7 @@ def main() -> None:
                 orbit_weight=orbit_weight,
                 retention_weight=retention_weight,
                 generator=noise_generator,
-                clean_side_information=bool(arm.get("clean_side_information", False)),
+                clean_side_information=use_clean_side,
             )
         if not torch.isfinite(output.loss):
             raise FloatingPointError("Stage-E loss is non-finite")
@@ -399,6 +411,7 @@ def main() -> None:
                 "null_retention": float(output.null_retention.loss),
                 "gradient_norm": float(gradient_norm),
                 "graphs_per_second": step * batch_size / (time.perf_counter() - started),
+                "clean_side_information": use_clean_side,
             }
             with metrics_path.open("a", encoding="utf-8", newline="\n") as handle:
                 handle.write(json.dumps(record, sort_keys=True) + "\n")
@@ -419,7 +432,7 @@ def main() -> None:
         {
             "schema": (
                 "gaugeflow.stage_e_e1.v1"
-                if protocol.get("protocol") == "stage_e_e1_clean_side_v1"
+                if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}
                 else "gaugeflow.stage_e_e0.v1"
             ),
             "arm": args.arm,
@@ -438,7 +451,7 @@ def main() -> None:
     result = {
         "schema": (
             "gaugeflow.stage_e_e1_result.v1"
-            if protocol.get("protocol") == "stage_e_e1_clean_side_v1"
+            if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}
             else "gaugeflow.stage_e_e0_result.v1"
         ),
         "arm": args.arm,

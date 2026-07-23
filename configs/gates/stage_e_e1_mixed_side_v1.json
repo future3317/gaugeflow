@@ -1,0 +1,25 @@
+{
+  "protocol": "stage_e_e1_mixed_side_v1",
+  "purpose": "retain E0 same-clock exposure while mixing clean-side coordinate states",
+  "seed": 5705,
+  "steps": 1500,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "mixed_side": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1,
+      "clean_side_probability": 0.25
+    }
+  },
+  "source_boundary": "initialized from qualified Stage-C 30k checkpoint; no Stage-D evaluator weights are trainable",
+  "qualification_boundary": "mechanism retraining only; must pass oracle-cal arm before any generated-side claim or F/RL",
+  "objective": "mixture of original synchronous noisy-state objective and clean-side coordinate exposure"
+}
