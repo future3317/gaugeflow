@@ -244,6 +244,13 @@ Completed provenance steps:
 9. Bounded 34M 2k generated-state correctness run on the same replay contract.
 10. Smoke32 replay-role/free-generation evaluation for the 2k checkpoint,
     with both EMA and raw weights.
+11. Replay-cache builder now supports fail-closed `--forbidden-source-ids`
+    selection and deterministic permuted source windows via `--selection-seed`.
+12. A 32-source real replay cache was built from the frozen Stage-C 40523 base
+    with the same four carrier roles, forbidden-source panel and sampler
+    protocol.
+13. The 32-source cache passed the same training-contract audit and a 20-step
+    34M optimizer smoke without saving a production checkpoint.
 
 Current immediate task:
 
@@ -259,6 +266,10 @@ Current immediate task:
 5. Run the same training-contract audit and same smoke32 evaluator on the
    broader 32/64-source cache before increasing steps, batch size, or model
    width.
+6. The 32-source cache has passed cache/audit/20-step training smoke.  The next
+   allowed experiment is a bounded 34M correctness run on this broader cache,
+   followed by the same replay/free-generation evaluator.  It is still not a
+   58M/98M capacity run.
 
 Deferred work:
 
@@ -332,6 +343,7 @@ Latest A-v2 provenance commits:
 11ac6a9 feat: audit generated-state replay training contract
 2e44df8 docs: record replay training contract audit
 23cde00 feat: train generated-state replay correctness smoke
+25cbde3b fix: guard generated-state replay source selection
 ```
 
 Latest tiny training smoke:
@@ -375,6 +387,50 @@ overfits the tiny replay cache and harms short free-generation retention.  The
 failure is not explained by EMA lag, because raw weights show the same NN-W1
 regression.  This blocks capacity scaling until the replay cache is broadened
 and the same evaluator shows non-degraded free-generation retention.
+```
+
+Latest 32-source provenance cache:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_real_v1/
+status: passed
+entries: 128 = 32 real source structures x 4 roles
+selection mode: permuted
+selection_seed: 6101
+reverse_steps: 4
+refresh_id: 2
+manifest SHA-256:
+  f59f58545bc1dab62664fad39b14806c0ef42e85f3d786c3cbaee78f131e4909
+forbidden_source_id_check: executed, count=773
+sampler_commit:
+  25cbde3b6be0109d5e6cf68748f051632366a2f0
+```
+
+Latest 32-source training-contract audit:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_real_v1/training_contract_audit.json
+status: passed
+entry_count: 128
+all_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_to_max_generated: 0.3621880364977982
+forbidden_source_id_check: executed, count=773
+```
+
+Latest 32-source 20-step correctness smoke:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_train_smoke_v1/
+status: passed
+steps: 20
+entry_count: 128
+role_weight: 0.25
+all_final_role_terminal_gradient_groups_nonzero: true
+parameters_updated: true
+first_step_parameter_update_norm: 1.0244015304898244
+final_parameter_update_norm: 5.814717134166754
+clean_retention_loss_ratio_max: 0.7123302917464417
+forbidden_source_id_check: executed, count=773
 ```
 
 Latest 34M correctness run:

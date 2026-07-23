@@ -184,6 +184,59 @@ short free-generation retention.  This is not an EMA artifact.  Larger model
 capacity is still deferred; the next correctness step is broader replay-state
 coverage under the same provenance contract.
 
+Broader-cache status as of `25cbde3b`:
+
+- `scripts/build_tiny_generated_state_replay_cache.py` now accepts
+  `--forbidden-source-ids` and fails closed when selected source IDs overlap a
+  held-out panel.
+- It also accepts `--selection-seed`; when set, `start-index/sample-count`
+  select a deterministic window from a full-split random permutation rather
+  than a contiguous source slice.
+- The new source-selection helpers are covered by unit tests for JSON and
+  newline forbidden files, contiguous selection, seeded deterministic
+  selection, out-of-range rejection and forbidden-overlap rejection.
+- A real 32-source cache has passed the same provenance and training-interface
+  checks:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_real_v1/
+entries:
+  128 = 32 real source structures x 4 roles
+selection mode:
+  permuted, selection_seed=6101
+reverse_steps:
+  4
+manifest SHA-256:
+  f59f58545bc1dab62664fad39b14806c0ef42e85f3d786c3cbaee78f131e4909
+forbidden_source_id_check:
+  executed, count=773
+```
+
+Training-contract audit:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_real_v1/training_contract_audit.json
+status: passed
+all_role_terminal_gradient_groups_nonzero: true
+clean_retention_loss_ratio_to_max_generated: 0.3621880364977982
+```
+
+20-step optimizer smoke:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_train_smoke_v1/
+status: passed
+steps: 20
+all_final_role_terminal_gradient_groups_nonzero: true
+parameters_updated: true
+clean_retention_loss_ratio_max: 0.7123302917464417
+final_parameter_update_norm: 5.814717134166754
+```
+
+This still does not authorize capacity scaling by itself.  It authorizes the
+next bounded 34M correctness run on the 32-source cache, followed by the same
+replay/free-generation evaluator that caught the 8-entry overfit regression.
+
 ## Purpose
 
 GaugeFlow v1 is blocked because the base and Stage-E adapters do not jointly
@@ -369,14 +422,12 @@ optimization, not a scientific variable.
 
 The immediate A-v2 implementation remains the broader 34M replay cache:
 
-- add a `--forbidden-source-ids` input to the cache builder and fail closed on
-  selected-source overlap;
-- replace contiguous source slices with deterministic random/permuted source
-  selection;
-- build 32/64-source caches with the same four carrier roles;
-- rerun the training-contract audit before any longer training;
+- use the 32-source cache above as the next correctness substrate;
+- run a bounded 34M correctness training checkpoint on it;
 - repeat the same smoke32 replay/free-generation evaluator and require
-  replay-role improvement without free-generation retention regression.
+  replay-role improvement without free-generation retention regression;
+- build a 64-source cache only if the 32-source run shows retention is no
+  longer immediately broken or if the 32-source evidence is too noisy to decide.
 
 ## Capacity Competition
 
