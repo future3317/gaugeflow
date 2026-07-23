@@ -1,0 +1,17 @@
+{
+  "protocol": "stage_e_e1a_factorial_rollout_v1",
+  "purpose": "production-budget Stage-E1a diagnostic with vectorized graph batching",
+  "status": "diagnostic_not_qualification",
+  "seed": 20260723,
+  "samples": 256,
+  "batch_size": 16,
+  "reverse_steps": 50,
+  "continuous_mode": "reverse_sde",
+  "orbit_frames": 384,
+  "wasserstein_quantile_points": 128,
+  "arms": ["oracle_cal", "oracle_ca", "oracle_c", "free"],
+  "roles": ["base", "conditioned", "swapped"],
+  "common_noise": true,
+  "batching_note": "Graph-packed batches are independent; batch size changes only vectorization, not targets, clocks, seeds or paired roles.",
+  "evaluator_boundary": "frozen Stage-D independent evaluator; diagnostic only"
+}
