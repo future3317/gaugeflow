@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+import copy
+from dataclasses import dataclass, replace
 
 import torch
 from torch import nn
@@ -270,6 +271,26 @@ class _EncodedHybridState:
     gauge_atlas: CartesianGaugeAtlasOutput
 
 
+class CenteredResidualAdapter(nn.Module):
+    """Exact-function-preserving residual with immediate internal gradients."""
+
+    def __init__(self, hidden_dim: int) -> None:
+        super().__init__()
+        self.active = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
+        self.reference = copy.deepcopy(self.active)
+        self.reference.requires_grad_(False)
+        self.reference.eval()
+
+    def forward(self, value: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            reference = self.reference(value)
+        return self.active(value) - reference
+
+
 class HybridCrystalDenoiser(nn.Module):
     """Paper-defined denoiser with no target-structure inputs or endpoint tokens."""
 
@@ -296,6 +317,8 @@ class HybridCrystalDenoiser(nn.Module):
         if edge_dim < 1 or angular_channels < 1 or edge_refresh_rank < 1:
             raise ValueError("edge, angular and refresh dimensions must be positive")
         self.edge_dim = int(edge_dim)
+        self.hidden_dim = int(hidden_dim)
+        self.tensor_residual_adapter: CenteredResidualAdapter | None = None
         if modality_time_conditioning is None:
             modality_time_conditioning = "separate" if independent_modality_times else "coordinate"
         if modality_time_conditioning not in {
@@ -395,6 +418,21 @@ class HybridCrystalDenoiser(nn.Module):
         )
         self.volume_head = nn.Sequential(nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1))
         self.shape_head = nn.Sequential(nn.Linear(graph_head_inputs, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 5))
+
+    def attach_tensor_residual_adapter(self) -> None:
+        """Attach the optional E-stage adapter after loading a base checkpoint."""
+
+        if self.tensor_residual_adapter is None:
+            # The base denoiser is normally restored on CUDA before E2
+            # attaches its optional module.  Constructing on CPU and relying
+            # on a later implicit move would make the first forward fail (and
+            # would silently break non-FP32 evaluation), so inherit both
+            # device and parameter dtype from the existing backbone.
+            reference = self.element_embedding.weight
+            self.tensor_residual_adapter = CenteredResidualAdapter(self.hidden_dim).to(
+                device=reference.device,
+                dtype=reference.dtype,
+            )
 
     @property
     def angular_channels(self) -> int:
@@ -553,6 +591,9 @@ class HybridCrystalDenoiser(nn.Module):
                 condition_token + self.gauge_atlas.present_bias,
                 self.gauge_atlas.null_condition.unsqueeze(0).expand_as(condition_token),
             )
+            if self.tensor_residual_adapter is not None:
+                residual = self.tensor_residual_adapter(condition_token)
+                condition_token = condition_token + residual * present.to(condition_token)
             graph_state = graph_state + condition_token
         counts = torch.bincount(batch, minlength=graphs).to(log_volume)
         composition_mean = graph_mean(element_nodes, batch, graphs)
@@ -666,6 +707,13 @@ class HybridCrystalDenoiser(nn.Module):
                 reference=tensor_condition,
             )
         node_condition = gauge_atlas.graph_condition[batch]
+        if self.tensor_residual_adapter is not None and bool(condition_present.any()):
+            present = condition_present.to(gauge_atlas.graph_condition)
+            graph_condition = gauge_atlas.graph_condition + present * self.tensor_residual_adapter(
+                gauge_atlas.graph_condition
+            )
+            gauge_atlas = replace(gauge_atlas, graph_condition=graph_condition)
+            node_condition = graph_condition[batch]
         nodes = initial_nodes + node_time + node_condition + node_state
         if source.numel():
             self_image = ((source == target) & edges.image_shift.ne(0).any(dim=-1)).to(nodes).unsqueeze(-1)

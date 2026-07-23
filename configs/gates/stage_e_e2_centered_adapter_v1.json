@@ -1,0 +1,32 @@
+{
+  "protocol": "stage_e_e2_centered_adapter_v1",
+  "purpose": "test a centered tensor residual that is exactly zero at initialization while preserving the Stage-C null branch",
+  "seed": 5705,
+  "steps": 1200,
+  "batch_size": 2,
+  "precision": "bf16",
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0001,
+  "gradient_clip": 1.0,
+  "ema_decay": 0.999,
+  "trainable_last_blocks": 2,
+  "log_every": 20,
+  "validation_graphs": 64,
+  "arms": {
+    "centered_adapter": {
+      "orbit_weight": 0.1,
+      "retention_weight": 0.1,
+      "exact_null": true
+    }
+  },
+  "evaluation": {
+    "initial_function_match": "exact on present and null branches before any optimizer step",
+    "null_typed_drift_max": 0.000001,
+    "active_adapter_gradient": "nonzero on the first backward pass",
+    "oracle_cal": "must improve relative to the Stage-C and E0 references before generated-side rollout"
+  },
+  "boundary": "one-seed mechanism repair only; no generated-side, tensor, F/RL or materials-discovery claim is unlocked by this protocol",
+  "source_boundary": "initialized from the qualified Stage-C checkpoint; the frozen reference copy is captured before any E2 update",
+  "qualification_boundary": "one-seed mechanism repair only; no generated-side, tensor, F/RL or materials-discovery claim is unlocked by this protocol",
+  "objective": "common-noise orbit mimic plus null retention with a centered condition residual"
+}

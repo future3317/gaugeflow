@@ -1,7 +1,13 @@
+import copy
+
 import torch
 
 from gaugeflow.production.cartesian_gauge_atlas import CartesianGaugeAtlasOutput
-from gaugeflow.production.equivariant_denoiser import HybridDenoiserOutput
+from gaugeflow.production.equivariant_denoiser import (
+    CenteredResidualAdapter,
+    HybridCrystalDenoiser,
+    HybridDenoiserOutput,
+)
 from gaugeflow.production.tensor_conditioning import (
     null_condition_retention_distance,
     orbit_mimic_distance,
@@ -115,3 +121,65 @@ def test_null_retention_excludes_atlas_response() -> None:
     )
     assert distance.loss.item() < 1e-9
     assert distance.response.item() == 0.0
+
+
+def test_centered_residual_is_zero_but_active_path_has_immediate_gradient() -> None:
+    adapter = CenteredResidualAdapter(8)
+    value = torch.randn((3, 8), generator=torch.Generator().manual_seed(21))
+    delta = adapter(value)
+    assert torch.equal(delta, torch.zeros_like(delta))
+    probe = torch.randn_like(delta)
+    (delta * probe).sum().backward()
+    active_gradients = [parameter.grad for parameter in adapter.active.parameters()]
+    reference_gradients = [parameter.grad for parameter in adapter.reference.parameters()]
+    assert all(gradient is not None and torch.isfinite(gradient).all() for gradient in active_gradients)
+    assert sum(float(gradient.square().sum()) for gradient in active_gradients if gradient is not None) > 0.0
+    assert all(gradient is None for gradient in reference_gradients)
+
+
+def test_centered_residual_preserves_null_branch_after_active_update() -> None:
+    model = HybridCrystalDenoiser(
+        hidden_dim=16,
+        vector_dim=4,
+        layers=1,
+        radial_dim=4,
+    ).eval()
+    reference_model = copy.deepcopy(model).eval()
+    model.attach_tensor_residual_adapter()
+    with torch.no_grad():
+        model.tensor_residual_adapter.active[-1].bias.add_(0.25)
+    tokens = torch.tensor([4, 6, 12, 15], dtype=torch.long)
+    coordinates = torch.tensor(
+        [[0.05, 0.10, 0.15], [0.35, 0.25, 0.70], [0.15, 0.75, 0.45], [0.72, 0.55, 0.20]]
+    )
+    batch = torch.tensor([0, 0, 1, 1], dtype=torch.long)
+    log_volume = torch.log(torch.tensor([64.0, 91.125]))
+    log_shape = torch.zeros((2, 6))
+    time = torch.full((2,), 0.4)
+    condition = torch.randn((2, 18), generator=torch.Generator().manual_seed(22))
+    projector = torch.eye(6).expand(2, -1, -1).clone()
+    chart = torch.eye(3).expand(2, -1, -1).clone()
+    null = torch.zeros((2, 1), dtype=torch.bool)
+    present = torch.ones((2, 1), dtype=torch.bool)
+    null_base = reference_model(
+        tokens, coordinates, log_volume, log_shape, batch, time, condition, null, projector, chart
+    )
+    null_adapted = model(
+        tokens, coordinates, log_volume, log_shape, batch, time, condition, null, projector, chart
+    )
+    torch.testing.assert_close(
+        null_adapted.coordinate_fractional_scaled_score,
+        null_base.coordinate_fractional_scaled_score,
+        atol=0.0,
+        rtol=0.0,
+    )
+    present_adapted = model(
+        tokens, coordinates, log_volume, log_shape, batch, time, condition, present, projector, chart
+    )
+    present_base = reference_model(
+        tokens, coordinates, log_volume, log_shape, batch, time, condition, present, projector, chart
+    )
+    assert not torch.equal(
+        present_adapted.coordinate_fractional_scaled_score,
+        present_base.coordinate_fractional_scaled_score,
+    )

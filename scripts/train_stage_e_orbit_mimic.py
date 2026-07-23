@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
             "orbit_mimic_exact_null",
             "clean_side",
             "mixed_side",
+            "centered_adapter",
         ),
         required=True,
     )
@@ -120,6 +121,7 @@ def _select_trainable_parameters(
             name.startswith("geometry_query_encoder.")
             or name.startswith("tensor_condition_adapters.")
             or name.startswith("tensor_condition_lattice_adapter.")
+            or name.startswith("tensor_residual_adapter.active.")
             or (
                 name.startswith("gauge_atlas.")
                 and name != "gauge_atlas.null_condition"
@@ -304,6 +306,7 @@ def main() -> None:
         "stage_e_e0_exact_null_adapter_v1",
         "stage_e_e1_clean_side_v1",
         "stage_e_e1_mixed_side_v1",
+        "stage_e_e2_centered_adapter_v1",
     }:
         raise ValueError("unexpected Stage-E protocol")
     arm = protocol["arms"].get(args.arm)
@@ -323,6 +326,11 @@ def main() -> None:
     student, teacher, diffusion, source_metadata = _load_backbones(
         args.checkpoint, device
     )
+    if protocol.get("protocol") == "stage_e_e2_centered_adapter_v1":
+        # Attach only after the Stage-C state has been restored.  The adapter
+        # carries its frozen same-initialization reference in the E2 schema;
+        # the Stage-C checkpoint remains strict-load compatible and unchanged.
+        student.attach_tensor_residual_adapter()
     parameters = _select_trainable_parameters(
         student,
         int(protocol["trainable_last_blocks"]),
@@ -434,6 +442,8 @@ def main() -> None:
                 "gaugeflow.stage_e_e1.v1"
                 if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}
                 else "gaugeflow.stage_e_e0.v1"
+                if protocol.get("protocol") != "stage_e_e2_centered_adapter_v1"
+                else "gaugeflow.stage_e_e2.v1"
             ),
             "arm": args.arm,
             "model": {
@@ -450,7 +460,9 @@ def main() -> None:
     )
     result = {
         "schema": (
-            "gaugeflow.stage_e_e1_result.v1"
+            "gaugeflow.stage_e_e2_result.v1"
+            if protocol.get("protocol") == "stage_e_e2_centered_adapter_v1"
+            else "gaugeflow.stage_e_e1_result.v1"
             if protocol.get("protocol") in {"stage_e_e1_clean_side_v1", "stage_e_e1_mixed_side_v1"}
             else "gaugeflow.stage_e_e0_result.v1"
         ),
@@ -460,7 +472,10 @@ def main() -> None:
         "validation": validation_metrics,
         "checkpoint_sha256": sha256_file(checkpoint_path),
         "device": torch.cuda.get_device_name(device),
-        "boundary": protocol["boundary"],
+        "boundary": protocol.get(
+            "boundary",
+            protocol.get("qualification_boundary", "unspecified mechanism-screen boundary"),
+        ),
     }
     (args.output / "result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
