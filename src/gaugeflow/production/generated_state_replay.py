@@ -714,7 +714,7 @@ def load_generated_state_replay_cache(
         expected_sampler_protocol_sha256=expected_sampler_protocol_sha256,
         forbidden_source_ids=forbidden_source_ids,
     )
-    payload: Any = torch.load(directory / _CACHE_PAYLOAD_FILENAME, map_location="cpu")
+    payload: Any = torch.load(directory / _CACHE_PAYLOAD_FILENAME, map_location="cpu", weights_only=True)
     if not isinstance(payload, dict):
         raise ValueError("generated-state replay payload must be an object")
     if payload.get("format_version") != 1:
