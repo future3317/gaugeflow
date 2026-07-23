@@ -20,6 +20,11 @@ from scripts.build_tiny_generated_state_replay_cache import (
     _select_source_indices,
     _source_ids_for_indices,
 )
+from scripts.select_generated_state_replay_checkpoint import (
+    SelectionContract,
+    evaluate_candidate,
+    select_candidate,
+)
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
@@ -315,3 +320,177 @@ def test_tiny_replay_builder_rejects_out_of_range_selection() -> None:
             sample_count=2,
             selection_seed=None,
         )
+
+
+def _selection_eval(
+    *,
+    nn_delta: float,
+    volume_delta: float,
+    replay_loss_delta: float = -0.1,
+    distance_delta: float = 0.0,
+    failures_delta: float = 0.0,
+    masks_delta: float = 0.0,
+) -> dict[str, object]:
+    roles = ("clean_clean", "generated_assignment", "generated_lattice", "generated_joint")
+    replay_deltas = {
+        role: {
+            "loss": replay_loss_delta,
+            "element_loss": -0.01,
+            "coordinate_loss": -0.01,
+            "volume_loss": -0.01,
+            "shape_loss": -0.01,
+        }
+        for role in roles
+    }
+    free_base = {
+        "normalized_nearest_neighbor_wasserstein": 0.538407,
+        "normalized_volume_wasserstein": 0.333797,
+        "minimum_distance_fraction_at_0_5_angstrom": 1.0,
+        "exact_composition_fraction": 1.0,
+        "finite_positive_lattice_fraction": 1.0,
+        "sampling_failures": 0.0,
+        "terminal_masks": 0.0,
+    }
+    free_candidate = {
+        **free_base,
+        "normalized_nearest_neighbor_wasserstein": free_base["normalized_nearest_neighbor_wasserstein"]
+        + nn_delta,
+        "normalized_volume_wasserstein": free_base["normalized_volume_wasserstein"] + volume_delta,
+        "minimum_distance_fraction_at_0_5_angstrom": free_base[
+            "minimum_distance_fraction_at_0_5_angstrom"
+        ]
+        + distance_delta,
+        "sampling_failures": free_base["sampling_failures"] + failures_delta,
+        "terminal_masks": free_base["terminal_masks"] + masks_delta,
+    }
+    return {
+        "schema": "gaugeflow.generated_state_replay_correctness_evaluation.v1",
+        "checkpoint": "/runs/candidate.pt",
+        "checkpoint_sha256": "checkpoint-sha",
+        "checkpoint_ema_used": True,
+        "checkpoint_training_summary": {"steps": 100},
+        "replay_role_losses": {
+            "base": {},
+            "candidate": {},
+            "candidate_minus_base": replay_deltas,
+        },
+        "free_generation": {
+            "base": free_base,
+            "candidate": free_candidate,
+            "candidate_minus_base": {
+                "normalized_nearest_neighbor_wasserstein": nn_delta,
+                "normalized_volume_wasserstein": volume_delta,
+                "minimum_distance_fraction_at_0_5_angstrom": distance_delta,
+                "exact_composition_fraction": 0.0,
+                "finite_positive_lattice_fraction": 0.0,
+                "sampling_failures": failures_delta,
+                "terminal_masks": masks_delta,
+            },
+        },
+    }
+
+
+def _write_selection_eval(tmp_path, name: str, result: dict[str, object]):
+    path = tmp_path / f"{name}.json"
+    import json
+
+    path.write_text(json.dumps(result), encoding="utf-8")
+    return path
+
+
+def test_generated_state_replay_checkpoint_selector_prefers_lowest_nn_delta(tmp_path) -> None:
+    contract = SelectionContract()
+    path_100 = _write_selection_eval(
+        tmp_path,
+        "100_ema",
+        _selection_eval(nn_delta=0.0067, volume_delta=-0.0068, replay_loss_delta=-0.1),
+    )
+    path_200 = _write_selection_eval(
+        tmp_path,
+        "200_ema",
+        _selection_eval(nn_delta=0.0327, volume_delta=-0.0079, replay_loss_delta=-0.2),
+    )
+    evidence = {
+        "100_ema": evaluate_candidate(
+            "100_ema",
+            path_100,
+            _selection_eval(nn_delta=0.0067, volume_delta=-0.0068),
+            contract,
+        ),
+        "200_ema": evaluate_candidate(
+            "200_ema",
+            path_200,
+            _selection_eval(nn_delta=0.0327, volume_delta=-0.0079, replay_loss_delta=-0.2),
+            contract,
+        ),
+    }
+
+    assert evidence["100_ema"]["eligible"]
+    assert evidence["200_ema"]["eligible"]
+    selection = select_candidate(evidence)
+    assert selection["status"] == "diagnostic_checkpoint_selected"
+    assert selection["selected_label"] == "100_ema"
+
+
+def test_generated_state_replay_checkpoint_selector_rejects_rollout_regressions(tmp_path) -> None:
+    contract = SelectionContract()
+    raw_path = _write_selection_eval(
+        tmp_path,
+        "100_raw",
+        _selection_eval(nn_delta=0.431, volume_delta=-0.037),
+    )
+    volume_path = _write_selection_eval(
+        tmp_path,
+        "volume_bad",
+        _selection_eval(nn_delta=0.01, volume_delta=0.02),
+    )
+    distance_path = _write_selection_eval(
+        tmp_path,
+        "distance_bad",
+        _selection_eval(nn_delta=0.01, volume_delta=-0.01, distance_delta=-0.1),
+    )
+    evidence = {
+        "100_raw": evaluate_candidate(
+            "100_raw",
+            raw_path,
+            _selection_eval(nn_delta=0.431, volume_delta=-0.037),
+            contract,
+        ),
+        "volume_bad": evaluate_candidate(
+            "volume_bad",
+            volume_path,
+            _selection_eval(nn_delta=0.01, volume_delta=0.02),
+            contract,
+        ),
+        "distance_bad": evaluate_candidate(
+            "distance_bad",
+            distance_path,
+            _selection_eval(nn_delta=0.01, volume_delta=-0.01, distance_delta=-0.1),
+            contract,
+        ),
+    }
+
+    assert not evidence["100_raw"]["eligible"]
+    assert not evidence["volume_bad"]["eligible"]
+    assert not evidence["distance_bad"]["eligible"]
+    assert select_candidate(evidence)["status"] == "no_eligible_checkpoint"
+
+
+def test_generated_state_replay_checkpoint_selector_rejects_replay_non_improvement(tmp_path) -> None:
+    contract = SelectionContract()
+    path = _write_selection_eval(
+        tmp_path,
+        "flat_replay",
+        _selection_eval(nn_delta=0.0, volume_delta=-0.01, replay_loss_delta=0.0),
+    )
+    evidence = {
+        "flat_replay": evaluate_candidate(
+            "flat_replay",
+            path,
+            _selection_eval(nn_delta=0.0, volume_delta=-0.01, replay_loss_delta=0.0),
+            contract,
+        )
+    }
+
+    assert not evidence["flat_replay"]["eligible"]
+    assert select_candidate(evidence)["status"] == "no_eligible_checkpoint"

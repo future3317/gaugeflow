@@ -519,9 +519,24 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Add or use a checkpoint-selection protocol for the 34M generated-state replay
-correctness run that evaluates intermediate checkpoints against both replay
-roles and smoke32 free-generation retention.  The first target region is the
-32-source 100--200 step EMA window.  Multi-GPU 58M/98M capacity training remains
-deferred until 34M has replay-role improvement and non-degraded free-generation
-retention under that predeclared selection rule.
+The checkpoint-selection protocol for the 34M generated-state replay
+correctness run is implemented in
+`scripts/select_generated_state_replay_checkpoint.py`.  The first report:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_v1.json
+```
+
+selects the 32-source 100-step EMA checkpoint:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/checkpoint_step_00000100.pt
+SHA-256:
+8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
+```
+
+This is a diagnostic candidate only.  The next step is a bounded 64-sample
+validation using the same evaluator, frozen target panel and random-stream
+policy.  Multi-GPU 58M/98M capacity training remains deferred until 34M has
+replay-role improvement and non-degraded free-generation retention beyond the
+smoke32 selector panel.

@@ -180,11 +180,19 @@ free NN-W1 仅从 `0.538407` 轻微漂移到 `0.545142`，volume-W1 从 `0.33379
 `0.326940`，distance-valid 维持 `1.0`；200-step EMA 的 NN-W1 为 `0.571096`，
 volume-W1 为 `0.325896`。但 raw 100/200 steps 已明显恶化 NN-W1 到
 `0.969413/1.124272`，EMA 300/500/2000 steps 也分别恶化到
-`0.669791/0.666141/1.085160`。因此 replay-role loss 改善不能作为 checkpoint 选择指标；
-当前只把 100-step EMA 和 200-step EMA 视为诊断候选，优先 100-step EMA。下一步应先实现
-预声明 checkpoint-selection audit，在 replay-role 改善、free-generation retention、distance-valid、
-sampling failure、composition 和 lattice 有效性上同时筛选；在该选择规则通过前，不启动
-58M/98M、多卡容量竞争或完整重训。
+`0.669791/0.666141/1.085160`。因此 replay-role loss 改善不能作为 checkpoint 选择指标。
+预声明 checkpoint-selection audit 已实现为
+`scripts/select_generated_state_replay_checkpoint.py`，并在全部现有 dose JSON 上生成报告：
+`/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_v1.json`。
+该规则要求所有 replay role total loss 下降、free NN-W1 delta 不超过 `0.05`、volume-W1 不变差、
+distance-valid/sampling failure/terminal masks/exact composition/finite-positive lattice 不退化；tie-break
+先取最小 NN drift，再取最大 replay total-loss improvement。结果选中
+`32src_100_ema`：
+`/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/checkpoint_step_00000100.pt`
+，SHA-256 为
+`8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16`。该选择仍是诊断
+checkpoint，不是 production checkpoint。下一步是用同一 evaluator、冻结随机流做 bounded
+64-sample validation；在 64-sample 证据通过前，不启动 58M/98M、多卡容量竞争或完整重训。
 
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 

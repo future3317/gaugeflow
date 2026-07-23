@@ -534,10 +534,19 @@ SHA-256:
 164dc4277c6fd80274990ff4452731f1cb43b4c7a2ef61e7d27c45a68a03f995
 ```
 
-They are diagnostic candidates only.  The next implementation step is a
-predeclared checkpoint-selection audit that selects from existing dose
-evaluations by replay-role improvement plus free-generation retention.  It
-must not select by replay-role loss alone.
+They are diagnostic candidates only.  The predeclared checkpoint-selection
+audit has now been implemented as:
+
+```text
+scripts/select_generated_state_replay_checkpoint.py
+```
+
+It was run on all existing 8-source and 32-source dose evaluation JSONs.  The
+selection report is:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32src_checkpoint_selection_v1.json
+```
 
 Minimum selector requirements:
 
@@ -548,7 +557,22 @@ Minimum selector requirements:
 - exact composition, finite-positive lattice and terminal masks remain valid;
 - tie-breaks are declared before looking at any new validation panel.
 
-Only after this audit selects a candidate should a bounded 64-sample validation
-be run with the same evaluator and frozen random-stream policy.  Full 58M/98M
-or multi-GPU capacity training remains deferred until 34M shows both
-replay-role improvement and non-degraded rollout retention under that rule.
+Selector result:
+
+```text
+selected_label: 32src_100_ema
+selected_checkpoint:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/checkpoint_step_00000100.pt
+selected_checkpoint_sha256:
+  8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
+nn_w1_delta: 0.006734872866905883
+volume_w1_delta: -0.006856855537134221
+distance_valid_delta: 0.0
+replay_total_loss_improvement: 0.5635005235671997
+```
+
+This is still diagnostic checkpoint selection, not a production promotion.
+The next bounded step is a 64-sample validation with the same evaluator and
+frozen random-stream policy.  Full 58M/98M or multi-GPU capacity training
+remains deferred until 34M shows both replay-role improvement and non-degraded
+rollout retention beyond smoke32.
