@@ -26,11 +26,12 @@ from audit_generated_state_replay_training_contract import (
     _pack_role_entries,
     _read_forbidden_source_ids,
 )
-from evaluate_gaugeflow_base_a1 import reference_statistics
+from evaluate_gaugeflow_base_a1 import dense_token_counts, reference_statistics
 from evaluate_physical_representation import evaluate_generation_retention
 
 from gaugeflow.file_utils import sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
+from gaugeflow.production.blueprint import EmpiricalNodeCountPrior, ParentBlueprintBatch
 from gaugeflow.production.checkpointing import load_production_checkpoint
 from gaugeflow.production.composition_runtime import load_qualified_composition_model
 from gaugeflow.production.continued_checkpointing import build_continued_pretraining_objects
@@ -40,12 +41,21 @@ from gaugeflow.production.generated_state_replay import (
     GeneratedStateReplayEntry,
     load_generated_state_replay_cache,
 )
+from gaugeflow.production.generation_metrics import (
+    element_histogram,
+    formula_keys,
+    jensen_shannon,
+    minimum_periodic_distances,
+    quantile_wasserstein,
+    robust_scale,
+)
 from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
 from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.physical_checkpointing import (
     load_physical_ema_for_evaluation,
     read_physical_checkpoint_metadata,
 )
+from gaugeflow.production.reverse_sampler import SamplingFailure, TensorFreeReverseSampler
 from gaugeflow.production.training import ExponentialMovingAverage
 
 
@@ -67,6 +77,24 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--reverse-steps", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--use-checkpoint-ema", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--record-free-generation-samples",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Save per-sample base/candidate free-generation retention records for paired diagnostics.",
+    )
+    parser.add_argument(
+        "--paired-bootstrap-samples",
+        type=int,
+        default=2000,
+        help="Bootstrap draws for optional paired free-generation retention diagnostics.",
+    )
+    parser.add_argument(
+        "--paired-bootstrap-seed",
+        type=int,
+        default=6101,
+        help="CPU RNG seed for optional paired free-generation retention bootstrap.",
+    )
     parser.add_argument("--expected-sampler-commit", default=None)
     parser.add_argument("--expected-sampler-protocol-sha256", default=None)
     parser.add_argument("--forbidden-source-ids", type=Path, default=None)
@@ -251,6 +279,256 @@ def _generation_delta(candidate: dict[str, Any], baseline: dict[str, Any]) -> di
     }
 
 
+def _reference_records(
+    reference: dict[str, torch.Tensor],
+    validation_indices: torch.Tensor,
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for row, source_index in enumerate(validation_indices.cpu().tolist()):
+        records.append(
+            {
+                "row": row,
+                "source_index": int(source_index),
+                "node_count": int(reference["node_counts"][row]),
+                "volume_per_atom": float(reference["volume_per_atom"][row]),
+                "minimum_distance": float(reference["minimum_distance"][row]),
+            }
+        )
+    return records
+
+
+@torch.no_grad()
+def _evaluate_generation_retention_with_records(
+    backbone: HybridCrystalDenoiser,
+    node_prior: EmpiricalNodeCountPrior,
+    standardization: dict[str, Any],
+    a1_training: dict[str, Any],
+    a1_evaluation: dict[str, Any],
+    reference: dict[str, torch.Tensor],
+    composition_model: Any,
+    *,
+    device: torch.device,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    sampler = TensorFreeReverseSampler(
+        backbone,
+        P1LatticeStandardizer.from_mapping(standardization),
+        coordinate_sigma_min=float(a1_training["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(a1_training["coordinate_sigma_max"]),
+        maximum_time=float(a1_training["maximum_time"]),
+        categorical_path="orderless_reveal",
+        composition_model=composition_model,
+    )
+    sample_count = int(a1_evaluation["free_samples"])
+    seed = int(a1_evaluation["sampling_seed"])
+    counts = node_prior.sample(sample_count, generator=torch.Generator().manual_seed(seed))
+    initialization_generator = torch.Generator(device=device).manual_seed(seed + 1)
+    categorical_generator = torch.Generator(device=device).manual_seed(seed + 2)
+    continuous_generator = torch.Generator(device=device).manual_seed(seed + 3)
+    elements = torch.zeros(118, dtype=torch.float64)
+    volumes: list[torch.Tensor] = []
+    distances: list[torch.Tensor] = []
+    formulas: list[str] = []
+    records: list[dict[str, Any]] = []
+    failures = terminal_masks = exact_composition = positive_lattice = 0
+    batch_size = int(a1_evaluation["batch_size"])
+    for start in range(0, sample_count, batch_size):
+        selected_counts = counts[start : start + batch_size].to(device)
+        blueprint = ParentBlueprintBatch.from_node_counts(selected_counts, device=device)
+        try:
+            generated = sampler.sample(
+                blueprint,
+                steps=int(a1_evaluation["reverse_steps"]),
+                initialization_generator=initialization_generator,
+                categorical_generator=categorical_generator,
+                continuous_generator=continuous_generator,
+                continuous_mode=str(a1_evaluation["continuous_mode"]),
+                time_grid=str(a1_evaluation["time_grid"]),
+            )
+        except (SamplingFailure, RuntimeError, FloatingPointError, ValueError) as error:
+            failures += int(selected_counts.numel())
+            for offset, node_count in enumerate(selected_counts.detach().cpu().tolist()):
+                records.append(
+                    {
+                        "sample_index": start + offset,
+                        "node_count": int(node_count),
+                        "sampling_failed": True,
+                        "failure_type": type(error).__name__,
+                    }
+                )
+            continue
+        graph_count = selected_counts.numel()
+        observed = dense_token_counts(generated.element_tokens, generated.batch, graph_count)
+        exact = (observed == generated.composition_counts).all(dim=1)
+        exact_composition += int(exact.sum())
+        terminal_masks += int(generated.diagnostics.masked_count[-1])
+        determinant = torch.linalg.det(generated.lattice)
+        finite = torch.isfinite(generated.lattice).all(dim=(-2, -1)) & (determinant > 0)
+        positive_lattice += int(finite.sum())
+        elements += element_histogram(generated.element_tokens.cpu())
+        volume = determinant / selected_counts
+        distance = minimum_periodic_distances(
+            generated.fractional_coordinates,
+            generated.lattice,
+            generated.batch,
+        )
+        volumes.append(volume.cpu())
+        distances.append(distance.cpu())
+        batch_formulas = formula_keys(generated.element_tokens, generated.batch, graph_count)
+        formulas.extend(batch_formulas)
+        for offset in range(int(graph_count)):
+            records.append(
+                {
+                    "sample_index": start + offset,
+                    "node_count": int(selected_counts[offset].detach().cpu()),
+                    "sampling_failed": False,
+                    "exact_composition": bool(exact[offset].detach().cpu()),
+                    "finite_positive_lattice": bool(finite[offset].detach().cpu()),
+                    "volume_per_atom": float(volume[offset].detach().cpu()),
+                    "minimum_distance": float(distance[offset].detach().cpu()),
+                    "formula_key": batch_formulas[offset],
+                }
+            )
+    if failures or not volumes or not distances:
+        return {"samples": sample_count, "sampling_failures": failures}, records
+    volume_all = torch.cat(volumes)
+    distance_all = torch.cat(distances)
+    count_classes = max(int(counts.max()), int(node_prior.support.max())) + 1
+    count_histogram = torch.bincount(counts, minlength=count_classes)
+    prior_histogram = torch.zeros(count_classes, dtype=torch.float64)
+    prior_histogram[node_prior.support] = node_prior.probabilities
+    points = int(a1_evaluation["wasserstein_quantile_points"])
+    return (
+        {
+            "samples": sample_count,
+            "sampling_failures": failures,
+            "terminal_masks": terminal_masks,
+            "exact_composition_fraction": exact_composition / sample_count,
+            "finite_positive_lattice_fraction": positive_lattice / sample_count,
+            "minimum_distance_fraction_at_0_5_angstrom": float((distance_all >= 0.5).double().mean()),
+            "normalized_nearest_neighbor_wasserstein": quantile_wasserstein(
+                distance_all, reference["minimum_distance"], points=points
+            )
+            / robust_scale(reference["minimum_distance"]),
+            "normalized_volume_wasserstein": quantile_wasserstein(
+                volume_all, reference["volume_per_atom"], points=points
+            )
+            / robust_scale(reference["volume_per_atom"]),
+            "element_marginal_jsd": jensen_shannon(elements, reference["element_histogram"]),
+            "node_count_jsd": jensen_shannon(count_histogram, prior_histogram),
+            "formula_uniqueness_fraction": len(set(formulas)) / len(formulas),
+        },
+        records,
+    )
+
+
+def _successful_paired_values(
+    base_records: list[dict[str, Any]],
+    candidate_records: list[dict[str, Any]],
+    metric: str,
+) -> tuple[torch.Tensor, torch.Tensor, int]:
+    if len(base_records) != len(candidate_records):
+        raise ValueError("base and candidate record counts differ")
+    base_values: list[float] = []
+    candidate_values: list[float] = []
+    failed_pairs = 0
+    for base, candidate in zip(base_records, candidate_records, strict=True):
+        if int(base["sample_index"]) != int(candidate["sample_index"]):
+            raise ValueError("base and candidate sample indices are not paired")
+        if bool(base.get("sampling_failed")) or bool(candidate.get("sampling_failed")):
+            failed_pairs += 1
+            continue
+        base_value = base.get(metric)
+        candidate_value = candidate.get(metric)
+        if not isinstance(base_value, (int, float)) or not isinstance(candidate_value, (int, float)):
+            raise ValueError(f"paired records lack metric {metric}")
+        base_values.append(float(base_value))
+        candidate_values.append(float(candidate_value))
+    if not base_values:
+        raise ValueError("paired bootstrap requires at least one successful pair")
+    return (
+        torch.tensor(base_values, dtype=torch.float64),
+        torch.tensor(candidate_values, dtype=torch.float64),
+        failed_pairs,
+    )
+
+
+def _paired_bootstrap_w1_delta(
+    base_records: list[dict[str, Any]],
+    candidate_records: list[dict[str, Any]],
+    reference_values: torch.Tensor,
+    *,
+    metric: str,
+    points: int,
+    scale: float,
+    bootstrap_samples: int,
+    seed: int,
+) -> dict[str, Any]:
+    if bootstrap_samples < 1:
+        raise ValueError("bootstrap_samples must be positive")
+    base_values, candidate_values, failed_pairs = _successful_paired_values(
+        base_records,
+        candidate_records,
+        metric,
+    )
+    generator = torch.Generator().manual_seed(seed)
+    sample_count = int(base_values.numel())
+    deltas = torch.empty(bootstrap_samples, dtype=torch.float64)
+    for index in range(bootstrap_samples):
+        sampled = torch.randint(sample_count, (sample_count,), generator=generator)
+        base_w1 = quantile_wasserstein(base_values[sampled], reference_values, points=points) / scale
+        candidate_w1 = quantile_wasserstein(candidate_values[sampled], reference_values, points=points) / scale
+        deltas[index] = candidate_w1 - base_w1
+    quantiles = torch.quantile(
+        deltas,
+        torch.tensor([0.025, 0.5, 0.975], dtype=torch.float64),
+    )
+    return {
+        "metric": metric,
+        "bootstrap_samples": bootstrap_samples,
+        "paired_successful_samples": sample_count,
+        "failed_pairs": failed_pairs,
+        "mean_delta": float(deltas.mean()),
+        "p025_delta": float(quantiles[0]),
+        "p50_delta": float(quantiles[1]),
+        "p975_delta": float(quantiles[2]),
+        "probability_delta_le_zero": float((deltas <= 0.0).double().mean()),
+        "boundary": "paired generated-sample bootstrap against the fixed validation reference distribution",
+    }
+
+
+def _paired_free_generation_bootstrap(
+    base_records: list[dict[str, Any]],
+    candidate_records: list[dict[str, Any]],
+    reference: dict[str, torch.Tensor],
+    *,
+    points: int,
+    bootstrap_samples: int,
+    seed: int,
+) -> dict[str, Any]:
+    return {
+        "normalized_volume_wasserstein_delta": _paired_bootstrap_w1_delta(
+            base_records,
+            candidate_records,
+            reference["volume_per_atom"],
+            metric="volume_per_atom",
+            points=points,
+            scale=robust_scale(reference["volume_per_atom"]),
+            bootstrap_samples=bootstrap_samples,
+            seed=seed,
+        ),
+        "normalized_nearest_neighbor_wasserstein_delta": _paired_bootstrap_w1_delta(
+            base_records,
+            candidate_records,
+            reference["minimum_distance"],
+            metric="minimum_distance",
+            points=points,
+            scale=robust_scale(reference["minimum_distance"]),
+            bootstrap_samples=bootstrap_samples,
+            seed=seed + 1,
+        ),
+    }
+
+
 def _evaluation_config(args: argparse.Namespace, a1_protocol: dict[str, Any]) -> dict[str, Any]:
     base = copy.deepcopy(a1_protocol["evaluation"])
     base["validation_graphs"] = int(args.validation_graphs)
@@ -328,26 +606,69 @@ def main() -> None:
         device=device,
         expected_checkpoint_sha256=str(a1_protocol["composition_checkpoint_sha256"]),
     )
-    generation_base = evaluate_generation_retention(
-        base_backbone,
-        node_prior,
-        _standardization(base_metadata),
-        _training_config(base_metadata),
-        evaluation,
-        reference,
-        composition,
-        device=device,
-    )
-    generation_candidate = evaluate_generation_retention(
-        candidate_backbone,
-        node_prior,
-        _standardization(base_metadata),
-        _training_config(base_metadata),
-        evaluation,
-        reference,
-        composition,
-        device=device,
-    )
+    base_records: list[dict[str, Any]] | None = None
+    candidate_records: list[dict[str, Any]] | None = None
+    if args.record_free_generation_samples:
+        generation_base, base_records = _evaluate_generation_retention_with_records(
+            base_backbone,
+            node_prior,
+            _standardization(base_metadata),
+            _training_config(base_metadata),
+            evaluation,
+            reference,
+            composition,
+            device=device,
+        )
+        generation_candidate, candidate_records = _evaluate_generation_retention_with_records(
+            candidate_backbone,
+            node_prior,
+            _standardization(base_metadata),
+            _training_config(base_metadata),
+            evaluation,
+            reference,
+            composition,
+            device=device,
+        )
+    else:
+        generation_base = evaluate_generation_retention(
+            base_backbone,
+            node_prior,
+            _standardization(base_metadata),
+            _training_config(base_metadata),
+            evaluation,
+            reference,
+            composition,
+            device=device,
+        )
+        generation_candidate = evaluate_generation_retention(
+            candidate_backbone,
+            node_prior,
+            _standardization(base_metadata),
+            _training_config(base_metadata),
+            evaluation,
+            reference,
+            composition,
+            device=device,
+        )
+    free_generation: dict[str, Any] = {
+        "evaluation": evaluation,
+        "validation_indices": indices.tolist(),
+        "base": generation_base,
+        "candidate": generation_candidate,
+        "candidate_minus_base": _generation_delta(generation_candidate, generation_base),
+    }
+    if base_records is not None and candidate_records is not None:
+        free_generation["reference_records"] = _reference_records(reference, indices)
+        free_generation["base_records"] = base_records
+        free_generation["candidate_records"] = candidate_records
+        free_generation["paired_bootstrap"] = _paired_free_generation_bootstrap(
+            base_records,
+            candidate_records,
+            reference,
+            points=int(evaluation["wasserstein_quantile_points"]),
+            bootstrap_samples=int(args.paired_bootstrap_samples),
+            seed=int(args.paired_bootstrap_seed),
+        )
     output = {
         "schema": "gaugeflow.generated_state_replay_correctness_evaluation.v1",
         "checkpoint": str(args.checkpoint),
@@ -375,13 +696,7 @@ def main() -> None:
             "candidate": replay_candidate,
             "candidate_minus_base": _loss_deltas(replay_candidate, replay_base),
         },
-        "free_generation": {
-            "evaluation": evaluation,
-            "validation_indices": indices.tolist(),
-            "base": generation_base,
-            "candidate": generation_candidate,
-            "candidate_minus_base": _generation_delta(generation_candidate, generation_base),
-        },
+        "free_generation": free_generation,
         "decision_boundary": (
             "diagnostic_only; this evaluates generated-state replay correctness and "
             "short free-generation retention, not Stage-E pass or capacity selection"

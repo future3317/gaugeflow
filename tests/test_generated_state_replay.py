@@ -21,6 +21,7 @@ from scripts.build_tiny_generated_state_replay_cache import (
     _select_source_indices,
     _source_ids_for_indices,
 )
+from scripts.evaluate_generated_state_replay_correctness import _paired_bootstrap_w1_delta
 from scripts.select_generated_state_replay_checkpoint import (
     SelectionContract,
     evaluate_candidate,
@@ -291,6 +292,47 @@ def test_generated_state_replay_correctness_parameter_update_norm() -> None:
     with torch.no_grad():
         module.weight.add_(1.0)
     assert _parameter_update_norm(module, reference) > 0.0
+
+
+def test_generated_state_replay_paired_bootstrap_rejects_unpaired_records() -> None:
+    base = [{"sample_index": 0, "sampling_failed": False, "volume_per_atom": 1.0}]
+    candidate = [{"sample_index": 1, "sampling_failed": False, "volume_per_atom": 1.0}]
+
+    with pytest.raises(ValueError, match="not paired"):
+        _paired_bootstrap_w1_delta(
+            base,
+            candidate,
+            torch.tensor([1.0], dtype=torch.float64),
+            metric="volume_per_atom",
+            points=2,
+            scale=1.0,
+            bootstrap_samples=8,
+            seed=1,
+        )
+
+
+def test_generated_state_replay_paired_bootstrap_zero_for_identical_records() -> None:
+    records = [
+        {"sample_index": 0, "sampling_failed": False, "minimum_distance": 1.0},
+        {"sample_index": 1, "sampling_failed": False, "minimum_distance": 2.0},
+        {"sample_index": 2, "sampling_failed": False, "minimum_distance": 3.0},
+    ]
+
+    report = _paired_bootstrap_w1_delta(
+        records,
+        records,
+        torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64),
+        metric="minimum_distance",
+        points=4,
+        scale=1.0,
+        bootstrap_samples=16,
+        seed=1,
+    )
+
+    assert report["mean_delta"] == pytest.approx(0.0)
+    assert report["p025_delta"] == pytest.approx(0.0)
+    assert report["p975_delta"] == pytest.approx(0.0)
+    assert report["probability_delta_le_zero"] == pytest.approx(1.0)
 
 
 def test_tiny_replay_builder_reads_forbidden_source_ids(tmp_path) -> None:
