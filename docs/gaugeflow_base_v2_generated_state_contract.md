@@ -1,8 +1,8 @@
 # GaugeFlow-base v2 Generated-State Contract
 
 Status: draft implementation contract with tiny-cache provenance and bounded
-34M 2k correctness training passed; not a generated-quality or capacity
-competition result.
+34M 2k correctness training passed, but smoke32 retention failed.  This is not
+a generated-quality or capacity competition result.
 
 Implementation status as of `23cde00`:
 
@@ -160,6 +160,29 @@ first_step_parameter_update_norm: 1.0069770103808358
 final_parameter_update_norm: 37.47103131901986
 forbidden_source_id_check: executed, count=773
 ```
+
+- The follow-up smoke32 evaluation showed that this 8-entry training run is not
+  a production candidate:
+
+```text
+EMA checkpoint:
+  replay role losses: lower than base for all four roles
+  free-generation NN-W1: 0.5384073850 -> 2.0589264243
+  free-generation volume-W1: 0.3337970015 -> 0.4414314562
+  distance-valid: 1.0 -> 0.9375
+
+Raw checkpoint:
+  replay role losses: lower than base for all four roles
+  free-generation NN-W1: 0.5384073850 -> 1.9576429188
+  free-generation volume-W1: 0.3337970015 -> 0.4852205126
+  distance-valid: 1.0 -> 1.0
+```
+
+The interface and optimizer path are therefore closed, but the tiny replay
+cache is too narrow: it reduces the cached role losses while damaging
+short free-generation retention.  This is not an EMA artifact.  Larger model
+capacity is still deferred; the next correctness step is broader replay-state
+coverage under the same provenance contract.
 
 ## Purpose
 
@@ -348,7 +371,7 @@ This contract does not authorize:
 
 ## Next Implementation Step
 
-Evaluate the 34M 2k correctness checkpoint with frozen generated-state
-stratification before any capacity run.  Multi-GPU 58M/98M capacity training
-remains deferred until this 34M generated-state contract has rollout evidence,
-not only training-interface evidence.
+Build a broader provenance-checked generated-state replay cache, then repeat a
+bounded 34M correctness run and the same replay/free-generation evaluator.
+Multi-GPU 58M/98M capacity training remains deferred until 34M has both
+replay-role improvement and non-degraded free-generation retention.

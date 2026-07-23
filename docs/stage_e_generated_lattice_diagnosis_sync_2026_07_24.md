@@ -202,14 +202,17 @@ Completed provenance steps:
 8. 34M generated-state replay correctness runner and 20-step tiny training
    smoke on the eight-entry real replay cache.
 9. Bounded 34M 2k generated-state correctness run on the same replay contract.
+10. Smoke32 replay-role/free-generation evaluation for the 2k checkpoint,
+    with both EMA and raw weights.
 
 Current immediate task:
 
-1. Evaluate the 34M 2k correctness checkpoint with the same frozen
-   generated-state stratification before any capacity run.
-2. Do not expand to 58M/98M or multi-GPU capacity competition until the 34M
-   generated-state contract has rollout evidence, not only training-interface
-   evidence.
+1. Treat the 8-entry 2k correctness checkpoint as an overfit diagnostic, not a
+   production candidate.
+2. Build a broader provenance-checked replay cache before any longer A-v2
+   correctness run.
+3. Do not expand to 58M/98M or multi-GPU capacity competition until 34M has
+   both replay-role improvement and non-degraded free-generation retention.
 
 Deferred work:
 
@@ -259,6 +262,8 @@ Server artifacts:
     checkpoint_metadata.json
     training_metrics.jsonl
     checkpoint_step_00002000.pt
+  generated_state_replay_correctness_eval_smoke32_v1.json
+  generated_state_replay_correctness_eval_smoke32_noema_v1.json
 ```
 
 Code/provenance boundary:
@@ -296,6 +301,34 @@ clean_retention_loss_ratio_max: 2.5471673704374154
 first_step_parameter_update_norm: 1.0069770103808358
 final_parameter_update_norm: 5.613741470653719
 forbidden_source_id_check: executed, count=773
+```
+
+Latest 34M 2k evaluation:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_eval_smoke32_v1.json
+checkpoint weights: EMA
+replay role losses: lower than base for all four roles
+free-generation base/candidate NN-W1: 0.5384073850 / 2.0589264243
+free-generation base/candidate volume-W1: 0.3337970015 / 0.4414314562
+free-generation base/candidate distance-valid: 1.0 / 0.9375
+
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_eval_smoke32_noema_v1.json
+checkpoint weights: raw model
+replay role losses: lower than base for all four roles
+free-generation base/candidate NN-W1: 0.5384073850 / 1.9576429188
+free-generation base/candidate volume-W1: 0.3337970015 / 0.4852205126
+free-generation base/candidate distance-valid: 1.0 / 1.0
+```
+
+Interpretation:
+
+```text
+The 8-entry replay correctness run proved optimizer/interface closure, but it
+overfits the tiny replay cache and harms short free-generation retention.  The
+failure is not explained by EMA lag, because raw weights show the same NN-W1
+regression.  This blocks capacity scaling until the replay cache is broadened
+and the same evaluator shows non-degraded free-generation retention.
 ```
 
 Latest 34M correctness run:

@@ -155,8 +155,14 @@ ratio 为 `2.5471673704374154`，first/final 参数更新范数为
 包含 2000 行 metrics、`checkpoint_step_00002000.pt`，checkpoint SHA-256 为
 `2935365787b934cfdd58bc8a47a2cf104654cd736b946eb5f493b0223de9e560`；clean-retention max
 ratio 为 `5.617618305543426`，final 参数更新范数为 `37.47103131901986`，四个 role 的终端
-梯度贡献仍全部非零。下一步是先用冻结 generated-state stratification 评估这个 34M 2k checkpoint；
-58M/98M、多卡容量竞争和完整重训仍必须等 34M contract 有 rollout 证据后再启动。
+梯度贡献仍全部非零。但随后冻结 smoke32 evaluation 说明它不是 production 候选：EMA 权重虽然把四个
+replay role loss 全部压低，free-generation NN-W1 却从 `0.5384073850` 恶化到
+`2.0589264243`，volume-W1 从 `0.3337970015` 恶化到 `0.4414314562`，distance-valid 从
+`1.0` 降到 `0.9375`；raw 权重同样把 NN-W1 恶化到 `1.9576429188`，因此不是 EMA 滞后造成。
+当前结论是 8-entry replay correctness run 关闭了 optimizer/interface 路径，但 replay cache 太窄，
+已经出现对 tiny cache 的过拟合和 free-generation retention 退化。下一步应先扩展 provenance-checked
+generated-state replay coverage，再重复 bounded 34M correctness run 和同一 evaluator；58M/98M、多卡容量竞争和
+完整重训仍必须等 34M 同时具备 replay-role 改善与 free-generation 非劣证据后再启动。
 
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
