@@ -1108,3 +1108,59 @@ steps; probability-flow W1 increased 0.59/1.88/4.46/7.24 across the same NFE
 values. This is directional evidence for a state-dependent generated-lattice
 field/exposure issue, not permission to increase NFE, promote probability flow,
 or clip terminal volumes. A properly nested-Brownian audit remains separate.
+
+The generated-lattice handoff audit then found a more specific interface bug:
+`composition_counts` had to follow the actual elements presented to each
+lattice role. `oracle_ca` receives the arm's true elements, `oracle_c` receives
+the element state actually entering the lattice module, `free` receives the
+generated elements, and exposure training receives the current exposed carrier.
+Generated-side roles must not read target or clean-structure composition
+counts. The repair in `838364d9` added provenance coverage for that rule and
+kept the Stage-A/C count normalization, batch indexing, vocabulary padding,
+composition-order invariance, and exact-count relabel semantics unchanged.
+
+The old adapter checkpoint is therefore retained only as a historical negative
+control. A counts-fixed adapter was trained from the same Stage-C 30k/global
+40523 base, the same E3 tensor checkpoint, the same JARVIS train split, the
+same target-exclusion contract, seed, optimizer, step budget and loss. In a
+paired smoke, it repaired the old volume drift but exposed a volume/local
+geometry decoupling: C-new brought `oracle_ca` volume-W1 back to about `0.08`,
+while NN-W1 worsened to `0.6645` relative to the no-adapter neighborhood around
+`0.5232`. Because clean-coordinate counterfactuals on C-new lattices did not
+immediately degrade nearest-neighbour distances, the remaining failure was
+localized to the reverse trajectory and its dynamic lattice-coordinate graph
+coupling rather than to terminal lattice validity alone.
+
+A zero-training residual decomposition then compared the C-new adapter residual
+against the B base lattice field over reverse time. The adapter shape residual
+was persistently large across the trajectory, not a single late numerical
+spike. The next bounded intervention kept the full volume residual and scaled
+only the five-dimensional shape residual:
+
+```text
+volume = base_volume + adapter_delta_volume
+shape  = base_shape  + alpha * adapter_delta_shape
+alpha in {0, 0.25, 0.5, 0.75, 1.0}
+```
+
+No clipping, retraining, checkpoint change, VP-sampler change or random-stream
+change was used. The official alpha `0.25` smoke32 evaluator gave
+`oracle_ca` tensor RMSE `0.786164`, volume-W1 `0.079249`, NN-W1 `0.528087` and
+zero failures; `oracle_c` remained poor at tensor RMSE `1.015259`, volume-W1
+`0.075922`, NN-W1 `0.701007`; and `free` was tensor RMSE `0.983278`,
+volume-W1 `0.306149`, NN-W1 `0.329158`. Target 123 was the clearest tail:
+full shape residual gave condition number `12.9924` and minimum distance
+`1.6711`, while alpha `0.25` reduced these to `4.6776` and `2.2970`.
+
+Commit `7b8f222d` exposes `--lattice-adapter-shape-scale` and
+`HybridCrystalDenoiser.set_lattice_residual_shape_scale`. The default remains
+`1.0`, so historical behavior is unchanged unless the diagnostic flag is set.
+This is a local causal diagnostic and candidate mitigation, not a Stage-E pass:
+counts explain the old adapter's volume catastrophe, full shape residual
+explains the counts-fixed `oracle_ca` NN/shape tail, but `oracle_c` is still
+blocked by generated assignment plus noisy/generated coordinate graph coverage.
+Replacing the full hybrid lattice update with a coordinate-free lattice field
+reduced target-123 condition number in a lattice-only probe but worsened tensor
+RMSE and NN, so it is not a production fix. Stage-F remains closed; any next
+repair must be separately authorized, such as a data-whitened shape trust
+region or an explicitly volume-only adapter candidate.

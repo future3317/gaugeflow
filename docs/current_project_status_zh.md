@@ -1,4 +1,4 @@
-# GaugeFlow 当前实现、方法演进与实验状态（2026-07-23）
+# GaugeFlow 当前实现、方法演进与实验状态（2026-07-24）
 
 ## 一句话结论
 
@@ -83,8 +83,40 @@ tensor condition，不能作为 null fallback。64-sample paired direct-conditio
 冻结 Stage-D evaluator 独立检查并失败：tensor-orbit RMSE
 `1.066727 -> 1.403886`，NN-W1 `0.248767 -> 0.366399`，有效距离比例
 `1.0 -> 0.984375`；volume-W1 略改善且零 failure。说明离线 orbit-mimic 机制没有跨过
-generated-side exposure shift。E 尚未资格化，下一步先补条件 composition/lattice 接口和
-on-policy exposure，F 仍阻塞。
+generated-side exposure shift。E 尚未资格化，F 仍阻塞。
+
+后续 Stage-E generated-lattice handoff 审计已把失败进一步分解。首先，
+`composition_counts` 的缺失是真实接口 bug：旧 lattice exposure adapter 在 generated-side
+arm 中不能可靠接收实际输入 lattice 模块的元素计数，导致 volume 漂移。该问题已由
+`838364d9 fix: preserve composition context in Stage-E lattice exposure` 修复，并用
+provenance 测试确认 generated-side arm 不会读取 clean target counts；每个样本的 counts
+总和、padding、vocabulary 映射、batch 分离、composition 顺序不变性和重标号一致性均按
+Stage-A/C 接口语义检查。
+
+从相同 Stage-C 30k/global 40523 base、相同 E3 tensor checkpoint、相同 JARVIS train
+split、相同 target-exclusion contract、seed、batch、optimizer、步数和 loss 重新训练的
+counts-fixed adapter 修复了旧 adapter 的 volume 问题，但暴露出新的解耦：C-new 在
+`oracle_ca` 中把 volume-W1 压回约 `0.08`，NN-W1 却从历史 no-adapter 对照约 `0.5232`
+恶化到 `0.6645`。零训练 lattice-coordinate counterfactual 表明 clean coordinates 放到
+C-new lattice 上没有立即恶化，问题更像是反向采样过程中 shape trajectory 改变周期距离与
+动态邻接图，使 coordinate score 进入训练不足状态，而不是最终 lattice 本身必然不物理。
+
+adapter residual 分解确认 full shape residual 沿整条反向轨迹持续偏大；随后只缩放
+shape residual、不缩放 volume residual 的 dose 实验给出最小诊断修复。`alpha=0.25`
+在官方 smoke32 evaluator 上得到：`oracle_ca` tensor RMSE `0.786164`、volume-W1
+`0.079249`、NN-W1 `0.528087`、零 failure；`oracle_c` 为 tensor RMSE `1.015259`、
+volume-W1 `0.075922`、NN-W1 `0.701007`；`free` 为 tensor RMSE `0.983278`、
+volume-W1 `0.306149`、NN-W1 `0.329158`。commit
+`7b8f222d fix: scale Stage-E lattice shape residual` 只暴露
+`--lattice-adapter-shape-scale` 和等价模型 setter，默认 `1.0` 保持历史行为。
+
+当前结论是：counts 缺失解释旧 adapter 的 volume catastrophe；full shape residual 解释
+C-new 在 `oracle_ca` 中的 volume/NN 解耦；`shape_scale=0.25` 是诊断候选而不是正式
+Stage-E pass。`oracle_c` 仍失败，尤其 target 123 仍有 generated assignment + noisy/generated
+coordinate graph 触发的 shape tail；简单把 hybrid lattice update 解耦为 coordinate-free
+lattice field 会牺牲 tensor target control，因此不是 production 修复。下一步只能继续定位
+generated-state coverage 或设计有证据授权的 shape trust-region/volume-only 最小候选；不得
+启动 Stage-F，不得把论文更新为 Stage-E 通过，也不得为 E-v1 盲目增加容量。
 
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 

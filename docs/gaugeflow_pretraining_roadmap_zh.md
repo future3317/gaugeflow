@@ -312,8 +312,28 @@ condition-present；后者不得作为 null fallback。64 个 held-out tensor ta
 paired rollout 已完成且失败：冻结 D tensor-orbit RMSE `1.066727 -> 1.403886`，配对
 95% 区间 `[-0.003943,0.769720]`；NN-W1 `0.248767 -> 0.366399`，有效距离比例
 `1.0 -> 0.984375 < 0.99`。volume-W1 略改善且零 failure，但不能抵消目标和碰撞失败。
-下一版 E 必须补上 tensor-conditioned composition/lattice side-state law，并加入
-generated-side exposure；不能只增大 mimic 权重。F 继续阻塞。
+后续 E-v1 已补上 tensor-conditioned composition/lattice side-state law，并加入
+generated-side lattice exposure；不能只增大 mimic 权重这一结论未变。F 继续阻塞。
+
+最新 E-v1 诊断边界如下。`composition_counts` 必须来自每个 arm 实际输入 lattice 模块的
+元素状态：`oracle_ca` 用该 arm 的真实元素，`oracle_c` 用实际元素状态，`free` 用生成元素，
+exposure 训练用当前 exposed carrier，禁止 generated-side arm 读取 clean target counts。
+该接口 bug 已由 `838364d9` 修复，旧 adapter checkpoint 只保留为 historical negative
+control。
+
+counts-fixed adapter 在相同 Stage-C 30k/global 40523 base、相同 E3 tensor checkpoint、
+相同 JARVIS split、相同 exclusion contract 和相同训练预算下重新训练后，修复了 volume
+漂移，但 `oracle_ca` 出现 volume/NN 解耦。零训练 residual dose 证明 full shape residual
+过强；只缩放 shape residual 且保留完整 volume residual 的 `alpha=0.25` 在 smoke32 上得到
+`oracle_ca` tensor RMSE `0.786164`、volume-W1 `0.079249`、NN-W1 `0.528087`、零 failure。
+同一设置下 `oracle_c` 仍为 NN-W1 `0.701007`，`free` 也未资格化。因此
+`--lattice-adapter-shape-scale 0.25` 只能作为诊断候选，不是 Stage-E pass。
+
+当前允许的下一步是根因继续收敛：若继续沿 E-v1 修复，必须优先验证 data-whitened shape
+trust region 或明确 volume-only adapter 是否能保持 tensor target separation，并用 paired
+bootstrap 报告 `oracle_ca/oracle_c/free`。若 `oracle_c/free` 仍失败，才可按新的冻结数据契约
+考虑 GaugeFlow-base v2 或 generated-state coverage 训练；不得启动 Stage-F，不得重训
+A/B/C 来掩盖 E-v1 失败，也不得把 shape scaling 写成最终机制。
 
 ## 9. 阶段 F：受约束 reward post-training
 
