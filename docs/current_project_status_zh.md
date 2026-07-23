@@ -293,6 +293,25 @@ microbatch 审计通过，`max_graphs_per_role_batch=64`，clean-retention ratio
 window 没有打开 strict volume retention 窗口；当前瓶颈更像 rollout-level volume retention
 评价/覆盖边界，而不是模型容量或 64-source 样本数本身。
 
+随后补了 opt-in 的 paired retention records 诊断，commit
+`b0ea2a3 feat: record paired replay retention diagnostics`。默认 evaluator 路径不变；只有显式传
+`--record-free-generation-samples` 时才保存 base/candidate 逐样本 free-generation 记录，并对同一
+固定 validation reference 做 paired generated-sample bootstrap。服务器验证通过：
+`tests/test_generated_state_replay.py` 为 23 passed，相关 `ruff` 与 `mypy` 均通过。
+
+记录版 val128 重跑了 64src/10、64src/15、128src/15、128src/25；四个 aggregate delta 与旧
+aggregate-only JSON 完全一致，均为 128 base records、128 candidate records、128 reference records，
+零 sampling failure，terminal masks、exact composition 与 finite-positive lattice 均不退化。
+paired bootstrap 结果为：64src/10 的 NN/volume 95% CI 分别为
+`[-0.002316,+0.007145]`、`[+0.000132,+0.001114]`；64src/15 为
+`[+0.000165,+0.024719]`、`[-0.000531,+0.001657]`；128src/15 为
+`[-0.001886,+0.009150]`、`[+0.000125,+0.001797]`；128src/25 为
+`[-0.002022,+0.024236]`、`[+0.000205,+0.003024]`。因此 strict positive volume drift
+不是 aggregate 报告假象；三组 volume bootstrap 区间严格为正，唯一 volume 区间过零的 64src/15
+又出现正的 NN drift 区间。当前仍没有同时满足 all-role replay loss improvement 与稳定 val128
+retention window 的 34M checkpoint。下一步应做同一 34M 下的 on-policy replay refresh，而不是
+立即启动 58M/98M 或 Stage-F。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

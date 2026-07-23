@@ -756,6 +756,34 @@ replay direction and hard validity are correct, but the zero-margin
 rollout-level volume rule has no robust overlap yet with replay-loss
 improvement.
 
+An opt-in retention-record diagnostic was added next:
+
+```text
+b0ea2a3 feat: record paired replay retention diagnostics
+```
+
+The default evaluator path is unchanged.  With
+`--record-free-generation-samples`, the evaluator stores paired base/candidate
+sample records and reports a paired generated-sample bootstrap against the same
+fixed validation reference distribution.  Server pytest, ruff and mypy passed
+for the modified evaluator and replay tests.
+
+Record-mode val128 reruns exactly matched the existing aggregate-only JSONs:
+
+| cache | steps | all replay role losses lower | agg NN delta | agg volume delta | NN 95% CI | volume 95% CI |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| 64-source | 10 | no | +0.002923 | +0.000934 | [-0.002316, +0.007145] | [+0.000132, +0.001114] |
+| 64-source | 15 | yes | +0.010864 | +0.000786 | [+0.000165, +0.024719] | [-0.000531, +0.001657] |
+| 128-source | 15 | yes | +0.004080 | +0.001527 | [-0.001886, +0.009150] | [+0.000125, +0.001797] |
+| 128-source | 25 | yes | +0.010673 | +0.002142 | [-0.002022, +0.024236] | [+0.000205, +0.003024] |
+
+This makes the current failure sharper.  The volume drift is not just an
+aggregate formatting artifact: three of the four paired bootstrap intervals are
+strictly positive for volume-W1, while the one interval crossing zero
+(`64-source`, 15 steps) has a positive NN-W1 interval.  There is still no
+measured 34M checkpoint that combines all-role replay loss improvement with a
+stable val128 retention window.
+
 Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic

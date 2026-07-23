@@ -1023,3 +1023,73 @@ The next minimum evidence-backed step is not 58M/98M capacity scaling.  It is
 either an on-policy replay refresh that uses carriers from the current
 candidate rather than only frozen Stage-C base carriers, or a predeclared paired
 statistical volume non-inferiority rule.  Stage-E remains blocked.
+
+### 2026-07-24 update: paired retention records
+
+The replay correctness evaluator now has an opt-in diagnostics mode for
+free-generation retention records:
+
+```text
+b0ea2a3 feat: record paired replay retention diagnostics
+```
+
+This mode is disabled by default.  When explicitly enabled with
+`--record-free-generation-samples`, it saves per-sample base/candidate records
+and a paired generated-sample bootstrap for NN-W1 and volume-W1 deltas against
+the same fixed validation reference distribution.  It does not change model,
+loss, sampler, replay loss, aggregate retention metric definitions or the
+existing selector.
+
+Server verification at `b0ea2a3`:
+
+```text
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python -m pytest -q tests/test_generated_state_replay.py
+  23 passed
+
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check scripts/evaluate_generated_state_replay_correctness.py tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy scripts/evaluate_generated_state_replay_correctness.py tests/test_generated_state_replay.py
+  Success
+```
+
+Record-mode val128 outputs:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_10_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_64src_15_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_eval_val128_records_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_25_eval_val128_records_v1.json
+```
+
+For all four reruns, the recorded aggregate NN-W1 and volume-W1 deltas exactly
+match the existing aggregate-only JSONs.  Each run has 128 base records, 128
+candidate records, 128 reference records, zero sampling failures, unchanged
+terminal masks, unchanged exact composition and unchanged finite-positive
+lattice fraction.
+
+Paired bootstrap summary:
+
+| cache | steps | all replay role losses lower | agg NN delta | agg volume delta | NN 95% CI | volume 95% CI | P(volume delta <= 0) |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 64-source | 10 | no | +0.002923 | +0.000934 | [-0.002316, +0.007145] | [+0.000132, +0.001114] | 0.0170 |
+| 64-source | 15 | yes | +0.010864 | +0.000786 | [+0.000165, +0.024719] | [-0.000531, +0.001657] | 0.1115 |
+| 128-source | 15 | yes | +0.004080 | +0.001527 | [-0.001886, +0.009150] | [+0.000125, +0.001797] | 0.0190 |
+| 128-source | 25 | yes | +0.010673 | +0.002142 | [-0.002022, +0.024236] | [+0.000205, +0.003024] | 0.0190 |
+
+Interpretation:
+
+```text
+The strict positive val128 volume deltas are not merely an aggregate reporting
+artifact.  Under paired generated-sample bootstrap, 64src/10, 128src/15 and
+128src/25 retain a positive volume-W1 delta with 95% CIs above zero; 64src/15
+has a volume CI that crosses zero, but its NN-W1 CI is positive and the run
+still does not create a clean retention window that is robust across support
+windows.  The new evidence preserves the previous conclusion: hard validity and
+replay-role losses move correctly, but rollout-level retention still lacks a
+stable overlap window.
+```
+
+The next evidence-backed action is to test on-policy replay refresh under the
+same 34M model, using carriers from the current candidate rather than only
+frozen Stage-C base carriers.  Capacity scaling and Stage-F remain deferred.
