@@ -192,7 +192,7 @@ def main() -> None:
     stage_e = torch.load(args.stage_e_checkpoint, map_location=device, weights_only=False)
     if stage_e.get("schema") not in {"gaugeflow.stage_e_e0.v1", "gaugeflow.stage_e_e1.v1"}:
         raise ValueError("Stage-E checkpoint schema is not a supported conditional arm")
-    if stage_e.get("arm") not in {"orbit_mimic", "clean_side"}:
+    if stage_e.get("arm") not in {"orbit_mimic", "clean_side", "mixed_side"}:
         raise ValueError("Stage-E checkpoint is not a supported conditional arm")
     if stage_e.get("source_checkpoint_sha256") != sha256_file(args.stage_c_checkpoint):
         raise ValueError("Stage-E checkpoint source mismatch")
