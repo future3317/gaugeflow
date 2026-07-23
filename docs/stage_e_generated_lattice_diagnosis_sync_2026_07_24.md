@@ -500,3 +500,55 @@ first_step_parameter_update_norm: 1.0069770103808358
 final_parameter_update_norm: 37.47103131901986
 forbidden_source_id_check: executed, count=773
 ```
+
+## Current Handoff State
+
+As of pushed HEAD:
+
+```text
+ef22924dc84fe1688d51dee7b70144e7dc59d90b
+docs: record replay early-EMA dose window
+```
+
+The active scientific boundary is:
+
+- Stage-E v1 remains blocked.
+- Counts absence explains the old lattice-adapter volume catastrophe.
+- Full shape residual explains the counts-fixed `oracle_ca` NN/shape tail.
+- Partial/MASK exposure is a real carrier gap, but the single shared E-v1
+  adapter is not a production candidate.
+- The current A-v2 route is generated-state replay coverage with strict
+  provenance, not immediate model-capacity scaling.
+
+The current diagnostic candidates are:
+
+```text
+100-step EMA:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_100_v1/checkpoint_step_00000100.pt
+SHA-256:
+8b9bbd2cd30216b7801282f58af85e52c9742fac9a6f3b353eb5ac8e9ffa5a16
+
+200-step EMA:
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_32src_200_v1/checkpoint_step_00000200.pt
+SHA-256:
+164dc4277c6fd80274990ff4452731f1cb43b4c7a2ef61e7d27c45a68a03f995
+```
+
+They are diagnostic candidates only.  The next implementation step is a
+predeclared checkpoint-selection audit that selects from existing dose
+evaluations by replay-role improvement plus free-generation retention.  It
+must not select by replay-role loss alone.
+
+Minimum selector requirements:
+
+- every replay role total loss is lower than the base;
+- free NN-W1 is non-degraded within the declared tolerance;
+- volume-W1 is non-inferior or improved;
+- distance-valid fraction and sampling failures do not regress;
+- exact composition, finite-positive lattice and terminal masks remain valid;
+- tie-breaks are declared before looking at any new validation panel.
+
+Only after this audit selects a candidate should a bounded 64-sample validation
+be run with the same evaluator and frozen random-stream policy.  Full 58M/98M
+or multi-GPU capacity training remains deferred until 34M shows both
+replay-role improvement and non-degraded rollout retention under that rule.
