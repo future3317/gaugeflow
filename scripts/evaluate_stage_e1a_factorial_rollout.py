@@ -229,6 +229,7 @@ def main() -> None:
         role_volumes: dict[str, list[torch.Tensor]] = {role: [] for role in roles}
         role_distances: dict[str, list[torch.Tensor]] = {role: [] for role in roles}
         failures = {role: 0 for role in roles}
+        errors: dict[str, list[str]] = {role: [] for role in roles}
         for start in range(0, len(records), int(protocol["batch_size"])):
             stop = min(start + int(protocol["batch_size"]), len(records))
             counts = target_batch.node_counts[start:stop]
@@ -257,8 +258,10 @@ def main() -> None:
                         steps=int(protocol["reverse_steps"]),
                         seed=seed,
                     )
-                except (SamplingFailure, RuntimeError, ValueError, FloatingPointError):
+                except (SamplingFailure, RuntimeError, ValueError, FloatingPointError) as error:
                     failures[role] += stop - start
+                    if len(errors[role]) < 3:
+                        errors[role].append(f"{type(error).__name__}: {error}")
                     continue
                 generated_batch = ParentBlueprintBatch.from_node_counts(counts).batch
                 prediction = evaluator(tokens, coordinates, lattice, generated_batch, source_index).piezoelectric
@@ -271,7 +274,10 @@ def main() -> None:
         arm_result: dict[str, Any] = {"roles": {}}
         for role in roles:
             if not role_errors[role]:
-                arm_result["roles"][role] = {"sampling_failures": failures[role]}
+                arm_result["roles"][role] = {
+                    "sampling_failures": failures[role],
+                    "errors": errors[role],
+                }
                 continue
             volume = torch.cat(role_volumes[role])
             distance = torch.cat(role_distances[role])
@@ -288,6 +294,7 @@ def main() -> None:
                     / robust_scale(target_volume)
                 ),
                 "mean_tensor_orbit_error": float(torch.cat(role_errors[role]).mean()),
+                "errors": errors[role],
             }
         if role_errors["base"] and role_errors["conditioned"]:
             difference = torch.cat(role_errors["conditioned"]) - torch.cat(role_errors["base"])
