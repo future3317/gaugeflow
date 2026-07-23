@@ -45,6 +45,15 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache-root", type=Path, required=True)
     parser.add_argument("--base-checkpoint", type=Path, required=True)
+    parser.add_argument(
+        "--carrier-checkpoint",
+        type=Path,
+        default=None,
+        help=(
+            "Optional checkpoint used only to generate replay carriers. "
+            "The replay training base identity remains --base-checkpoint."
+        ),
+    )
     parser.add_argument("--composition-checkpoint", type=Path, required=True)
     parser.add_argument("--composition-protocol", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -194,6 +203,106 @@ def _load_sampler(
     return sampler, metadata
 
 
+def _load_correctness_sampler(
+    checkpoint: Path,
+    composition_checkpoint: Path,
+    composition_protocol: Path,
+    *,
+    base_checkpoint: Path,
+    device: torch.device,
+) -> tuple[TensorFreeReverseSampler, dict[str, Any]]:
+    payload = torch.load(checkpoint, map_location=device, weights_only=False)
+    if (
+        not isinstance(payload, dict)
+        or payload.get("schema") != "gaugeflow.generated_state_replay_correctness_training.v1"
+    ):
+        raise ValueError("checkpoint is not a generated-state replay correctness checkpoint")
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise ValueError("generated-state replay correctness checkpoint lacks summary")
+    base_metadata = read_physical_checkpoint_metadata(base_checkpoint)
+    stage_b_metadata = base_metadata.get("stage_b_metadata")
+    if not isinstance(stage_b_metadata, dict):
+        raise ValueError("base checkpoint lacks Stage-B metadata for correctness carrier checkpoint")
+    model_config = stage_b_metadata.get("model_config")
+    training_config = stage_b_metadata.get("a1_training_config")
+    standardization = stage_b_metadata.get("lattice_standardization")
+    if not isinstance(model_config, dict) or not isinstance(training_config, dict) or not isinstance(
+        standardization, dict
+    ):
+        raise ValueError("base checkpoint lacks Stage-B runtime config for correctness carrier checkpoint")
+    training_summary_config = summary.get("training_config")
+    if not isinstance(training_summary_config, dict):
+        raise ValueError("generated-state replay correctness checkpoint lacks training config")
+    denoiser = HybridCrystalDenoiser(**model_config).to(device)
+    ema = ExponentialMovingAverage(denoiser, float(training_summary_config["ema_decay"]))
+    ema.load_state_dict(payload["ema"])
+    ema.copy_to(denoiser)
+    denoiser.eval()
+    if training_config.get("categorical_path") != "orderless_reveal":
+        raise ValueError("tiny replay writer requires an orderless exact-count product checkpoint")
+    composition_model = load_qualified_composition_model(
+        composition_checkpoint,
+        composition_protocol,
+        device=device,
+    )
+    sampler = TensorFreeReverseSampler(
+        denoiser,
+        P1LatticeStandardizer.from_mapping(standardization),
+        coordinate_sigma_min=float(training_config["coordinate_sigma_min"]),
+        coordinate_sigma_max=float(training_config["coordinate_sigma_max"]),
+        maximum_time=float(training_config["maximum_time"]),
+        categorical_path="orderless_reveal",
+        composition_model=composition_model,
+    )
+    metadata = {
+        "protocol": "gaugeflow.generated_state_replay_correctness_training.v1",
+        "protocol_sha256": sha256_file(checkpoint),
+        "carrier_checkpoint": str(checkpoint),
+        "carrier_checkpoint_sha256": sha256_file(checkpoint),
+        "carrier_training_summary": {
+            key: summary.get(key)
+            for key in (
+                "status",
+                "steps",
+                "clean_retention_loss_ratio_max",
+                "final_parameter_update_norm",
+            )
+        },
+        "carrier_base_checkpoint": str(base_checkpoint),
+        "carrier_base_checkpoint_sha256": sha256_file(base_checkpoint),
+    }
+    return sampler, metadata
+
+
+def _load_carrier_sampler(
+    checkpoint: Path,
+    composition_checkpoint: Path,
+    composition_protocol: Path,
+    *,
+    base_checkpoint: Path,
+    device: torch.device,
+) -> tuple[TensorFreeReverseSampler, dict[str, Any]]:
+    try:
+        return _load_sampler(
+            checkpoint,
+            composition_checkpoint,
+            composition_protocol,
+            device=device,
+        )
+    except (FileNotFoundError, ValueError) as metadata_error:
+        try:
+            return _load_correctness_sampler(
+                checkpoint,
+                composition_checkpoint,
+                composition_protocol,
+                base_checkpoint=base_checkpoint,
+                device=device,
+            )
+        except ValueError:
+            raise metadata_error
+
+
 def _clean_lattice_state(
     lattice: torch.Tensor,
     blueprint: ParentBlueprintBatch,
@@ -263,10 +372,12 @@ def main() -> None:
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is not available")
-    sampler, metadata = _load_sampler(
-        args.base_checkpoint,
+    carrier_checkpoint = args.carrier_checkpoint or args.base_checkpoint
+    sampler, metadata = _load_carrier_sampler(
+        carrier_checkpoint,
         args.composition_checkpoint,
         args.composition_protocol,
+        base_checkpoint=args.base_checkpoint,
         device=device,
     )
     dataset = PackedAlexP1Dataset(args.cache_root, args.split, include_material_id=True)
@@ -313,8 +424,13 @@ def main() -> None:
     )
 
     base_sha = sha256_file(args.base_checkpoint)
+    carrier_sha = sha256_file(carrier_checkpoint)
     sampler_commit = args.sampler_commit or _current_git_commit()
-    sampler_protocol = str(metadata.get("protocol_sha256", "unknown-protocol-sha"))
+    sampler_protocol = (
+        carrier_sha
+        if args.carrier_checkpoint is not None
+        else str(metadata.get("protocol_sha256", "unknown-protocol-sha"))
+    )
     clean_log_volume, clean_log_shape = _clean_lattice_state(source.lattice, blueprint)
     entries: list[GeneratedStateReplayEntry] = []
     rows: list[dict[str, Any]] = []
@@ -433,8 +549,12 @@ def main() -> None:
         "loaded_entry_count": len(loaded_entries),
         "reverse_steps": args.reverse_steps,
         "base_checkpoint_sha256": base_sha,
+        "carrier_checkpoint": str(carrier_checkpoint),
+        "carrier_checkpoint_sha256": carrier_sha,
+        "carrier_checkpoint_is_base": args.carrier_checkpoint is None,
         "sampler_commit": sampler_commit,
         "sampler_protocol_sha256": sampler_protocol,
+        "sampler_metadata_protocol": metadata.get("protocol", "unknown"),
         "manifest_sha256": manifest_hash,
         "loaded_manifest_sha256": loaded_manifest.canonical_sha256(),
         "roles_per_source": 4,
