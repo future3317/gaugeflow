@@ -26,6 +26,39 @@ This is still only the provenance/cache layer.  It does not authorize 34M
 training until a tiny real replay writer has produced entries from actual
 current-model generated carriers and passed the same contract.
 
+Real tiny-cache status as of `48186d52`:
+
+- `scripts/build_tiny_generated_state_replay_cache.py` now loads the frozen
+  Stage-C 30k/global 40523 backbone from its physical continued-pretraining
+  checkpoint, plus the frozen `p(C|N)` composition law.
+- It selects real Alex P1 source rows, records real source IDs and clean side
+  states, then writes four roles per source:
+  `clean_clean`, `generated_assignment`, `generated_lattice` and
+  `generated_joint`.
+- `generated_assignment` and `generated_joint` use sampled model composition
+  counts, not clean target counts; `generated_lattice` is generated while
+  conditioning on clean assignment tokens.
+- A two-source, four-step server smoke passed:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_tiny_real_smoke_v3/
+base checkpoint SHA-256:
+  8807877bbdcc61090a431dc5cd146ed62bf545b2a65425ff8bb16c8d0d317bf9
+sampler protocol SHA-256:
+  587bf38c705bade6034f73a819cc254c188abdb018b97654c3ec545e232388e1
+manifest SHA-256:
+  c2878dcc8404d5c47bc32f95fe85506a624c1f867fc6b837b0a83afe896e7e6a
+entries:
+  8 = 2 real source structures x 4 roles
+source IDs:
+  mp-1007760, mp-1091415
+```
+
+This closes the first real cache-provenance smoke.  It is still not a training
+result and not a generated-quality claim.  The next step is a bounded 34M
+correctness run that consumes this contract and reports per-role gradient,
+finite-loss, clean-retention and generated-state stratification checks.
+
 ## Purpose
 
 GaugeFlow v1 is blocked because the base and Stage-E adapters do not jointly
