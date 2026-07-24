@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.generated_state_replay import (
     GeneratedStateReplayEntry,
     GeneratedStateReplayKey,
@@ -14,7 +15,6 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.training import ExponentialMovingAverage
 from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.build_tiny_generated_state_replay_cache import (
@@ -23,8 +23,10 @@ from scripts.build_tiny_generated_state_replay_cache import (
     _select_source_indices,
     _source_ids_for_indices,
 )
-from scripts.evaluate_generated_state_replay_correctness import _paired_bootstrap_w1_delta
-from scripts.evaluate_generated_state_replay_correctness import _load_correctness_backbone
+from scripts.evaluate_generated_state_replay_correctness import (
+    _load_correctness_backbone,
+    _paired_bootstrap_w1_delta,
+)
 from scripts.project_generated_state_replay_checkpoint import _alpha_for_key, _project_state_dict
 from scripts.select_generated_state_replay_checkpoint import (
     SelectionContract,
