@@ -118,7 +118,7 @@ def _validate_loss_weights(training: dict[str, Any]) -> tuple[float, float]:
     if objective_mix == "clean_only_baseline":
         if clean_loss_weight != 1.0 or replay_loss_weight != 0.0:
             raise ValueError("clean-only baseline requires clean_loss_weight=1 and replay_loss_weight=0")
-    elif objective_mix == "clean_plus_replay":
+    elif objective_mix in {"clean_plus_replay", "clean_plus_projected_replay"}:
         if not 0.0 < clean_loss_weight < 1.0 or not 0.0 < replay_loss_weight < 1.0:
             raise ValueError("clean+replay training requires both loss weights to be positive")
         if abs(clean_loss_weight + replay_loss_weight - 1.0) > 1.0e-12:
@@ -126,6 +126,106 @@ def _validate_loss_weights(training: dict[str, Any]) -> tuple[float, float]:
     else:
         raise ValueError("unsupported A-v2 objective mix")
     return clean_loss_weight, replay_loss_weight
+
+
+def _validate_replay_gradient_trust(training: dict[str, Any]) -> dict[str, Any] | None:
+    objective_mix = str(training.get("objective_mix", "clean_plus_replay"))
+    trust = training.get("replay_gradient_trust")
+    if objective_mix != "clean_plus_projected_replay":
+        if trust is not None:
+            raise ValueError("replay_gradient_trust is only allowed for clean_plus_projected_replay")
+        return None
+    if not isinstance(trust, dict):
+        raise ValueError("clean_plus_projected_replay requires replay_gradient_trust")
+    if str(trust.get("method")) != "remove_negative_clean_projection":
+        raise ValueError("unsupported replay gradient trust method")
+    max_ratio = float(trust["max_replay_to_clean_norm"])
+    if not 0.0 < max_ratio <= 1.0:
+        raise ValueError("max_replay_to_clean_norm must lie in (0, 1]")
+    return {
+        "method": "remove_negative_clean_projection",
+        "max_replay_to_clean_norm": max_ratio,
+    }
+
+
+def _clone_named_gradients(model: torch.nn.Module) -> dict[str, torch.Tensor | None]:
+    return {
+        name: None if parameter.grad is None else parameter.grad.detach().clone()
+        for name, parameter in model.named_parameters()
+    }
+
+
+def _apply_replay_gradient_trust(
+    model: torch.nn.Module,
+    clean_gradients: dict[str, torch.Tensor | None],
+    *,
+    max_replay_to_clean_norm: float,
+    eps: float = 1.0e-12,
+) -> dict[str, float | bool]:
+    current_gradients = _clone_named_gradients(model)
+    clean_norm_sq = 0.0
+    replay_norm_sq = 0.0
+    dot = 0.0
+    for name, current in current_gradients.items():
+        clean = clean_gradients.get(name)
+        if current is None:
+            continue
+        replay = current if clean is None else current - clean.to(current.device)
+        replay_norm_sq += float(torch.sum(replay.float() * replay.float()).cpu())
+        if clean is not None:
+            clean_on_device = clean.to(current.device)
+            clean_norm_sq += float(torch.sum(clean_on_device.float() * clean_on_device.float()).cpu())
+            dot += float(torch.sum(replay.float() * clean_on_device.float()).cpu())
+
+    clean_norm = clean_norm_sq**0.5
+    replay_norm = replay_norm_sq**0.5
+    projection_coeff = dot / clean_norm_sq if clean_norm_sq > eps and dot < 0.0 else 0.0
+
+    projected_replay_norm_sq = 0.0
+    projected_replays: dict[str, torch.Tensor] = {}
+    for name, current in current_gradients.items():
+        if current is None:
+            continue
+        clean = clean_gradients.get(name)
+        replay = current if clean is None else current - clean.to(current.device)
+        if clean is not None and projection_coeff != 0.0:
+            replay = replay - projection_coeff * clean.to(current.device)
+        projected_replays[name] = replay
+        projected_replay_norm_sq += float(torch.sum(replay.float() * replay.float()).cpu())
+
+    projected_replay_norm = projected_replay_norm_sq**0.5
+    max_replay_norm = max_replay_to_clean_norm * clean_norm
+    scale = 1.0
+    if projected_replay_norm > eps and projected_replay_norm > max_replay_norm:
+        scale = max_replay_norm / projected_replay_norm
+
+    for name, parameter in model.named_parameters():
+        replay = projected_replays.get(name)
+        if replay is None:
+            continue
+        clean = clean_gradients.get(name)
+        if clean is None:
+            parameter.grad = replay.mul(scale).to(parameter.device)
+        else:
+            parameter.grad = clean.to(parameter.device) + replay.mul(scale).to(parameter.device)
+
+    trusted_replay_norm = projected_replay_norm * scale
+    return {
+        "enabled": True,
+        "clean_gradient_norm": clean_norm,
+        "raw_replay_gradient_norm": replay_norm,
+        "raw_replay_clean_dot": dot,
+        "raw_replay_clean_cosine": dot / (clean_norm * replay_norm)
+        if clean_norm > eps and replay_norm > eps
+        else 0.0,
+        "negative_projection_removed": projection_coeff != 0.0,
+        "projection_coeff": projection_coeff,
+        "projected_replay_gradient_norm": projected_replay_norm,
+        "max_replay_to_clean_norm": max_replay_to_clean_norm,
+        "replay_scale": scale,
+        "trusted_replay_gradient_norm": trusted_replay_norm,
+        "trusted_replay_to_clean_ratio": trusted_replay_norm / clean_norm if clean_norm > eps else 0.0,
+    }
 
 
 def _move_clean_batch(host: Any, *, device: torch.device) -> tuple[torch.Tensor, ...]:
@@ -422,6 +522,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     if clean_accumulation < 1:
         raise ValueError("invalid clean accumulation")
     clean_loss_weight, replay_loss_weight = _validate_loss_weights(training)
+    replay_gradient_trust = _validate_replay_gradient_trust(training)
     replay_enabled = replay_loss_weight > 0.0
 
     generator = torch.Generator(device=device).manual_seed(seed + 1)
@@ -527,6 +628,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                 generator=generator,
                 device=device,
             )
+            clean_gradients = _clone_named_gradients(model) if replay_gradient_trust is not None else {}
             replay_reports = (
                 [
                     _accumulate_role_step(
@@ -541,6 +643,15 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                 if replay_enabled
                 else []
             )
+            replay_gradient_trust_report = (
+                _apply_replay_gradient_trust(
+                    model,
+                    clean_gradients,
+                    max_replay_to_clean_norm=float(replay_gradient_trust["max_replay_to_clean_norm"]),
+                )
+                if replay_gradient_trust is not None
+                else {"enabled": False}
+            )
             terminal_gradient_norms = _gradient_group_norms(model)
             gradient_norm = trainer.finish_optimization_step()
             step = trainer.step
@@ -548,6 +659,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                 "step": step,
                 "clean_report": clean_report,
                 "replay_role_reports": replay_reports,
+                "replay_gradient_trust": replay_gradient_trust_report,
                 "terminal_gradient_group_norms": terminal_gradient_norms,
                 "gradient_norm": float(gradient_norm.cpu()),
                 "parameter_update_norm_from_initial": _parameter_update_norm(model, initial_parameters),
@@ -589,6 +701,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         "candidate": args.candidate,
         "parameter_count": parameter_count,
         "training": training,
+        "replay_gradient_trust": replay_gradient_trust or {"enabled": False},
         "requested_stop_step": target_step,
         "replay_manifest_sha256": manifest.canonical_sha256(),
         "entry_count": len(entries),

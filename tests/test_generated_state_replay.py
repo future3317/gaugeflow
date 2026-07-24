@@ -34,6 +34,8 @@ from scripts.select_generated_state_replay_checkpoint import (
     select_candidate,
 )
 from scripts.train_gaugeflow_base_v2_generated_state_smoke import (
+    _apply_replay_gradient_trust,
+    _clone_named_gradients,
     _load_training_checkpoint,
     _model_config,
     _read_training_checkpoint_description,
@@ -41,6 +43,7 @@ from scripts.train_gaugeflow_base_v2_generated_state_smoke import (
     _training_config,
     _validate_loss_weights,
     _validate_protocol_header,
+    _validate_replay_gradient_trust,
 )
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
@@ -159,6 +162,13 @@ def test_base_v2_loss_weights_allow_only_explicit_clean_baseline() -> None:
     ) == (0.75, 0.25)
     assert _validate_loss_weights(
         {
+            "objective_mix": "clean_plus_projected_replay",
+            "clean_loss_weight": 0.5,
+            "replay_loss_weight": 0.5,
+        }
+    ) == (0.5, 0.5)
+    assert _validate_loss_weights(
+        {
             "objective_mix": "clean_only_baseline",
             "clean_loss_weight": 1.0,
             "replay_loss_weight": 0.0,
@@ -181,6 +191,60 @@ def test_base_v2_loss_weights_allow_only_explicit_clean_baseline() -> None:
                 "replay_loss_weight": 0.125,
             }
         )
+
+
+def test_base_v2_projected_replay_requires_declared_trust() -> None:
+    assert _validate_replay_gradient_trust(
+        {
+            "objective_mix": "clean_plus_projected_replay",
+            "replay_gradient_trust": {
+                "method": "remove_negative_clean_projection",
+                "max_replay_to_clean_norm": 0.25,
+            },
+        }
+    ) == {
+        "method": "remove_negative_clean_projection",
+        "max_replay_to_clean_norm": 0.25,
+    }
+
+    with pytest.raises(ValueError, match="requires replay_gradient_trust"):
+        _validate_replay_gradient_trust({"objective_mix": "clean_plus_projected_replay"})
+    with pytest.raises(ValueError, match="only allowed"):
+        _validate_replay_gradient_trust(
+            {
+                "objective_mix": "clean_plus_replay",
+                "replay_gradient_trust": {
+                    "method": "remove_negative_clean_projection",
+                    "max_replay_to_clean_norm": 0.25,
+                },
+            }
+        )
+    with pytest.raises(ValueError, match="must lie"):
+        _validate_replay_gradient_trust(
+            {
+                "objective_mix": "clean_plus_projected_replay",
+                "replay_gradient_trust": {
+                    "method": "remove_negative_clean_projection",
+                    "max_replay_to_clean_norm": 1.5,
+                },
+            }
+        )
+
+
+def test_base_v2_projected_replay_gradient_trust_removes_clean_conflict() -> None:
+    model = torch.nn.Linear(2, 1, bias=False)
+    parameter = next(model.parameters())
+    parameter.grad = torch.tensor([[2.0, 0.0]])
+    clean_gradients = _clone_named_gradients(model)
+    parameter.grad = torch.tensor([[-2.0, 2.0]])
+
+    report = _apply_replay_gradient_trust(model, clean_gradients, max_replay_to_clean_norm=0.5)
+
+    assert report["negative_projection_removed"] is True
+    assert report["replay_scale"] == pytest.approx(0.5)
+    assert report["trusted_replay_to_clean_ratio"] == pytest.approx(0.5)
+    assert parameter.grad is not None
+    torch.testing.assert_close(parameter.grad.detach(), torch.tensor([[2.0, 1.0]]))
 
 
 class _TinyTrainer:

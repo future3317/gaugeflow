@@ -1369,3 +1369,97 @@ The current decision is:
   direction needs an explicit retention/trust constraint or schedule before any
   larger-capacity competition.
 - Keep Stage-F blocked and keep all checkpoint/eval artifacts outside git.
+
+The first explicit trust-constraint implementation is now added as a bounded
+34M diagnostic protocol:
+
+```text
+configs/gates/gaugeflow_base_v2_generated_state_short_run_34m_projected_replay_v1.json
+objective_mix:
+  clean_plus_projected_replay
+clean_loss_weight:
+  0.5
+replay_loss_weight:
+  0.5
+replay_gradient_trust:
+  method: remove_negative_clean_projection
+  max_replay_to_clean_norm: 0.25
+```
+
+This does not change the denoising loss or add a model module.  The runner
+first accumulates clean A-v1 gradients, then replay-role gradients.  Before the
+optimizer step, it removes any negative global replay projection against the
+clean gradient and caps the trusted replay gradient norm to a declared fraction
+of the clean gradient norm.  The purpose is to test whether replay-role support
+can be added without moving opposite to the clean/free local-geometry retention
+direction.
+
+Server verification for the implementation:
+
+```text
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check \
+  scripts/train_gaugeflow_base_v2_generated_state_smoke.py \
+  tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy \
+  scripts/train_gaugeflow_base_v2_generated_state_smoke.py \
+  tests/test_generated_state_replay.py
+  Success
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python \
+  -m pytest -q tests/test_generated_state_replay.py
+  34 passed
+```
+
+Two-step CUDA smoke:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_projected_replay_smoke_34m_steps2_e00d443_v1
+status:
+  passed
+final checkpoint SHA-256:
+  a4bac0070214f247eb641cd2381a6aeb3861cf549877e0b08b77d5708b9af20c
+peak CUDA MiB:
+  13513.2080078125
+clean terminal gradient groups:
+  nonzero
+replay role terminal gradient groups:
+  nonzero for all roles
+```
+
+Trust reports from the two optimizer steps:
+
+| step | clean grad norm | raw replay grad norm | replay-clean cosine | projection removed | replay scale | trusted replay/clean |
+| ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| 1 | 5.970315 | 3.659133 | +0.591196 | no | 0.407905 | 0.25 |
+| 2 | 9.288491 | 10.163218 | +0.865544 | no | 0.228483 | 0.25 |
+
+The smoke encountered positive clean/replay cosine in both steps, so the
+negative-projection branch was not triggered in the real two-step sample; the
+norm cap did trigger and held replay to the declared 0.25 ratio.  Unit tests
+cover the conflict case where replay initially points against clean and verify
+that the conflicting component is removed before the cap is applied.
+
+Exact-resume check for the new projected-replay path:
+
+```text
+interrupted/resumed run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_projected_replay_resume_smoke_34m_steps2_e00d443_v1
+resume status:
+  passed
+full status:
+  passed
+full final checkpoint SHA-256:
+  a4bac0070214f247eb641cd2381a6aeb3861cf549877e0b08b77d5708b9af20c
+resumed final checkpoint SHA-256:
+  a4bac0070214f247eb641cd2381a6aeb3861cf549877e0b08b77d5708b9af20c
+exact_final_checkpoint_match:
+  true
+```
+
+The projected-replay protocol is now ready for a bounded 34M/2000 diagnostic
+run and the same frozen eval32 selector.  It still does not authorize 58M/98M,
+Stage-E pass or Stage-F.  If it fails the selector, the evidence will point
+away from simple gradient-conflict control and toward an explicit rollout-level
+retention objective or a generated-state schedule.
