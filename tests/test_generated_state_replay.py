@@ -14,6 +14,7 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
+from gaugeflow.production.training import ExponentialMovingAverage
 from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.build_tiny_generated_state_replay_cache import (
     _read_forbidden_source_ids,
@@ -28,7 +29,13 @@ from scripts.select_generated_state_replay_checkpoint import (
     evaluate_candidate,
     select_candidate,
 )
-from scripts.train_gaugeflow_base_v2_generated_state_smoke import _model_config, _training_config
+from scripts.train_gaugeflow_base_v2_generated_state_smoke import (
+    _load_training_checkpoint,
+    _model_config,
+    _read_training_checkpoint_description,
+    _save_training_checkpoint,
+    _training_config,
+)
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
@@ -97,6 +104,58 @@ def test_base_v2_smoke_model_config_maps_capacity_spec() -> None:
     assert config["radial_cutoff"] == 8.0
     assert config["atlas_residual_circle_samples"] == 8
     assert config["modality_time_conditioning"] == "separate"
+
+
+class _TinyTrainer:
+    def __init__(self, model: torch.nn.Module) -> None:
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+        self.ema = ExponentialMovingAverage(model, 0.9)
+
+
+def test_base_v2_training_checkpoint_round_trips_runtime_state(tmp_path) -> None:
+    model = torch.nn.Linear(3, 2)
+    trainer = _TinyTrainer(model)
+    loader_generator = torch.Generator().manual_seed(11)
+    device_generator = torch.Generator().manual_seed(12)
+    runtime_state = {
+        "epoch_loader_generator_state": loader_generator.get_state(),
+        "batches_consumed_in_epoch": 5,
+        "device_generator_state": device_generator.get_state(),
+    }
+    path = tmp_path / "checkpoint_step_00000007.pt"
+
+    record = _save_training_checkpoint(
+        path,
+        model=model,
+        trainer=trainer,  # type: ignore[arg-type]
+        trainer_step=7,
+        metadata={"protocol_sha256": "protocol", "candidate": "small_34m"},
+        runtime_state=runtime_state,
+    )
+
+    assert record["step"] == 7
+    description = _read_training_checkpoint_description(path)
+    assert description["metadata"]["candidate"] == "small_34m"
+
+    restored = torch.nn.Linear(3, 2)
+    restored_trainer = _TinyTrainer(restored)
+    step, metadata, restored_runtime = _load_training_checkpoint(
+        path,
+        model=restored,
+        trainer=restored_trainer,  # type: ignore[arg-type]
+        map_location="cpu",
+    )
+
+    assert step == 7
+    assert metadata["protocol_sha256"] == "protocol"
+    for name, value in model.state_dict().items():
+        assert torch.equal(value, restored.state_dict()[name])
+    assert restored_runtime["batches_consumed_in_epoch"] == 5
+    assert torch.equal(
+        restored_runtime["epoch_loader_generator_state"],
+        runtime_state["epoch_loader_generator_state"],
+    )
+    assert torch.equal(restored_runtime["device_generator_state"], runtime_state["device_generator_state"])
 
 
 def _entry(*, role: str = "generated_joint") -> GeneratedStateReplayEntry:

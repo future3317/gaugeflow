@@ -77,5 +77,33 @@
     "all_replay_role_terminal_gradient_groups_nonzero": true,
     "peak_cuda_memory_mib_max": 22000.0
   },
+  "short_run_selector": {
+    "scope": "post-training evaluation selector for bounded 34M A-v2 short runs; not used by the one-step training-interface smoke",
+    "required_candidate_evidence": [
+      "training_summary",
+      "checkpoint_sha256",
+      "free_generation_paired_evaluation",
+      "replay_role_loss_deltas",
+      "clean_retention"
+    ],
+    "eligibility": {
+      "all_replay_role_total_losses_lower": true,
+      "clean_retention_non_degraded": true,
+      "max_nn_w1_delta": 0.05,
+      "max_volume_w1_delta": 0.0,
+      "min_exact_composition_fraction": 1.0,
+      "min_finite_positive_lattice_fraction": 1.0,
+      "min_distance_valid_delta": 0.0,
+      "max_sampling_failures_delta": 0.0,
+      "max_terminal_masks_delta": 0.0
+    },
+    "tie_break_order": [
+      "fewest free NN-W1 delta",
+      "largest replay total-loss improvement",
+      "earliest eligible checkpoint",
+      "lexicographic label"
+    ],
+    "boundary": "Selector output can choose a diagnostic A-v2 short-run checkpoint only after frozen paired evaluation; it does not qualify Stage-E or authorize Stage-F."
+  },
   "boundary": "This smoke only qualifies the A-v2 clean plus generated-state training interface. It does not select capacity, qualify Stage-E, or authorize Stage-F."
 }
