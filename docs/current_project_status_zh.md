@@ -342,6 +342,25 @@ learning rate：`1e-4` 的 15-step update norm 降到 `3.024477`，all-role repl
 必须显式引入 retention/trust constraint，或撤销 replay update 的 production 候选身份；不能靠盲目扩容
 或 Stage-F 绕过。
 
+随后做了零训练参数块投影诊断，目的不是继续训练 E-v1，而是检查上述冲突是否集中在少数
+parameter blocks。新工具 commit `715eb074 feat: project replay checkpoint update blocks`
+只按 block 缩放现有 128src/15 update，不改变 sampler、loss 或 checkpoint 语义。block ablation
+显示：full update 虽降低 all-role replay total losses，但 volume-W1 delta 为 `+0.001527`
+且 bootstrap CI 严格为正；`only_lattice_heads` 也降低 replay losses，但 volume delta 仍为
+`+0.001044`；`only_coordinate` 使 volume delta 为 `-0.000303`，但 clean replay loss 轻微转正。
+组合诊断中，`coordinate_alpha=1.0, lattice_head_alpha=0.25, element_alpha=0.0` 是第一组同时满足
+all-role replay total loss 下降和 val128 volume 非劣的 trust-projection 窗口：clean loss delta
+`-0.000179`，NN-W1 delta `+0.002433`，volume-W1 delta `-0.000041`，volume bootstrap CI
+`[-0.000741,+0.000300]`。
+
+该结果只授权一个最小恢复点：用已提交工具生成的官方投影 checkpoint
+`/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_trust_coord1_lattice025_v1/checkpoint_step_00000000.pt`
+（SHA-256 `f003a264bf19f1b7a47683e873acab67d73bc591a5b3eae7966d5d747f12ef1d`）必须先用同一
+val128 record-mode evaluator 复核是否匹配临时 combo。若匹配，也只能登记为 diagnostic
+trust-projection candidate；还必须在独立 support/window 上验证后才能讨论后续训练。若该投影在
+独立窗口不稳，则结论是 E-v1 replay update 方向过拟合当前 cache/window，Stage-E 继续 blocked。
+当前不应再围绕 E-v1 adapter 做新的标量调参，也不应因为 GPU 空闲直接启动 58M/98M 或 Stage-F。
+
 ![Stage-E E0](../figures/stage_e_e0_orbit_mimic.png)
 
 ![Stage-E paired rollout](../figures/stage_e_e0_paired_rollout.png)

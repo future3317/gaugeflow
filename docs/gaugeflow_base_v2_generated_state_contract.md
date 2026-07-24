@@ -857,3 +857,42 @@ Multi-GPU 58M/98M capacity training remains deferred.  The next A-v2 step must
 address replay support/on-policy coverage or predeclare a statistically
 meaningful paired non-inferiority margin before another bounded 34M diagnostic
 is run.
+
+A zero-training parameter-block projection then tested whether the measured
+128src/15 update conflict is concentrated in broad update groups rather than
+requiring another trained adapter.  The committed utility is:
+
+```text
+715eb074 feat: project replay checkpoint update blocks
+scripts/project_generated_state_replay_checkpoint.py
+```
+
+It generated a diagnostic checkpoint with:
+
+```text
+element_alpha: 0.0
+coordinate_alpha: 1.0
+lattice_head_alpha: 0.25
+```
+
+Official artifact:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_trust_coord1_lattice025_v1/checkpoint_step_00000000.pt
+SHA-256:
+f003a264bf19f1b7a47683e873acab67d73bc591a5b3eae7966d5d747f12ef1d
+```
+
+The temporary block-combo measurement for the same coefficients had all replay
+total losses lower, clean loss delta `-0.000179`, NN-W1 delta `+0.002433`,
+volume-W1 delta `-0.000041` and volume bootstrap CI
+`[-0.000741,+0.000300]`.  This is the first measured trust-projection window
+that is compatible with val128 volume non-inferiority, but it is still a
+diagnostic candidate only.  It must be verified as the official artifact under
+the same record-mode evaluator, then checked on an independent support/window.
+
+This contract therefore does not authorize more E-v1 scalar tuning.  If the
+official projection fails to reproduce or fails outside the original support,
+the replay update remains non-production and Stage-E stays blocked.  Capacity
+scaling is allowed only after the generated-state/trust rule is stable under
+the same provenance, forbidden-source and paired-retention checks.

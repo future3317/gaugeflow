@@ -1305,3 +1305,86 @@ This does not justify 58M/98M capacity scaling yet.  The next minimal fix must
 change the training objective or update rule with an explicit retention/trust
 constraint, or else keep the replay adapter out of production.  Any such change
 must be predeclared and rerun under the same val128 paired record-mode surface.
+
+### 2026-07-24 update: parameter-block trust projection
+
+The first zero-training trust projection has now been implemented and committed:
+
+```text
+715eb074 feat: project replay checkpoint update blocks
+```
+
+The new tool,
+`scripts/project_generated_state_replay_checkpoint.py`, constructs diagnostic
+checkpoints of the form:
+
+```text
+state = base
+      + element_alpha      * delta_element
+      + coordinate_alpha   * delta_coordinate
+      + lattice_head_alpha * delta_lattice_heads
+      + unchanged_other_deltas
+```
+
+It is a checkpoint projection utility only.  It does not train, does not change
+the sampler or loss, and does not qualify Stage-E.
+
+The block ablation result from the 128-source/15-step replay update is:
+
+| candidate | all replay total losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| --- | --- | ---: | ---: | ---: | ---: |
+| full | yes | -0.000402 | +0.004080 | +0.001527 | [+0.000125, +0.001797] |
+| no_volume | yes | -0.000350 | +0.003350 | +0.000470 | [+0.000042, +0.000577] |
+| no_shape | no | +0.000067 | +0.004104 | +0.001542 | [+0.000137, +0.001809] |
+| no_lattice_heads | no | +0.000119 | +0.003196 | +0.000485 | [+0.000047, +0.000585] |
+
+Block-only and block-combination diagnostics further narrowed the useful
+direction:
+
+| candidate | all replay total losses lower | clean loss delta | agg NN delta | agg volume delta | volume 95% CI |
+| --- | --- | ---: | ---: | ---: | ---: |
+| only_element | no | +0.000059 | +0.000033 | +0.000009 | [-0.000000, +0.000015] |
+| only_coordinate | no | +0.000010 | +0.002166 | -0.000303 | [-0.000908, +0.000000] |
+| only_lattice_heads | yes | -0.000561 | +0.000701 | +0.001044 | [+0.000092, +0.001245] |
+| coordinate full + lattice heads 0.25 + element 0 | yes | -0.000179 | +0.002433 | -0.000041 | [-0.000741, +0.000300] |
+
+Interpretation:
+
+```text
+The full replay update direction conflicts with volume retention.  Freezing
+element updates and projecting the update to coordinate parameters plus a small
+lattice-head component is the first measured window that keeps all replay-role
+total losses lower while making val128 volume-W1 non-inferior under paired
+bootstrap.
+```
+
+This is still not a Stage-E pass.  It is a diagnostic trust-projection candidate
+that must be evaluated as an official artifact, and then checked outside the
+same support/window before it can be treated as robust.
+
+Official projected checkpoint:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/generated_state_replay_correctness_34m_128src_15_trust_coord1_lattice025_v1/checkpoint_step_00000000.pt
+SHA-256:
+  f003a264bf19f1b7a47683e873acab67d73bc591a5b3eae7966d5d747f12ef1d
+element_alpha:
+  0.0
+coordinate_alpha:
+  1.0
+lattice_head_alpha:
+  0.25
+update norm:
+  0.9738314446868565
+```
+
+Immediate recovery point:
+
+1. Evaluate the official projected checkpoint with the same val128 record-mode
+   evaluator and compare it to the temporary combo result.
+2. If it matches, record it as a diagnostic trust-projection candidate, not a
+   production checkpoint.
+3. Require at least one independent support/window check before any capacity
+   scaling.
+4. If the projection fails outside the original cache/window, conclude it is an
+   overfit trust projection and keep Stage-E blocked.
