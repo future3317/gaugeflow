@@ -883,13 +883,24 @@ SHA-256:
 f003a264bf19f1b7a47683e873acab67d73bc591a5b3eae7966d5d747f12ef1d
 ```
 
-The temporary block-combo measurement for the same coefficients had all replay
-total losses lower, clean loss delta `-0.000179`, NN-W1 delta `+0.002433`,
-volume-W1 delta `-0.000041` and volume bootstrap CI
-`[-0.000741,+0.000300]`.  This is the first measured trust-projection window
-that is compatible with val128 volume non-inferiority, but it is still a
-diagnostic candidate only.  It must be verified as the official artifact under
-the same record-mode evaluator, then checked on an independent support/window.
+The official artifact was evaluated under the same val128 record-mode evaluator:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_correctness_128src_15_trust_coord1_lattice025_eval_val128_records_v1.json
+```
+
+It exactly reproduces the temporary block-combo measurement.  All replay total
+losses are lower; clean loss delta is `-0.00017905235290527344`, NN-W1 delta is
+`+0.0024332300859237765`, volume-W1 delta is
+`-0.000040659420989408446`, and volume bootstrap CI is
+`[-0.0007411272712751895,+0.00030002156927976496]`.  Hard validity, exact
+composition, finite-positive lattice, sampling failures and terminal masks do
+not regress.
+
+This is the first measured trust-projection window that is compatible with
+val128 volume non-inferiority, but it is still a diagnostic candidate only.  It
+must be checked on an independent support/window before any production use or
+capacity scaling.
 
 This contract therefore does not authorize more E-v1 scalar tuning.  If the
 official projection fails to reproduce or fails outside the original support,
