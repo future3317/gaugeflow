@@ -35,6 +35,7 @@ from scripts.train_gaugeflow_base_v2_generated_state_smoke import (
     _read_training_checkpoint_description,
     _save_training_checkpoint,
     _training_config,
+    _validate_protocol_header,
 )
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
@@ -104,6 +105,34 @@ def test_base_v2_smoke_model_config_maps_capacity_spec() -> None:
     assert config["radial_cutoff"] == 8.0
     assert config["atlas_residual_circle_samples"] == 8
     assert config["modality_time_conditioning"] == "separate"
+
+
+def test_base_v2_protocol_header_accepts_smoke_and_short_run_only() -> None:
+    assert (
+        _validate_protocol_header(
+            {
+                "protocol": "gaugeflow_base_v2_generated_state_smoke_v1",
+                "status_before_run": "frozen_not_run",
+            }
+        )
+        == "gaugeflow_base_v2_generated_state_smoke_v1"
+    )
+    assert (
+        _validate_protocol_header(
+            {
+                "protocol": "gaugeflow_base_v2_generated_state_short_run_v1",
+                "status_before_run": "frozen_not_run",
+            }
+        )
+        == "gaugeflow_base_v2_generated_state_short_run_v1"
+    )
+    with pytest.raises(ValueError, match="unexpected or unfrozen"):
+        _validate_protocol_header(
+            {
+                "protocol": "gaugeflow_base_v2_generated_state_short_run_v1",
+                "status_before_run": "mutable",
+            }
+        )
 
 
 class _TinyTrainer:

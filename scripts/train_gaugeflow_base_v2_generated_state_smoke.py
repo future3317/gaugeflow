@@ -38,6 +38,10 @@ from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
 from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
 _CHECKPOINT_SCHEMA = "gaugeflow.base_v2_generated_state_training_checkpoint.v1"
+_SUPPORTED_PROTOCOLS = {
+    "gaugeflow_base_v2_generated_state_smoke_v1",
+    "gaugeflow_base_v2_generated_state_short_run_v1",
+}
 
 
 def _parse_args() -> argparse.Namespace:
@@ -97,6 +101,13 @@ def _training_config(training: dict[str, Any]) -> ProductionTrainingConfig:
     )
     config.validate()
     return config
+
+
+def _validate_protocol_header(protocol: dict[str, Any]) -> str:
+    name = protocol.get("protocol")
+    if name not in _SUPPORTED_PROTOCOLS or protocol.get("status_before_run") != "frozen_not_run":
+        raise ValueError("unexpected or unfrozen A-v2 generated-state protocol")
+    return str(name)
 
 
 def _move_clean_batch(host: Any, *, device: torch.device) -> tuple[torch.Tensor, ...]:
@@ -298,21 +309,31 @@ def _accumulate_clean_batches(
 def _run(args: argparse.Namespace) -> dict[str, Any]:
     torch.use_deterministic_algorithms(True)
     protocol = load_json_object(args.protocol)
-    if (
-        protocol.get("protocol") != "gaugeflow_base_v2_generated_state_smoke_v1"
-        or protocol.get("status_before_run") != "frozen_not_run"
-    ):
-        raise ValueError("unexpected or unfrozen A-v2 smoke protocol")
+    protocol_name = _validate_protocol_header(protocol)
     source = protocol["source"]
     training = protocol["training"]
     candidates = protocol["model_candidates"]
     if args.candidate not in candidates:
         raise ValueError("unknown A-v2 smoke candidate")
+    allowed_candidates = protocol.get("allowed_candidates")
+    if isinstance(allowed_candidates, list) and args.candidate not in {
+        str(value) for value in allowed_candidates
+    }:
+        raise ValueError("candidate is not allowed by this A-v2 protocol")
     if args.resume is None and args.output_dir.exists() and any(args.output_dir.iterdir()):
         raise FileExistsError(f"refusing to write into nonempty output directory: {args.output_dir}")
     if args.resume is not None and args.resume.parent.resolve() != args.output_dir.resolve():
         raise ValueError("A-v2 resume checkpoint must live directly inside the output directory")
-    if args.checkpoint_every_steps is not None and args.checkpoint_every_steps <= 0:
+    protocol_execution = protocol.get("execution")
+    protocol_checkpoint_interval = None
+    if isinstance(protocol_execution, dict) and protocol_execution.get("checkpoint_every_steps") is not None:
+        protocol_checkpoint_interval = int(protocol_execution["checkpoint_every_steps"])
+    checkpoint_every_steps = (
+        int(args.checkpoint_every_steps)
+        if args.checkpoint_every_steps is not None
+        else protocol_checkpoint_interval
+    )
+    if checkpoint_every_steps is not None and checkpoint_every_steps <= 0:
         raise ValueError("checkpoint interval must be positive")
     target_step = int(training["steps"]) if args.stop_step is None else int(args.stop_step)
     if target_step < 1 or target_step > int(training["steps"]):
@@ -392,7 +413,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     protocol_sha256 = canonical_json_hash(protocol)
     checkpoint_metadata = {
         "schema": _CHECKPOINT_SCHEMA,
-        "protocol": protocol["protocol"],
+        "protocol": protocol_name,
         "protocol_sha256": protocol_sha256,
         "candidate": args.candidate,
         "parameter_count": parameter_count,
@@ -517,7 +538,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             handle.flush()
             final_clean_report = clean_report
             final_replay_reports = replay_reports
-            if args.checkpoint_every_steps is not None and step % int(args.checkpoint_every_steps) == 0:
+            if checkpoint_every_steps is not None and step % checkpoint_every_steps == 0:
                 save_checkpoint(step)
 
     if not checkpoints or checkpoints[-1]["step"] != trainer.step:
@@ -541,7 +562,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     }
     summary = {
         "schema": "gaugeflow.base_v2_generated_state_smoke.v1",
-        "protocol": protocol["protocol"],
+        "protocol": protocol_name,
         "protocol_sha256": protocol_sha256,
         "candidate": args.candidate,
         "parameter_count": parameter_count,
@@ -559,6 +580,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         "status": "passed" if all(checks.values()) else "failed",
         "metrics_jsonl": str(metrics_path),
         "checkpoints": checkpoints,
+        "checkpoint_every_steps": checkpoint_every_steps,
         "resumed_from": None
         if args.resume is None
         else {"path": str(args.resume), "step": resume_step, "metadata": resume_metadata},
