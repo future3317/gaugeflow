@@ -1,0 +1,103 @@
+{
+  "protocol": "gaugeflow_base_v2_generated_state_short_run_v1",
+  "status_before_run": "frozen_not_run",
+  "scope": "single-GPU 34M A-v2 replay-pressure dose; clean weight 0.875 and generated-state replay weight 0.125; bounded 2000-update retention candidate, not a capacity result",
+  "parent_protocol": "gaugeflow_base_v2_generated_state_short_run_34m_v1",
+  "dose_variable": {
+    "clean_loss_weight": 0.875,
+    "replay_loss_weight": 0.125,
+    "reason": "Test whether a smaller generated-state replay dose can preserve clean/free local geometry while retaining some generated-side correction."
+  },
+  "allowed_candidates": [
+    "small_34m"
+  ],
+  "source": {
+    "alex_cache_manifest_sha256": "6cb3b57776fcbb8db2dc45a0beb9ecd8b3f54732d412c4f03095940919b467da",
+    "replay_cache_dir": "/home/workspace/lrh/DATA/T2C-Flow/evaluations/generated_state_replay_32_real_v1",
+    "replay_manifest_sha256": "f59f58545bc1dab62664fad39b14806c0ef42e85f3d786c3cbaee78f131e4909",
+    "replay_sampler_commit": "25cbde3b6be0109d5e6cf68748f051632366a2f0",
+    "replay_sampler_protocol_sha256": "587bf38c705bade6034f73a819cc254c188abdb018b97654c3ec545e232388e1",
+    "forbidden_source_ids_sha256": "043de2544a52de76a81b656a27e49365e1d0cb3908b8dcb3d1dbae3affcd9650",
+    "lattice_standardization_canonical_sha256": "83fbaa4712a49dfb6aa523212c8593235056f329ae10a19de40d9db50d4de2c4"
+  },
+  "model_candidates": {
+    "small_34m": {
+      "hidden_dim": 384,
+      "vector_dim": 64,
+      "layers": 8,
+      "radial_dim": 24,
+      "radial_cutoff_angstrom": 8.0,
+      "edge_dim": 128,
+      "angular_channels": 16,
+      "edge_refresh_rank": 32,
+      "modality_time_conditioning": "separate",
+      "parameter_count": 34284207
+    }
+  },
+  "training": {
+    "seed": 5705,
+    "steps": 2000,
+    "clean_batch_size": 64,
+    "clean_gradient_accumulation_steps": 1,
+    "max_graphs_per_role_batch": 32,
+    "clean_loss_weight": 0.875,
+    "replay_loss_weight": 0.125,
+    "precision": "bf16",
+    "learning_rate": 0.0002,
+    "weight_decay": 0.000001,
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.999,
+    "coordinate_sigma_min": 0.005,
+    "coordinate_sigma_max": 0.5,
+    "minimum_time": 0.001,
+    "maximum_time": 0.999,
+    "categorical_path": "orderless_reveal",
+    "composition_conditioning": true
+  },
+  "execution": {
+    "device": "cuda",
+    "checkpoint_every_steps": 250,
+    "expected_checkpoint_steps": [
+      0,
+      250,
+      500,
+      750,
+      1000,
+      1250,
+      1500,
+      1750,
+      2000
+    ],
+    "resume_exact_match_required": true
+  },
+  "acceptance": {
+    "finite_loss": true,
+    "finite_gradient": true,
+    "parameters_updated": true,
+    "clean_terminal_gradient_groups_nonzero": true,
+    "all_replay_role_terminal_gradient_groups_nonzero": true,
+    "peak_cuda_memory_mib_max": 22000.0
+  },
+  "short_run_selector": {
+    "scope": "post-training paired selector for this bounded 34M A-v2 replay-pressure dose",
+    "eligibility": {
+      "all_replay_role_total_losses_lower": true,
+      "clean_retention_non_degraded": true,
+      "max_nn_w1_delta": 0.05,
+      "max_volume_w1_delta": 0.0,
+      "min_exact_composition_fraction": 1.0,
+      "min_finite_positive_lattice_fraction": 1.0,
+      "min_distance_valid_delta": 0.0,
+      "max_sampling_failures_delta": 0.0,
+      "max_terminal_masks_delta": 0.0
+    },
+    "tie_break_order": [
+      "fewest free NN-W1 delta",
+      "largest replay total-loss improvement",
+      "earliest eligible checkpoint",
+      "lexicographic label"
+    ],
+    "boundary": "Selector output can choose a diagnostic A-v2 short-run checkpoint only after frozen paired evaluation; it does not qualify Stage-E or authorize Stage-F."
+  },
+  "boundary": "This dose can only test whether lower replay pressure repairs clean/free retention. It does not authorize 58M/98M capacity competition, Stage-E pass, or Stage-F."
+}
