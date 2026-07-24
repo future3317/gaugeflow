@@ -1235,3 +1235,13 @@ same free NN/volume retention surface, the next fix belongs in the base
 training budget/objective or checkpoint selector.  If clean-only is much more
 stable than the replay runs, the next fix should target generated-state replay
 retention/trust constraints rather than capacity scaling.
+
+The checkpoint selector now has an explicit clean-control mode:
+
+```text
+scripts/select_generated_state_replay_checkpoint.py --no-replay-loss-requirement
+```
+
+The default selector still requires all replay role losses to decrease.  The
+flag may only be used for predeclared clean-objective controls, where replay
+loss deltas are diagnostics rather than eligibility criteria.

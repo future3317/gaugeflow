@@ -81,6 +81,7 @@
   "short_run_selector": {
     "scope": "post-training paired selector for this bounded 34M A-v2 clean-objective baseline",
     "eligibility": {
+      "require_all_replay_role_losses_lower": false,
       "clean_retention_non_degraded": true,
       "max_nn_w1_delta": 0.05,
       "max_volume_w1_delta": 0.0,

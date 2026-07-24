@@ -871,3 +871,26 @@ def test_generated_state_replay_checkpoint_selector_rejects_replay_non_improveme
 
     assert not evidence["flat_replay"]["eligible"]
     assert select_candidate(evidence)["status"] == "no_eligible_checkpoint"
+
+
+def test_generated_state_replay_checkpoint_selector_allows_clean_objective_control(tmp_path) -> None:
+    contract = SelectionContract(require_all_replay_role_losses_lower=False)
+    path = _write_selection_eval(
+        tmp_path,
+        "clean_only_250",
+        _selection_eval(nn_delta=0.0, volume_delta=-0.01, replay_loss_delta=0.0),
+    )
+    evidence = {
+        "clean_only_250": evaluate_candidate(
+            "clean_only_250",
+            path,
+            _selection_eval(nn_delta=0.0, volume_delta=-0.01, replay_loss_delta=0.0),
+            contract,
+        )
+    }
+
+    assert evidence["clean_only_250"]["eligible"]
+    selection = select_candidate(evidence, use_replay_tie_break=False)
+    assert selection["status"] == "diagnostic_checkpoint_selected"
+    assert selection["selected_label"] == "clean_only_250"
+    assert "replay_total_loss_improvement" not in selection["selected_metrics"]

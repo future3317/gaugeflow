@@ -29,6 +29,7 @@ TERMINAL_MASKS_METRIC = "terminal_masks"
 
 @dataclass(frozen=True)
 class SelectionContract:
+    require_all_replay_role_losses_lower: bool = True
     max_nn_w1_delta: float = 0.05
     max_volume_w1_delta: float = 0.0
     min_exact_composition_fraction: float = 1.0
@@ -64,6 +65,11 @@ def _parse_args() -> argparse.Namespace:
         help="Candidate label and evaluation JSON path as LABEL=PATH.",
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--no-replay-loss-requirement",
+        action="store_true",
+        help="Do not require replay-role loss improvement; use only for predeclared clean-objective controls.",
+    )
     parser.add_argument("--max-nn-w1-delta", type=float, default=SelectionContract.max_nn_w1_delta)
     parser.add_argument("--max-volume-w1-delta", type=float, default=SelectionContract.max_volume_w1_delta)
     parser.add_argument(
@@ -241,7 +247,8 @@ def evaluate_candidate(
     finite = _finite_numeric_payload(result)
     replay = _replay_role_report(result, tolerance=contract.tolerance)
     free = _free_generation_report(result, contract)
-    eligible = finite and bool(replay["all_total_losses_lower"]) and bool(free["all_checks_passed"])
+    replay_ok = (not contract.require_all_replay_role_losses_lower) or bool(replay["all_total_losses_lower"])
+    eligible = finite and replay_ok and bool(free["all_checks_passed"])
     return {
         "label": label,
         "path": str(path),
@@ -257,26 +264,67 @@ def evaluate_candidate(
     }
 
 
-def select_candidate(evidence: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def select_candidate(
+    evidence: dict[str, dict[str, Any]],
+    *,
+    use_replay_tie_break: bool = True,
+) -> dict[str, Any]:
     eligible = [item for item in evidence.values() if item["eligible"]]
     if not eligible:
-        return {
-            "status": "no_eligible_checkpoint",
-            "selected_label": None,
-            "tie_break_order": [
+        tie_break_order = (
+            [
                 "fewest free NN-W1 delta",
                 "largest replay total-loss improvement",
                 "lexicographic label",
-            ],
+            ]
+            if use_replay_tie_break
+            else [
+                "fewest free NN-W1 delta",
+                "lexicographic label",
+            ]
+        )
+        return {
+            "status": "no_eligible_checkpoint",
+            "selected_label": None,
+            "tie_break_order": tie_break_order,
         }
-    ordered = sorted(
-        eligible,
-        key=lambda item: (
-            float(item["free_generation"]["metrics"]["nn_w1_delta"]),
-            -float(item["replay"]["total_loss_improvement"]),
-            str(item["label"]),
-        ),
-    )
+    if use_replay_tie_break:
+        ordered = sorted(
+            eligible,
+            key=lambda item: (
+                float(item["free_generation"]["metrics"]["nn_w1_delta"]),
+                -float(item["replay"]["total_loss_improvement"]),
+                str(item["label"]),
+            ),
+        )
+        selected_metrics = {
+            "nn_w1_delta": ordered[0]["free_generation"]["metrics"]["nn_w1_delta"],
+            "volume_w1_delta": ordered[0]["free_generation"]["metrics"]["volume_w1_delta"],
+            "distance_valid_delta": ordered[0]["free_generation"]["metrics"]["distance_valid_delta"],
+            "replay_total_loss_improvement": ordered[0]["replay"]["total_loss_improvement"],
+        }
+        tie_break_order = [
+            "fewest free NN-W1 delta",
+            "largest replay total-loss improvement",
+            "lexicographic label",
+        ]
+    else:
+        ordered = sorted(
+            eligible,
+            key=lambda item: (
+                float(item["free_generation"]["metrics"]["nn_w1_delta"]),
+                str(item["label"]),
+            ),
+        )
+        selected_metrics = {
+            "nn_w1_delta": ordered[0]["free_generation"]["metrics"]["nn_w1_delta"],
+            "volume_w1_delta": ordered[0]["free_generation"]["metrics"]["volume_w1_delta"],
+            "distance_valid_delta": ordered[0]["free_generation"]["metrics"]["distance_valid_delta"],
+        }
+        tie_break_order = [
+            "fewest free NN-W1 delta",
+            "lexicographic label",
+        ]
     selected = ordered[0]
     return {
         "status": "diagnostic_checkpoint_selected",
@@ -284,22 +332,14 @@ def select_candidate(evidence: dict[str, dict[str, Any]]) -> dict[str, Any]:
         "selected_checkpoint": selected["checkpoint"],
         "selected_checkpoint_sha256": selected["checkpoint_sha256"],
         "selected_checkpoint_ema_used": selected["checkpoint_ema_used"],
-        "selected_metrics": {
-            "nn_w1_delta": selected["free_generation"]["metrics"]["nn_w1_delta"],
-            "volume_w1_delta": selected["free_generation"]["metrics"]["volume_w1_delta"],
-            "distance_valid_delta": selected["free_generation"]["metrics"]["distance_valid_delta"],
-            "replay_total_loss_improvement": selected["replay"]["total_loss_improvement"],
-        },
-        "tie_break_order": [
-            "fewest free NN-W1 delta",
-            "largest replay total-loss improvement",
-            "lexicographic label",
-        ],
+        "selected_metrics": selected_metrics,
+        "tie_break_order": tie_break_order,
     }
 
 
 def _contract_from_args(args: argparse.Namespace) -> SelectionContract:
     contract = SelectionContract(
+        require_all_replay_role_losses_lower=not bool(args.no_replay_loss_requirement),
         max_nn_w1_delta=float(args.max_nn_w1_delta),
         max_volume_w1_delta=float(args.max_volume_w1_delta),
         min_exact_composition_fraction=float(args.min_exact_composition_fraction),
@@ -327,7 +367,10 @@ def main() -> None:
         "schema": OUTPUT_SCHEMA,
         "contract": contract.__dict__,
         "candidate_evidence": evidence,
-        "selection": select_candidate(evidence),
+        "selection": select_candidate(
+            evidence,
+            use_replay_tie_break=contract.require_all_replay_role_losses_lower,
+        ),
         "boundary": (
             "diagnostic checkpoint selection for 34M generated-state replay correctness; "
             "not a Stage-E pass, not Stage-F authorization, and not a capacity result"
