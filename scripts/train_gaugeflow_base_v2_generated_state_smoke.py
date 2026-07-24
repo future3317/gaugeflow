@@ -53,6 +53,11 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         help="Save periodic exact-resume checkpoints; by default only step 0 and the final step are saved.",
     )
+    parser.add_argument(
+        "--stop-step",
+        type=int,
+        help="Stop this invocation before the protocol step count; used for interrupted-resume smokes.",
+    )
     return parser.parse_args()
 
 
@@ -305,6 +310,9 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError("A-v2 resume checkpoint must live directly inside the output directory")
     if args.checkpoint_every_steps is not None and args.checkpoint_every_steps <= 0:
         raise ValueError("checkpoint interval must be positive")
+    target_step = int(training["steps"]) if args.stop_step is None else int(args.stop_step)
+    if target_step < 1 or target_step > int(training["steps"]):
+        raise ValueError("A-v2 stop step must lie in [1, protocol training steps]")
     if sha256_file(args.alex_cache / "manifest.json") != str(source["alex_cache_manifest_sha256"]):
         raise ValueError("Alex cache manifest hash mismatch")
     if canonical_json_hash(load_json_object(args.lattice_standardization)) != str(
@@ -465,10 +473,10 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         torch.cuda.reset_peak_memory_stats(device)
     final_clean_report: dict[str, Any] = {}
     final_replay_reports: list[dict[str, Any]] = []
-    if trainer.step >= int(training["steps"]):
+    if trainer.step >= target_step:
         raise ValueError("A-v2 resume checkpoint is already at or beyond the requested stop step")
     with metrics_path.open("a" if args.resume is not None else "w", encoding="utf-8") as handle:
-        while trainer.step < int(training["steps"]):
+        while trainer.step < target_step:
             trainer.begin_optimization_step()
             clean_batches = [next_host_batch() for _ in range(clean_accumulation)]
             clean_report = _accumulate_clean_batches(
@@ -534,6 +542,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         "candidate": args.candidate,
         "parameter_count": parameter_count,
         "training": training,
+        "requested_stop_step": target_step,
         "replay_manifest_sha256": manifest.canonical_sha256(),
         "entry_count": len(entries),
         "forbidden_source_id_check": {"executed": True, "count": len(forbidden_source_ids or set())},
