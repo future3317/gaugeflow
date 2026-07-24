@@ -907,3 +907,35 @@ official projection fails to reproduce or fails outside the original support,
 the replay update remains non-production and Stage-E stays blocked.  Capacity
 scaling is allowed only after the generated-state/trust rule is stable under
 the same provenance, forbidden-source and paired-retention checks.
+
+The independent support/window check has now been run for the official
+projection:
+
+| replay cache | manifest SHA-256 | all replay role losses lower | free NN-W1 delta | free volume-W1 delta | volume 95% CI |
+| --- | --- | --- | ---: | ---: | ---: |
+| 32-source | `f59f58545bc1dab62664fad39b14806c0ef42e85f3d786c3cbaee78f131e4909` | yes | +0.0024332300859237765 | -0.000040659420989408446 | [-0.0007411272712751895, +0.00030002156927976496] |
+| 64-source | `bd10fa96d0175fa799da075906a18cb96fcffb609d9e3df63c5bea9dfcdfe11f` | yes | +0.0024332300859237765 | -0.000040659420989408446 | [-0.0007411272712751895, +0.00030002156927976496] |
+| 128-source | `6e7cfd853b6a3ee1464b31ddfd623df89ed00bc0c1a2c7bef3805708ceee2283` | yes | +0.0024332300859237765 | -0.000040659420989408446 | [-0.0007411272712751895, +0.00030002156927976496] |
+
+The free-generation deltas are identical because these evaluations use the
+same checkpoint, validation reference, random streams and free-generation
+surface; the independent evidence is the replay-cache loss behavior across
+three distinct provenance windows.  In all three windows, all four role losses
+decrease and hard validity does not regress.
+
+This is enough to stop E-v1 scalar tuning and enter the retraining plan, but it
+does not by itself launch a larger model.  The current
+`train_generated_state_replay_correctness.py` runner is a 34M Stage-C replay
+update runner: it reconstructs the frozen Stage-C backbone from a checkpoint
+and therefore cannot train 58M/98M base models or a from-scratch A-v2 product
+model.  The next implementation step is an A-v2 retraining runner/protocol that:
+
+1. initializes preregistered 34M/58M/98M model specs without requiring a
+   same-shaped Stage-C checkpoint;
+2. trains on the clean A-v1 product objective plus provenance-checked
+   generated-state replay roles;
+3. keeps forbidden-source checks, checkpoint/protocol hashes, exact counts,
+   per-role losses and paired free-retention selectors;
+4. supports larger effective batch and multi-GPU execution as an execution
+   optimization, not as a changed scientific variable;
+5. first runs a bounded 34M smoke before any 58M/98M capacity competition.

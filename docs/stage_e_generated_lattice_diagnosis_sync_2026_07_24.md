@@ -1414,3 +1414,41 @@ Current boundary:
    scaling or production use.
 5. If the projection fails outside the original cache/window, conclude it is an
    overfit trust projection and keep Stage-E blocked.
+
+The independent support/window check has now been completed on the existing
+32-source and 64-source replay caches, in addition to the original 128-source
+cache:
+
+| replay cache | all replay role losses lower | clean loss delta | generated_assignment loss delta | generated_lattice loss delta | generated_joint loss delta |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 32-source | yes | -0.0002186298370361328 | -0.0010221004486083984 | -0.00016021728515625 | -0.0036773681640625 |
+| 64-source | yes | -0.00005245208740234375 | -0.001954793930053711 | -0.0009167194366455078 | -0.0034050941467285156 |
+| 128-source | yes | -0.00017905235290527344 | -0.001874685287475586 | -0.0013530254364013672 | -0.0034461021423339844 |
+
+All three evaluations use the same official projection checkpoint and the same
+val128 free-generation surface, so free NN-W1 and volume-W1 deltas are
+identical: `+0.0024332300859237765` and
+`-0.000040659420989408446`, with volume bootstrap CI
+`[-0.0007411272712751895,+0.00030002156927976496]`.  Hard validity, exact
+composition, finite-positive lattice, sampling failures and terminal masks do
+not regress.
+
+Interpretation:
+
+```text
+The trust projection is not only a single 128-source replay-window artifact.
+It is stable across the existing 32/64/128 replay windows for the replay-role
+loss surface, while preserving the same short free-generation retention result.
+This closes the E-v1 scalar-tuning loop and authorizes moving into the
+GaugeFlow-base v2 retraining plan.
+```
+
+Execution boundary for the retraining plan:
+
+```text
+The existing replay correctness runner is not a full A-v2 retraining runner.
+It can update the 34M Stage-C checkpoint, but it cannot initialize and train
+58M/98M base models.  The next code task is to implement a preregistered A-v2
+clean-plus-generated-state runner and run its 34M smoke before any large
+capacity job.
+```
