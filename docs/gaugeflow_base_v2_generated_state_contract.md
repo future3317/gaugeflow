@@ -1,8 +1,11 @@
 # GaugeFlow-base v2 Generated-State Contract
 
-Status: draft implementation contract with tiny-cache provenance and bounded
-34M 2k correctness training passed, but smoke32 retention failed.  This is not
-a generated-quality or capacity competition result.
+Status: draft implementation contract with provenance-checked generated-state
+replay, A-v2 smoke/resume support and bounded 34M diagnostics.  Clean-only 34M
+can recover eval32 retention by 2000 updates, but all measured replay-dose
+short runs remain ineligible because replay improvement still damages
+free-generation local geometry.  This is not a generated-quality or capacity
+competition result.
 
 Implementation status as of `23cde00`:
 
@@ -1245,3 +1248,124 @@ scripts/select_generated_state_replay_checkpoint.py --no-replay-loss-requirement
 The default selector still requires all replay role losses to decrease.  The
 flag may only be used for predeclared clean-objective controls, where replay
 loss deltas are diagnostics rather than eligibility criteria.
+
+The clean-only 34M/2000 control has now completed under `cec53f3`:
+
+```text
+run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_clean_objective_34m_2000_b06d844_v1
+
+metrics rows:
+  2000
+checkpoints:
+  0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000
+final checkpoint SHA-256:
+  e7d4be856296dcb5102321494c7d120b2e4030ec6bb45553ee5fc66436b15595
+peak CUDA MiB:
+  17293.40576171875
+training status:
+  passed
+```
+
+Eval32 clean-control selector:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_clean_objective_34m_2000_eval32_selection_all_cec53f3_v1.json
+status:
+  diagnostic_checkpoint_selected
+selected label:
+  clean_only_step2000
+selected checkpoint:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_clean_objective_34m_2000_b06d844_v1/checkpoint_step_00002000.pt
+selected checkpoint SHA-256:
+  e7d4be856296dcb5102321494c7d120b2e4030ec6bb45553ee5fc66436b15595
+selected free-generation deltas:
+  NN-W1 +0.024811769612691048
+  volume-W1 -0.025527678223868533
+  distance-valid 0.0
+```
+
+Clean-only eval32 curve:
+
+| step | clean_clean loss delta | free NN-W1 delta | free volume-W1 delta |
+| ---: | ---: | ---: | ---: |
+| 250 | +1.732421 | +0.449538 | +0.317320 |
+| 500 | +1.477882 | +0.319148 | +0.216182 |
+| 750 | +1.298067 | +0.255180 | +0.122665 |
+| 1000 | +1.139970 | +0.270466 | +0.046672 |
+| 1250 | +1.023181 | +0.141904 | +0.000639 |
+| 1500 | +0.932429 | +0.075713 | -0.024507 |
+| 1750 | +0.857146 | +0.035936 | -0.030226 |
+| 2000 | +0.797477 | +0.024812 | -0.025528 |
+
+This control closes the "fresh 34M/2000 cannot approach Stage-C retention"
+alternative.  Fresh clean-only training is initially worse than Stage-C, but by
+2000 updates it is inside the eval32 clean-control retention window.  Therefore
+the replay-dose failures are not explained solely by insufficient fresh-model
+training budget.
+
+The replay025 and replay0125 34M/2000 runs also completed, and the previously
+missing 1500/1750/2000 eval32 checkpoints were filled under the same random
+streams, replay cache, base checkpoint and selector surface:
+
+```text
+replay025 run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_short_run_34m_2000_replay025_gpu3_1caba26_v1
+final checkpoint SHA-256:
+  f2161ac0139eebe6cb37e495e0cd542b73a88fca0d643ea4ef3b3ad01317567a
+
+replay0125 run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_short_run_34m_2000_replay0125_1caba26_v1
+final checkpoint SHA-256:
+  d25a62ae9d6a16ccf25a37a3e3a0866aaa2fb6509c99995a0b7788246386d3b2
+```
+
+Selector reports:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_replay025_eval32_selection_all_cec53f3_v1.json
+status:
+  no_eligible_checkpoint
+
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_replay0125_eval32_selection_all_cec53f3_v1.json
+status:
+  no_eligible_checkpoint
+```
+
+Replay-dose eval32 summary:
+
+| dose | step | clean_clean loss delta | generated_assignment | generated_lattice | generated_joint | free NN-W1 delta | free volume-W1 delta |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.25 | 250 | +1.682917 | -0.080870 | +0.246450 | -0.124508 | +0.547538 | +0.322733 |
+| 0.25 | 500 | +1.366135 | -0.199586 | +0.052842 | -0.363059 | +0.716587 | +0.222644 |
+| 0.25 | 1000 | +0.971517 | -0.424267 | -0.160639 | -0.589001 | +0.490748 | +0.060188 |
+| 0.25 | 1250 | +0.834073 | -0.534371 | -0.229574 | -0.638911 | +0.386247 | +0.016663 |
+| 0.25 | 1500 | +0.722445 | -0.639294 | -0.286723 | -0.674510 | +0.277110 | -0.008968 |
+| 0.25 | 1750 | +0.630528 | -0.737637 | -0.334510 | -0.690012 | +0.205921 | -0.024518 |
+| 0.25 | 2000 | +0.553613 | -0.824708 | -0.387610 | -0.702879 | +0.157590 | -0.029845 |
+| 0.125 | 250 | +1.686853 | -0.022801 | +0.262390 | -0.156833 | +0.733156 | +0.319709 |
+| 0.125 | 500 | +1.404759 | -0.093588 | +0.105081 | -0.393486 | +0.686011 | +0.217394 |
+| 0.125 | 1000 | +1.048732 | -0.170492 | -0.033935 | -0.615191 | +0.448427 | +0.053797 |
+| 0.125 | 1250 | +0.921330 | -0.232858 | -0.076727 | -0.674698 | +0.300467 | +0.012159 |
+| 0.125 | 1500 | +0.809900 | -0.303097 | -0.115254 | -0.713836 | +0.242368 | -0.010707 |
+| 0.125 | 1750 | +0.708814 | -0.380238 | -0.149435 | -0.731384 | +0.204451 | -0.020337 |
+| 0.125 | 2000 | +0.638506 | -0.455657 | -0.186782 | -0.742676 | +0.178185 | -0.024950 |
+
+Hard validity, exact composition, finite-positive lattice, sampling failures
+and terminal masks did not regress in these eval32 replay-dose runs.  The
+selector nevertheless rejects every replay checkpoint because the free
+NN-W1 deltas remain far outside the preregistered +0.05 non-inferiority bound.
+Late replay checkpoints improve volume and generated replay-role losses, but
+they do so while degrading clean_clean loss and free-generation local geometry.
+
+The current decision is:
+
+- Do not start 58M/98M capacity training from these replay-dose protocols.
+- Do not run more scalar replay-weight sweeps; 0.5, 0.25 and 0.125 all show
+  the same local-geometry retention failure.
+- Treat clean-only 34M/2000 as the positive control that the fresh 34M route is
+  viable under the clean objective.
+- Treat replay-dose results as evidence that the generated-state replay update
+  direction needs an explicit retention/trust constraint or schedule before any
+  larger-capacity competition.
+- Keep Stage-F blocked and keep all checkpoint/eval artifacts outside git.
