@@ -115,7 +115,7 @@ def _cpu_tree(value: Any) -> Any:
     if isinstance(value, torch.Tensor):
         return value.detach().cpu()
     if isinstance(value, dict):
-        return {str(key): _cpu_tree(item) for key, item in value.items()}
+        return {key: _cpu_tree(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_cpu_tree(item) for item in value]
     if isinstance(value, tuple):

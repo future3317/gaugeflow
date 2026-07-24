@@ -115,6 +115,10 @@ class _TinyTrainer:
 def test_base_v2_training_checkpoint_round_trips_runtime_state(tmp_path) -> None:
     model = torch.nn.Linear(3, 2)
     trainer = _TinyTrainer(model)
+    model(torch.ones((4, 3))).sum().backward()
+    trainer.optimizer.step()
+    trainer.optimizer.zero_grad(set_to_none=True)
+    trainer.ema.update(model)
     loader_generator = torch.Generator().manual_seed(11)
     device_generator = torch.Generator().manual_seed(12)
     runtime_state = {
@@ -150,6 +154,16 @@ def test_base_v2_training_checkpoint_round_trips_runtime_state(tmp_path) -> None
     assert metadata["protocol_sha256"] == "protocol"
     for name, value in model.state_dict().items():
         assert torch.equal(value, restored.state_dict()[name])
+    optimizer_state = trainer.optimizer.state_dict()["state"]
+    restored_optimizer_state = restored_trainer.optimizer.state_dict()["state"]
+    assert optimizer_state.keys() == restored_optimizer_state.keys()
+    for parameter_id, state in optimizer_state.items():
+        for name, value in state.items():
+            restored_value = restored_optimizer_state[parameter_id][name]
+            if isinstance(value, torch.Tensor):
+                assert torch.equal(value, restored_value)
+            else:
+                assert value == restored_value
     assert restored_runtime["batches_consumed_in_epoch"] == 5
     assert torch.equal(
         restored_runtime["epoch_loader_generator_state"],
