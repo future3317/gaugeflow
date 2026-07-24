@@ -22,6 +22,7 @@ from scripts.build_tiny_generated_state_replay_cache import (
     _source_ids_for_indices,
 )
 from scripts.evaluate_generated_state_replay_correctness import _paired_bootstrap_w1_delta
+from scripts.project_generated_state_replay_checkpoint import _alpha_for_key, _project_state_dict
 from scripts.select_generated_state_replay_checkpoint import (
     SelectionContract,
     evaluate_candidate,
@@ -333,6 +334,65 @@ def test_generated_state_replay_paired_bootstrap_zero_for_identical_records() ->
     assert report["p025_delta"] == pytest.approx(0.0)
     assert report["p975_delta"] == pytest.approx(0.0)
     assert report["probability_delta_le_zero"] == pytest.approx(1.0)
+
+
+def test_generated_state_replay_projection_assigns_expected_parameter_blocks() -> None:
+    assert _alpha_for_key(
+        "element_head.0.weight",
+        element_alpha=0.1,
+        coordinate_alpha=0.2,
+        lattice_head_alpha=0.3,
+    ) == pytest.approx(0.1)
+    assert _alpha_for_key(
+        "coordinate_edge_encoder.weight",
+        element_alpha=0.1,
+        coordinate_alpha=0.2,
+        lattice_head_alpha=0.3,
+    ) == pytest.approx(0.2)
+    assert _alpha_for_key(
+        "volume_head.0.weight",
+        element_alpha=0.1,
+        coordinate_alpha=0.2,
+        lattice_head_alpha=0.3,
+    ) == pytest.approx(0.3)
+    assert _alpha_for_key(
+        "shared_trunk.0.weight",
+        element_alpha=0.1,
+        coordinate_alpha=0.2,
+        lattice_head_alpha=0.3,
+    ) == pytest.approx(0.0)
+
+
+def test_generated_state_replay_projection_interpolates_only_declared_blocks() -> None:
+    base = {
+        "element_head.0.weight": torch.tensor([0.0]),
+        "coordinate_carrier.weight": torch.tensor([0.0]),
+        "shape_head.0.weight": torch.tensor([0.0]),
+        "shared_trunk.0.weight": torch.tensor([0.0]),
+        "integer_buffer": torch.tensor([1], dtype=torch.long),
+    }
+    candidate = {
+        key: value.clone()
+        for key, value in base.items()
+    }
+    for key in candidate:
+        if candidate[key].is_floating_point():
+            candidate[key] += 8.0
+    candidate["integer_buffer"] = torch.tensor([2], dtype=torch.long)
+
+    projected = _project_state_dict(
+        base,
+        candidate,
+        element_alpha=0.0,
+        coordinate_alpha=1.0,
+        lattice_head_alpha=0.25,
+    )
+
+    assert projected["element_head.0.weight"].item() == pytest.approx(0.0)
+    assert projected["coordinate_carrier.weight"].item() == pytest.approx(8.0)
+    assert projected["shape_head.0.weight"].item() == pytest.approx(2.0)
+    assert projected["shared_trunk.0.weight"].item() == pytest.approx(0.0)
+    assert torch.equal(projected["integer_buffer"], torch.tensor([1], dtype=torch.long))
 
 
 def test_tiny_replay_builder_reads_forbidden_source_ids(tmp_path) -> None:
