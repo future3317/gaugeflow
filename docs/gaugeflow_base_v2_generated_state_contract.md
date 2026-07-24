@@ -939,3 +939,61 @@ model.  The next implementation step is an A-v2 retraining runner/protocol that:
 4. supports larger effective batch and multi-GPU execution as an execution
    optimization, not as a changed scientific variable;
 5. first runs a bounded 34M smoke before any 58M/98M capacity competition.
+
+That first runner now exists:
+
+```text
+9be8950 feat: add GaugeFlow-base v2 generated-state smoke runner
+8bc5ba9 fix: match A-v2 smoke runner import order
+68b2233 test: cover A-v2 generated-state smoke helpers
+```
+
+Files:
+
+```text
+configs/gates/gaugeflow_base_v2_generated_state_smoke_v1.json
+scripts/train_gaugeflow_base_v2_generated_state_smoke.py
+tests/test_generated_state_replay.py
+```
+
+The smoke initializes each preregistered capacity from its model spec rather
+than from a Stage-C checkpoint, accumulates one clean A-v1 product batch plus
+four generated-state replay roles into the same optimizer step, checks
+forbidden-source IDs and replay manifest hashes, and reports clean/replay
+terminal gradient groups separately.
+
+Server verification at `68b2233`:
+
+```text
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python -m pytest -q tests/test_generated_state_replay.py
+  27 passed
+
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check scripts/train_gaugeflow_base_v2_generated_state_smoke.py tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy scripts/train_gaugeflow_base_v2_generated_state_smoke.py tests/test_generated_state_replay.py
+  Success
+```
+
+One-step A-v2 clean+generated-state smoke results:
+
+| candidate | status | parameters | peak CUDA MiB | final update norm | clean terminal groups | replay role terminal groups |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| small_34m | passed | 34,284,207 | 7,832.16 | 0.964336 | nonzero | nonzero for all roles |
+| base_58m | passed | 57,682,095 | 11,959.72 | 1.259605 | nonzero | nonzero for all roles |
+| large_98m | passed | 97,580,719 | 17,183.43 | 1.633221 | nonzero | nonzero for all roles |
+
+Artifacts:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_generated_state_smoke_34m_v1/
+/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_generated_state_smoke_58m_v1/
+/home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_generated_state_smoke_98m_v1/
+```
+
+This qualifies the A-v2 clean+generated-state training interface and shows all
+three capacities fit the current RTX 4090 memory envelope for the bounded
+smoke.  It is still not a capacity selection result and not a long training
+run.  The next retraining step is to add exact-resume/checkpointing and a
+predeclared short-run selector before launching any multi-GPU 2--5k or
+full-pass jobs.
