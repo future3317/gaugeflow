@@ -1060,3 +1060,109 @@ With this fix, the next authorized retraining step is a bounded 34M A-v2
 selector.  The 58M/98M capacity competition remains blocked until the 34M
 short run passes clean retention, replay-role and free-generation retention
 checks.
+
+The first bounded 34M short-run protocol is now frozen:
+
+```text
+15607bb feat: add A-v2 short-run protocol
+configs/gates/gaugeflow_base_v2_generated_state_short_run_34m_v1.json
+```
+
+It keeps the same seed, optimizer, loss weights, replay cache, forbidden-source
+contract and model definition as the smoke, but increases the clean batch to 64
+and runs `2000` updates with checkpoints every `250` updates.  The protocol
+allows only `small_34m`; 58M/98M remain blocked until 34M passes the selector.
+
+The short-run protocol itself passed the same two-step exact-resume CUDA smoke:
+
+```text
+interrupted run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_short_run_protocol_resume_smoke_34m_steps2_15607bb_v1
+
+uninterrupted run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_short_run_protocol_full2_smoke_34m_steps2_15607bb_v1
+
+final checkpoint SHA-256:
+  ec8186831b24e5778a4b4dd242d85eea577764b4bdf7a6ce3175bf4d23c06d9b
+exact_final_checkpoint_match: true
+peak CUDA MiB: about 13,400
+```
+
+The full 34M/2000-step short run completed:
+
+```text
+run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_short_run_34m_2000_15607bb_v1
+
+metrics rows: 2000
+checkpoints:
+  0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000
+final checkpoint SHA-256:
+  0765f84e05733b4c2a72d806eeb9413a6887280e1870405d780596f6a319a706
+peak CUDA MiB:
+  17048.096
+status:
+  passed training-interface checks
+```
+
+This training pass is not an A-v2 success.  It only authorizes checkpoint
+selection/evaluation.  To evaluate it, the generated-state replay evaluator was
+extended to read A-v2 hash-sidecar checkpoints:
+
+```text
+037b1e8 feat: evaluate A-v2 generated-state checkpoints
+```
+
+Server verification at `037b1e8`:
+
+```text
+ruff: passed
+mypy: passed
+pytest tests/test_generated_state_replay.py: 29 passed
+```
+
+The first selector surface used the existing 32-source replay cache and a
+32-sample paired free-generation panel.  It evaluated all nonzero checkpoints:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_250_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_500_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_750_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_1000_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_1250_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_1500_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_step_1750_eval32_037b1e8_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_eval32_037b1e8_v1.json
+```
+
+Summary of candidate-minus-Stage-C deltas:
+
+| step | clean_clean replay loss delta | all generated replay roles lower | free NN-W1 delta | free volume-W1 delta | hard validity deltas |
+| ---: | ---: | --- | ---: | ---: | --- |
+| 250 | +1.644628 | no | +0.718542 | +0.326028 | unchanged |
+| 500 | +1.321868 | nearly, but clean fails | +0.557899 | +0.228987 | unchanged |
+| 750 | +1.088746 | no | +0.466493 | +0.146872 | unchanged |
+| 1000 | +0.884881 | no | +0.368408 | +0.075038 | unchanged |
+| 1250 | +0.724149 | no | +0.254024 | +0.029822 | unchanged |
+| 1500 | +0.594618 | no | +0.225156 | +0.000628 | unchanged |
+| 1750 | +0.489394 | no | +0.178541 | -0.019747 | unchanged |
+| 2000 | +0.392433 | no | +0.115212 | -0.031482 | unchanged |
+
+Selector report:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_eval32_selection_037b1e8_v1.json
+status:
+  no_eligible_checkpoint
+```
+
+Interpretation: this A-v2 objective/curriculum has the same failure signature
+as the late E-v1 diagnostics at a broader base-training level.  It steadily
+improves volume and generated-state replay losses, but it does so while
+degrading clean-side retention and free-generation local geometry.  Therefore
+capacity scaling to 58M/98M is still not authorized.  The next minimal
+hypothesis is not "make the model larger"; it is that the generated-state
+replay term is over-weighted or insufficiently clean-retentive even in A-v2.
+The next experiment should keep the 34M model and exact same replay support,
+then reduce replay pressure or add an explicit clean-retention selector before
+any larger-capacity competition.

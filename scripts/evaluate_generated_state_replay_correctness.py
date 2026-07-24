@@ -590,6 +590,34 @@ def _evaluation_config(args: argparse.Namespace, a1_protocol: dict[str, Any]) ->
     return base
 
 
+def _checkpoint_training_summary(checkpoint: Path, checkpoint_summary: dict[str, Any]) -> dict[str, Any]:
+    if checkpoint_summary.get("schema") == A_V2_CHECKPOINT_SCHEMA:
+        summary_path = checkpoint.parent / "training_summary.json"
+        if not summary_path.is_file():
+            return {
+                "status": None,
+                "steps": None,
+                "clean_retention_loss_ratio_max": None,
+                "final_parameter_update_norm": None,
+            }
+        summary = _read_json(summary_path)
+        return {
+            "status": summary.get("status"),
+            "steps": summary.get("requested_stop_step"),
+            "clean_retention_loss_ratio_max": None,
+            "final_parameter_update_norm": summary.get("final_parameter_update_norm"),
+        }
+    return {
+        key: checkpoint_summary.get(key)
+        for key in (
+            "status",
+            "steps",
+            "clean_retention_loss_ratio_max",
+            "final_parameter_update_norm",
+        )
+    }
+
+
 @torch.inference_mode()
 def main() -> None:
     args = _parse_args()
@@ -737,15 +765,7 @@ def main() -> None:
         "base_checkpoint_sha256": base_sha,
         "replay_cache_dir": str(args.replay_cache_dir),
         "replay_manifest_sha256": manifest.canonical_sha256(),
-        "checkpoint_training_summary": {
-            key: checkpoint_summary.get(key)
-            for key in (
-                "status",
-                "steps",
-                "clean_retention_loss_ratio_max",
-                "final_parameter_update_norm",
-            )
-        },
+        "checkpoint_training_summary": _checkpoint_training_summary(args.checkpoint, checkpoint_summary),
         "forbidden_source_id_check": {
             "executed": forbidden is not None,
             "count": 0 if forbidden is None else len(forbidden),
