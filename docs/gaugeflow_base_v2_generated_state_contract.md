@@ -997,3 +997,66 @@ smoke.  It is still not a capacity selection result and not a long training
 run.  The next retraining step is to add exact-resume/checkpointing and a
 predeclared short-run selector before launching any multi-GPU 2--5k or
 full-pass jobs.
+
+That resume/checkpointing precondition is now implemented for the A-v2 smoke
+runner:
+
+```text
+1d5538c feat: add A-v2 smoke exact resume checkpoints
+7fb36ab fix: allow interrupted A-v2 smoke runs
+b65fb20 fix: make A-v2 smoke resume deterministic
+a7e57c2 fix: preserve optimizer keys in A-v2 checkpoints
+```
+
+The runner now writes hash-sidecar checkpoints containing model, EMA,
+optimizer, CPU/CUDA RNG state, device generator state, DataLoader generator
+state and epoch cursor.  It supports `--resume`, `--checkpoint-every-steps` and
+`--stop-step` for interrupted-resume qualification.  The smoke protocol also
+contains the preregistered short-run selector contract; this selector is only
+for post-training paired evaluation of bounded A-v2 short runs and does not
+qualify Stage-E or authorize Stage-F.
+
+Server verification at `a7e57c2`:
+
+```text
+/home/workspace/lrh/miniconda3/envs/gaugeflow/bin/ruff check scripts/train_gaugeflow_base_v2_generated_state_smoke.py tests/test_generated_state_replay.py
+  All checks passed
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/mypy scripts/train_gaugeflow_base_v2_generated_state_smoke.py tests/test_generated_state_replay.py
+  Success
+
+PYTHONPATH=src:. /home/workspace/lrh/miniconda3/envs/gaugeflow/bin/python -m pytest -q tests/test_generated_state_replay.py
+  28 passed
+```
+
+Two-step exact-resume CUDA smoke:
+
+```text
+temporary protocol:
+  /tmp/gaugeflow_base_v2_generated_state_smoke_steps2_a7e57c2.json
+
+interrupted run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_generated_state_resume_smoke_34m_steps2_a7e57c2_v1
+
+uninterrupted run:
+  /home/workspace/lrh/DATA/T2C-Flow/runs/gaugeflow_base_v2_generated_state_full2_smoke_34m_steps2_a7e57c2_v1
+
+resume status: passed
+full status: passed
+metrics rows: 2 in both runs
+final checkpoint SHA-256:
+  5a9676312d9120d73cd95c2ebb6671979ee45615fc8adf048910e9ce7468ae11
+exact_final_checkpoint_match: true
+```
+
+The first attempted exact-resume comparison exposed a real checkpoint bug:
+integer optimizer-state keys were converted to strings during CPU-portable
+checkpoint serialization.  That made `AdamW.load_state_dict` silently restore a
+non-equivalent optimizer state.  Commit `a7e57c2` preserves optimizer keys and
+adds a non-empty AdamW-state round-trip test.
+
+With this fix, the next authorized retraining step is a bounded 34M A-v2
+2--5k-update short run with periodic checkpoints and the preregistered paired
+selector.  The 58M/98M capacity competition remains blocked until the 34M
+short run passes clean retention, replay-role and free-generation retention
+checks.
