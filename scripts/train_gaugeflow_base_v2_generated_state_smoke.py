@@ -8,23 +8,13 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from torch.utils.data import DataLoader
-
-from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
-from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset, collate_packed_alex
-from gaugeflow.production.blueprint import ParentBlueprintBatch
-from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
-from gaugeflow.production.generated_state_replay import load_generated_state_replay_cache
-from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
-from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
-from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
-
 from audit_generated_state_replay_training_contract import (
     _ROLES,
     _gradient_group_norms,
     _pack_role_entries,
     _read_forbidden_source_ids,
 )
+from torch.utils.data import DataLoader
 from train_generated_state_replay_correctness import (
     _accumulate_role_step,
     _clone_current_group_gradients,
@@ -34,6 +24,15 @@ from train_generated_state_replay_correctness import (
     _parameter_update_norm,
     _write_json,
 )
+
+from gaugeflow.file_utils import canonical_json_hash, load_json_object, sha256_file
+from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset, collate_packed_alex
+from gaugeflow.production.blueprint import ParentBlueprintBatch
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
+from gaugeflow.production.generated_state_replay import load_generated_state_replay_cache
+from gaugeflow.production.hybrid_diffusion import TensorFreeHybridDiffusion
+from gaugeflow.production.lattice_standardization import P1LatticeStandardizer
+from gaugeflow.production.training import ProductionTrainer, ProductionTrainingConfig
 
 
 def _parse_args() -> argparse.Namespace:
