@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
+
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 import torch
 from audit_generated_state_replay_training_contract import (
@@ -293,6 +296,7 @@ def _accumulate_clean_batches(
 
 
 def _run(args: argparse.Namespace) -> dict[str, Any]:
+    torch.use_deterministic_algorithms(True)
     protocol = load_json_object(args.protocol)
     if (
         protocol.get("protocol") != "gaugeflow_base_v2_generated_state_smoke_v1"
