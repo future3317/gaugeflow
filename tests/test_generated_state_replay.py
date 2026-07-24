@@ -28,6 +28,7 @@ from scripts.select_generated_state_replay_checkpoint import (
     evaluate_candidate,
     select_candidate,
 )
+from scripts.train_gaugeflow_base_v2_generated_state_smoke import _model_config, _training_config
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
 
 
@@ -54,6 +55,48 @@ def _counts() -> torch.Tensor:
     counts[1, 12] = 1
     counts[1, 15] = 1
     return counts
+
+
+def test_base_v2_smoke_config_uses_orderless_joint_training() -> None:
+    config = _training_config(
+        {
+            "learning_rate": 2.0e-4,
+            "weight_decay": 1.0e-6,
+            "gradient_clip_norm": 1.0,
+            "ema_decay": 0.999,
+            "coordinate_sigma_min": 0.005,
+            "coordinate_sigma_max": 0.5,
+            "minimum_time": 0.001,
+            "maximum_time": 0.999,
+            "precision": "bf16",
+            "categorical_path": "orderless_reveal",
+            "composition_conditioning": True,
+        }
+    )
+
+    assert config.objective == "joint"
+    assert config.categorical_path == "orderless_reveal"
+    assert config.composition_conditioning is True
+
+
+def test_base_v2_smoke_model_config_maps_capacity_spec() -> None:
+    config = _model_config(
+        {
+            "hidden_dim": 384,
+            "vector_dim": 64,
+            "layers": 8,
+            "radial_dim": 24,
+            "radial_cutoff_angstrom": 8.0,
+            "edge_dim": 128,
+            "angular_channels": 16,
+            "edge_refresh_rank": 32,
+            "modality_time_conditioning": "separate",
+        }
+    )
+
+    assert config["radial_cutoff"] == 8.0
+    assert config["atlas_residual_circle_samples"] == 8
+    assert config["modality_time_conditioning"] == "separate"
 
 
 def _entry(*, role: str = "generated_joint") -> GeneratedStateReplayEntry:
