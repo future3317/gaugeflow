@@ -28,6 +28,15 @@ from audit_generated_state_replay_training_contract import (
 )
 from evaluate_gaugeflow_base_a1 import dense_token_counts, reference_statistics
 from evaluate_physical_representation import evaluate_generation_retention
+from train_gaugeflow_base_v2_generated_state_smoke import (
+    _CHECKPOINT_SCHEMA as A_V2_CHECKPOINT_SCHEMA,
+)
+from train_gaugeflow_base_v2_generated_state_smoke import (
+    _model_config as _a_v2_model_config,
+)
+from train_gaugeflow_base_v2_generated_state_smoke import (
+    _read_training_checkpoint_description as _read_a_v2_checkpoint_description,
+)
 
 from gaugeflow.file_utils import sha256_file
 from gaugeflow.production.alex_p1_data import PackedAlexP1Dataset
@@ -69,6 +78,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--alex-cache", type=Path, required=True)
     parser.add_argument("--composition-checkpoint", type=Path, required=True)
     parser.add_argument("--composition-protocol", type=Path, required=True)
+    parser.add_argument(
+        "--candidate-protocol",
+        type=Path,
+        default=None,
+        help="Frozen A-v2 protocol JSON required when --checkpoint is an A-v2 training checkpoint.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=5705)
@@ -153,12 +168,34 @@ def _load_correctness_backbone(
     *,
     device: torch.device,
     use_ema: bool,
+    candidate_protocol: dict[str, Any] | None,
 ) -> tuple[HybridCrystalDenoiser, dict[str, Any]]:
     payload = torch.load(checkpoint, map_location=device, weights_only=False)
-    if (
-        not isinstance(payload, dict)
-        or payload.get("schema") != "gaugeflow.generated_state_replay_correctness_training.v1"
-    ):
+    if not isinstance(payload, dict):
+        raise ValueError("checkpoint is not a generated-state replay correctness checkpoint")
+    if payload.get("schema") == A_V2_CHECKPOINT_SCHEMA:
+        if candidate_protocol is None:
+            raise ValueError("A-v2 checkpoint evaluation requires --candidate-protocol")
+        description = _read_a_v2_checkpoint_description(checkpoint)
+        metadata = description["metadata"]
+        candidate = str(metadata["candidate"])
+        candidates = candidate_protocol.get("model_candidates")
+        if not isinstance(candidates, dict) or candidate not in candidates:
+            raise ValueError("A-v2 candidate protocol lacks checkpoint model spec")
+        model = HybridCrystalDenoiser(**_a_v2_model_config(candidates[candidate])).to(device)
+        if use_ema:
+            ema = ExponentialMovingAverage(model, float(metadata["training"]["ema_decay"]))
+            ema.load_state_dict(payload["ema"])
+            ema.copy_to(model)
+        else:
+            model.load_state_dict(payload["model"], strict=True)
+        model.eval()
+        return model, {
+            "schema": A_V2_CHECKPOINT_SCHEMA,
+            "checkpoint_metadata": metadata,
+            "candidate_protocol": str(candidate_protocol["protocol"]),
+        }
+    if payload.get("schema") != "gaugeflow.generated_state_replay_correctness_training.v1":
         raise ValueError("checkpoint is not a generated-state replay correctness checkpoint")
     summary = payload.get("summary")
     if not isinstance(summary, dict):
@@ -183,20 +220,31 @@ def _load_correctness_backbone(
     return model, summary
 
 
-def _diffusion_for_backbone(
+def _diffusion_from_config(
     backbone: HybridCrystalDenoiser,
-    stage_b_metadata: dict[str, Any],
+    standardization: dict[str, Any],
+    training: dict[str, Any],
 ) -> TensorFreeHybridDiffusion:
-    training = stage_b_metadata["a1_training_config"]
     return TensorFreeHybridDiffusion(
         backbone,
-        P1LatticeStandardizer.from_mapping(stage_b_metadata["lattice_standardization"]),
+        P1LatticeStandardizer.from_mapping(standardization),
         coordinate_sigma_min=float(training["coordinate_sigma_min"]),
         coordinate_sigma_max=float(training["coordinate_sigma_max"]),
         minimum_time=float(training["minimum_time"]),
         maximum_time=float(training["maximum_time"]),
         categorical_path=str(training["categorical_path"]),
         composition_conditioning=bool(training["composition_conditioning"]),
+    )
+
+
+def _diffusion_for_backbone(
+    backbone: HybridCrystalDenoiser,
+    stage_b_metadata: dict[str, Any],
+) -> TensorFreeHybridDiffusion:
+    return _diffusion_from_config(
+        backbone,
+        dict(stage_b_metadata["lattice_standardization"]),
+        dict(stage_b_metadata["a1_training_config"]),
     )
 
 
@@ -559,14 +607,24 @@ def main() -> None:
         expected_sampler_protocol_sha256=args.expected_sampler_protocol_sha256,
         forbidden_source_ids=forbidden,
     )
-    base_backbone, stage_b_metadata, base_metadata = _load_stage_c_base_backbone(args.base_checkpoint, device=device)
+    base_backbone, stage_b_metadata, base_metadata = _load_stage_c_base_backbone(
+        args.base_checkpoint,
+        device=device,
+    )
+    candidate_protocol = _read_json(args.candidate_protocol) if args.candidate_protocol is not None else None
     candidate_backbone, checkpoint_summary = _load_correctness_backbone(
         args.checkpoint,
         base_metadata,
         device=device,
         use_ema=bool(args.use_checkpoint_ema),
+        candidate_protocol=candidate_protocol,
     )
     precision = str(_training_config(base_metadata).get("precision", "fp32"))
+    candidate_training = _training_config(base_metadata)
+    candidate_standardization = _standardization(base_metadata)
+    if checkpoint_summary.get("schema") == A_V2_CHECKPOINT_SCHEMA:
+        checkpoint_metadata = checkpoint_summary["checkpoint_metadata"]
+        candidate_training = dict(checkpoint_metadata["training"])
     grouped = _grouped_entries(entries)
     packed_roles = {
         role: _pack_role_entries(role, role_entries, device=device)
@@ -579,7 +637,7 @@ def main() -> None:
         precision=precision,
     )
     replay_candidate = _evaluate_replay_losses(
-        _diffusion_for_backbone(candidate_backbone, stage_b_metadata),
+        _diffusion_from_config(candidate_backbone, candidate_standardization, candidate_training),
         packed_roles,
         seed=int(args.seed),
         precision=precision,
@@ -622,8 +680,8 @@ def main() -> None:
         generation_candidate, candidate_records = _evaluate_generation_retention_with_records(
             candidate_backbone,
             node_prior,
-            _standardization(base_metadata),
-            _training_config(base_metadata),
+            candidate_standardization,
+            candidate_training,
             evaluation,
             reference,
             composition,
@@ -643,8 +701,8 @@ def main() -> None:
         generation_candidate = evaluate_generation_retention(
             candidate_backbone,
             node_prior,
-            _standardization(base_metadata),
-            _training_config(base_metadata),
+            candidate_standardization,
+            candidate_training,
             evaluation,
             reference,
             composition,
@@ -674,6 +732,7 @@ def main() -> None:
         "checkpoint": str(args.checkpoint),
         "checkpoint_sha256": sha256_file(args.checkpoint),
         "checkpoint_ema_used": bool(args.use_checkpoint_ema),
+        "candidate_protocol": None if args.candidate_protocol is None else str(args.candidate_protocol),
         "base_checkpoint": str(args.base_checkpoint),
         "base_checkpoint_sha256": base_sha,
         "replay_cache_dir": str(args.replay_cache_dir),

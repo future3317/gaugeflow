@@ -14,6 +14,7 @@ from gaugeflow.production.generated_state_replay import (
     write_generated_state_replay_cache,
     write_generated_state_replay_manifest,
 )
+from gaugeflow.production.equivariant_denoiser import HybridCrystalDenoiser
 from gaugeflow.production.training import ExponentialMovingAverage
 from scripts.audit_generated_state_replay_training_contract import _iter_role_chunks, _pack_role_entries
 from scripts.build_tiny_generated_state_replay_cache import (
@@ -23,6 +24,7 @@ from scripts.build_tiny_generated_state_replay_cache import (
     _source_ids_for_indices,
 )
 from scripts.evaluate_generated_state_replay_correctness import _paired_bootstrap_w1_delta
+from scripts.evaluate_generated_state_replay_correctness import _load_correctness_backbone
 from scripts.project_generated_state_replay_checkpoint import _alpha_for_key, _project_state_dict
 from scripts.select_generated_state_replay_checkpoint import (
     SelectionContract,
@@ -199,6 +201,61 @@ def test_base_v2_training_checkpoint_round_trips_runtime_state(tmp_path) -> None
         runtime_state["epoch_loader_generator_state"],
     )
     assert torch.equal(restored_runtime["device_generator_state"], runtime_state["device_generator_state"])
+
+
+def test_generated_state_replay_evaluator_loads_base_v2_training_checkpoint(tmp_path) -> None:
+    spec = {
+        "hidden_dim": 16,
+        "vector_dim": 4,
+        "layers": 1,
+        "radial_dim": 4,
+        "radial_cutoff_angstrom": 8.0,
+        "edge_dim": 32,
+        "angular_channels": 4,
+        "edge_refresh_rank": 8,
+        "modality_time_conditioning": "separate",
+    }
+    denoiser = HybridCrystalDenoiser(**_model_config(spec))
+    trainer = _TinyTrainer(denoiser)
+    path = tmp_path / "checkpoint_step_00000001.pt"
+    _save_training_checkpoint(
+        path,
+        model=denoiser,
+        trainer=trainer,  # type: ignore[arg-type]
+        trainer_step=1,
+        metadata={
+            "protocol_sha256": "protocol",
+            "candidate": "tiny",
+            "training": {
+                "ema_decay": 0.9,
+                "coordinate_sigma_min": 0.005,
+                "coordinate_sigma_max": 0.5,
+                "minimum_time": 0.001,
+                "maximum_time": 0.999,
+                "categorical_path": "orderless_reveal",
+                "composition_conditioning": True,
+            },
+        },
+        runtime_state={
+            "epoch_loader_generator_state": torch.Generator().manual_seed(1).get_state(),
+            "batches_consumed_in_epoch": 0,
+            "device_generator_state": torch.Generator().manual_seed(2).get_state(),
+        },
+    )
+
+    loaded, summary = _load_correctness_backbone(
+        path,
+        {},
+        device=torch.device("cpu"),
+        use_ema=True,
+        candidate_protocol={
+            "protocol": "unit-test",
+            "model_candidates": {"tiny": spec},
+        },
+    )
+
+    assert isinstance(loaded, HybridCrystalDenoiser)
+    assert summary["checkpoint_metadata"]["candidate"] == "tiny"
 
 
 def _entry(*, role: str = "generated_joint") -> GeneratedStateReplayEntry:
