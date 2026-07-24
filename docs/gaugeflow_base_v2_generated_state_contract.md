@@ -1166,3 +1166,72 @@ replay term is over-weighted or insufficiently clean-retentive even in A-v2.
 The next experiment should keep the 34M model and exact same replay support,
 then reduce replay pressure or add an explicit clean-retention selector before
 any larger-capacity competition.
+
+The replay-pressure dose check has now reached the step-1000 decision point for
+both lower-dose protocols added in `1caba26`:
+
+```text
+configs/gates/gaugeflow_base_v2_generated_state_short_run_34m_replay025_v1.json
+configs/gates/gaugeflow_base_v2_generated_state_short_run_34m_replay0125_v1.json
+```
+
+Step-1000 paired eval32 artifacts:
+
+```text
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_replay025_step1000_eval32_1caba26_v1.json
+/home/workspace/lrh/DATA/T2C-Flow/evaluations/gaugeflow_base_v2_short_run_34m_2000_replay0125_step1000_eval32_1caba26_v1.json
+```
+
+Candidate-minus-Stage-C deltas at the same step:
+
+| replay dose | clean_clean replay loss delta | generated_assignment | generated_lattice | generated_joint | free NN-W1 delta | free volume-W1 delta | hard validity deltas |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0.5 | +0.884881 | -0.677010 | -0.271472 | -0.512396 | +0.368408 | +0.075038 | unchanged |
+| 0.25 | +0.971517 | -0.424267 | -0.160639 | -0.589001 | +0.490748 | +0.060188 | unchanged |
+| 0.125 | +1.048732 | -0.170492 | -0.033935 | -0.615191 | +0.448427 | +0.053797 | unchanged |
+
+The lower replay doses improve volume slightly relative to the original
+0.5-dose step-1000 checkpoint, but they do not repair clean retention and they
+make free-generation NN-W1 worse.  This is enough to close the scalar replay
+weight hypothesis as insufficient.  The two 2000-step runs may finish as
+historical dose evidence, but no additional scalar replay-pressure runs are
+authorized.
+
+The retraining plan therefore moves to the next contract-level intervention:
+retain the A-v2 base-training route, but add an explicit clean/free-retention
+constraint or schedule before any 58M/98M capacity competition.  This must be a
+bounded 34M protocol first.  The next implementation should not be "larger
+model first"; it should be a 34M runner/protocol that makes the retention rule
+part of the training or checkpoint-selection contract, while preserving the
+same generated-state provenance checks, forbidden-source exclusion,
+checkpoint-hash enforcement, exact-count semantics and paired eval surface.
+
+Before adding a new retention loss or schedule, one missing control must be
+filled: the current A clean-objective short-run baseline.  Without that control
+we cannot cleanly separate "2k updates from a fresh 34M model are simply not
+competitive with the frozen Stage-C 40523 checkpoint" from "generated-state
+replay specifically damages rollout geometry."  The next frozen protocol is:
+
+```text
+configs/gates/gaugeflow_base_v2_clean_objective_short_run_34m_v1.json
+```
+
+It uses the same 34M model specification, seed, clean batch size, optimizer,
+precision, checkpoint cadence, forbidden-source panel and evaluation surface as
+the generated-state replay short runs, but sets:
+
+```text
+objective_mix: clean_only_baseline
+clean_loss_weight: 1.0
+replay_loss_weight: 0.0
+```
+
+The smoke runner now supports this explicit clean-only baseline while keeping
+the previous `clean_plus_replay` protocols strict: generated-state runs still
+require positive clean and replay weights summing to one, and still require
+nonzero replay-role gradients.  Clean-only checkpoints are controls, not
+generated-state replay candidates.  If the clean-only baseline also fails the
+same free NN/volume retention surface, the next fix belongs in the base
+training budget/objective or checkpoint selector.  If clean-only is much more
+stable than the replay runs, the next fix should target generated-state replay
+retention/trust constraints rather than capacity scaling.

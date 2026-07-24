@@ -41,6 +41,7 @@ _CHECKPOINT_SCHEMA = "gaugeflow.base_v2_generated_state_training_checkpoint.v1"
 _SUPPORTED_PROTOCOLS = {
     "gaugeflow_base_v2_generated_state_smoke_v1",
     "gaugeflow_base_v2_generated_state_short_run_v1",
+    "gaugeflow_base_v2_clean_objective_short_run_v1",
 }
 
 
@@ -108,6 +109,23 @@ def _validate_protocol_header(protocol: dict[str, Any]) -> str:
     if name not in _SUPPORTED_PROTOCOLS or protocol.get("status_before_run") != "frozen_not_run":
         raise ValueError("unexpected or unfrozen A-v2 generated-state protocol")
     return str(name)
+
+
+def _validate_loss_weights(training: dict[str, Any]) -> tuple[float, float]:
+    clean_loss_weight = float(training["clean_loss_weight"])
+    replay_loss_weight = float(training["replay_loss_weight"])
+    objective_mix = str(training.get("objective_mix", "clean_plus_replay"))
+    if objective_mix == "clean_only_baseline":
+        if clean_loss_weight != 1.0 or replay_loss_weight != 0.0:
+            raise ValueError("clean-only baseline requires clean_loss_weight=1 and replay_loss_weight=0")
+    elif objective_mix == "clean_plus_replay":
+        if not 0.0 < clean_loss_weight < 1.0 or not 0.0 < replay_loss_weight < 1.0:
+            raise ValueError("clean+replay training requires both loss weights to be positive")
+        if abs(clean_loss_weight + replay_loss_weight - 1.0) > 1.0e-12:
+            raise ValueError("clean and replay loss weights must sum to one")
+    else:
+        raise ValueError("unsupported A-v2 objective mix")
+    return clean_loss_weight, replay_loss_weight
 
 
 def _move_clean_batch(host: Any, *, device: torch.device) -> tuple[torch.Tensor, ...]:
@@ -401,12 +419,10 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     )
     iterator = iter(loader)
     clean_accumulation = int(training["clean_gradient_accumulation_steps"])
-    clean_loss_weight = float(training["clean_loss_weight"])
-    replay_loss_weight = float(training["replay_loss_weight"])
-    if clean_accumulation < 1 or not 0.0 < clean_loss_weight < 1.0:
-        raise ValueError("invalid clean accumulation or loss weight")
-    if not 0.0 < replay_loss_weight < 1.0 or abs(clean_loss_weight + replay_loss_weight - 1.0) > 1.0e-12:
-        raise ValueError("clean and replay loss weights must sum to one")
+    if clean_accumulation < 1:
+        raise ValueError("invalid clean accumulation")
+    clean_loss_weight, replay_loss_weight = _validate_loss_weights(training)
+    replay_enabled = replay_loss_weight > 0.0
 
     generator = torch.Generator(device=device).manual_seed(seed + 1)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -511,16 +527,20 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                 generator=generator,
                 device=device,
             )
-            replay_reports = [
-                _accumulate_role_step(
-                    trainer,
-                    packed_roles[role],
-                    role_weight=replay_loss_weight / len(_ROLES),
-                    generator=generator,
-                    max_graphs_per_role_batch=int(training["max_graphs_per_role_batch"]),
-                )
-                for role in _ROLES
-            ]
+            replay_reports = (
+                [
+                    _accumulate_role_step(
+                        trainer,
+                        packed_roles[role],
+                        role_weight=replay_loss_weight / len(_ROLES),
+                        generator=generator,
+                        max_graphs_per_role_batch=int(training["max_graphs_per_role_batch"]),
+                    )
+                    for role in _ROLES
+                ]
+                if replay_enabled
+                else []
+            )
             terminal_gradient_norms = _gradient_group_norms(model)
             gradient_norm = trainer.finish_optimization_step()
             step = trainer.step
@@ -550,14 +570,16 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     clean_groups_nonzero = all(
         bool(value) for value in final_clean_report["nonzero_gradient_delta_groups"].values()
     )
-    replay_groups_nonzero = all(
+    replay_groups_nonzero = bool(final_replay_reports) and all(
         all(bool(value) for value in report["nonzero_gradient_delta_groups"].values())
         for report in final_replay_reports
     )
     checks = {
         "parameters_updated": final_update_norm > 0.0,
         "clean_terminal_gradient_groups_nonzero": clean_groups_nonzero,
-        "all_replay_role_terminal_gradient_groups_nonzero": replay_groups_nonzero,
+        "all_replay_role_terminal_gradient_groups_nonzero": replay_groups_nonzero
+        if bool(acceptance["all_replay_role_terminal_gradient_groups_nonzero"])
+        else True,
         "memory": peak_memory <= float(acceptance["peak_cuda_memory_mib_max"]),
     }
     summary = {

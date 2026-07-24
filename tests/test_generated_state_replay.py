@@ -39,6 +39,7 @@ from scripts.train_gaugeflow_base_v2_generated_state_smoke import (
     _read_training_checkpoint_description,
     _save_training_checkpoint,
     _training_config,
+    _validate_loss_weights,
     _validate_protocol_header,
 )
 from scripts.train_generated_state_replay_correctness import _parameter_update_norm, _role_weight
@@ -130,11 +131,54 @@ def test_base_v2_protocol_header_accepts_smoke_and_short_run_only() -> None:
         )
         == "gaugeflow_base_v2_generated_state_short_run_v1"
     )
+    assert (
+        _validate_protocol_header(
+            {
+                "protocol": "gaugeflow_base_v2_clean_objective_short_run_v1",
+                "status_before_run": "frozen_not_run",
+            }
+        )
+        == "gaugeflow_base_v2_clean_objective_short_run_v1"
+    )
     with pytest.raises(ValueError, match="unexpected or unfrozen"):
         _validate_protocol_header(
             {
                 "protocol": "gaugeflow_base_v2_generated_state_short_run_v1",
                 "status_before_run": "mutable",
+            }
+        )
+
+
+def test_base_v2_loss_weights_allow_only_explicit_clean_baseline() -> None:
+    assert _validate_loss_weights(
+        {
+            "objective_mix": "clean_plus_replay",
+            "clean_loss_weight": 0.75,
+            "replay_loss_weight": 0.25,
+        }
+    ) == (0.75, 0.25)
+    assert _validate_loss_weights(
+        {
+            "objective_mix": "clean_only_baseline",
+            "clean_loss_weight": 1.0,
+            "replay_loss_weight": 0.0,
+        }
+    ) == (1.0, 0.0)
+
+    with pytest.raises(ValueError, match="requires both loss weights to be positive"):
+        _validate_loss_weights(
+            {
+                "objective_mix": "clean_plus_replay",
+                "clean_loss_weight": 1.0,
+                "replay_loss_weight": 0.0,
+            }
+        )
+    with pytest.raises(ValueError, match="clean-only baseline requires"):
+        _validate_loss_weights(
+            {
+                "objective_mix": "clean_only_baseline",
+                "clean_loss_weight": 0.875,
+                "replay_loss_weight": 0.125,
             }
         )
 
